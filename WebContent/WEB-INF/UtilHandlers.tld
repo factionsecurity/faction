@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<taglib> 
+<tlibversion>1.0</tlibversion>
+<jspversion>1.1</jspversion>
+<shortname>FuseSoft</shortname>
+<info>Utils taglib</info>
+<tag>
+    <name>vulncount</name>
+    <tagclass>com.fuse.taglib.AssessmentCountHandler</tagclass>
+    <attribute>
+      <name>asmt</name>
+      <required>true</required>
+      <rtexprvalue>true</rtexprvalue>
+  	</attribute>
+  	<attribute>
+      <name>levels</name>
+      <required>true</required>
+      <rtexprvalue>true</rtexprvalue>
+  	</attribute>
+</tag>
+
+</taglib> 

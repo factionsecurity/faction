@@ -1,0 +1,213 @@
+    
+//import 'jquery';
+//import 'jquery-ui';
+//import 'bootstrap';
+import 'jquery-confirm';
+    var _token = $("#_token")[0].value;
+    global._token=_token;
+    global.showLoading = function showLoading(com){
+    	$(com).loading({overlay: true, base: 0.3});
+    };
+    global.clearLoading = function clearLoading(com){
+    	if($(com).hasClass('js-loading'))
+    		$(com).loading({destroy: true});
+    };
+    global.alertRedirect =  function alertRedirect(resp){
+    	if(typeof resp.message == "undefined") window.location=window.location;
+		else
+			$.alert(
+					{
+						title: "Error",
+						type:"red",
+						content: resp.message,
+						columnClass: 'small'
+					}
+				);
+		
+		global._token = resp.token;
+		
+    };
+    global.getData = function getData(resp){
+    	global._token = resp.token;
+    	if(typeof resp.message == "undefined") return resp.data;
+		else{
+			$.alert(
+					{
+						title: "Error",
+						type:"red",
+						content: resp.message,
+						columnClass: 'small'
+					}
+				);
+			return "error";
+		}
+		
+		
+    };
+
+    global.alertMessage = function alertMessage(resp, success){
+    	if(typeof resp.message == "undefined"){
+    		$.alert(
+					{
+						title: "SUCCESS!",
+						type:"green",
+						content: success,
+						columnClass: 'small'
+					}
+				);
+        }else{
+			$.alert(
+					{
+						title: "Error",
+						type:"red",
+						content: resp.message,
+						columnClass: 'small'
+					}
+				);
+        }
+		
+		global._token = resp.token;
+    };
+    
+    
+    setInterval(function () {
+    	updateNotificaitons();
+    }, 60000);
+	
+    function updateNotificaitons(){
+    	$.get('../services/getAssessments', function(json){
+			//json = JSON.parse(data);
+			if(json.count != 0)
+				$(".assessmentCount").each(function(a,b){$(b).html(json.count);});
+			if(json.prcount != 0)
+				$(".prCount").each(function(a,b){$(b).html(json.prcount);});
+			var assessments=json.assessments;
+			var innerData="<li class='header'>You have "+json.count+ " assessments</li>\n";
+			innerData+=" <li>\n";
+			innerData+=" <ul class='menu'>\n";
+			for(var i=0;i<json.count; i++){
+				innerData+="<li>\n";
+				innerData+="<a href='SetAssessment?id=" + assessments[i][4] +"'>\n";
+				innerData+="<div class='clipped' >&nbsp;</div><small><i class='fa fa-clock-o'></i> "+assessments[i][2]+"</small>";
+				innerData+="<h4>\n";
+			    innerData+=assessments[i][1] + " - " + assessments[i][0];
+				innerData+="</h4>";
+				innerData+="\n";
+				innerData+="</a>\n";
+				innerData+="</li>\n";
+				}
+			innerData+="</ul></li>";
+			$("#assessmentWidget").html(innerData);
+		
+		});
+		$.get('../services/getVerifications', function(json){
+			//json = JSON.parse(data);
+			if(json.count != 0)
+				$(".verificationCount").each(function(a,b){$(b).html(json.count);});
+			var verifications=json.verifications;
+			var innerData="<li class='header'>You have "+json.count+ " Verifications</li>\n";
+			innerData+=" <li>\n";
+			innerData+=" <ul class='menu'>\n";
+	
+		
+			for(var i=0;i<json.count; i++){
+				innerData+="<li>\n";
+				innerData+="<a href='Verifications?id=" + verifications[i][3] +"'>\n";
+				innerData+="<h4>\n";
+			    innerData+="<div class='clipped' >" +verifications[i][4] + "</div><small><i class='fa fa-clock-o'></i> "+verifications[i][2]+"</small>";
+				innerData+="</h4>";
+				innerData+="<p>" + verifications[i][1] + " - " + verifications[i][0] + "</p>";
+				innerData+="\n";
+				innerData+="</a>\n";
+				innerData+="</li>\n";
+				}
+			innerData+="</ul></li>";
+			$("#verificationWidget").html(innerData);
+			
+		
+		});
+    	
+    }
+    $(function(){
+    	
+
+	    updateNotificaitons();
+		$("#Profile").click( ()=>{
+			$.confirm({
+			    content: 'url:Profile',
+			    title: 'Update Your Profile',
+			    theme: "black",
+			    columnClass: 'col-md-8 col-md-offset-2',
+			    buttons: {
+				    save: function (){
+				    	var data="action=update";
+				    	data+="&fname=" + encodeURIComponent($("#profile_fname").val());
+				    	data+="&lname="+ encodeURIComponent($("#profile_lname").val());
+				    	data+="&email="+ encodeURIComponent($("#profile_email").val());
+				    	data+="&current="+ $("#profile_password").val();
+				    	data+="&password="+ $("#profile_newpassword").val();
+				    	data+="&confirm="+ $("#profile_confirm").val();
+				    	$.post("Profile", data).done(function(resp){
+				    		var title="Success!";
+				    		var content="Your profile was updated.";
+				    		if(resp.message != null){
+				    			title="Error!";
+				    			content = resp.message;
+				    		}
+				    		$.alert({
+				    			title: title,
+				    			content: content
+				    		});
+				    		
+				    	}).error(function(){
+			    			$.alert({
+				    			title: 'Error!',
+				    			content: "There is a problem with your request."
+			    			});
+				    	});
+					},
+					cancel: function(){}
+			  }
+			});
+		
+		 });
+    });
+    	//Session Timeout Code since ajax updates keep the sesion alive
+    	window.setTimeout(timeouts, 60*60*1000 -120 );
+    	var sss=119;
+    	var sessTimeout=undefined;
+    	function tfunc(){ 
+			if(sss < 0 ){
+				window.location = "../service/logout";
+			}else{
+				$("#seconds").html(sss);
+				sss--;
+			}
+    	}
+    	
+    	function timeouts(){
+    		$.confirm({
+    			title: 'Session Timeout',
+    			content: 'Your Session will expire in <span id="seconds">120</span> seconds. <br/><br/>' +
+    					 'Do you wish to stay logged in?',
+    			onContentReady: function () {
+    				sessTimeout = setInterval(tfunc, 2000);	
+    			},buttons: {
+    				"Still Working" : function(){
+    					window.setTimeout(timeouts, 60*60*1000 -120);
+    					clearInterval(sessTimeout);
+    				},
+    				logout: function(){
+    					window.location = "../service/logout";
+    				}
+    			}
+    		});
+    		
+    	}
+    	
+    	global.b64DecodeUnicode = function b64DecodeUnicode(str) {
+    		str=decodeURIComponent(str);
+    	    return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
+    	        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    	    }).join(''));
+    	};

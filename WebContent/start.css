@@ -1,0 +1,47 @@
+html,
+body {
+  background: #030D1C;
+  padding: 0px;
+  margin:0px;
+  font-family: 'Source Sans Pro', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color:#030D1C;
+}
+.logo {
+  margin-top: 50px; 	
+  padding: 20px 0;
+  font-size: 25px;
+  //color: #aaaaaa;
+  color: #030D1C;
+  font-weight: bold;
+}
+.alert{
+	padding-bottom:25px;
+	padding-top:1px;
+}
+.myform{
+	width: 700px;
+	margin-left: auto;
+	margin-right: auto;
+}
+.form-control{
+	//background-color: #38405f;
+	background-color:  rgb(232, 240, 254);
+	color:#030D1C;
+	border:1px;
+	border-color:#38405f;
+	border-radius:4px;
+	
+}
+
+.btn-success {
+  background-color: transparent;
+  border-color: #00a65a;
+  color: #00a65a;
+}
+
+.btn-warning {
+  background-color: transparent;
+  border-color: #f39c12;
+  color: #f39c12;
+  
+}

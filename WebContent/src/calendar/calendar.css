@@ -1,0 +1,23 @@
+
+.daterangepicker{
+    background-color: #030D1C !important;
+}
+.fn-gantt .verificationClass {
+	background-color: #e67e22 !important;
+}
+.fn-gantt .verificationClass .fn-label{
+	color: white !important;
+
+}
+.fn-gantt .assessmentClass{
+	background-color: #c0392b !important;
+}
+.fn-gantt .assessmentClass .fn-label{
+	color: white !important;
+}
+.fn-gantt .oooClass{
+	background-color: #27ae60 !important;
+}
+.fn-gantt .oooClass .fn-label{
+	color: white !important;
+}

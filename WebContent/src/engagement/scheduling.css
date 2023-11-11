@@ -1,0 +1,18 @@
+.daterangepicker{
+    background-color: #030D1C !important;
+}
+.form-control{
+    background-color: #192338 !important;
+}
+.select2-container .select2-selection--single .select2-selection__rendered {
+  background-color: #192338 !important;
+  border-color: #192338 !important;
+}
+.select2-container--default .select2-selection--single, .select2-selection .select2-selection--single {
+  background-color: #192338 !important;
+  border-color: #192338 !important;
+}
+.select2-results{
+  border: 1px solid #030D1C;
+  border-width: 0px 1px 1px 1px;
+}

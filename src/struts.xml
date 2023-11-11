@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE struts PUBLIC
+	"-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
+	"http://struts.apache.org/dtds/struts-2.3.dtd">
+<struts>
+    
+	<constant name="struts.multipart.maxSize" value="10000000"/>	
+
+    <package name="default" namespace="/" extends="struts-default">
+      <interceptors>
+      	 <interceptor name="staticParams" class="com.opensymphony.xwork2.interceptor.StaticParametersInterceptor"/>
+	     <interceptor name="params" class="com.opensymphony.xwork2.interceptor.ParametersInterceptor"/>
+	     <interceptor name="conversionError" class="org.apache.struts2.interceptor.StrutsConversionErrorInterceptor"/>
+	     <interceptor name="annotationWorkflow" class="com.opensymphony.xwork2.interceptor.annotations.AnnotationWorkflowInterceptor" />
+	     <interceptor name="cachingHeadersInterceptor" class="com.fuse.utils.CachingHeadersInterceptor"/>
+	     <interceptor name="accessControlInterceptor" class="com.fuse.utils.AccessControlInterceptor"/>
+	     <interceptor-stack name="defaultSecurityStack">
+	         <interceptor-ref name="defaultStack">
+	         	<param name="fileUpload.allowedExtensions">msg,jpg,gif,png,pdf,doc,xls,xlsx,docx,txt,csv,xml,bmp,jpeg,zip,rar,tar,gzip,tar.gz</param>
+	         </interceptor-ref>
+	         <interceptor-ref name="accessControlInterceptor"/>
+	         <interceptor-ref name="cachingHeadersInterceptor"/>
+	         <interceptor-ref name="cookie">
+	          	<param name="CookiesName">faction_menu</param>
+      			<param name="cookiesValue">full</param>
+	         </interceptor-ref>
+	         <interceptor-ref name="annotationWorkflow"/>
+	     </interceptor-stack>
+	     <interceptor-stack name="annotatedStack">
+	     	<interceptor-ref name="staticParams"/>
+	        <interceptor-ref name="params"/>
+	        <interceptor-ref name="conversionError"/>
+	        <interceptor-ref name="annotationWorkflow"/>
+		</interceptor-stack>
+	   </interceptors>
+	   
+	   
+		<default-interceptor-ref name="defaultSecurityStack"/>
+        <default-action-ref name="index" />
+
+        <global-results>
+            <result name="error">/WEB-INF/jsp/error.jsp</result>
+        </global-results>
+
+        <global-exception-mappings>
+            <exception-mapping exception="java.lang.Exception" result="error"/>
+        </global-exception-mappings>
+        
+		
+
+    </package>
+     <constant name="struts.convention.default.parent.package" value="default"/>
+     <constant name="struts.devMode" value="false" />
+
+    <!-- Add packages here -->
+     <constant name="struts.action.excludePattern" value="/(service|api)/.*"/>
+
+</struts>
