@@ -17,7 +17,8 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 
 public class S3 extends ReportTemplate {
 	private final S3Client s3Client;
-	private final String bucketName = "faction-customer-reports";
+	private final String bucketName = System.getenv("FACTION_BUCKET_NAME");
+
 	private final String bucketPath = System.getenv("FACTION_MONGO_DATABASE");
 
 	public S3() {

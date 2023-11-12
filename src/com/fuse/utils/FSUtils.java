@@ -398,7 +398,6 @@ public class FSUtils {
 	public static String decryptPassword(String password) {
 		try {
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
-			//byte[] hash = md.digest(("Fus3F@" + "c710n 5up" + "3r 53c" + "r37 K3y").getBytes());
 			String secret = System.getenv("FACTION_SECRET_KEY");
 			byte[] hash = md.digest(secret.getBytes());
 			char[] b64hash = Base64.encodeBase64String(hash).toCharArray();
@@ -426,7 +425,6 @@ public class FSUtils {
 			MessageDigest md = MessageDigest.getInstance("SHA-256");
 			String secret = System.getenv("FACTION_SECRET_KEY");
 			byte[] hash = md.digest(secret.getBytes());
-			//byte[] hash = md.digest(("Fus3F@" + "c710n 5up" + "3r 53c" + "r37 K3y").getBytes());
 			char[] b64hash = Base64.encodeBase64String(hash).toCharArray();
 
 			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");

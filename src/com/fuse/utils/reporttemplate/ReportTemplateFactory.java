@@ -5,7 +5,7 @@ import org.apache.commons.lang3.SystemUtils;
 public class ReportTemplateFactory {
 
 	public ReportTemplate getReportTemplate() {
-		String reportStorage = SystemUtils.getEnvironmentVariable("REPORT_STORAGE", "");
+		String reportStorage = SystemUtils.getEnvironmentVariable("FACTION_REPORT_STORAGE", "");
 		if (reportStorage.equals("aws")) {
 			return new S3();
 		} else {
