@@ -24,7 +24,7 @@ __Want to see it in action?__ -> [Faction Video Overview](https://www.factionsec
 Run the following commands to build the war file and deploy it to the docker container. 
 ```
 git clone git@github.com:factionsecurity/faction.git
-cd faction/faction
+cd faction
 mvn clean compile war:war
 docker-compose up --build
 ```
