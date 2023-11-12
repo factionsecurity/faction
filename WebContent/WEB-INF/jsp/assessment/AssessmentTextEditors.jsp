@@ -303,7 +303,6 @@
 	<!-- /.box -->
 </div>
 
-</div>
 <div class="row">
 
 	<!-- Notes Analysis Section -->

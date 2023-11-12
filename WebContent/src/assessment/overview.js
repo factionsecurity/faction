@@ -77,7 +77,11 @@ function alertMessage(resp, success) {
 				title: "SUCCESS!",
 				type: "green",
 				content: success,
-				columnClass: 'small'
+				columnClass: 'small',
+				autoClose: 'ok|1000',
+				buttons: {
+					ok: function(){}
+				}
 			}
 		);
 	else
@@ -86,7 +90,11 @@ function alertMessage(resp, success) {
 				title: "Error",
 				type: "red",
 				content: resp.message,
-				columnClass: 'small'
+				columnClass: 'small',
+				autoClose: 'ok|3000',
+				buttons: {
+					ok: function(){}
+				}
 			}
 		);
 
@@ -543,8 +551,75 @@ $(function() {
 
 		});
 		$("#saveTemplateSideBar").on('click', async () =>{
+			let selected = $("#summaryTemplates option:selected");
+			let selectedText = Array.from(selected).map( (t)=> t.innerHTML);
+			let contentMessage="";
+			let buttons = {
+					save: function(){
+						if(selected.length == 0){
+							selectedText = $("#tempName").val();
+						}
+						let data = `term=${selectedText}`
+						data += "&summary=" + encodeURIComponent(getEditorText("summary"));
+						data += "&exploit=false";
+						data += "&_token=" + global._token;
+						$.post("tempSave", data).done(function(resp) {
+							alertMessage(resp, "Template Updated.");
+						});
+						
+					},
+					cancel: function(){}
+				}
+			if(selectedText.length > 1){
+				$.confirm({
+					title: "Error",
+					content: "You can only select one template name to save.",
+					buttons: {
+						ok: function(){}
+						}
+				});
+				return;
+				
+			}else if(selectedText.length == 0){
+				contentMessage = "Enter a Template name: <input id='tempName' class='form-control'></input>";
+			}else{
+				contentMessage = "Do you want to save the template <b>"+selectedText+"</b> or create a new template?<input id='updateTemplateName' type='hidden' value=" + selectedText + "'/>";
+				buttons["new"] = function(){
+						$('#summaryTemplates').val(null).trigger('change');
+						$("#saveTemplateSideBar").click()
+				}
+			}
+			$.confirm({
+				title: "Save Template",
+				content: contentMessage,
+				buttons: buttons
+				
+			})
+			
 		});
 		$("#deleteTemplateSideBar").on('click', async () =>{
+			let selected = $("#summaryTemplates option:selected");
+			let textData=[];
+			const selectedText = Array.from(selected).map( (t)=> t.innerHTML).join(",");
+			$.confirm({
+				title: "Confirm?",
+				content: "Are you sure you want to delete these templates?<br><b>"+selectedText+"</b>",
+				buttons: {
+					confirm: async function() {
+						let messages=[]
+						$('#summaryTemplates').val(null).trigger('change');
+						for await (const option of selected){
+							await $.post(`tempDelete`, `tmpId=${$(option).val()}`).done(function(resp) {
+								_token=resp.token;
+								messages.push(resp);
+								option.remove();
+								});
+						}
+						alertMessage(messages[0], "Templates Deleted.");
+					},
+					cancel: function() { }
+				}
+			});
 		});
 		$("#addTemplateSideBar").on('click', async () =>{
 			let selected = $("#summaryTemplates option:selected");
