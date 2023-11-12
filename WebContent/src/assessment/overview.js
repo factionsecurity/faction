@@ -542,6 +542,55 @@ $(function() {
 
 
 		});
+		$("#saveTemplateSideBar").on('click', async () =>{
+		});
+		$("#deleteTemplateSideBar").on('click', async () =>{
+		});
+		$("#addTemplateSideBar").on('click', async () =>{
+			let selected = $("#summaryTemplates option:selected");
+			let textData=[]
+			for await (const option of selected){
+				await $.get('tempSearchDetail?tmpId=' + $(option).val())
+					.done(function(data) {
+						textData.push(data.templates[0].text);
+					});
+
+
+			}
+			let text = textData.join("\n");
+			$.confirm({
+				title: "Confirm?",
+				content: "Are you sure you want to Overwrite, Append, or Prepend the current text?",
+				buttons: {
+					overWrite: {
+						text: "OverWrite",
+						action: function() {
+								setEditorText("summary", text);
+						}
+
+					},
+					prepend: {
+						text: "Prepend",
+						action: function() {
+								setEditorText("summary", text + "\n" + getEditorText("summary"));
+						}
+
+					},
+					append: {
+						text: "Append",
+						action: function() {
+								setEditorText("summary", getEditorText("summary") + "\n" + text);
+						}
+
+					},
+					cancel: function() {
+
+					}
+				}
+
+			});
+			
+		})
 		$(".tempSearch").keypress(function() {
 			var delBtn = $($("#tempSearch1").parent().parent()).find("button");
 			$(delBtn).prop("disabled", true);
