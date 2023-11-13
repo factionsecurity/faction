@@ -36,7 +36,7 @@
 						<div class="row">
 							<div class="col-sm-3" style="margin-bottom: -30px; z-index: 1">
 								<button class="btn btn-block btn-primary btn-sm"
-									id="addTemplate">Add Template</button>
+									id="createTemplate">New Template</button>
 							</div>
 						</div>
 						<table id="templateTable"
@@ -47,7 +47,9 @@
 									<th>Title</th>
 									<th>Type</th>
 									<th>Created</th>
+									<th>Created By</th>
 									<th>Active</th>
+									<th></th>
 								</tr>
 							</thead>
 							<tbody>
@@ -56,9 +58,12 @@
 										<td><s:property value="id" /></td>
 										<td><s:property value="title" /></td>
 										<td><s:property value="type" />
+										<td><s:date name="created" format="MM/dd/yyyy"/>
 										<td><s:property value="user.fname" /> <s:property
 												value="user.lname" /></td>
-										<td><input type="checkbox" /></td>
+										<td><input type="checkbox" class="activeCheckBox" <s:if test="active">checked</s:if> /></td>
+										<td>
+						<span class="vulnControl vulnControl-delete"><i class="fa fa-trash" title="Delete Template"></i></span></td>
 									</tr>
 								</s:iterator>
 							</tbody>
@@ -74,6 +79,10 @@
 				<div class="col-md-12">
 
 					<div class="box box-primary">
+						<div class="box-header">
+						<h2><span id="templateName">&nbsp;</span><span id="edits"></span></h2> 
+						<span id="saveTemplate" class="vulnControl pull-right" style="margin-top: -40px"><i class="fa fa-save" title="Save Template"></i></span>
+						</div>
 						<div class="box-body">
 							<form>
 							<bs:editor name="templateEditor" toolbar="Full" id="templateEditor"

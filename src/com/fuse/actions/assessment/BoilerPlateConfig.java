@@ -1,6 +1,7 @@
 package com.fuse.actions.assessment;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.Query;
@@ -28,16 +29,15 @@ public class BoilerPlateConfig extends FSActionSupport {
 	private Boolean exploit;
 	private Boolean global;
 	private String type;
+	private Boolean active;
 
 	@Action(value = "tempSearch", results = {
 			@Result(name = "tempSearchJson", location = "/WEB-INF/jsp/assessment/tempSearchJSON.jsp") })
 	public String searchTemplate() {
 
-		String query = "{ 'userid' : " + this.getSessionUser().getId() + " , " + " 'title' : { $regex : '.*" + this.term
-				+ ".*', $options: 'ix' }}";
 
-		List<BoilerPlate> plates = em.createQuery("from BoilerPlate where userid = :uid and title like :title and type = :type")
-				.setParameter("uid", this.getSessionUser().getId())
+		List<BoilerPlate> plates = em.createQuery("from BoilerPlate where user = :user and title like :title and type = :type and active = true")
+				.setParameter("user", this.getSessionUser())
 				.setParameter("title", "%" + this.term.trim() + "%")
 				.setParameter("type", this.type.trim())
 				.getResultList();
@@ -60,12 +60,25 @@ public class BoilerPlateConfig extends FSActionSupport {
 
 	@Action(value = "tempDelete")
 	public String tempDelete() {
-		BoilerPlate bp = (BoilerPlate) em.createQuery("from BoilerPlate where userid = :uid and id = :id")
-				.setParameter("uid", this.getSessionUser().getId()).setParameter("id", this.tmpId).getResultList()
+		BoilerPlate bp = (BoilerPlate) em.createQuery("from BoilerPlate where id = :id")
+				.setParameter("id", this.tmpId).getResultList()
 				.stream().findFirst().orElse(null);
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		em.remove(bp);
+		HibHelper.getInstance().commit();
+
+		return this.SUCCESSJSON;
+	}
+	@Action(value = "tempActive")
+	public String tempActive() {
+		BoilerPlate bp = (BoilerPlate) em.createQuery("from BoilerPlate where id = :id")
+				.setParameter("id", this.tmpId).getResultList()
+				.stream().findFirst().orElse(null);
+		HibHelper.getInstance().preJoin();
+		bp.setActive(this.active);
+		em.joinTransaction();
+		em.persist(bp);
 		HibHelper.getInstance().commit();
 
 		return this.SUCCESSJSON;
@@ -86,10 +99,12 @@ public class BoilerPlateConfig extends FSActionSupport {
 	public String saveTemplate() {
 		if(global == null)
 			global = false;
+		if(active == null)
+			active=true;
 		BoilerPlate bp = (BoilerPlate) em
 				.createQuery(
-						"from BoilerPlate where userid= :uid and title = :title and type = :type and global = :global")
-				.setParameter("uid", this.getSessionUser().getId()).setParameter("title", this.term.trim())
+						"from BoilerPlate where user= :user and title = :title and type = :type and global = :global")
+				.setParameter("user", this.getSessionUser()).setParameter("title", this.term.trim())
 				.setParameter("type", this.type.trim()).setParameter("global", this.global).getResultList().stream()
 				.findFirst().orElse(null);
 		if (bp == null)
@@ -105,9 +120,11 @@ public class BoilerPlateConfig extends FSActionSupport {
 		}
 		bp.setTitle(this.term);
 		bp.setText(FSUtils.sanitizeHTML(this.summary));
-		bp.setUserid(this.getSessionUser().getId());
+		bp.setUser(this.getSessionUser());
 		bp.setType(this.type.trim());
 		bp.setGlobal(this.global);
+		bp.setCreated(new Date());
+		bp.setActive(this.active);
 
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
@@ -153,6 +170,13 @@ public class BoilerPlateConfig extends FSActionSupport {
 
 	public void setType(String type) {
 		this.type = type;
+	}
+	
+	public void setActive(Boolean active) {
+		this.active = active;
+	}
+	public Boolean getActive() {
+		return this.active;
 	}
 
 }

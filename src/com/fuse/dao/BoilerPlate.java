@@ -1,5 +1,7 @@
 package com.fuse.dao;
 
+import java.util.Date;
+
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
@@ -11,7 +13,6 @@ public class BoilerPlate {
 	@Id
 	@GeneratedValue
 	private Long id;
-	private Long userid;
 	@ManyToOne
 	private User user;
 	private String title;
@@ -19,12 +20,11 @@ public class BoilerPlate {
 	private Boolean exploit;
 	private String type;
 	private Boolean global;
+	private Boolean active;
+	private Date created;
 	
 	public Long getId() {
 		return id;
-	}
-	public Long getUserid() {
-		return userid;
 	}
 	public User getUser() {
 		return user;
@@ -37,9 +37,6 @@ public class BoilerPlate {
 	}
 	public void setId(Long id) {
 		this.id = id;
-	}
-	public void setUserid(Long userid) {
-		this.userid = userid;
 	}
 	public void setUser(User user) {
 		this.user = user;
@@ -67,6 +64,24 @@ public class BoilerPlate {
 	}
 	public void setGlobal(Boolean global) {
 		this.global = global;
+	}
+	public Boolean getActive() {
+		if(active == null)
+			return true;
+		else
+			return active;
+	}
+	public void setActive(Boolean active) {
+		if(active == null)
+			this.active = true;
+		else
+			this.active = active;
+	}
+	public Date getCreated() {
+		return created;
+	}
+	public void setCreated(Date created) {
+		this.created = created;
 	}
 	
 

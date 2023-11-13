@@ -566,6 +566,7 @@ $(function() {
 						let data = `term=${selectedText.trim()}`
 						data += "&summary=" + encodeURIComponent(getEditorText(type));
 						data += `&type=${type}`;
+						data += "&active=true"
 						data += "&_token=" + global._token;
 						$.post("tempSave", data).done(function(resp) {
 							_token = resp.token;

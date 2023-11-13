@@ -114,11 +114,11 @@ public class AssessmentView extends FSActionSupport {
 
 		vulntypes = em.createQuery("from CustomType where type = 1").getResultList();
 
-		summaryTemplates = em.createQuery("from BoilerPlate where (userid = :user_id or global = true) and type='summary'")
-				.setParameter("user_id", user.getId()).getResultList();
+		summaryTemplates = em.createQuery("from BoilerPlate where (user = :user or global = true) and type='summary' and active = true")
+				.setParameter("user", user).getResultList();
 		
-		riskTemplates = em.createQuery("from BoilerPlate where (userid = :user_id or global = true) and type='risk'")
-				.setParameter("user_id", user.getId()).getResultList();
+		riskTemplates = em.createQuery("from BoilerPlate where (user = :user or global = true) and type='risk' and active = true")
+				.setParameter("user", user).getResultList();
 
 		history = this.createHistory(assessment, levels);
 
