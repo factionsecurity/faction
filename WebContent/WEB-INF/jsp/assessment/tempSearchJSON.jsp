@@ -9,8 +9,14 @@ boolean first =true;
 <s:iterator value="boilers">
 <% if(first){first=false;}else{ %> , <% } %>
 	{ "tmpId" : <s:property value="id"/>,
-	"title" : "<s:property value="title"/>"
+	"title" : "<s:property value="title"/>",
+	"type" : "<s:property value="type"/>",
+	"user": "<s:property value="user.fname"/> <s:property value="user.lname"/>",
+	"created": "<s:date name="created" format="dd/MM/yyyy"/>",
+	"active": <s:property value="active"/>
 	}
 	
 </s:iterator>
-]}
+],
+"token" : "${_token}"
+}

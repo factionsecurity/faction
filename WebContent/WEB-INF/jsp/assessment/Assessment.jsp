@@ -30,6 +30,23 @@ color:#00a65a
 .lockUser{
 color: white;
 }
+.userTemplate:after {
+	content: '\f007';
+	font-family: FontAwesome;
+	font-style: normal;
+	font-weight: normal;
+	text-decoration: inherit;
+	margin-left: 10px;
+}
+
+.globalTemplate:after {
+	content: '\f0ac';
+	font-family: FontAwesome;
+	font-style: normal;
+	font-weight: normal;
+	text-decoration: inherit;
+	margin-left: 10px;
+}
 </style>
 
 <!-- Content Wrapper. Contains page content -->

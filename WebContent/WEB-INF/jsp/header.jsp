@@ -230,6 +230,14 @@
               </ul>
             </li>
             </s:if>
+            <li class="treeview <s:property value="activeVulnTemplates"/><s:property value="activeCats"/><s:property value="activeTemplates"/>">
+              <a href="#"><i class="glyphicon glyphicon-pencil"></i> <span>Templates</span> <i class="fa fa-angle-left pull-right"></i></a>
+              <ul class="treeview-menu">
+                <!-- <li class="<s:property value="activeVulnTemplates"/>"><a href="VulnerabilityTemplates">Vulnerabilities</a></li>
+                <li class="<s:property value="activeCats"/>" ><a href="Options">Categories</a></li>-->
+                <li class="<s:property value="activeTemplates"/>" ><a href="Templates">Assessment Templates</a></li>
+              </ul>
+            </li>
           </ul><!-- /.sidebar-menu -->
         </section>
         <!-- /.sidebar -->

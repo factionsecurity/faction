@@ -334,10 +334,10 @@ z-index:100000;
   			</div><!-- .row -->
   			<br>
                   <div class="row">
-                  	<div class="col-md-3"><a class="btn btn-default saveTemp form-control" for="tempSearch3"><i class="fa fa-save"></i> Save Template</a></div>
+                  	<!--  <div class="col-md-3"><a class="btn btn-default saveTemp form-control" for="tempSearch3"><i class="fa fa-save"></i> Save Template</a></div>
                   	<div class="col-md-6"><input id="tempSearch3" class="form-control tempSearch" for="step_description" placeholder="Search for Template" /></div>
                   	<div class="col-md-3"><a id="deleteTemp3" class="btn btn-default deleteTemp form-control" for="extempSearch" disabled><i class="fa fa-trash"></i> Delete Template</a></div>
-                  </div>
+                  </div>-->
        </div>
        <div class="modal-footer bg-red">
          <button type="button" class="btn btn-default pull-left step-close" data-dismiss="modal">Close</button>

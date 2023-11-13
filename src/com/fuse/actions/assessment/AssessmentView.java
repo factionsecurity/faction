@@ -25,6 +25,7 @@ import org.json.simple.JSONObject;
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
+import com.fuse.dao.BoilerPlate;
 import com.fuse.dao.CheckListAnswers;
 import com.fuse.dao.Comment;
 import com.fuse.dao.CustomField;
@@ -73,6 +74,8 @@ public class AssessmentView extends FSActionSupport {
 	private List<CustomType> vulntypes = new ArrayList();
 	private Boolean notowner;
 	private User user;
+	private List<BoilerPlate> summaryTemplates;
+	private List<BoilerPlate> riskTemplates;
 
 	@Action(value = "Assessment", results = { @Result(name = "ics", location = "/WEB-INF/jsp/assessment/ics.jsp"),
 			@Result(name = "finerrorJson", location = "/WEB-INF/jsp/assessment/finerrorJson.jsp") })
@@ -111,6 +114,12 @@ public class AssessmentView extends FSActionSupport {
 
 		vulntypes = em.createQuery("from CustomType where type = 1").getResultList();
 
+		summaryTemplates = em.createQuery("from BoilerPlate where (user = :user or global = true) and type='summary' and active = true")
+				.setParameter("user", user).getResultList();
+		
+		riskTemplates = em.createQuery("from BoilerPlate where (user = :user or global = true) and type='risk' and active = true")
+				.setParameter("user", user).getResultList();
+
 		history = this.createHistory(assessment, levels);
 
 		avulns = (List<Vulnerability>) assessment.getVulns();
@@ -144,13 +153,13 @@ public class AssessmentView extends FSActionSupport {
 
 			String host = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
 			host += request.getContextPath();
-			
+
 			HttpSession session = ServletActionContext.getRequest().getSession();
-			if(assessment.getFinalReport() != null && assessment.getFinalReport().getGentime() != null) {
-				session.setAttribute("reportDate", assessment.getFinalReport().getGentime());	
-			}else {
-				Calendar dummy = new GregorianCalendar(1980, 1, 1); //Dummy Data
-				session.setAttribute("reportDate", dummy.getTime());	
+			if (assessment.getFinalReport() != null && assessment.getFinalReport().getGentime() != null) {
+				session.setAttribute("reportDate", assessment.getFinalReport().getGentime());
+			} else {
+				Calendar dummy = new GregorianCalendar(1980, 1, 1); // Dummy Data
+				session.setAttribute("reportDate", dummy.getTime());
 			}
 
 			ReportGenThread reportThread = new ReportGenThread(host, assessment, assessment.getAssessor());
@@ -347,17 +356,17 @@ public class AssessmentView extends FSActionSupport {
 		return this.SUCCESSJSON;
 
 	}
+
 	private Map<String, String> jsonSuccessMessage;
-	
-	public Map<String, String>getJsonSuccessMessage() {
+
+	public Map<String, String> getJsonSuccessMessage() {
 		return this.jsonSuccessMessage;
 	}
-	
-	
+
 	@Action(value = "CheckStatus", results = {
-			@Result(name="success202", type="httpheader", params={"status", "202"}),
-			@Result(name="success200", location="/WEB-INF/jsp/assessment/SuccessMessageJSON.jsp")
-			
+			@Result(name = "success202", type = "httpheader", params = { "status", "202" }),
+			@Result(name = "success200", location = "/WEB-INF/jsp/assessment/SuccessMessageJSON.jsp")
+
 	})
 	public String checkStatus() {
 		if (!(this.isAcengagement() || this.isAcmanager())) {
@@ -365,18 +374,18 @@ public class AssessmentView extends FSActionSupport {
 		}
 		HttpSession session = ServletActionContext.getRequest().getSession();
 		Date lastDate = (Date) session.getAttribute("reportDate");
-		if(lastDate == null)
+		if (lastDate == null)
 			return ERROR;
-		
+
 		Long asmtId = (Long) this.getSession("asmtid");
 		Assessment assessment = em.find(Assessment.class, asmtId);
-		if(assessment.getFinalReport() == null || assessment.getFinalReport().getGentime().equals(lastDate)) {
+		if (assessment.getFinalReport() == null || assessment.getFinalReport().getGentime().equals(lastDate)) {
 			return "success202";
 		}
-		this._message =  "" + assessment.getFinalReport().getGentime();
-		
+		this._message = "" + assessment.getFinalReport().getGentime();
+
 		return "success200";
-		
+
 	}
 
 	private String updatedText = "";
@@ -792,6 +801,12 @@ public class AssessmentView extends FSActionSupport {
 	public void setCfValue(String cfValue) {
 		this.cfValue = cfValue;
 	}
+	public List<BoilerPlate> getRiskTemplates(){
+		return riskTemplates;
+	}
+	public List<BoilerPlate> getSummaryTemplates(){
+		return summaryTemplates;
+	}
 
 	private class History {
 		private Date opened;
@@ -857,6 +872,7 @@ public class AssessmentView extends FSActionSupport {
 		public void setAssessor(String assessor) {
 			this.assessor = assessor;
 		}
+		
 
 	}
 

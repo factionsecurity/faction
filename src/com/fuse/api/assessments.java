@@ -63,11 +63,6 @@ public class assessments {
 			if (u != null && (u.getPermissions().isAssessor() || u.getPermissions().isManager())) {
 				;
 				try {
-					/*
-					 * List<Assessment> asmts = (List<Assessment>)em.createNativeQuery(
-					 * "{\"assessor\" : "+u.getId() + ", \"completed\" : {$exists: false}}" ,
-					 * Assessment.class).getResultList();
-					 */
 					List<Assessment> asmts = AssessmentQueries.getAssessmentsByUserId(em, u, u.getId(),
 							AssessmentQueries.OnlyNonCompleted);
 					for (Assessment a : asmts) {

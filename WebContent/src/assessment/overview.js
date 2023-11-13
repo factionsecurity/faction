@@ -2,7 +2,6 @@ require('suneditor/dist/css/suneditor.min.css');
 require('../scripts/fileupload/css/fileinput.css');
 require('./overview.css');
 require('../loading/css/jquery-loading.css');
-//require('bootstrap/dist/css/bootstrap.css');
 import suneditor from 'suneditor';
 import colorPicker from 'suneditor/src/plugins/modules/_colorPicker';
 import plugins from 'suneditor/src/plugins';
@@ -61,7 +60,8 @@ var editorOptions = {
 };
 let engagementOptions = {
 	defaultStyle: 'font-family: arial; font-size: 18px',
-	buttonList: []
+	buttonList: [],
+	height: 500
 }
 function setEditorText(id, data) {
 	if (typeof editors[id] == 'undefined') {
@@ -77,7 +77,11 @@ function alertMessage(resp, success) {
 				title: "SUCCESS!",
 				type: "green",
 				content: success,
-				columnClass: 'small'
+				columnClass: 'small',
+				autoClose: 'ok|1000',
+				buttons: {
+					ok: function(){}
+				}
 			}
 		);
 	else
@@ -86,7 +90,11 @@ function alertMessage(resp, success) {
 				title: "Error",
 				type: "red",
 				content: resp.message,
-				columnClass: 'small'
+				columnClass: 'small',
+				autoClose: 'ok|3000',
+				buttons: {
+					ok: function(){}
+				}
 			}
 		);
 
@@ -542,24 +550,164 @@ $(function() {
 
 
 		});
-		$(".tempSearch").keypress(function() {
-			var delBtn = $($("#tempSearch1").parent().parent()).find("button");
-			$(delBtn).prop("disabled", true);
+		
+		
+		$(".saveTemplate").on('click', async (event) =>{
+			let type = $(event.currentTarget).attr("for")
+			let selected = $(`#${type}Templates option:selected`);
+			let selectedText = Array.from(selected).map( (t)=> t.innerHTML)
+			let contentMessage="";
+			let buttons = {
+					save: function(){
+						selectedText = selectedText.join(",")
+						if(selected.length == 0){
+							selectedText = $("#tempName").val();
+						}
+						let data = `term=${selectedText.trim()}`
+						data += "&summary=" + encodeURIComponent(getEditorText(type));
+						data += `&type=${type}`;
+						data += "&active=true"
+						data += "&_token=" + global._token;
+						$.post("tempSave", data).done(function(resp) {
+							_token = resp.token;
+							const template = resp.templates[0]
+							if(!Array.from( $(`#${type}Templates option`) )
+									.some( (t) => $(t).val() == template.tmpId)){
+								let option = document.createElement("option");
+								$(option).attr("global", "false")
+								$(option).addClass("userTemplate")
+								$(option).val(template.tmpId)
+								$(option).html(template.title)
+								$(`#${type}Templates`).append(option).trigger("change")
+							}
+							alertMessage(resp, "Template Updated.");
+						});
+						
+					},
+					cancel: function(){}
+				}
+			if(selectedText.length > 1){
+				$.confirm({
+					title: "Error",
+					content: "You can only select one template name to save.",
+					buttons: {
+						ok: function(){}
+						}
+				});
+				return;
+				
+			}else if(selectedText.length == 0){
+				contentMessage = "Enter a Template name: <input id='tempName' class='form-control'></input>";
+			}else{
+				contentMessage = "Do you want to save the template <b>"+selectedText+"</b> or create a new template?<input id='updateTemplateName' type='hidden' value=" + selectedText + "'/>";
+				buttons["new"] = function(){
+						$(`#${type}Templates`).val(null).trigger('change');
+						let saveButtons = $(".saveTemplate")
+						for( let button of saveButtons){
+							if($(button).attr('for') == type){
+								$(button).click();
+							}
+						}
+				}
+				const isGlobal = $(selected[0]).attr("global")
+				if(isGlobal == "true"){
+					buttons["new"]()
+					return;
+				}
+			}
+			$.confirm({
+				title: "Save Template",
+				content: contentMessage,
+				buttons: buttons
+				
+			})
+			
 		});
+		$(".deleteTemplate").on('click', async (event) =>{
+			let type = $(event.currentTarget).attr("for")
+			let selected = Array.from($(`#${type}Templates option:selected`)).filter( (t) => $(t).attr("global") != "true");
+			if(selected.length == 0){
+				alertMessage({message: "No Valid Templates to Delete"}, null)		
+				return;
+			}
+			let textData=[];
+			const selectedText = selected.map( (t)=> t.innerHTML).join(",");
+			
+			$.confirm({
+				title: "Confirm?",
+				content: "Are you sure you want to delete these templates?<br><b>"+selectedText+"</b>",
+				buttons: {
+					confirm: async function() {
+						let messages=[]
+						$(`#${type}Templates`).val(null).trigger('change');
+						for await (const option of selected){
+							await $.post(`tempDelete`, `tmpId=${$(option).val()}`).done(function(resp) {
+								_token=resp.token;
+								messages.push(resp);
+								option.remove();
+								});
+						}
+						alertMessage(messages[0], "Templates Deleted.");
+					},
+					cancel: function() { }
+				}
+			});
+		});
+		$(".addTemplate").on('click', async (event) =>{
+			let type = $(event.currentTarget).attr("for")
+			let selected = $(`#${type}Templates option:selected`);
+			let textData=[]
+			for await (const option of selected){
+				await $.get('tempSearchDetail?tmpId=' + $(option).val())
+					.done(function(data) {
+						textData.push(data.templates[0].text);
+					});
+			}
+			let text = textData.join("\n");
+			$.confirm({
+				title: "Confirm?",
+				content: "Are you sure you want to Overwrite, Append, or Prepend the current text?",
+				buttons: {
+					overWrite: {
+						text: "OverWrite",
+						action: function() {
+								setEditorText(type, text);
+						}
+					},
+					prepend: {
+						text: "Prepend",
+						action: function() {
+								setEditorText(type, text + "\n" + getEditorText(type));
+						}
+					},
+					append: {
+						text: "Append",
+						action: function() {
+								setEditorText(type, getEditorText(type) + "\n" + text);
+						}
+					},
+					cancel: function() {
+
+					}
+				}
+
+			});
+			
+		})
 		$(".tempSearch").each(function(i, el) {
 			var el = $(el)[0];
 			var id = $(el).attr("id");
+			
 
 			$(el).autoComplete({
 				minChars: 1,
 				cacheLength: 0,
 				source: function(term, response) {
-					var exploit = "";
-					if ($("#" + $(el).attr("id")).attr("for") == "step_description")
-						exploit = "&exploit=true";
+					const type = $("#" + $(el).attr("id")).attr("for");
 					$.ajaxSetup({ cache: false });
-					$.getJSON('tempSearch?term=' + term + exploit,
+					$.getJSON(`tempSearch?term=${term}&type=${type}`,
 						function(data) {
+							_token = data.token
 							var tmps = data.templates;
 							var list = [];
 							for (i = 0; i < tmps.length; i++) {
@@ -586,14 +734,7 @@ $(function() {
 									action: function() {
 										$.get('tempSearchDetail?tmpId=' + tmpId)
 											.done(function(data) {
-
 												setEditorText($(el).attr("for"), data.templates[0].text);
-												if ($(el).attr("for") == "summary")
-													$("#deleteTemp1").prop("disabled", false);
-												else if ($(el).attr("for") == "riskAnalysis")
-													$("#deleteTemp2").prop("disabled", false);
-												else if ($(el).attr("for") == "step_description")
-													$("#deleteTemp3").removeAttr("disabled");
 											});
 									}
 
@@ -605,12 +746,6 @@ $(function() {
 											.done(function(data) {
 												var text = "<br />" + getEditorText($(el).attr("for"));
 												setEditorText($(el).attr("for"), data.templates[0].text + text);
-												if ($(el).attr("for") == "summary")
-													$("#deleteTemp1").prop("disabled", false);
-												else if ($(el).attr("for") == "riskAnalysis")
-													$("#deleteTemp2").prop("disabled", false);
-												else if ($(el).attr("for") == "step_description")
-													$("#deleteTemp3").removeAttr("disabled");
 											});
 									}
 
@@ -622,12 +757,6 @@ $(function() {
 											.done(function(data) {
 												var text = getEditorText($(el).attr("for")) + "<br />";
 												setEditorText($(el).attr("for"), text + data.templates[0].text);
-												if ($(el).attr("for") == "summary")
-													$("#deleteTemp1").prop("disabled", false);
-												else if ($(el).attr("for") == "riskAnalysis")
-													$("#deleteTemp2").prop("disabled", false);
-												else if ($(el).attr("for") == "step_description")
-													$("#deleteTemp3").removeAttr("disabled");
 											});
 									}
 
@@ -642,14 +771,7 @@ $(function() {
 					} else {
 						$.get('tempSearchDetail?tmpId=' + tmpId)
 							.done(function(data) {
-
 								setEditorText($(el).attr("for"), data.templates[0].text);
-								if ($(el).attr("for") == "summary")
-									$("#deleteTemp1").prop("disabled", false);
-								else if ($(el).attr("for") == "riskAnalysis")
-									$("#deleteTemp2").prop("disabled", false);
-								else if ($(el).attr("for") == "step_description")
-									$("#deleteTemp3").removeAttr("disabled");
 							});
 					}
 
