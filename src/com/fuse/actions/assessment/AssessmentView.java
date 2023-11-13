@@ -74,7 +74,8 @@ public class AssessmentView extends FSActionSupport {
 	private List<CustomType> vulntypes = new ArrayList();
 	private Boolean notowner;
 	private User user;
-	private List<BoilerPlate> templates;
+	private List<BoilerPlate> summaryTemplates;
+	private List<BoilerPlate> riskTemplates;
 
 	@Action(value = "Assessment", results = { @Result(name = "ics", location = "/WEB-INF/jsp/assessment/ics.jsp"),
 			@Result(name = "finerrorJson", location = "/WEB-INF/jsp/assessment/finerrorJson.jsp") })
@@ -113,7 +114,10 @@ public class AssessmentView extends FSActionSupport {
 
 		vulntypes = em.createQuery("from CustomType where type = 1").getResultList();
 
-		templates = em.createQuery("from BoilerPlate where userid = :user_id and exploit = false")
+		summaryTemplates = em.createQuery("from BoilerPlate where (userid = :user_id or global = true) and type='summary'")
+				.setParameter("user_id", user.getId()).getResultList();
+		
+		riskTemplates = em.createQuery("from BoilerPlate where (userid = :user_id or global = true) and type='risk'")
 				.setParameter("user_id", user.getId()).getResultList();
 
 		history = this.createHistory(assessment, levels);
@@ -797,8 +801,11 @@ public class AssessmentView extends FSActionSupport {
 	public void setCfValue(String cfValue) {
 		this.cfValue = cfValue;
 	}
-	public List<BoilerPlate> getTemplates(){
-		return templates;
+	public List<BoilerPlate> getRiskTemplates(){
+		return riskTemplates;
+	}
+	public List<BoilerPlate> getSummaryTemplates(){
+		return summaryTemplates;
 	}
 
 	private class History {

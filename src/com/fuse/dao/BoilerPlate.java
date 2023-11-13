@@ -17,6 +17,8 @@ public class BoilerPlate {
 	private String title;
 	private String text;
 	private Boolean exploit;
+	private String type;
+	private Boolean global;
 	
 	public Long getId() {
 		return id;
@@ -54,7 +56,18 @@ public class BoilerPlate {
 	public void setExploit(Boolean exploit) {
 		this.exploit = exploit;
 	}
-	
+	public String getType() {
+		return type;
+	}
+	public void setType(String type) {
+		this.type = type;
+	}
+	public Boolean getGlobal() {
+		return global;
+	}
+	public void setGlobal(Boolean global) {
+		this.global = global;
+	}
 	
 
 }

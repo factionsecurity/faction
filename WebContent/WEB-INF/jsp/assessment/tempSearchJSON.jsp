@@ -13,4 +13,6 @@ boolean first =true;
 	}
 	
 </s:iterator>
-]}
+],
+"token" : "${_token}"
+}

@@ -6,9 +6,9 @@
 
 <s:set var="hideit"
 	value="(assessment.InPr || assessment.prComplete || assessment.finalized)" />
-	
+
 <style>
-.templates{
+.templates {
 	min-height: 570px;
 	max-height: 570px;
 }
@@ -184,20 +184,10 @@
 				<s:if test="!(hideit)">
 					<br>
 					<div class="row">
-						<div class="col-md-3">
-							<a class="btn btn-default saveTemp form-control"
-								for="tempSearch1"><i class="fa fa-save"></i> Save Template</a>
-						</div>
+						<div class="col-md-3"></div>
 						<div class="col-md-6">
 							<input id="tempSearch1" class="form-control tempSearch"
 								for="summary" placeholder="Search for Template" />
-						</div>
-						<div class="col-md-3">
-							<button id="deleteTemp1"
-								class="btn btn-default deleteTemp form-control"
-								for="tempSearch1" disabled>
-								<i class="fa fa-trash"></i> Delete Template
-							</button>
 						</div>
 					</div>
 				</s:if>
@@ -212,40 +202,45 @@
 			<div class="box-header">
 				<h3 class="box-title">
 					<i class="glyphicon glyphicon-edit"></i> Templates
-				</h3>  <small></small>
+				</h3>
+				<small></small>
 				<div class="box-tools pull-right"></div>
 			</div>
 			<!-- /.box-header -->
 			<div class="box-body pad">
 				<div class="form-group">
-					<select id="summaryTemplates" multiple="false" class="form-control templates"
-						<s:iterator value="templates">
-							<option value="${id}">${title}
+					<select id="summaryTemplates" multiple="false"
+						class="form-control templates">
+						<s:iterator value="summaryTemplates">
+							<option value="${id}" title="${user.fname } ${user.lname}"
+								global="${global}"
+								<s:if test="global == true">
+								class='globalTemplate'>
+							</s:if><s:else>
+								class='userTemplate'>
+							</s:else>
+							${title}
 							</option>
 						</s:iterator>
 					</select>
 				</div>
 				<s:if test="!(hideit)">
 					<div class="row">
-						<div class="col-md-8">
-							<input id="tempSearch1" class="form-control tempSearch"
+						<!-- <div class="col-md-8">
+							<input class="form-control searchTemplate"
 								for="summary" placeholder="Search for Template" />
-						</div>
-						<div class="col-md-4" style="padding-top:8px">
+						</div>-->
+						<div class="col-md-1"></div>
+						<div class="col-md-4" style="padding-top: 8px">
 							<span id="saveTemplateSideBar"
-								class="vulnControl vulnControl-add" for="summary"
-								>
+								class="vulnControl vulnControl-add saveTemplate" for="summary" title='Save or Create Template'>
 								<i class="fa fa-save"></i>
-							</span>
-							<span id="addTemplateSideBar"
-								class="vulnControl vulnControl-add" for="summary"
-								>
+							</span> <span id="addTemplateSideBar"
+								class="vulnControl vulnControl-add addTemplate" for="summary" title='Add Templates to Editor'>
 								<i class="fa fa-plus"></i>
-							</span>
-							<span id="deleteTemplateSideBar"
-								class="vulnControl vulnControl-delete" for="tempSearch1"
-								>
-								<i class="fa fa-trash"></i>
+							</span> <span id="deleteTemplateSideBar"
+								class="vulnControl vulnControl-delete deleteTemplate" title='Delete Selected Templates'
+								for="summary"> <i class="fa fa-trash"></i>
 							</span>
 						</div>
 					</div>
@@ -261,46 +256,90 @@
    <div class="row">  -->
 
 <!-- Risk Analysis Section -->
-<div class="col-md-12">
-	<div class="box box-danger">
-		<div class="box-header">
-			<h3 class="box-title">
-				<i class="glyphicon glyphicon-asterisk"></i> Detailed Summary / Risk
-				Analysis<span id="risk_header" class="edited"></span><small></small>
-			</h3>
-			<div class="box-tools pull-right"></div>
+<div class="row">
+	<div class="col-md-10">
+		<div class="box box-danger">
+			<div class="box-header">
+				<h3 class="box-title">
+					<i class="glyphicon glyphicon-asterisk"></i> Detailed Summary /
+					Risk Analysis<span id="risk_header" class="edited"></span><small></small>
+				</h3>
+				<div class="box-tools pull-right"></div>
+			</div>
+			<!-- /.box-header -->
+			<div class="box-body pad">
+				<form>
+					<bs:editor name="editor2" toolbar="Full" id="riskAnalysis"
+						clickToEnable="false" readonly="${hideit}">
+						<s:property value="assessment.riskAnalysis" />
+					</bs:editor>
+				</form>
+				<s:if test="!(hideit)">
+					<br>
+					<div class="row">
+						<div class="col-md-3"></div>
+						<div class="col-md-6">
+							<input id="tempSearch2" class="form-control tempSearch "
+								for="risk" placeholder="Search for Template" />
+						</div>
+					</div>
+				</s:if>
+			</div>
 		</div>
-		<!-- /.box-header -->
-		<div class="box-body pad">
-			<form>
-				<bs:editor name="editor2" toolbar="Full" id="riskAnalysis"
-					clickToEnable="false" readonly="${hideit}">
-					<s:property value="assessment.riskAnalysis" />
-				</bs:editor>
-			</form>
-			<s:if test="!(hideit)">
-				<br>
-				<div class="row">
-					<div class="col-md-3">
-						<a class="btn btn-default saveTemp form-control" for="tempSearch2"><i
-							class="fa fa-save"></i> Save Template</a>
-					</div>
-					<div class="col-md-6">
-						<input id="tempSearch2" class="form-control tempSearch "
-							for="risk" placeholder="Search for Template" />
-					</div>
-					<div class="col-md-3">
-						<button id="deleteTemp2"
-							class="btn btn-default deleteTemp form-control" for="tempSearch2"
-							disabled>
-							<i class="fa fa-trash"></i> Delete Template
-						</button>
-					</div>
+		<!-- /.box -->
+	</div>
+	<div class="col-md-2">
+		<div class="box box-warning">
+			<div class="box-header">
+				<h3 class="box-title">
+					<i class="glyphicon glyphicon-edit"></i> Templates
+				</h3>
+				<small></small>
+				<div class="box-tools pull-right"></div>
+			</div>
+			<!-- /.box-header -->
+			<div class="box-body pad">
+				<div class="form-group">
+					<select id="riskTemplates" multiple="false"
+						class="form-control templates">
+						<s:iterator value="riskTemplates">
+							<option value="${id}" title="${user.fname } ${user.lname}"
+								global="${global}" 
+								<s:if test="global == true">
+								class='globalTemplate'>
+							</s:if><s:else>
+								class='userTemplate'>
+							</s:else>
+							${title}
+							</option>
+						</s:iterator>
+					</select>
 				</div>
-			</s:if>
+				<s:if test="!(hideit)">
+					<div class="row">
+						<!-- <div class="col-md-8">
+							<input class="form-control searchTemplate"
+								for="risk" placeholder="Search for Template" />
+						</div>-->
+						<div class="col-md-1"></div>
+						<div class="col-md-4" style="padding-top: 8px">
+							<span id="saveTemplateSideBar"
+								class="vulnControl vulnControl-add saveTemplate" for="risk" title='Save or Create Template'>
+								<i class="fa fa-save"></i>
+							</span> <span id="addTemplateSideBar"
+								class="vulnControl vulnControl-add addTemplate" for="risk" title='Add Templates to Editor'>
+								<i class="fa fa-plus"></i>
+							</span> <span class="vulnControl vulnControl-delete deleteTemplate" title='Delete Templates'
+								for="risk"> <i class="fa fa-trash"></i>
+							</span>
+						</div>
+					</div>
+				</s:if>
+			</div>
+
+
 		</div>
 	</div>
-	<!-- /.box -->
 </div>
 
 <div class="row">
@@ -323,9 +362,6 @@
 						clickToEnable="false" readonly="${hideit}">
 						<s:property value="assessment.Notes" />
 					</bs:editor>
-					<!--  <textarea id="notes" name="editor3" rows="10" cols="80" <s:if test="hideit">readonly</s:if>>
-                                            <s:property value="assessment.Notes"/>
-                    </textarea>-->
 				</form>
 			</div>
 		</div>
@@ -347,28 +383,24 @@
 				<div class="box-tools pull-right"></div>
 			</div>
 			<!-- /.box-header -->
-			<div class="col-md-6">
-				<div class="box-body pad">
+			<div class="box-body pad">
+				<div class="col-md-6">
 					<form>
 						<bs:editor name="engagmentnotes" toolbar="None"
 							id="engagmentnotes" readonly="true" clickToEnable="false">
 							<s:property value="assessment.accessNotes" />
 						</bs:editor>
-						<!--
-                    <textarea id="engagmentnotes" name="engagmentnotes" rows="10" cols="80" readonly>
-                                            <s:property value="assessment.accessNotes"/>
-                    </textarea>-->
 					</form>
 				</div>
-			</div>
-			<div class="col-md-6">
-				<div class="form-group">
-					<br> <input id="files" type="file" multiple name="file_data"
-						<s:if test="hideit">disabled</s:if> />
+				<div class="col-md-6">
+					<div class="form-group">
+						<br> <input id="files" type="file" multiple name="file_data"
+							<s:if test="hideit">disabled</s:if> />
+					</div>
 				</div>
 			</div>
+			<!-- /.box -->
 		</div>
-		<!-- /.box -->
-	</div>
 
+	</div>
 </div>
