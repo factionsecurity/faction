@@ -231,7 +231,7 @@
 								for="summary" placeholder="Search for Template" />
 						</div>-->
 						<div class="col-md-1"></div>
-						<div class="col-md-4" style="padding-top: 8px">
+						<div class="col-md-11" style="padding-top: 8px">
 							<span id="saveTemplateSideBar"
 								class="vulnControl vulnControl-add saveTemplate" for="summary" title='Save or Create Template'>
 								<i class="fa fa-save"></i>
@@ -322,7 +322,7 @@
 								for="risk" placeholder="Search for Template" />
 						</div>-->
 						<div class="col-md-1"></div>
-						<div class="col-md-4" style="padding-top: 8px">
+						<div class="col-md-11" style="padding-top: 8px">
 							<span id="saveTemplateSideBar"
 								class="vulnControl vulnControl-add saveTemplate" for="risk" title='Save or Create Template'>
 								<i class="fa fa-save"></i>
