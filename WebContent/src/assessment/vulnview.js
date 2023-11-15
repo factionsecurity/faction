@@ -47,6 +47,12 @@ $(function() {
 		$("#impact").val(sev).trigger("change");
 		
 	});
+	$("#vulntable tr").on('click', function(event){
+		const vulnid = $(this).data("vulnid");
+		EditVuln(vulnid);
+		
+		
+	});
 
 	$("#vulntable tr[id^=show]").each((_index, element) => {
 		$(element).on('click', event => {
@@ -97,7 +103,8 @@ var editorOptions = {
 
 	],
 	defaultStyle: 'font-family: arial; font-size: 18px',
-	height: 300
+	minHeight: 500,
+	height: 'auto'
 };
 function updateColors() {
 	var colors = ["#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"];
@@ -105,12 +112,12 @@ function updateColors() {
 	var width = 100 / boxCount;
 	$("#infobar").find("div.row").find("[class^=col-sm]").css("width", width + "%").css("min-width", "100px");
 	var boxes = $("#infobar").find("[class=small-box]");
-	console.log(boxes);
 	var colorCount = 9;
 	boxes.each((index, box) => {
 		let risk = $(box).find("p")[0].innerText;
 		$(`.severity:contains('${risk}')`).css("color", colors[colorCount]).css("font-weight", "bold");
 		$(box).css("border-color", colors[colorCount]);
+		$(`.sev${risk}`).css("border-left", `5px solid ${colors[colorCount]}`)
 		$(box).css("color", colors[colorCount--]);
 	});
 }
@@ -146,32 +153,76 @@ function reasign() {
 		}
 	});
 }
+function saveEditor(type) {
+	
+	let edits = getEditorText(type);
+	data += `${type}=${encodeURIComponent(edits)}`;
+	data += "&id=app" + $("#appid")[0].value
+	data += "&update=true";
+	data += "&_token=" + global._token;
+	$.post("Assessment.action", data).done(function(resp) {
+		document.getElementById(`${type}_header`).innerHTML=""
+		if(resp.result != "success"){
+			$.alert(resp.message);
+		}
+		global._token = resp.token;
+		clearTimeout(clearLockTimeout[type]);
+		clearLockTimeout[type] = setTimeout(() => {
+			$.get(`ClearLock?action=${type}`).done();
+			}, 5000);
+	});
+
+}
+let editorTimeout = {};
+let clearLockTimeout = {};
+function queueSave(type) {
+	$.get(`SetLock?action=${type}`).done( (resp) => {
+		if(resp.result == "success"){
+			document.getElementById(`${type}_header`).innerHTML="*"
+			clearTimeout(editorTimeout[type]);
+			clearTimeout(clearLockTimeout[type]);
+			editorTimeout[type] = setTimeout(() => {
+				saveEditor(type);
+			}, 2000);
+		}
+	});
+
+}
 (function() {
 	updateColors();
 	editors.vulnDescription = suneditor.create("description", editorOptions);
+	editors.vulnDescription.onInput = function(contents, core){
+		queueSave("vulnDescription");
+	}
+	editors.vulnDescription.onChange = function(contents, core){
+		queueSave("vulnDescription");
+	}
 	editors.vulnRecommendation = suneditor.create("recommendation", editorOptions);
-	editorOptions.minHeight= editorOptions.height;
-	editorOptions.maxHeight= window.innerHeight-390;
-	editorOptions.height='auto';
+	editors.vulnRecommendation.onInput = function(contents, core){
+		queueSave("vulnRecommendation");
+	}
+	editors.vulnRecommendation.onChange = function(contents, core){
+		queueSave("vulnRecommendation");
+	}
 	editors.stepDescription = suneditor.create("step_description", editorOptions);
+	editors.stepDescription.onInput = function(contents, core){
+		queueSave("stepDescription");
+	}
+	editors.stepDescription.onChange = function(contents, core){
+		queueSave("stepDescription");
+	}
 	$('#vulntable').DataTable({
-		"paging": true,
+		"paging": false,
 		"lengthChange": false,
-		"searching": true,
+		"searching": false,
 		"ordering": true,
-		"info": true,
+		"info": false,
 		"autoWidth": true,
-		"order": [[7, "desc"]],
+		"order": [[1, "desc"]],
 		"columns": [
 			{width: "10px"}, //checkbox
-			{width: "10px"}, //vulnid
 			null, //name
-			{width: "150px"}, //cat
-			{width: "10px"},//has details
-			{width: "50px"}, //like
-			{width: "50px"}, //impact
-			{width: "50px"},//sev
-			{width: "70px"} //controls
+			{width: "10px"} //controls
 			
 		]
 	});
@@ -434,7 +485,6 @@ function deleteVulnForm() {
 
 
 function EditVuln(id) {
-	$('#vulnModal').modal('show');
 	$.get('AddVulnerability?vulnid=' + id + '&action=get').done(function(data) {
 
 		$("#title").val($("<div/>").html(data.name).text());
@@ -444,6 +494,7 @@ function EditVuln(id) {
 		$("#dcategory").attr("intVal", data.dfcatid);
 		editors.vulnDescription.setContents(b64DecodeUnicode(data.description));
 		editors.vulnRecommendation.setContents(b64DecodeUnicode(data.recommendation));
+		editors.stepDescription.setContents(b64DecodeUnicode(data.details));
 		setIntVal(data.likelyhood, 'likelyhood');
 		setIntVal(data.impact, 'impact');
 		setIntVal(data.overall, 'overall');
@@ -451,11 +502,7 @@ function EditVuln(id) {
 			$("#type" + b.typeid).val(b.value);
 		});
 	});
-	$("#saveVuln").unbind();
-	$("#saveVuln1").unbind();
-	$("#saveVuln2").hide();
-	$("#saveVuln3").hide();
-	$("#saveVuln, #saveVuln1, #saveVuln2, saveVuln3").click(function() {
+	$("#saveVuln").click(function() {
 		var desc = getEditorText("vulnDescription");
 		var rec = getEditorText("vulnRecommendation");
 		var data = "vulnid=" + id;
@@ -615,7 +662,7 @@ function hookSteps(vulnid) {
 		var stepId = $(this).attr("id").replace("editStep", "");
 		var vulnId = $($(this).parent().parent().children()[2]).html();
 		var vulnName = $($("td:contains('" + vulnId + "')").parent().children()[3]).html();
-		$('#stepModal').modal('show');
+		$('#details').modal('show');
 		$("#stepTitle").html("&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[ " + vulnName + " ]");
 		//clearStepForm();
 		$("#stepVulnId").val(vulnId);
