@@ -19,6 +19,11 @@ import 'select2';
 import '../scripts/jquery.autocomplete.min';
 import { marked } from 'marked';
 
+function getEditorText(name) {
+	let html = editors[name].getContents();
+	return Array.from($(html)).filter( a => a.innerHTML != "<br>").map( a => a.outerHTML).join("")
+}
+
 
 global.updateIntVal = function updateIntVal(element, elementName) {
 	var rank = $(element).html();
@@ -213,8 +218,8 @@ function reasign() {
 			);
 		},
 		onSelect: function(e, term, item) {
-			var d = editors.vulnDescription.getContents();
-			var r = editors.vulnRecommendation.getContents();
+			var d = getEditorText("vulnDescription");
+			var r = getEditorText("vulnRecommendation");
 			var splits = term.split(" :: ");
 			$("#dtitle").val(splits[1]);
 			if ($("#title").val() == "")
@@ -280,8 +285,8 @@ function reasign() {
 			var isFeedPost = false;
 			if ($("#isFeedPost").is(':checked'))
 				isFeedPost = true;
-			var desc = editors.vulnDescription.getContents();
-			var rec = editors.vulnRecommendation.getContents();
+			var desc = getEditorText("vulnDescription");
+			var rec = getEditorText("vulnRecommendation");
 			var data = "id=" + assesssmentId;
 			data += "&description=" + encodeURIComponent(desc);
 			data += "&recommendation=" + encodeURIComponent(rec);
@@ -451,8 +456,8 @@ function EditVuln(id) {
 	$("#saveVuln2").hide();
 	$("#saveVuln3").hide();
 	$("#saveVuln, #saveVuln1, #saveVuln2, saveVuln3").click(function() {
-		var desc = editors.vulnDescription.getContents();
-		var rec = editors.vulnRecommendation.getContents();
+		var desc = getEditorText("vulnDescription");
+		var rec = getEditorText("vulnRecommendation");
 		var data = "vulnid=" + id;
 		data += "&description=" + encodeURIComponent(desc);
 		data += "&recommendation=" + encodeURIComponent(rec);
@@ -701,7 +706,7 @@ function clearStepForm() {
 
 }
 $("#saveStep, #saveStep2").click(function( event ) {
-	var step = editors.stepDescription.getContents();
+	var step = getEditorText("stepDescription");
 	var div = $("<div/>").html(step);
 	console.log(div.html());
 	div.find("pre").each(function(i, el) {

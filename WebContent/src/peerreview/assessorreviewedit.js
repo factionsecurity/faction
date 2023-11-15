@@ -221,7 +221,7 @@ function updateStepEditors() {
 		if (id.indexOf("notes") == -1) {
 			editorConfig.allowedClassNames=".*";
 			editors[id] = suneditor.create(id, editorConfig)
-			editors[i].onKeyDown = function(contents, core) {
+			editors[id].onKeyDown = function(contents, core) {
 				queueSave();
 			}
 		} else {

@@ -102,7 +102,8 @@ function alertMessage(resp, success) {
 }
 
 function getEditorText(name) {
-	return editors[name].getContents();
+	let html = editors[name].getContents();
+	return Array.from($(html)).filter( a => a.innerHTML != "<br>").map( a => a.outerHTML).join("")
 }
 function showLoading(com) {
 	$(com).loading({ overlay: true, base: 0.3 });
