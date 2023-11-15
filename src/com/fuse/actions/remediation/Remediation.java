@@ -54,7 +54,7 @@ public class Remediation extends FSActionSupport{
 			@Result(name="verificationJson",location="/WEB-INF/jsp/remediation/dateSearchJson.jsp")
 		})
 	public String execute(){
-		if(!(this.isAcremediation() || this.isAcmanager())) {
+		if(!this.isAcremediation()) {
 			return LOGIN;
 		}
 		User user = this.getSessionUser();

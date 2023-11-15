@@ -197,7 +197,7 @@
             <s:if test="acengagement || acmanager">
             	<li class="<s:property value="activeEngagement"/>"><a href="Engagement"><i class="glyphicon glyphicon-calendar"></i> <span>Scheduling</span></a></li>
             </s:if>
-            <s:if test="(acremediation || acmanager) && !tier.equals('consultant')">
+            <s:if test="acremediation && !tier.equals('consultant')">
             	 <li class="treeview <s:property value="activeRem"/> <s:property value="activeRemSearch"/>">
             	 <a href="#"><i class="glyphicon glyphicon-retweet"></i> <span>Remediation</span> <i class="fa fa-angle-left pull-right"></i></a>
             	 	<ul class="treeview-menu">
@@ -216,7 +216,7 @@
             <li class="treeview <s:property value="activeChecklist"/><s:property value="activeRConfig"/><s:property value="activeAPI"/><s:property value="activeCms"/><s:property value="activeUsers"/><s:property value="activeVulns"/><s:property value="activeOptions"/><s:property value="activeLicense"/>">
               <a href="#"><i class="glyphicon glyphicon-user"></i> <span>Admin</span> <i class="fa fa-angle-left pull-right"></i></a>
               <ul class="treeview-menu">
-              	<s:if test="acmanager || acadmin">
+              	<s:if test="acadmin == true ">
                 <li class="<s:property value="activeUsers"/>"><a href="Users">Users</a></li>
                 </s:if>
                 <s:if test="acmanager || acadmin || acengagement">

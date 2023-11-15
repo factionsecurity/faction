@@ -60,7 +60,7 @@ public class CMS extends FSActionSupport {
 			@Result(name = "reportJSON", location = "/WEB-INF/jsp/cms/reportJSON.jsp") })
 	public String execute() throws IOException {
 
-		if (!this.isAcadmin())
+		if (!(this.isAcadmin()|| this.isAcengagement()))
 			return LOGIN;
 
 		templates = em.createQuery("from ReportTemplates").getResultList();

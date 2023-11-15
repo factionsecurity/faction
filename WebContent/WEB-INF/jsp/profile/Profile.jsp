@@ -31,7 +31,7 @@
 </bs:row>
 <hr>
 <bs:row>
-<bs:inputgroup name="API Key (click to show): <a href='/faction/api-docs/' style='text-decoration: underline;'>Click here for API docs</a>" colsize="12" id="apiKey" password="true">${apiKey}</bs:inputgroup>
+<bs:inputgroup name="API Key (click to show): <a href='../api-docs/' style='text-decoration: underline;'>Click here for API docs</a>" colsize="12" id="apiKey" password="true">${apiKey}</bs:inputgroup>
 </bs:row>
 <script src="../fileupload/js/fileinput.min.js" type="text/javascript"></script>
 <script>
