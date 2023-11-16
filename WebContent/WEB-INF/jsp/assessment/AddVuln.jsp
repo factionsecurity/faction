@@ -17,7 +17,7 @@
 			<bs:mco colsize="2">
 				<button id="addVuln" class="btn btn-block btn-primary btn-lg"
 					<s:if test="hideit">disabled</s:if>>
-					<b><i class="glyphicon glyphicon-plus"></i> Add Vulnerability</b>
+					<b><i class="glyphicon glyphicon-plus"></i> New Vulnerability</b>
 				</button>
 			</bs:mco>
 		</bs:row>
@@ -46,12 +46,27 @@ tr  td {
     border-top: 0px !important;
 }
 
+.disabled {
+opacity: 0.2;
+pointer-events: none;
+}
+
+td:first-child {
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+.selected td:first-child{
+	border-left-style: dotted;
+	
+}
+
 </style>
 
 <!-- Findings  TABLE -->
 <div class="row">
 	<div class="col-xs-8">
-		<div class="box box-danger">
+		<div id="vulnForm" class="box box-danger disabled">
 			<div class="box-header">
 				<h3 class="box-title"></h3>
 				&nbsp;&nbsp;<small></small>
@@ -62,13 +77,13 @@ tr  td {
 					<div class="form-horizontal">
 						<div class="form-group">
 							<label for="title" class="col-sm-2 control-label">Title:
-								*</label>
+								<span id="title_header"></span></label>
 							<div class="col-sm-4">
 								<input type="text" class="form-control" id="title"
 									placeholder="Vulnerbility Name">
 							</div>
 							<label for="title" class="col-sm-2 control-label">Overall
-								Severity: *</label>
+								Severity: </label>
 							<div class="col-sm-4">
 								<select class="select2 form-control" id="overall"
 									style="width: 100%">
@@ -83,14 +98,14 @@ tr  td {
 						</div>
 						<div class="form-group">
 							<label for="dtitle" class="col-sm-2 control-label">Default
-								Title: *</label>
+								Title: </label>
 							<div class="col-sm-4">
 								<input type="text" class="form-control" id="dtitle"
 									placeholder="Type to Search Vulnerbility Name" intVal="-1">
 							</div>
 
 							<label for="title" class="col-sm-2 control-label">Impact:
-								*</label>
+								</label>
 							<div class="col-sm-4">
 								<select class="select2 form-control" id="impact"
 									style="width: 100%">
@@ -105,13 +120,13 @@ tr  td {
 						</div>
 						<div class="form-group">
 							<label for="category" class="col-sm-2 control-label">Category:
-								*</label>
+								</label>
 							<div class="col-sm-4">
 								<input type="text" class="form-control" id="dcategory"
 									placeholder="Auto Populated Category Name" intVal="-1">
 							</div>
 							<label for="title" class="col-sm-2 control-label">Likelihood:
-								*</label>
+								</label>
 							<div class="col-sm-4">
 								<select class="select2 form-control" id="likelyhood"
 									style="width: 100%">
@@ -125,18 +140,6 @@ tr  td {
 							</div>
 						</div>
 						<br>
-						<s:if test="feedEnabled">
-							<div class="form-group">
-
-								<label for="feedMessage" class="col-sm-2 control-label">Post
-									to Live Feed <input type="checkbox" id="isFeedPost" />
-								</label>
-								<div class="col-sm-10">
-									<input type="text" class="form-control" id=feedMsg
-										placeholder="Look what I Found!">
-								</div>
-							</div>
-						</s:if>
 					</div>
 					<div class="row">
 						<s:iterator value="vulntypes">
@@ -158,13 +161,13 @@ tr  td {
 								<div class="box-header">
 									<h3 class="box-title">
 										<i class="glyphicon glyphicon-edit"></i> Vulnerability
-										Description: *<small></small>
+										Description: <span id="description_header"></span>
 									</h3>
 								</div>
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="editor4" toolbar="Full" id="description"
+										<bs:editor name="description" toolbar="Full" id="description"
 											clickToEnable="false">
 
 										</bs:editor>
@@ -181,13 +184,13 @@ tr  td {
 								<div class="box-header">
 									<h3 class="box-title">
 										<i class="glyphicon glyphicon-edit"></i> Vulnerability
-										Recommendation: *<small></small>
+										Recommendation: <span id="recommendation_header"></span>
 									</h3>
 								</div>
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="editor5" toolbar="Full" id="recommendation"
+										<bs:editor name="recommendation" toolbar="Full" id="recommendation"
 											clickToEnable="false">
 
 										</bs:editor>
@@ -203,13 +206,13 @@ tr  td {
 							<div class="box box-info">
 								<div class="box-header">
 									<h3 class="box-title">
-										<i class="glyphicon glyphicon-edit"></i> Details: *<small></small>
+										<i class="glyphicon glyphicon-edit"></i> Details: <span id="details_header"></span>
 									</h3>
 								</div>
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="editor6" toolbar="Full" id="step_description"
+										<bs:editor name="details" toolbar="Full" id="details"
 											clickToEnable="false">
 
 										</bs:editor>
@@ -255,7 +258,7 @@ tr  td {
 						<s:iterator value="avulns">
 							<tr data-vulnid="${id}">
 								<td class="sev${overallStr}"><input type="checkbox" id="ckl<s:property value="id"/>" /></td>
-								<td data-sort="${overall}"><s:property value="name" /><br> <s:property
+								<td data-sort="${overall}"><span class="vulnName"><s:property value="name" /></span><br> <s:property
 										value="defaultVuln.category.name" /><BR> <span class="severity"
 									><s:property value="overallStr" /></span>
 								</td>
