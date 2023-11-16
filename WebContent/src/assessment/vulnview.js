@@ -437,18 +437,28 @@ function enableAutoSave(){
 		queueSave("description");
 	}
 	editors.description.onChange = function(contents, core){
+		if(contents.endsWith("</div>")){
+			editors.description.setContents(contents + "<p><br></p>");
+		}
 		queueSave("description");
 	}
 	editors.recommendation.onInput = function(contents, core){
 		queueSave("recommendation");
 	}
 	editors.recommendation.onChange = function(contents, core){
+		if(contents.endsWith("</div>")){
+			editors.remediation.setContents(contents + "<p><br></p>");
+		}
 		queueSave("recommendation");
 	}
 	editors.details.onInput = function(contents, core){
 		queueSave("details");
 	}
+	global.details = editors.details;
 	editors.details.onChange = function(contents, core){
+		if(contents.endsWith("</div>")){
+			editors.details.setContents(contents + "<p><br></p>");
+		}
 		queueSave("details");
 	}
 	$("#title").on('input', function(event){
@@ -457,7 +467,13 @@ function enableAutoSave(){
 	});
 	
 }
-
+function setEditorContents(type, data){
+	let decoded = b64DecodeUnicode(data);
+	if(decoded.endsWith("</div>")){
+		decoded = decoded + "<p><br></p>";
+	}
+	editors[type].setContents(decoded);
+}
 
 function EditVuln(id) {
 	global.vulnid=id;
@@ -470,9 +486,9 @@ function EditVuln(id) {
 		$("#dtitle").attr("intVal", data.dfvulnid);
 		$("#dcategory").val($("<div/>").html(data.dfcat).text());
 		$("#dcategory").attr("intVal", data.dfcatid);
-		editors.description.setContents(b64DecodeUnicode(data.description));
-		editors.recommendation.setContents(b64DecodeUnicode(data.recommendation));
-		editors.details.setContents(b64DecodeUnicode(data.details));
+		setEditorContents("description", data.description);
+		setEditorContents("recommendation", data.recommendation);
+		setEditorContents("details", data.details);
 		setIntVal(data.likelyhood, 'likelyhood');
 		setIntVal(data.impact, 'impact');
 		setIntVal(data.overall, 'overall');
