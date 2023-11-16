@@ -83,7 +83,7 @@ td:first-child {
 									placeholder="Vulnerbility Name">
 							</div>
 							<label for="title" class="col-sm-2 control-label">Overall
-								Severity: </label>
+								Severity: <span id="overall_header"></span></label>
 							<div class="col-sm-4">
 								<select class="select2 form-control" id="overall"
 									style="width: 100%">
@@ -105,7 +105,7 @@ td:first-child {
 							</div>
 
 							<label for="title" class="col-sm-2 control-label">Impact:
-								</label>
+								<span id="impact_header"></span></label>
 							<div class="col-sm-4">
 								<select class="select2 form-control" id="impact"
 									style="width: 100%">
@@ -120,13 +120,13 @@ td:first-child {
 						</div>
 						<div class="form-group">
 							<label for="category" class="col-sm-2 control-label">Category:
-								</label>
+								<span id="dcategory_header"></span></label>
 							<div class="col-sm-4">
 								<input type="text" class="form-control" id="dcategory"
 									placeholder="Auto Populated Category Name" intVal="-1">
 							</div>
 							<label for="title" class="col-sm-2 control-label">Likelihood:
-								</label>
+								<span id="likelyhood_header"></span></label>
 							<div class="col-sm-4">
 								<select class="select2 form-control" id="likelyhood"
 									style="width: 100%">
@@ -258,8 +258,8 @@ td:first-child {
 						<s:iterator value="avulns">
 							<tr data-vulnid="${id}">
 								<td class="sev${overallStr}"><input type="checkbox" id="ckl<s:property value="id"/>" /></td>
-								<td data-sort="${overall}"><span class="vulnName"><s:property value="name" /></span><br> <s:property
-										value="defaultVuln.category.name" /><BR> <span class="severity"
+								<td data-sort="${overall}"><span class="vulnName"><s:property value="name" /></span><br><span class="category"> <s:property
+										value="defaultVuln.category.name" /></span><BR> <span class="severity"
 									><s:property value="overallStr" /></span>
 								</td>
 								<td><span
