@@ -15,6 +15,8 @@ import java.util.Properties;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
+import org.hibernate.Criteria;
+import org.hibernate.Query;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -568,6 +570,20 @@ public class DefaultVulns  extends FSActionSupport{
 		AuditLog.audit(this, "Downloaded All Default Vulnerabilities",AuditLog.UserAction,true);
 		return "vulnMap";
 	}
+	@Action(value="DefaultCategories", results={
+			@Result(name="catsearch",location="/WEB-INF/jsp/admin/categoriesJSON.jsp")
+		})
+	public String catSearch() throws UnsupportedEncodingException, ParseException{
+		if(terms == null)
+			terms = "";
+		categories = em.createNativeQuery("{ 'name' : {'$regex': '.*" + terms + ".*', '$options': 'is'}, "
+				+ "'$or' : ["
+				+ " { 'active' : {'$exists': false}},"
+				+ " { 'active' : true }"
+				+ "] }", Category.class).getResultList();
+		return "catsearch";
+	}
+		
 	
 	public String getActiveVulns() {
 		return "active";

@@ -68,14 +68,16 @@ td:first-child {
 	<div class="col-xs-8">
 		<div id="vulnForm" class="box box-danger disabled">
 			<div class="box-header">
-				<h3 class="box-title"></h3>
-				&nbsp;&nbsp;<small></small>
+				<h3 class="box-title">
+					<i class="fa fa-bug"></i> Vulnerability Details
+				</h3>
 			</div>
 			<!-- /.box-header -->
 			<form>
 				<div class="box-body">
 					<div class="form-horizontal">
 						<div class="form-group">
+							<input type="hidden" id="dvulnerability"/>
 							<label for="title" class="col-sm-2 control-label">Title:
 								<span id="title_header"></span></label>
 							<div class="col-sm-4">
@@ -84,30 +86,8 @@ td:first-child {
 							</div>
 							<label for="title" class="col-sm-2 control-label">Overall
 								Severity: <span id="overall_header"></span></label>
-							<div class="col-sm-4">
+							<div class="col-sm-2">
 								<select class="select2 form-control" id="overall"
-									style="width: 100%">
-									<s:iterator value="levels" status="stat">
-										<s:if
-											test="risk != null && risk != 'Unassigned' && risk != ''">
-											<option value="${stat.index}">${risk}</option>
-										</s:if>
-									</s:iterator>
-								</select>
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="dtitle" class="col-sm-2 control-label">Default
-								Title: </label>
-							<div class="col-sm-4">
-								<input type="text" class="form-control" id="dtitle"
-									placeholder="Type to Search Vulnerbility Name" intVal="-1">
-							</div>
-
-							<label for="title" class="col-sm-2 control-label">Impact:
-								<span id="impact_header"></span></label>
-							<div class="col-sm-4">
-								<select class="select2 form-control" id="impact"
 									style="width: 100%">
 									<s:iterator value="levels" status="stat">
 										<s:if
@@ -123,11 +103,27 @@ td:first-child {
 								<span id="dcategory_header"></span></label>
 							<div class="col-sm-4">
 								<input type="text" class="form-control" id="dcategory"
-									placeholder="Auto Populated Category Name" intVal="-1">
+									placeholder="Auto Populated Category Name">
 							</div>
+							<label for="title" class="col-sm-2 control-label">Impact:
+								<span id="impact_header"></span></label>
+							<div class="col-sm-2">
+								<select class="select2 form-control" id="impact"
+									style="width: 100%">
+									<s:iterator value="levels" status="stat">
+										<s:if
+											test="risk != null && risk != 'Unassigned' && risk != ''">
+											<option value="${stat.index}">${risk}</option>
+										</s:if>
+									</s:iterator>
+								</select>
+							</div>
+						</div>
+						<div class="form-group">
+							<div class="col-sm-6"></div>
 							<label for="title" class="col-sm-2 control-label">Likelihood:
 								<span id="likelyhood_header"></span></label>
-							<div class="col-sm-4">
+							<div class="col-sm-2">
 								<select class="select2 form-control" id="likelyhood"
 									style="width: 100%">
 									<s:iterator value="levels" status="stat">
@@ -234,8 +230,6 @@ td:first-child {
 				<h3 class="box-title">
 					<i class="fa fa-bug"></i> Vulnerability Findings
 				</h3>
-				&nbsp;&nbsp;<small><a id="removeFilter"
-					style="cursor: pointer">Remove Search Filters</a></small>
 				<s:if
 					test="!(assessment.InPr || assessment.prComplete || assessment.finalized)">
 					<span id="deleteMulti" class="fa fa-trash circle pull-right"
@@ -259,7 +253,7 @@ td:first-child {
 							<tr data-vulnid="${id}">
 								<td class="sev${overallStr}"><input type="checkbox" id="ckl<s:property value="id"/>" /></td>
 								<td data-sort="${overall}"><span class="vulnName"><s:property value="name" /></span><br><span class="category"> <s:property
-										value="defaultVuln.category.name" /></span><BR> <span class="severity"
+										value="category.name" /></span><BR> <span class="severity"
 									><s:property value="overallStr" /></span>
 								</td>
 								<td><span
