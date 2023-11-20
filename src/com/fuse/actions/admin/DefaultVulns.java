@@ -7,7 +7,10 @@ import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -98,15 +101,22 @@ public class DefaultVulns  extends FSActionSupport{
 		if(this.isAcassessor() && action != null && action.equals("json") && terms != null ){
 
 			terms = FSUtils.sanitizeMongo(terms);
-			List<DefaultVulnerability> dv = (List<DefaultVulnerability>)em
-					.createNativeQuery("{ 'name' : {'$regex': '.*" + terms + ".*', '$options': 'is'}, "
+			String [] eachTerm =terms.split(" ");
+			LinkedHashSet<DefaultVulnerability> dv = new LinkedHashSet();
+			for(String term : eachTerm) {
+				dv.addAll(	
+					(List<DefaultVulnerability>)em
+					.createNativeQuery("{ 'name' : {'$regex': '.*" + term + ".*', '$options': 'is'}, "
 							+ "'$or' : ["
 							+ " { 'active' : {'$exists': false}},"
 							+ " { 'active' : true }"
 							+ "] }", DefaultVulnerability.class)
-					.getResultList();
+					.getResultList()
+					);
+			}
 			
-			this.vulnerabilities = dv;
+			
+			this.vulnerabilities = new ArrayList<>(dv);
 			//session.close();
 			return "vulnsearch";
 		}else if(this.isAcassessor() && action != null && action.equals("getvuln") && vulnId != null ){

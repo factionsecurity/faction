@@ -20,16 +20,18 @@ import '../scripts/jquery.autocomplete.min';
 import { marked } from 'marked';
 
 class SaveQueue {
-	constructor( caller, saveCallback ){
+	constructor(caller, assessmentId, saveCallback, updateVulnsCallback ){
 		this.queue={};
 		this.timer={};
 		this.timeout=2000;
 		this.saveCallback = saveCallback;
 		this.caller = caller;
-		this.locks = new EditLocks(this);
+		this.token = caller._token;
+		this.locks = new EditLocks(this, assessmentId, updateVulnsCallback);
 	}
 	push(id, key, value){
-		this.locks.setLock(id);
+		console.log(arguments)
+		this.locks.setLock(id, key);
 		if(document.getElementById(`${key}_header`)){
 			document.getElementById(`${key}_header`).innerHTML="*"
 		}
@@ -54,44 +56,63 @@ class SaveQueue {
 				if(this.caller.vulnId == key && document.getElementById(`${k}_header`)){
 					document.getElementById(`${k}_header`).innerHTML=""
 				}
+				setTimeout(function(){
+					_this.locks.clearLock(key, k);
+				}, 5000)
 				return `${k}=${this.queue[key][k]}`
 			}).join("&")
 			this.saveCallback(data, this.caller);
 			delete this.queue[key];
-			setTimeout(function(){
-				_this.locks.clearLock(key);
-			}, 5000)
 		}
 	}
 	
 }
 
 class EditLocks{
-	constructor(caller){
+	constructor(caller, assessmentId, updateVulnsCallback){
 		this.lockIds={};
 		this.caller = caller;
+		this.token = caller.token;
+		this.assessmentId = assessmentId;
+		this.updateVulnsCallback = updateVulnsCallback;
+		this.checkLocks()
 	}
-	setLock( id ){
+	setLock( id, attr ){
 		let _this = this;
+		console.log(this.lockIds)
 		if( typeof this.lockIds[id] == "undefined"){
-			this.lockIds[id]=true;
-			$.get(`SetVulnLock?vulnid=${id}`).done( (resp) => {
+			this.lockIds[id]=[attr];
+			$.get(`SetVulnLock?vulnid=${id}&vulnAttr=${attr}&_token=${this.token}`).done( (resp) => {
 				if(resp.result == "success"){
 				}
 			});
+		}else{
+			if(!this.lockIds[id].some( i => i == attr)){
+				this.lockIds[id].push(attr);
+				$.get(`SetVulnLock?vulnid=${id}&vulnAttr=${attr}&_token=${this.token}`).done( (resp) => {
+					if(resp.result == "success"){
+					}
+				});
+			}
+			
 		}
 		
 	}
-	clearLock(id){
-		delete this.lockIds[id];
-		$.get(`ClearVulnLock?vulnid=${id}`).done();
+	clearLock(id, attr){
+		if(this.lockIds[id]){
+			this.lockIds[id] = this.lockIds[id].filter( l => l!=attr )
+			$.get(`ClearVulnLock?vulnid=${id}&vulnAttr=${attr}&_token=${this.token}`).done();
+		}else{
+			console.log("no locks found");
+		}
 	}
-	getLocks(){
-		$.get(`GetVulnLocks?vulnid=${id}`).done( (resp) => {
-			if(resp.result == "success"){
-				console.log(resp);
-			}
-		});
+	checkLocks(){
+		let _this = this;
+		setInterval(function(){
+			$.get(`CheckVulnLocks?id=${_this.assessmentId}`).done( (resp) => {
+				_this.updateVulnsCallback(resp);
+			});
+		}, 1000)
 		
 	}
 }
@@ -100,10 +121,10 @@ class EditLocks{
 class VulnerablilityView {
 	
 	constructor(assessmentId){
-		this.queue = new SaveQueue(this, this.saveChanges);
+		this._token = $("#_token")[0].value;
+		this.queue = new SaveQueue(this, assessmentId, this.saveChanges, (vulns) => {this.updateVulnsCallback(vulns)});
 		this.vulnId=-1;
 		this.editors = {};
-		this._token = $("#_token")[0].value;
 		this.assesssmentId = assessmentId //$("#assessmentId")[0].value;
 		this.editorOptions = {
 			codeMirror: CodeMirror,
@@ -124,6 +145,7 @@ class VulnerablilityView {
 		$("#overall").select2()
 		$("#likelyhood").select2()
 		$("#impact").select2()
+		$("#dcategory").select2()// {matcher: this.catHearder})
 		
 		this.vulnTable = $('#vulntable').DataTable({
 			"paging": false,
@@ -148,6 +170,16 @@ class VulnerablilityView {
 		this.setUpVulnAutoComplete()
 		
 		
+	}
+	
+	catHearder(params, data){
+		if ($.trim(params.term) === '') {
+			return data;
+		}
+		if(data.text.toUpperCase().indexOf(params.term.toUpperCase()) != -1){
+			return data
+		}
+		return null;
 	}
 	
 	setUpEventHandlers(){
@@ -204,6 +236,7 @@ class VulnerablilityView {
 		const boxes = $("#infobar").find("[class=small-box]");
 		let colorCount = 9;
 		boxes.each((index, box) => {
+			this.updateSeverityCount(box, boxCount - 1 - index);
 			const risk = $(box).find("p")[0].innerText;
 			$(`.severity:contains('${risk}')`).css("color", colors[colorCount]).css("font-weight", "bold");
 			$(box).css("border-color", colors[colorCount]);
@@ -211,6 +244,12 @@ class VulnerablilityView {
 			$(`.sev${risk}`).css("border-left-color", `${colors[colorCount]}`)
 			$(box).css("color", colors[colorCount--]);
 		});
+	}
+	updateSeverityCount(box, sevId){
+		console.log(box, sevId);
+		let count = Array.from($("#vulntable td")).filter( td => $(td).attr('data-sort') == sevId).length;
+		console.log(count)
+		$(box).find("h3")[0].innerText = count;
 	}
 	reasign() {
 		let _this = this;
@@ -257,61 +296,100 @@ class VulnerablilityView {
 		});
 		
 	}
-	saveChanges2(vulnId, type, isEditor=true) {
-		console.log("save2")
-		let _this = this;	
-		let edits = "";
-		if(isEditor){
-			edits = this.getEditorText(type);
-		}else{
-			if(type == "dcategory"){
-				edits = $("#dcategory").data("catid");
-			}else{
-				edits = $(`#${type}`).val();
-			}
-		}
-		let data = "vulnid=" + vulnId;
-		data += `&${type}=${encodeURIComponent(edits)}`;
-		let fields = [];
-		for (let id of vulnTypes) {
-			const value = $(`#type${id}`).val();
-			fields.push(`{"typeid" : ${id}, "value" : "${value}"}`);
-		}
-		data += '&cf=[' + fields.join(",") + "]";
-		data += "&_token=" + _this._token;
-		$.post("updateVulnerability", data, function(resp) {
-			if(document.getElementById(`${type}_header`)){
-				document.getElementById(`${type}_header`).innerHTML=""
-			}
-			if(resp.result != "success"){
-				$.alert(resp.message);
-			}
-			_this._token = resp.token;
-			clearTimeout(_this.clearLockTimeout[type]);
-			_this.clearLockTimeout[type] = setTimeout(() => {
-			$.get(`ClearLock?action=${type}`).done();
-			}, 5000);
-			console.log("check for errors");
-		});
-
+	setLockScreen(){
+		this.disableAutoSave()
+		$("#vulnForm").addClass("disabled")
 	}
-	queueSave(vulnId, type, isEditor=true) {
-		let _this = this;
-		$.get(`SetLock?action=${type}`).done( (resp) => {
-			if(resp.result == "success"){
-				if(document.getElementById(`${type}_header`)){
-					document.getElementById(`${type}_header`).innerHTML="*"
+	clearLockScreen(vulnId){
+		this.getVuln(vulnId)
+	}
+	updateVulnsCallback(data){
+		let lockedVulns = data.vulns;
+		for(let vuln of lockedVulns){
+			if(vuln.id == this.vulnId){
+				this.setLockScreen();
+			}
+			$(`#deleteVuln${vuln.id}`).hide();
+			$("#vulntable tr").each( (_a, el) => {
+				if($(el).data('vulnid') == vuln.id){
+					if($(el).find(".userEdit").length==0){
+						let vulnName = $(el).find(".vulnName")[0].outerHTML;
+						vulnName = vulnName + "<span class='userEdit'>" + vuln.lockby + " is making changes</span>";
+						$(el).find(".vulnName")[0].outerHTML = vulnName;
+					}
 				}
-				clearTimeout(_this.editorTimeout[type]);
-				clearTimeout(_this.clearLockTimeout[type]);
-				_this.editorTimeout[type] = setTimeout(() => {
-					_this.saveChanges(vulnId, type, isEditor);
-				}, 2000);
+			});
+		}
+		const vulnIds = lockedVulns.map( v => v.id );
+		$("#vulntable tr").each( (_a, el) => {
+			let vulnId = $(el).data('vulnid');
+			if(vulnIds.indexOf(`${vulnId}`) == -1 && this.vulnId == vulnId && $("#vulnForm").hasClass("disabled")){
+				this.getVuln(vulnId);
+			}else if(vulnIds.indexOf(`${vulnId}`) == -1){
+				$(el).find(".userEdit").each( (_a, edit) => edit.remove());
+				$(`#deleteVuln${vulnId}`).show();
 			}
 		});
-
+		const activeVulns = Array.from($("#vulntable tr")).map( tr => `${$(tr).data("vulnid")}`).filter( tr => tr != "undefined");
+		
+		for(let vuln of data.current){
+			//vuln was added by another user so add it to the table
+			if(activeVulns.indexOf(vuln.id) == -1){
+					let rowData = `<tr data-vulnid="${vuln.id}"><td class="sev${vuln.severity}">`
+						rowData+= `<input type="checkbox" id="ckl${vuln.id}"/></td><td data-sort="${vuln.severity}">`
+						rowData+= `<span class="vulnName">${vuln.title}</span><br>`
+						rowData+= `<span class="category">${vuln.category}</span><br>`
+						rowData+= `<span class="severity">${vuln.severityName}</span>`
+						rowData+= `</td>`
+						rowData+= `<td><span class="vulnControl vulnControl-delete" id="deleteVuln${vuln.id}">`
+						rowData+= `<i class="fa fa-trash" title="Delete Vulnerability"></i></span>`
+						rowData+= `</td></tr>`
+					console.log(rowData)
+					const row = this.vulnTable.row.add($(rowData)).draw().node()
+					this.rebindTable();
+					this.updateColors();
+			}else{
+				let row = Array.from($("#vulntable tr")).filter( (el) => $(el).data('vulnid') == vuln.id);
+				if(row.length > 0 && vuln.id != this.vulnId){
+					
+					let vulnName = $(row[0]).find(".vulnName")[0].innerHTML;
+					let category = $(row[0]).find(".category")[0].innerHTML;
+					let severity = $(row[0]).find(".severity")[0].innerHTML;
+					//Titles or severity was changed by another user. 
+					// update the table an resort it
+					if(vulnName != vuln.title){
+						$(row[0]).find(".vulnName")[0].innerHTML = vuln.title;
+					}
+					if(category != vuln.category){
+						$(row[0]).find(".category")[0].innerHTML = vuln.category;
+					}
+					if(severity != vuln.severityName){
+						$(row[0]).find(".severity")[0].innerHTML = vuln.severityName;
+						$(row[0]).children()[0].className=`sev${vuln.severityName}`
+						$($(row[0]).children()[1]).attr('data-sort', vuln.severity)
+						this.vulnTable.row(row[0]).invalidate()
+						this.vulnTable.order( [ 1, 'desc' ] ).draw();
+						this.updateColors();
+						
+					}
+				}
+				
+			}
+			
+		}
+		const serverVulns = data.current.map( c => c.id);
+		// delete rows of vulns that have been deleted by another user
+		for(let vuln of activeVulns){
+			if(serverVulns.indexOf(vuln) == -1){
+				let row = Array.from($("#vulntable tr")).filter( (el) => $(el).data('vulnid') == vuln);
+				this.vulnTable.row($(row[0])).remove().draw();
+				if(this.vulnId == vuln){
+					this.vulnId = -1;
+					this.deleteVulnForm();
+				}
+			}	
+		}
 	}
-	
 	getOnGoingAssessmentsToReassign(){
 		$.get("onGoingAssessments").done(function(resp) {
 
@@ -329,31 +407,6 @@ class VulnerablilityView {
 	
 	setUpVulnAutoComplete(){
 		let _this=this;
-		$("#dcategory").autoComplete({
-			minChars: 3,
-			source: function(term, response) {
-				$.getJSON('DefaultCategories?action=json&terms=' + term,
-					function(data) {
-						let list = [];
-						for (let i = 0; i < data.length; i++) {
-							list[i] = data[i].id + " :: " + data[i].name;
-						}
-						response(list);
-					}
-				);
-			},
-			onSelect: function(e, term, item) {
-				let catData=term.split("::");
-				const catId = catData[0].trim();
-				const catName = catData[1].trim();
-				$("#dcategory").val(catName);
-				$("#dcategory").attr("data-catid", catId);
-				$(".selected").find(".category")[0].innerHTML = catName;
-				
-				//_this.queueSave(_this.vulnId, "dcategory", false);
-				_this.queue.push(_this.vulnId,"dcategory", catId)
-			}
-		});
 		$("#title").autoComplete({
 			minChars: 3,
 			source: function(term, response) {
@@ -374,12 +427,15 @@ class VulnerablilityView {
 				const splits = term.split(" :: ");
 				$("#title").val(splits[1]);
 				$(".selected").find(".vulnName")[0].innerHTML = splits[1]
-				$("#dcategory").val(splits[2]);
 				$(".selected").find(".category")[0].innerHTML = splits[2]
 				$("#dvulnerability").val(splits[0].trim())
 				//_this.queueSave(_this.vulnId, "dvulnerability", false)
+				let val = $("#dcategory").find("option:contains('"+splits[2].trim()+"')").val()
+				_this.setIntVal(val, "dcategory");
+				$("#dcategory").val(val).trigger('change');
 				const vulnid = splits[0];
 				_this.queue.push(_this.vulnId,"dvulnerability", vulnid)
+				_this.queue.push(_this.vulnId,"title", splits[1])
 				$("#title").attr("intVal", vulnid);
 				d = d.replace("<p><br></p>", "");
 				r = r.replace("<p><br></p>", "");
@@ -399,6 +455,7 @@ class VulnerablilityView {
 										_this.setIntVal(data.likelyhood, 'likelyhood');
 										_this.setIntVal(data.impact, 'impact');
 										_this.setIntVal(data.overall, 'overall');
+										_this.setIntVal(data.catid, 'dcategory');
 										const severity = $("#overall").select2('data')[0].text;
 										$(".selected").find(".severity")[0].innerHTML = severity;
 										$(".selected").children()[0].className=`sev${severity}`
@@ -425,6 +482,7 @@ class VulnerablilityView {
 							_this.setIntVal(data.likelyhood, 'likelyhood');
 							_this.setIntVal(data.impact, 'impact');
 							_this.setIntVal(data.overall, 'overall');
+							//_this.setIntVal(data.catid, 'dcategory');
 							const severity = $("#overall").select2('data')[0].text;
 							$(".selected").find(".severity")[0].innerHTML = severity;
 							$(".selected").children()[0].className=`sev${severity}`
@@ -591,8 +649,7 @@ class VulnerablilityView {
 		$("#category").val("");
 		$("#title").attr("intVal", "-1");
 		$("#title").val("");
-		$("#dcategory").attr("intVal", "-1");
-		$("#dcategory").val("");
+		$("#dcategory").val("").trigger('change')
 		
 	}
 	disableAutoSave(){
@@ -609,14 +666,13 @@ class VulnerablilityView {
 		$("#overall").unbind('input');
 		$("#impact").unbind('input');
 		$("#likelyhood").unbind('input');
-		$("#dcategory").unbind('change');
+		$("#dcategory").unbind('input');
 	}
 
 	enableAutoSave(){
 		console.log("autosave enabled");
 		let _this = this;
 		this.editors.description.onInput = function(contents, core){
-			//_this.queueSave(_this.vulnId, "description");
 			_this.queue.push(_this.vulnId,"description", encodeURIComponent(contents));
 		}
 		this.editors.description.onChange = function(contents, core){
@@ -624,34 +680,28 @@ class VulnerablilityView {
 				_this.editors.description.setContents(contents + "<p><br></p>");
 			}
 			contents = marked.parse(contents)
-			//_this.queueSave(_this.vulnId, "description");
 			_this.queue.push(_this.vulnId,"description", encodeURIComponent(contents));
 		}
 		this.editors.recommendation.onInput = function(contents, core){
-			//_this.queueSave(_this.vulnId, "recommendation");
 			_this.queue.push(_this.vulnId,"recommendation", encodeURIComponent(contents));
 		}
 		this.editors.recommendation.onChange = function(contents, core){
 			if(contents.endsWith("</div>")){
 				_this.editors.remediation.setContents(contents + "<p><br></p>");
 			}
-			//_this.queueSave(_this.vulnId, "recommendation");
 			_this.queue.push(_this.vulnId,"recommendation", encodeURIComponent(contents));
 		}
 		this.editors.details.onInput = function(contents, core){
-			//_this.queueSave(_this.vulnId, "details");
 			_this.queue.push(_this.vulnId,"details", encodeURIComponent(contents));
 		}
 		this.editors.details.onChange = function(contents, core){
 			if(contents.endsWith("</div>")){
 				_this.editors.details.setContents(contents + "<p><br></p>");
 			}
-			//_this.queueSave(_this.vulnId, "details");
 			_this.queue.push(_this.vulnId,"details", encodeURIComponent(contents));
 		}
 		$("#title").on('input', function(event){
 			$(".selected").find(".vulnName")[0].innerHTML=$(this).val()
-			//_this.queueSave(_this.vulnId, "title", false);
 			_this.queue.push(_this.vulnId,"title", $(this).val());
 		});
 		$("#overall").on('input', function(event){
@@ -662,20 +712,17 @@ class VulnerablilityView {
 			_this.vulnTable.row($(".selected")).invalidate()
 			_this.vulnTable.order( [ 1, 'desc' ] ).draw();
 			_this.updateColors()
-			
-			//_this.queueSave(_this.vulnId, "overall", false);
 			_this.queue.push(_this.vulnId,"overall", $(this).val());
 		});
 		$("#impact").on('input', function(event){
-			//_this.queueSave(_this.vulnId, "impact", false);
 			_this.queue.push(_this.vulnId,"impact", $(this).val());
 		});
 		$("#likelyhood").on('input', function(event){
-			//_this.queueSave(_this.vulnId, "likelyhood", false);
 			_this.queue.push(_this.vulnId,"likelyhood", $(this).val());
 		});
-		$("#dcategory").on('change', function(event){
-			//_this.queueSave(_this.vulnId, "dcategory", false);
+		$("#dcategory").on('input', function(event){
+			const catName = $(this).select2('data')[0].text
+			$(".selected").find(".category")[0].innerHTML=catName
 			_this.queue.push(_this.vulnId,"dcategory", $(this).val());
 		});
 		
@@ -688,21 +735,26 @@ class VulnerablilityView {
 		this.editors[type].setContents(marked.parse(decoded));
 	}
 	getVuln(id) {
-		this.vulnid=id;
+		this.vulnId=id;
 		this.disableAutoSave()
+		$(`#deleteVuln${id}`).show();
+		$("#vulntable tr").each( (_a, el) => {
+				if($(el).data('vulnid') == id){
+					$(el).find(".userEdit").each( (_a,el) =>  el.remove())
+				}
+			});
 		let _this = this;
 		$("#vulnForm").removeClass("disabled");
 		$.get('AddVulnerability?vulnid=' + id + '&action=get').done(function(data) {
 
 			$("#title").val($("<div/>").html(data.name).text());
-			$("#dcategory").val($("<div/>").html(data.dfcat).text());
-			$("#dcategory").attr("intVal", data.dfcatid);
 			_this.setEditorContents("description", data.description);
 			_this.setEditorContents("recommendation", data.recommendation);
 			_this.setEditorContents("details", data.details);
 			_this.setIntVal(data.overall, 'overall');
 			_this.setIntVal(data.likelyhood, 'likelyhood');
 			_this.setIntVal(data.impact, 'impact');
+			_this.setIntVal(data.catid, 'dcategory');
 			$(data.cf).each(function(a, b) {
 				$("#type" + b.typeid).val(b.value);
 			});

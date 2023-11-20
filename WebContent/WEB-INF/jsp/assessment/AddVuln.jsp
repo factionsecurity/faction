@@ -60,6 +60,17 @@ td:first-child {
 	border-left-style: dotted;
 	
 }
+.userEdit{
+    background: #f39c12;
+    color: white;
+    font-weight: bold;
+    border-radius: 5px;
+    padding-left: 4px;
+    padding-right: 7px;
+    padding-top: 2px;
+    padding-bottom: 4px;
+    margin-left: 30px;
+}
 
 </style>
 
@@ -102,8 +113,12 @@ td:first-child {
 							<label for="category" class="col-sm-2 control-label">Category:
 								<span id="dcategory_header"></span></label>
 							<div class="col-sm-4">
-								<input type="text" class="form-control" id="dcategory"
-									placeholder="Auto Populated Category Name">
+								<select class="select2 form-control" id="dcategory"
+									style="width: 100%">
+									<s:iterator value="categories">
+										<option value="${id}">${name}</option>
+									</s:iterator>
+								</select>
 							</div>
 							<label for="title" class="col-sm-2 control-label">Impact:
 								<span id="impact_header"></span></label>

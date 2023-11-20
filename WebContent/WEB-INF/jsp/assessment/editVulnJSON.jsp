@@ -13,7 +13,8 @@
 "dfname" : "<s:property value="current.defaultVuln.name"/>",
 "dfvulnid" : "<s:property value="current.defaultVuln.id"/>",
 "dfcat" : "<s:property value="current.defaultVuln.category.name"/>",
-"dfcatid" : "<s:property value="current.defaultVuln.category.id"/>"
+"dfcatid" : "<s:property value="current.defaultVuln.category.id"/>",
+"catid" : "<s:property value="current.category.id"/>"
 }
 
 

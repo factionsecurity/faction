@@ -28,4 +28,25 @@
   "updatedText" : "<s:property value="assessment.getNotes()"/>"
 }
 </s:if>
+<s:if test="lockedVulns">
+"vulns": [
+	<s:iterator value="lockedVulns" status="stats">
+	{ "id": "<s:property value="id"/>", 
+	  "islock" : <s:property value="desc_lock" />,
+	  "lockby" : "<s:property value="desc_locked_by.fname"/> <s:property value="desc_locked_by.lname"/>",
+	  "lockat" : "<s:date name="desc_lock_time" format="mm/dd/yyyy hh:mm:ss"/>"
+	}<s:if test="!#stats.last">,</s:if>
+	</s:iterator>
+],
+"current": [
+	<s:iterator value="currentVulns" status="stats">
+	{ "id": "<s:property value="id"/>", 
+	  "title" : "<s:property value="name" />",
+	  "category" : "<s:property value="getCategory().getName()"/>",
+	  "severityName" : "<s:property value="overallStr"/>",
+	  "severity" : <s:property value="overall"/>
+	}<s:if test="!#stats.last">,</s:if>
+	</s:iterator>
+]
+</s:if>
 }
