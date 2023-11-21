@@ -60,7 +60,6 @@ padding-left:50px;
    <ul class="nav nav-tabs">
      <li class="active"><a href="#tab_1" data-toggle="tab">Overview</a></li>
      <li><a href="#tab_2" data-toggle="tab">Vulnerabilities</a></li>
-     <li><a href="#tab_3" data-toggle="tab">Steps</a></li>
      <li><a href="#tabfiles" data-toggle="tab">Files</a></li>
      <s:iterator value="checklists" var="cl">
      	<li><a href="#tabcl_${key}" data-toggle="tab"><s:property value="value[0].checklist"/> Checklist</a></li>
@@ -187,37 +186,6 @@ padding-left:50px;
 			  	</bs:box>
 			  	</bs:mco>
 			  </bs:row>
-			  </s:iterator>
-		</div>
-  		<div class="tab-pane" id="tab_3">
-  
-			  <s:iterator value="asmt.vulns" >
-			  		<bs:row>
-					<bs:mco colsize="12">
-				    <bs:box title="Exploit Steps: <b>${name}</b>" type="info">
-				    		<s:if test="steps.size == 0">No Exploit Steps Added for this Vulnerability</s:if>
-						   <s:iterator value="steps" status="stat" var="step">
-						   		<bs:row><bs:mco colsize="12"><h3>Example ${stat.count }:</h3></bs:mco></bs:row>
-								<bs:row>
-									<bs:mco colsize="7">
-										<div class="text-header" id="step['${id}']_header"></div>
-							  			<textarea id="steps['${step.id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="description"/></textarea>
-							  		</bs:mco>
-							  		<bs:mco colsize="4">
-										<div class="text-header" id="step_notes['${id}']_header">Notes</div>
-							  			<textarea id="steps_notes['${step.id}']" style="width: 100%"><s:property value="exp_notes"/></textarea>
-							  		</bs:mco>
-			  						<bs:mco colsize="1" style="padding-right:30px">
-			  							<bs:row>
-				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>>Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12">Close</button>
-				  						</bs:row>
-			  						</bs:mco>
-							  	</bs:row>
-						  </s:iterator>
-				  </bs:box>
-				  </bs:mco>
-				  </bs:row>
 			  </s:iterator>
 		</div>
 		<div class="tab-pane" id="tabfiles">
