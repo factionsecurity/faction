@@ -50,10 +50,10 @@ public class TrackChanges extends FSActionSupport {
 	private String sum_notes;
 	private HashMap<String, String> vuln_desc;
 	private HashMap<String, String> vuln_rec;
+	private HashMap<String, String> vuln_details;
 	private HashMap<String, String> vuln_desc_notes;
 	private HashMap<String, String> vuln_rec_notes;
-	private HashMap<String, String> steps;
-	private HashMap<String, String> steps_notes;
+	private HashMap<String, String> vuln_detail_notes;
 	private Long prid;
 	private String jsonResponse;
 	private Boolean prqueue = false;
@@ -99,14 +99,10 @@ public class TrackChanges extends FSActionSupport {
 				v.setRecommendation(vuln_rec.get("" + id));
 			if (vuln_rec_notes != null && vuln_rec_notes.get("" + id) != null)
 				v.setRec_notes(vuln_rec_notes.get("" + id));
-			for (ExploitStep step : v.getSteps()) {
-				long sid = step.getId();
-
-				if (steps != null && steps.get("" + sid) != null)
-					step.setDescription(steps.get("" + sid));
-				if (steps_notes != null && steps_notes.get("" + sid) != null)
-					step.setExp_notes(steps_notes.get("" + sid));
-			}
+			if (vuln_details != null && vuln_details.get("" + id) != null)
+				v.setDetails(vuln_details.get("" + id));
+			if (vuln_detail_notes != null && vuln_detail_notes.get("" + id) != null)
+				v.setDetail_notes(vuln_detail_notes.get("" + id));
 		}
 		// Remove the vulns currently there and add our Updated ones.
 		review.deleteAllVulns();
@@ -186,6 +182,7 @@ public class TrackChanges extends FSActionSupport {
 		assessment.setSummary(this.summary);
 		assessment.setPr_sum_notes(this.sum_notes);
 		assessment.setPr_risk_notes(this.risk_notes);
+	
 		assessment.setAcceptedEdits();
 		for (Vulnerability v : assessment.getVulns()) {
 			long id = v.getId();
@@ -193,11 +190,8 @@ public class TrackChanges extends FSActionSupport {
 			v.setDesc_notes(vuln_desc_notes.get("" + id));
 			v.setRecommendation(vuln_rec.get("" + id));
 			v.setRec_notes(vuln_rec_notes.get("" + id));
-			for (ExploitStep step : v.getSteps()) {
-				long sid = step.getId();
-				step.setDescription(steps.get("" + sid));
-				step.setExp_notes(steps_notes.get("" + sid));
-			}
+			v.setDetails(vuln_details.get("" + id));
+			v.setDetail_notes(vuln_detail_notes.get("" + id) == null? "" : vuln_detail_notes.get("" + id));
 		}
 
 		// Check if there are any un-accepted edits. These will html from track changes
@@ -463,7 +457,7 @@ public class TrackChanges extends FSActionSupport {
 			@Result(name = "lockJSON", location = "/WEB-INF/jsp/peerreviews/lockJSON.jsp"), })
 	public String checkLocks() throws UnsupportedEncodingException, IllegalAccessException, InvocationTargetException,
 			NoSuchMethodException, ParseException {
-		if (!(this.isAcengagement() || this.isAcmanager())) {
+		if (!(this.isAcassessor() || this.isAcmanager())) {
 			return LOGIN;
 		}
 		user = this.getSessionUser();
@@ -496,22 +490,14 @@ public class TrackChanges extends FSActionSupport {
 							lock.setUpdatedText(this.getBase64Encoded(vulnerability.getRec_notes()));
 						} else if (lock.getLockedField().contains("desc_notes")) {
 							lock.setUpdatedText(this.getBase64Encoded(vulnerability.getDesc_notes()));
+						} else if (lock.getLockedField().contains("detail_notes")) {
+							lock.setUpdatedText(this.getBase64Encoded(vulnerability.getDetail_notes()));
 						} else if (lock.getLockedField().contains("desc")) {
 							lock.setUpdatedText(this.getBase64Encoded(vulnerability.getDescription()));
 						} else if (lock.getLockedField().contains("rec")) {
 							lock.setUpdatedText(this.getBase64Encoded(vulnerability.getRecommendation()));
-						}
-					} else if (lock.getLockedField().startsWith("steps")) {
-						for (Vulnerability vuln : asmt.getVulns()) {
-							ExploitStep exploitStep = vuln.getSteps().stream()
-									.filter(step -> step.getId() == Long.parseLong(index)).findFirst().orElse(null);
-							if (exploitStep != null) {
-								if (lock.getLockedField().contains("notes")) {
-									lock.setUpdatedText(this.getBase64Encoded(exploitStep.getExp_notes()));
-								} else {
-									lock.setUpdatedText(exploitStep.getDescBase64());
-								}
-							}
+						} else if (lock.getLockedField().contains("details")) {
+							lock.setUpdatedText(this.getBase64Encoded(vulnerability.getDetails()));
 						}
 					}
 
@@ -528,7 +514,7 @@ public class TrackChanges extends FSActionSupport {
 			@Result(name = "lockError", location = "/WEB-INF/jsp/peerreviews/lockError.jsp"),
 			@Result(name = "lockJSON", location = "/WEB-INF/jsp/peerreviews/lockJSON.jsp"), })
 	public String setLock() throws UnsupportedEncodingException, ParseException {
-		if (!(this.isAcengagement() || this.isAcmanager())) {
+		if (!(this.isAcassessor() || this.isAcmanager())) {
 			return LOGIN;
 		}
 		user = this.getSessionUser();
@@ -569,7 +555,7 @@ public class TrackChanges extends FSActionSupport {
 			@Result(name = "lockError", location = "/WEB-INF/jsp/peerreviews/lockError.jsp"),
 			@Result(name = "lockJSON", location = "/WEB-INF/jsp/peerreviews/lockJSON.jsp"), })
 	public String clearLock() throws ParseException {
-		if (!(this.isAcengagement() || this.isAcmanager())) {
+		if (!(this.isAcassessor() || this.isAcmanager())) {
 			return LOGIN;
 		}
 		user = this.getSessionUser();
@@ -699,6 +685,13 @@ public class TrackChanges extends FSActionSupport {
 	public void setVuln_rec(HashMap<String, String> vuln_rec) {
 		this.vuln_rec = vuln_rec;
 	}
+	public HashMap<String, String> getVuln_details() {
+		return vuln_details;
+	}
+	public void setVuln_details(HashMap<String, String> vuln_details) {
+		this.vuln_details = vuln_details;
+	}
+
 
 	public HashMap<String, String> getVuln_desc_notes() {
 		return vuln_desc_notes;
@@ -715,21 +708,12 @@ public class TrackChanges extends FSActionSupport {
 	public void setVuln_rec_notes(HashMap<String, String> vuln_rec_notes) {
 		this.vuln_rec_notes = vuln_rec_notes;
 	}
-
-	public HashMap<String, String> getSteps() {
-		return steps;
+	public HashMap<String, String> getVuln_detail_notes() {
+		return vuln_detail_notes;
 	}
 
-	public void setSteps(HashMap<String, String> steps) {
-		this.steps = steps;
-	}
-
-	public HashMap<String, String> getSteps_notes() {
-		return steps_notes;
-	}
-
-	public void setSteps_notes(HashMap<String, String> steps_notes) {
-		this.steps_notes = steps_notes;
+	public void setVuln_detail_notes(HashMap<String, String> vuln_detail_notes) {
+		this.vuln_detail_notes = vuln_detail_notes;
 	}
 
 	public Long getPrid() {

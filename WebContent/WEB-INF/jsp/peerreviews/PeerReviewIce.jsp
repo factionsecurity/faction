@@ -174,7 +174,7 @@ padding-left:50px;
 				  		</bs:mco>
 				  		<bs:mco colsize="4">
 							<div class="text-header">Detail Notes <span id="vuln_detail_notes['${id}']_header"></span></div>
-				  			<textarea id="vuln_details_notes['${id}']" style="width: 100%"><s:property value="detail_notes"/></textarea>
+				  			<textarea id="vuln_detail_notes['${id}']" style="width: 100%"><s:property value="detail_notes"/></textarea>
 				  		</bs:mco>
 			  			<bs:mco colsize="1" style="padding-right:30px">
 			  			

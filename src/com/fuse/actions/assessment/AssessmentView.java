@@ -319,10 +319,8 @@ public class AssessmentView extends FSActionSupport {
 			return this.ERRORJSON;
 		}
 
-		/// Get status of the assessment
-		String status = asmt.getStatus();
 		if (asmt.isInPr()) {
-			this._token = "Assessment Already in PeerReview";
+			this._message = "Assessment Already in PeerReview";
 			return this.ERRORJSON;
 		}
 		/// Are the checklists complete
