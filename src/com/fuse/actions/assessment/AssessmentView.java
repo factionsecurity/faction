@@ -168,7 +168,7 @@ public class AssessmentView extends FSActionSupport {
 			return this.SUCCESSJSON;
 
 		} else if (this.action != null && this.action.equals("finalize")) {
-			if (!this.testToken())
+			if (!this.testToken(false))
 				return this.ERRORJSON;
 
 			if (assessment != null && assessment.getCompleted() != null) {
@@ -179,7 +179,7 @@ public class AssessmentView extends FSActionSupport {
 			return finalizeAssessment(em, assessment, user);
 
 		} else if (this.update != null && this.update.equals("true")) {
-			if (!this.testToken())
+			if (!this.testToken(false))
 				return this.ERRORJSON;
 			if (assessment == null) {
 				this._message = "Assessment does not exist.";
@@ -235,7 +235,7 @@ public class AssessmentView extends FSActionSupport {
 		if (!(this.isAcassessor() || this.isAcmanager()))
 			return LOGIN;
 
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
@@ -284,7 +284,7 @@ public class AssessmentView extends FSActionSupport {
 		if (!(this.isAcassessor()))
 			return LOGIN;
 
-		if (!this.testToken()) {
+		if (!this.testToken(false)) {
 			JSONObject msg = new JSONObject();
 			msg.put("errors", "Missing CSRF Token");
 			msg.put("token", this.get_token());

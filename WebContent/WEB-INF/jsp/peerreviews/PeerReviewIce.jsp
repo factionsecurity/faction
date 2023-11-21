@@ -167,6 +167,23 @@ padding-left:50px;
 				  				</bs:row>
 			  		</bs:mco>
 			  		</bs:row>
+						<bs:row>
+						<bs:mco colsize="7">
+							<div class="text-header" >Details <span id="vuln_details['${id}']_header"></span></div>
+				  			<textarea id="vuln_details['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="details"/></textarea>
+				  		</bs:mco>
+				  		<bs:mco colsize="4">
+							<div class="text-header">Detail Notes <span id="vuln_detail_notes['${id}']_header"></span></div>
+				  			<textarea id="vuln_details_notes['${id}']" style="width: 100%"><s:property value="detail_notes"/></textarea>
+				  		</bs:mco>
+			  			<bs:mco colsize="1" style="padding-right:30px">
+			  			
+				  			<bs:row>
+				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>>Complete</button><br><br>
+				  					<button class="btn btn-info closeit col-md-12">Close</button>
+				  				</bs:row>
+			  		</bs:mco>
+			  		</bs:row>
 			  	</bs:box>
 			  	</bs:mco>
 			  </bs:row>

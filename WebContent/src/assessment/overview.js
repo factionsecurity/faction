@@ -382,6 +382,7 @@ $(function() {
 			$("#genreport").html("<div class='throbber-loader'>Loading…</div>");
         	$(".reportLoading").loading({overlay: true});
 			$.get("Assessment?action=genreport&id=" + $("#appid")[0].value, function(resp){
+				global._token = resp.token;
 				clearInterval(checkStatus);
 				checkStatus = setInterval(function(){
 					$.get("CheckStatus", function(resp){
