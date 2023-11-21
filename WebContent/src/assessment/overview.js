@@ -63,7 +63,7 @@ let engagementOptions = {
 	buttonList: [],
 	height: 500
 }
-function setEditorText(id, data) {
+function setEditorText_bk(id, data) {
 	if (typeof editors[id] == 'undefined') {
 		$('#' + id).html(data);
 	} else {
@@ -225,6 +225,15 @@ function b64DecodeUnicode(str) {
 		return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
 	}).join(''));
 }
+function setEditorContents(contents, editor, isEncoded){
+		if(isEncoded){
+			contents = b64DecodeUnicode(contents)
+		}
+		//This fixes issuen with images that makes it hard to edit
+		if(contents.endsWith("</div>")){
+			editors[editor].setContents(contents + "<p><br></p>");
+		}
+}
 $(function() {
 	global._token = $("#_token")[0].value;
 	editors.summary = suneditor.create("summary", editorOptions);
@@ -232,6 +241,7 @@ $(function() {
 		queueSave("summary");
 	}
 	editors.summary.onChange = function(contents, core) {
+		setEditorContents(contents,'summary', false);
 		if(document.getElementById(`summary_header`).innerHTML == ""){
 			queueSave("summary");
 		}
@@ -242,6 +252,7 @@ $(function() {
 		queueSave("risk");
 	}
 	editors.risk.onChange = function(contents, core) {
+		setEditorContents(contents,'risk', false);
 		if(document.getElementById(`risk_header`).innerHTML == ""){
 			queueSave("risk");
 		}
@@ -251,6 +262,7 @@ $(function() {
 		queueSave("notes");
 	}
 	editors.notes.onChange = function(contents, core) {
+		setEditorContents(contents,'notes', false);
 		if(document.getElementById(`notes_header`).innerHTML == ""){
 			queueSave("notes");
 		}
@@ -264,7 +276,7 @@ $(function() {
 						editors[type].core.context.element.wysiwygFrame.classList.add("disabled");
 						document.getElementById(`${type}_header`).innerHTML=`<i class="lockUser">Editing by ${resp[type].lockBy} ${resp[type].lockAt}</i>`
 						editors[type].disabled();
-						editors[type].setContents(b64DecodeUnicode(resp[type].updatedText));
+						setEditorContents(resp[type].updatedText, type, true);
 					}else{
 						editors[type].enable();
 						if(document.getElementById(`${type}_header`).innerHTML.indexOf("*") == -1){
@@ -673,19 +685,21 @@ $(function() {
 					overWrite: {
 						text: "OverWrite",
 						action: function() {
-								setEditorText(type, text);
+								setEditorContents(text,type, false);
 						}
 					},
 					prepend: {
 						text: "Prepend",
 						action: function() {
-								setEditorText(type, text + "\n" + getEditorText(type));
+								text = text + "\n" + getEditorText(type);
+								setEditorContents(text,type, false);
 						}
 					},
 					append: {
 						text: "Append",
 						action: function() {
-								setEditorText(type, getEditorText(type) + "\n" + text);
+								text = getEditorText(type) + "\n" + text;
+								setEditorContents(text,type, false);
 						}
 					},
 					cancel: function() {
@@ -736,7 +750,9 @@ $(function() {
 									action: function() {
 										$.get('tempSearchDetail?tmpId=' + tmpId)
 											.done(function(data) {
-												setEditorText($(el).attr("for"), data.templates[0].text);
+												let type = $(el).attr("for");
+												let text = data.templates[0].text;
+												setEditorContents(text,type, false);
 											});
 									}
 
@@ -747,7 +763,8 @@ $(function() {
 										$.get('tempSearchDetail?tmpId=' + tmpId)
 											.done(function(data) {
 												var text = "<br />" + getEditorText($(el).attr("for"));
-												setEditorText($(el).attr("for"), data.templates[0].text + text);
+												let type = $(el).attr("for");
+												setEditorContents(text,type, false);
 											});
 									}
 
@@ -758,7 +775,8 @@ $(function() {
 										$.get('tempSearchDetail?tmpId=' + tmpId)
 											.done(function(data) {
 												var text = getEditorText($(el).attr("for")) + "<br />";
-												setEditorText($(el).attr("for"), text + data.templates[0].text);
+												let type = $(el).attr("for");
+												setEditorContents(text,type, false);
 											});
 									}
 
@@ -773,7 +791,9 @@ $(function() {
 					} else {
 						$.get('tempSearchDetail?tmpId=' + tmpId)
 							.done(function(data) {
-								setEditorText($(el).attr("for"), data.templates[0].text);
+								let type = $(el).attr("for");
+								let text = data.templates[0].text;
+								setEditorContents(text,type, false);
 							});
 					}
 
