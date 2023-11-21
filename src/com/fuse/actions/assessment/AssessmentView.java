@@ -102,22 +102,6 @@ public class AssessmentView extends FSActionSupport {
 					.orElse(null);
 			if (mgrs == null)
 				this.notowner = true;
-			///fix image issue
-			String content = assessment.getSummary();
-			if(content.endsWith("div>")) {
-				content = content + "<p><br/></p>";
-				assessment.setSummary(content);
-			}
-			content = assessment.getRiskAnalysis();
-			if(content.endsWith("div>")) {
-				content = content + "<p><br/></p>";
-				assessment.setRiskAnalysis(content);
-			}
-			content = assessment.getNotes();
-			if(content.endsWith("div>")) {
-				content = content + "<p><br/></p>";
-				assessment.setNotes(content);
-			}
 
 		} else {
 			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
@@ -125,6 +109,23 @@ public class AssessmentView extends FSActionSupport {
 
 		if (assessment == null)
 			return SUCCESS;
+		
+		///fix image issue
+		String content = assessment.getSummary();
+		if(content.endsWith("div>")) {
+			content = content + "<p><br/></p>";
+			assessment.setSummary(content);
+		}
+		content = assessment.getRiskAnalysis();
+		if(content.endsWith("div>")) {
+			content = content + "<p><br/></p>";
+			assessment.setRiskAnalysis(content);
+		}
+		content = assessment.getNotes();
+		if(content.endsWith("div>")) {
+			content = content + "<p><br/></p>";
+			assessment.setNotes(content);
+		}
 
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 

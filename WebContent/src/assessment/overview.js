@@ -397,9 +397,8 @@ $(function() {
 				global._token = resp.token;
 				clearInterval(checkStatus);
 				checkStatus = setInterval(function(){
-					$.get("CheckStatus", function(resp){
-						console.log(resp);
-						if(resp.status != 202){
+					$.get("CheckStatus").done(function(resp, _message, http){
+						if(http.status != 202){
 							const updatedDate = resp.message;
 							$("#updatedDate").html(updatedDate);
 							clearInterval(checkStatus);
