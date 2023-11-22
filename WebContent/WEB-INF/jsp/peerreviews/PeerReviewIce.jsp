@@ -92,7 +92,6 @@ color:white;
 			  		<bs:mco colsize="1" style="padding-right:30px">
 			  					<bs:row>
 				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12"><i class="fa fa-save"></i> Save</button> 
 				  				</bs:row>
 			  		</bs:mco>
 			  		</bs:row>
@@ -114,7 +113,6 @@ color:white;
 			  		<bs:mco colsize="1" style="padding-right: 30px">
 			  					<bs:row>
 				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12"><i class="fa fa-save"></i> Save</button>
 				  				</bs:row>
 			  		</bs:mco>
 			  		</bs:row>
@@ -125,7 +123,6 @@ color:white;
 		<div class="tab-pane" id="tab_2">
 			  <s:iterator value="asmt.vulns" status="stat" var="v">
 			  	${v.updateRiskLevels()}
-			   <br/>
 			   <bs:row>
 				<bs:mco colsize="12">
 			    <bs:box title="
@@ -152,7 +149,6 @@ color:white;
 			  			<bs:mco colsize="1" style="padding-right:30px">
 			  					<bs:row>
 				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12"><i class="fa fa-save"></i> Save</button>
 				  				</bs:row>
 			  			</bs:mco>
 				  		</bs:row>
@@ -168,8 +164,7 @@ color:white;
 			  			<bs:mco colsize="1" style="padding-right:30px">
 			  			
 				  			<bs:row>
-				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>>Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12">Close</button>
+				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
 				  				</bs:row>
 			  		</bs:mco>
 			  		</bs:row>
@@ -185,8 +180,7 @@ color:white;
 			  			<bs:mco colsize="1" style="padding-right:30px">
 			  			
 				  			<bs:row>
-				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>>Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12">Close</button>
+				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
 				  				</bs:row>
 			  		</bs:mco>
 			  		</bs:row>
