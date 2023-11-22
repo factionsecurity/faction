@@ -350,6 +350,7 @@ public class TrackChanges extends FSActionSupport {
 	}
 
 	@Action(value = "TrackChanges", results = {
+			@Result(name = "redirect", type = "redirectAction", location = "PeerReview"),
 			@Result(name = "completeErrors", location = "/WEB-INF/jsp/peerreviews/completeErrors.jsp"),
 			@Result(name = "completeJSON", location = "/WEB-INF/jsp/peerreviews/completeJson.jsp") })
 	public String execute() throws ParseException {
@@ -363,7 +364,7 @@ public class TrackChanges extends FSActionSupport {
 				.getSingleResult();
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 		if (pr == null)
-			return this.SUCCESSJSON;
+			return "redirect";
 
 		boolean isAssessor = false;
 		for (User u : pr.getAssessment().getAssessor()) {
@@ -383,7 +384,7 @@ public class TrackChanges extends FSActionSupport {
 		}
 
 		if (pr.getCompleted().getTime() != 0 && !isAssessor)
-			return this.SUCCESSJSON;
+			return "redirect";
 
 		asmt = new Assessment();
 		Comment com = pr.getComments().get(pr.getComments().size() - 1);
@@ -463,6 +464,14 @@ public class TrackChanges extends FSActionSupport {
 		user = this.getSessionUser();
 		PeerReview pr = (PeerReview) this.em.createQuery("from PeerReview where id = :id").setParameter("id", prid)
 				.getSingleResult();
+		if(pr == null) {
+			this._message ="Peer Review has been completed.";
+			return this.ERRORJSON;
+		}
+		if(pr.getCompleted().getTime() != 0l) {
+			this._message ="Peer Review has been completed.";
+			return this.ERRORJSON;
+		}
 		Comment com = pr.getComments().get(pr.getComments().size() - 1);
 		this.clearOldLocks(com);
 		if (com == null) {
