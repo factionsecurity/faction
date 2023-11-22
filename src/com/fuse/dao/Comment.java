@@ -142,6 +142,8 @@ public class Comment {
 	private void addVuln(Vulnerability v, boolean blankNotes) {
 		JSONObject json = new JSONObject();
 		json.put("id", (Long) v.getId());
+		json.put("catName",""+ v.getCategory().getName());
+		json.put("catId",(Long) v.getCategory().getId());
 		json.put("name", v.getName());
 		json.put("desc", v.getDescription());
 		json.put("rec", v.getRecommendation());
@@ -213,9 +215,15 @@ public class Comment {
 			JSONObject vuln = (JSONObject) parse.parse(json);
 			v.setId((Long) vuln.get("id"));
 			v.setName("" + (vuln.get("name") == null ? "" : vuln.get("name")));
+			DefaultVulnerability dv = em.find(DefaultVulnerability.class, (Long) vuln.get("dv"));
+			if( vuln.get("catId") != null) {
+				v.setCategory(em.find(Category.class, (Long) vuln.get("catId")));
+			}else {
+				v.setCategory(dv.getCategory());
+			}
 			v.setDescription("" + (vuln.get("desc") == null ? "" : vuln.get("desc")));
 			v.setRecommendation("" + (vuln.get("rec") == null ? "" : vuln.get("rec")));
-			v.setDefaultVuln(em.find(DefaultVulnerability.class, (Long) vuln.get("dv")));
+			v.setDefaultVuln(dv);
 			v.setImpact((Long) vuln.get("impact"));
 			v.setOverall((Long) vuln.get("overall"));
 			v.setDetails(""+vuln.get("details"));

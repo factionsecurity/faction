@@ -10,7 +10,7 @@
 <script src="../plugins/ice_patched.js"></script>
 <style>
 .rating{
-padding-left:50px;
+padding-left:0px;
 }
 .text-header{
 	background: lightgray;
@@ -32,6 +32,16 @@ padding-left:50px;
 }
 .disabled{
 	background: lightgray;
+}
+.box-title u{
+font-size: xx-large;
+}
+.meta {
+font-weight: bold;
+line-height: 30px;
+}
+.catName {
+color:white;
 }
 </style>
 <style>
@@ -81,8 +91,8 @@ padding-left:50px;
 			  		</bs:mco>
 			  		<bs:mco colsize="1" style="padding-right:30px">
 			  					<bs:row>
-				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>>Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12">Close</button>
+				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
+				  					<button class="btn btn-info closeit col-md-12"><i class="fa fa-save"></i> Save</button> 
 				  				</bs:row>
 			  		</bs:mco>
 			  		</bs:row>
@@ -103,8 +113,8 @@ padding-left:50px;
 			  		</bs:mco>
 			  		<bs:mco colsize="1" style="padding-right: 30px">
 			  					<bs:row>
-				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>>Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12">Close</button>
+				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
+				  					<button class="btn btn-info closeit col-md-12"><i class="fa fa-save"></i> Save</button>
 				  				</bs:row>
 			  		</bs:mco>
 			  		</bs:row>
@@ -115,21 +125,18 @@ padding-left:50px;
 		<div class="tab-pane" id="tab_2">
 			  <s:iterator value="asmt.vulns" status="stat" var="v">
 			  	${v.updateRiskLevels()}
-			  	${v.defaultVuln.updateRiskLevels()}
 			   <br/>
 			   <bs:row>
 				<bs:mco colsize="12">
 			    <bs:box title="
 			    		<b><u>${name }</u></b><br><br>
 			    		<div class='rating'>
-			    		<span>Current Severity:</span><br><span class='label ' title='Severity'>${overallStr} Severity</span>
+			    		<span class='meta'>Category:</span><br/>
+			    		<span class='catName'>${category.name }</span><br/>
+			    		<span class='meta'>Severity:</span><br><span class='label ' title='Severity'>${overallStr} Severity</span>
 			    		<span class='label ' title='Impact'>${impactStr} Impact</span>
 			    		<span class='label ' title='Likelihood'>${likelyhoodStr} Likelihood</span>
-			    		</div><br>
-			    		<div class='rating'><span>Default Severity:</span><br>
-			    		<span class='label ' title='Severity'>${defaultVuln.overallStr} Severity</span>
-			    		<span class='label ' title='Impact'>${defaultVuln.impactStr} Impact</span>
-			    		<span class='label ' title='Likelihood'>${defaultVuln.likelyhoodStr} Likelihood</span></div> 
+			    		</div>
 			    		" type="warning">
 			    	<bs:row>
 					   
@@ -144,8 +151,8 @@ padding-left:50px;
 				  		
 			  			<bs:mco colsize="1" style="padding-right:30px">
 			  					<bs:row>
-				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>>Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12">Close</button>
+				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
+				  					<button class="btn btn-info closeit col-md-12"><i class="fa fa-save"></i> Save</button>
 				  				</bs:row>
 			  			</bs:mco>
 				  		</bs:row>

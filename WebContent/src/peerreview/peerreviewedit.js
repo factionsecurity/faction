@@ -354,8 +354,18 @@ $(function() {
 
 	$(".complete").click(function() {
 		if ($(this).hasClass("complete")){
-			//saveAllEditors(true);
-			completePR();
+			$.confirm({
+				title: 'Confirm!',
+				content: 'Are you sure you want to complete the PR? <br/> This will remove it from the PR queue and send it back to the assessor.',
+				buttons: {
+					confirm: function() {
+						completePR();
+					},
+					cancel: function() {
+
+					}
+				}
+			});
 		}
 	});
 

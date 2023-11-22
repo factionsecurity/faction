@@ -253,21 +253,6 @@ function saveAllEditors(isComplete=false){
 			}
 			data += "&" + id + "=" + encodeURIComponent(editors[id].getContents());
 		});
-		$.each($("[id^=step]"), function(_id, obj) {
-			let id = $(obj).attr("id");
-			if(id.indexOf("header") != -1) {
-				return;
-			}
-			let step = editors[id].getContents();
-			//replaces br inside pre that gets removed from ckeditor
-			let div = $("<div/>").html(step);
-			console.log(div.html());
-			div.find("pre").each(function(i, el) {
-				let newHTML = $(el).html().replace(/\n/g, "<br/>");
-				$(el).html(newHTML);
-			});
-			data += "&" + id + "=" + encodeURIComponent(div.html());
-		});
 		$.post(action, data).done(function(resp) {
 			if (resp.result == "success") {
 				$(".box-title").each((a, b) => {
