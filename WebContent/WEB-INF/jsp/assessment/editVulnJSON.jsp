@@ -5,6 +5,7 @@
 { "name" : "<s:property value="current.name"/>",
 "description" : "<s:property value="description"/>",
 "recommendation" : "<s:property value="recommendation"/>",
+"details" : "<s:property value="details"/>",
 "likelyhood" : "<s:property value="current.likelyhood"/>",
 "impact" : "<s:property value="current.impact"/>",
 "overall" : "<s:property value="current.overall"/>",
@@ -12,7 +13,8 @@
 "dfname" : "<s:property value="current.defaultVuln.name"/>",
 "dfvulnid" : "<s:property value="current.defaultVuln.id"/>",
 "dfcat" : "<s:property value="current.defaultVuln.category.name"/>",
-"dfcatid" : "<s:property value="current.defaultVuln.category.id"/>"
+"dfcatid" : "<s:property value="current.defaultVuln.category.id"/>",
+"catid" : "<s:property value="current.category.id"/>"
 }
 
 

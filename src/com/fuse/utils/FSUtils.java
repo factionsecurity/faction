@@ -63,7 +63,7 @@ public class FSUtils {
 
 	public static String jtidy(String html) {
 		// figures seems to kill the whole message.
-		html = html.replaceAll("<(/)?figure>", "");
+		//html = html.replaceAll("<(/)?figure>", "");
 
 		Tidy tidy = new Tidy();
 		InputStream stream = new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8));

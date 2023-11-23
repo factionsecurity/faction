@@ -120,7 +120,7 @@ let iceConfig = {
 function updateVulnEditors() {
 	$.each($("[id^=vuln_]"), function(_id, obj) {
 		let id = $(obj).attr("id");
-		if(id.indexOf("header") != -1) {
+		if (id.indexOf("header") != -1) {
 			return;
 		}
 		console.log(id);
@@ -143,7 +143,7 @@ function updateVulnEditors() {
 function updateStepEditors() {
 	$.each($("[id^=step]"), function(_id, obj) {
 		let id = $(obj).attr("id");
-		if(id.indexOf("header") != -1) {
+		if (id.indexOf("header") != -1) {
 			return;
 		}
 
@@ -178,22 +178,22 @@ function setUpTracking(element) {
 	}
 }
 
-function completePR(){
-	let data=`prid=${prid}`;
+function completePR() {
+	let data = `prid=${prid}`;
 	$.post("CompletePR", data).done(function(resp) {
 		if (resp.result == "complete") {
 			document.location = "PeerReview";
-		}else{
+		} else {
 			$.alert(resp.message);
 		}
 	})
-	
+
 }
-function saveAllEditors(isComplete=false) {
+function saveAllEditors(isComplete = false) {
 	let action = "SaveTrackChanges";
-	if(isComplete){
+	if (isComplete) {
 		action = "CompletePR";
-		}
+	}
 	let data = `prid=${prid}`;
 	data += "&risk_notes=" + encodeURIComponent(editors.risk_notes.getContents());
 	data += "&sum_notes=" + encodeURIComponent(editors.summary_notes.getContents());
@@ -236,28 +236,27 @@ function saveAllEditors(isComplete=false) {
 function saveEditor(type) {
 	let action = "SaveTrackChanges?action=type";
 	let data = `prid=${prid}`;
-	if(type == "risk_notes")
+	if (type == "risk_notes")
 		data += "&risk_notes=" + encodeURIComponent(editors.risk_notes.getContents());
-	else if(type == "summary_notes")
+	else if (type == "summary_notes")
 		data += "&sum_notes=" + encodeURIComponent(editors.summary_notes.getContents());
-	else if(type == "risk")
+	else if (type == "risk")
 		data += "&risk=" + encodeURIComponent(editors.risk.getContents());
-	else if(type == "summary")
+	else if (type == "summary")
 		data += "&summary=" + encodeURIComponent(editors.summary.getContents());
 	else
 		data += "&" + type + "=" + encodeURIComponent(editors[type].getContents());
-		
+
 	$.post(action, data).done(function(resp) {
 
 		if (resp.result == "success") {
-			document.getElementById(`${type}_header`).innerHTML=""
+			document.getElementById(`${type}_header`).innerHTML = ""
 			clearLockTimeout[type] = setTimeout(() => {
-				$.post(`PRClearLock`,`field=${type}&prid=${prid}`).done();
-				}, 5000);
+				$.post(`PRClearLock`, `field=${type}&prid=${prid}`).done();
+			}, 5000);
 		} else if (resp.result == "complete") {
 			clearTimeout(clearLockTimeout[type]);
-			$.post(`PRClearLock`,`field=${type}&prid=${prid}`).done(()=>
-			{
+			$.post(`PRClearLock`, `field=${type}&prid=${prid}`).done(() => {
 				document.location = "PeerReview";
 			});
 		}
@@ -275,9 +274,9 @@ function b64DecodeUnicode(str) {
 let editorTimeout = {};
 let clearLockTimeout = {};
 function queueSave(type) {
-	$.post(`PRSetLock`,`field=${type}&prid=${prid}`).done( (resp) => {
-		if(resp.result == "success"){
-			document.getElementById(`${type}_header`).innerHTML="*"
+	$.post(`PRSetLock`, `field=${type}&prid=${prid}`).done((resp) => {
+		if (resp.result == "success") {
+			document.getElementById(`${type}_header`).innerHTML = "*"
 			clearTimeout(editorTimeout[type]);
 			clearTimeout(clearLockTimeout[type]);
 			editorTimeout[type] = setTimeout(() => {
@@ -315,24 +314,37 @@ $(function() {
 
 	updateVulnEditors();
 	updateStepEditors();
-	
-	setInterval( () => {
-		$.get(`PRCheckLocks?prid=${prid}`).done( (resp) =>{
-				Object.keys(editors).forEach( function(type){
-					if(resp[type] && resp[type].isLocked){
+
+	setInterval(() => {
+		$.get(`PRCheckLocks?prid=${prid}`).done((resp) => {
+			if (resp.message == "Peer Review has been completed.") {
+				$.confirm({
+					title: "",
+					content: resp.message,
+					autoClose: "ok|5000",
+					buttons: {
+						ok: function() {
+							location.href = "PeerReview";
+						}
+					}
+				})
+			} else {
+				Object.keys(editors).forEach(function(type) {
+					if (resp[type] && resp[type].isLocked) {
 						editors[type].core.context.element.wysiwygFrame.classList.add("disabled");
-						document.getElementById(`${type}_header`).innerHTML=`<i class="lockUser">Editing by ${resp[type].lockedBy} ${resp[type].lockedAt}</i>`
+						document.getElementById(`${type}_header`).innerHTML = `<i class="lockUser">Editing by ${resp[type].lockedBy} ${resp[type].lockedAt}</i>`
 						editors[type].disabled();
 						editors[type].setContents(b64DecodeUnicode(resp[type].updatedText));
-					}else{
+					} else {
 						editors[type].enable();
-						document.getElementById(`${type}_header`).innerHTML="";
+						document.getElementById(`${type}_header`).innerHTML = "";
 						editors[type].core.context.element.wysiwygFrame.classList.remove("disabled");
 					}
 				});
 			}
+		}
 		)
-		
+
 	}, 1000);
 
 
@@ -353,9 +365,19 @@ $(function() {
 	});
 
 	$(".complete").click(function() {
-		if ($(this).hasClass("complete")){
-			//saveAllEditors(true);
-			completePR();
+		if ($(this).hasClass("complete")) {
+			$.confirm({
+				title: 'Confirm!',
+				content: 'Are you sure you want to complete the PR? <br/> This will remove it from the PR queue and send it back to the assessor.',
+				buttons: {
+					confirm: function() {
+						completePR();
+					},
+					cancel: function() {
+
+					}
+				}
+			});
 		}
 	});
 

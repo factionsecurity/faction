@@ -142,34 +142,25 @@ public class Comment {
 	private void addVuln(Vulnerability v, boolean blankNotes) {
 		JSONObject json = new JSONObject();
 		json.put("id", (Long) v.getId());
+		json.put("catName",""+ v.getCategory().getName());
+		json.put("catId",(Long) v.getCategory().getId());
 		json.put("name", v.getName());
 		json.put("desc", v.getDescription());
 		json.put("rec", v.getRecommendation());
+		json.put("details", v.getDetails());
 		if (blankNotes) {
 			json.put("rec_notes", "<p></p>");
 			json.put("desc_notes", "<p></p>");
+			json.put("detail_notes", "<p></p>");
 		} else {
 			json.put("rec_notes", v.getRec_notes());
 			json.put("desc_notes", v.getDesc_notes());
+			json.put("detail_notes", v.getDetail_notes());
 		}
 		json.put("dv", v.getDefaultVuln().getId());
 		json.put("overall", v.getOverall());
 		json.put("likelihood", v.getLikelyhood());
 		json.put("impact", v.getImpact());
-		JSONArray steps = new JSONArray();
-		for (ExploitStep step : v.getSteps()) {
-			JSONObject s = new JSONObject();
-			s.put("id", step.getId());
-			s.put("step", step.getDescription());
-			if (blankNotes) {
-				s.put("note", "<p></p>");
-			} else {
-				s.put("note", step.getExp_notes());
-			}
-			s.put("order", step.getStepNum());
-			steps.add(s);
-		}
-		json.put("steps", steps);
 
 		if (this.vulnerabilities == null) {
 			this.vulnerabilities = new ArrayList();
@@ -224,26 +215,22 @@ public class Comment {
 			JSONObject vuln = (JSONObject) parse.parse(json);
 			v.setId((Long) vuln.get("id"));
 			v.setName("" + (vuln.get("name") == null ? "" : vuln.get("name")));
+			DefaultVulnerability dv = em.find(DefaultVulnerability.class, (Long) vuln.get("dv"));
+			if( vuln.get("catId") != null) {
+				v.setCategory(em.find(Category.class, (Long) vuln.get("catId")));
+			}else {
+				v.setCategory(dv.getCategory());
+			}
 			v.setDescription("" + (vuln.get("desc") == null ? "" : vuln.get("desc")));
 			v.setRecommendation("" + (vuln.get("rec") == null ? "" : vuln.get("rec")));
-			v.setDefaultVuln(em.find(DefaultVulnerability.class, (Long) vuln.get("dv")));
+			v.setDefaultVuln(dv);
 			v.setImpact((Long) vuln.get("impact"));
 			v.setOverall((Long) vuln.get("overall"));
+			v.setDetails(""+vuln.get("details"));
+			v.setDetail_notes(""+ vuln.get("detail_notes"));
 			v.setLikelyhood((Long) vuln.get("likelihood"));
 			v.setDesc_notes("" + (vuln.get("desc_notes") == null ? "" : vuln.get("desc_notes")));
 			v.setRec_notes("" + (vuln.get("rec_notes") == null ? "" : vuln.get("rec_notes")));
-			v.setSteps(new ArrayList());
-			JSONArray steps = (JSONArray) vuln.get("steps");
-			for (int i = 0; i < steps.size(); i++) {
-				JSONObject step = (JSONObject) parse.parse(steps.get(i).toString());
-				ExploitStep ex = new ExploitStep();
-				ex.setId((Long) step.get("id"));
-				ex.setDescription("" + (step.get("step") == null ? "" : step.get("step")));
-				ex.setStepNum((Long) step.get("order"));
-				ex.setExp_notes("" + (step.get("note") == null ? "" : step.get("note")));
-				v.getSteps().add(ex);
-
-			}
 			a.getVulns().add(v);
 		}
 		return a;

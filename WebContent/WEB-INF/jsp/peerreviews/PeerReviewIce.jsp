@@ -10,7 +10,7 @@
 <script src="../plugins/ice_patched.js"></script>
 <style>
 .rating{
-padding-left:50px;
+padding-left:0px;
 }
 .text-header{
 	background: lightgray;
@@ -32,6 +32,16 @@ padding-left:50px;
 }
 .disabled{
 	background: lightgray;
+}
+.box-title u{
+font-size: xx-large;
+}
+.meta {
+font-weight: bold;
+line-height: 30px;
+}
+.catName {
+color:white;
 }
 </style>
 <style>
@@ -60,7 +70,6 @@ padding-left:50px;
    <ul class="nav nav-tabs">
      <li class="active"><a href="#tab_1" data-toggle="tab">Overview</a></li>
      <li><a href="#tab_2" data-toggle="tab">Vulnerabilities</a></li>
-     <li><a href="#tab_3" data-toggle="tab">Steps</a></li>
      <li><a href="#tabfiles" data-toggle="tab">Files</a></li>
      <s:iterator value="checklists" var="cl">
      	<li><a href="#tabcl_${key}" data-toggle="tab"><s:property value="value[0].checklist"/> Checklist</a></li>
@@ -82,8 +91,7 @@ padding-left:50px;
 			  		</bs:mco>
 			  		<bs:mco colsize="1" style="padding-right:30px">
 			  					<bs:row>
-				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>>Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12">Close</button>
+				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
 				  				</bs:row>
 			  		</bs:mco>
 			  		</bs:row>
@@ -104,8 +112,7 @@ padding-left:50px;
 			  		</bs:mco>
 			  		<bs:mco colsize="1" style="padding-right: 30px">
 			  					<bs:row>
-				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>>Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12">Close</button>
+				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
 				  				</bs:row>
 			  		</bs:mco>
 			  		</bs:row>
@@ -116,21 +123,17 @@ padding-left:50px;
 		<div class="tab-pane" id="tab_2">
 			  <s:iterator value="asmt.vulns" status="stat" var="v">
 			  	${v.updateRiskLevels()}
-			  	${v.defaultVuln.updateRiskLevels()}
-			   <br/>
 			   <bs:row>
 				<bs:mco colsize="12">
 			    <bs:box title="
 			    		<b><u>${name }</u></b><br><br>
 			    		<div class='rating'>
-			    		<span>Current Severity:</span><br><span class='label ' title='Severity'>${overallStr} Severity</span>
+			    		<span class='meta'>Category:</span><br/>
+			    		<span class='catName'>${category.name }</span><br/>
+			    		<span class='meta'>Severity:</span><br><span class='label ' title='Severity'>${overallStr} Severity</span>
 			    		<span class='label ' title='Impact'>${impactStr} Impact</span>
 			    		<span class='label ' title='Likelihood'>${likelyhoodStr} Likelihood</span>
-			    		</div><br>
-			    		<div class='rating'><span>Default Severity:</span><br>
-			    		<span class='label ' title='Severity'>${defaultVuln.overallStr} Severity</span>
-			    		<span class='label ' title='Impact'>${defaultVuln.impactStr} Impact</span>
-			    		<span class='label ' title='Likelihood'>${defaultVuln.likelyhoodStr} Likelihood</span></div> 
+			    		</div>
 			    		" type="warning">
 			    	<bs:row>
 					   
@@ -145,8 +148,7 @@ padding-left:50px;
 				  		
 			  			<bs:mco colsize="1" style="padding-right:30px">
 			  					<bs:row>
-				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>>Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12">Close</button>
+				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
 				  				</bs:row>
 			  			</bs:mco>
 				  		</bs:row>
@@ -162,45 +164,29 @@ padding-left:50px;
 			  			<bs:mco colsize="1" style="padding-right:30px">
 			  			
 				  			<bs:row>
-				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>>Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12">Close</button>
+				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
+				  				</bs:row>
+			  		</bs:mco>
+			  		</bs:row>
+						<bs:row>
+						<bs:mco colsize="7">
+							<div class="text-header" >Details <span id="vuln_details['${id}']_header"></span></div>
+				  			<textarea id="vuln_details['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="details"/></textarea>
+				  		</bs:mco>
+				  		<bs:mco colsize="4">
+							<div class="text-header">Detail Notes <span id="vuln_detail_notes['${id}']_header"></span></div>
+				  			<textarea id="vuln_detail_notes['${id}']" style="width: 100%"><s:property value="detail_notes"/></textarea>
+				  		</bs:mco>
+			  			<bs:mco colsize="1" style="padding-right:30px">
+			  			
+				  			<bs:row>
+				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
 				  				</bs:row>
 			  		</bs:mco>
 			  		</bs:row>
 			  	</bs:box>
 			  	</bs:mco>
 			  </bs:row>
-			  </s:iterator>
-		</div>
-  		<div class="tab-pane" id="tab_3">
-  
-			  <s:iterator value="asmt.vulns" >
-			  		<bs:row>
-					<bs:mco colsize="12">
-				    <bs:box title="Exploit Steps: <b>${name}</b>" type="info">
-				    		<s:if test="steps.size == 0">No Exploit Steps Added for this Vulnerability</s:if>
-						   <s:iterator value="steps" status="stat" var="step">
-						   		<bs:row><bs:mco colsize="12"><h3>Example ${stat.count }:</h3></bs:mco></bs:row>
-								<bs:row>
-									<bs:mco colsize="7">
-										<div class="text-header" id="step['${id}']_header"></div>
-							  			<textarea id="steps['${step.id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="description"/></textarea>
-							  		</bs:mco>
-							  		<bs:mco colsize="4">
-										<div class="text-header" id="step_notes['${id}']_header">Notes</div>
-							  			<textarea id="steps_notes['${step.id}']" style="width: 100%"><s:property value="exp_notes"/></textarea>
-							  		</bs:mco>
-			  						<bs:mco colsize="1" style="padding-right:30px">
-			  							<bs:row>
-				  					<button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>>Complete</button><br><br>
-				  					<button class="btn btn-info closeit col-md-12">Close</button>
-				  						</bs:row>
-			  						</bs:mco>
-							  	</bs:row>
-						  </s:iterator>
-				  </bs:box>
-				  </bs:mco>
-				  </bs:row>
 			  </s:iterator>
 		</div>
 		<div class="tab-pane" id="tabfiles">

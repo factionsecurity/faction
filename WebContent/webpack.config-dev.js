@@ -12,13 +12,21 @@ module.exports = {
 		assessment_queue:  path.resolve(__dirname, './src/assessment/assessment_queue.js'),
 		checklist:  path.resolve(__dirname, './src/assessment/checklist.js'),
 		peerreviewedit:  path.resolve(__dirname, './src/peerreview/peerreviewedit.js'),
+		peerreview_queue:  path.resolve(__dirname, './src/peerreview/peerreview_queue.js'),
 		assessorreviewedit:  path.resolve(__dirname, './src/peerreview/assessorreviewedit.js'),
 		scheduling:  path.resolve(__dirname, './src/engagement/scheduling.js'),
 		calendar:  path.resolve(__dirname, './src/calendar/calendar.js'),
 		options:  path.resolve(__dirname, './src/admin/options.js'),
 		cms:  path.resolve(__dirname, './src/cms/cms.js'),
 		default_vulns:  path.resolve(__dirname, './src/admin/default_vulns.js'),
-		users: path.resolve(__dirname, './src/admin/users.js')
+		users: path.resolve(__dirname, './src/admin/users.js'),
+		verification_edit: path.resolve(__dirname, './src/remediation/verification_edit.js'),
+		remediation: path.resolve(__dirname, './src/remediation/remediation.js'),
+		remediation_queue: path.resolve(__dirname, './src/remediation/remediation_queue.js'),
+		verification: path.resolve(__dirname, './src/retests/verification.js'),
+		verification_queue: path.resolve(__dirname, './src/retests/verification_queue.js'),
+		ice: path.resolve(__dirname, './src/ice_patched.js'),
+		templates: path.resolve(__dirname, './src/templates/templates.js')
 	},
 	output: {
 		filename: '[name].js',

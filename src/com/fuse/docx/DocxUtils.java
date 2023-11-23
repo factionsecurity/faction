@@ -192,14 +192,16 @@ public class DocxUtils {
 			int count = 1;
 			for (Vulnerability v : a.getVulns()) {
 				// Change Colors if need be
-				for (ExploitStep ex : v.getSteps()) {
-					String desc = ex.getDescription();
-					desc = desc.replaceAll("#FAC701", "#" + colorMap.get(v.getOverallStr()));
-					desc = desc.replaceAll("#FAC702", "#" + colorMap.get(v.getLikelyhoodStr()));
-					desc = desc.replaceAll("#FAC703", "#" + colorMap.get(v.getImpactStr()));
-					// desc = desc.replaceAll("#0A0A0A", "#" +colorMap.get(v.getOverallStr()));
-					ex.setDescription(desc);
+				if(v.getSteps() != null) {
+					for (ExploitStep ex : v.getSteps()) {
+						String desc = ex.getDescription();
+						desc = desc.replaceAll("#FAC701", "#" + colorMap.get(v.getOverallStr()));
+						desc = desc.replaceAll("#FAC702", "#" + colorMap.get(v.getLikelyhoodStr()));
+						desc = desc.replaceAll("#FAC703", "#" + colorMap.get(v.getImpactStr()));
+						// desc = desc.replaceAll("#0A0A0A", "#" +colorMap.get(v.getOverallStr()));
+						ex.setDescription(desc);
 
+					}
 				}
 				for (String xml : xmls) {
 					String nxml = xml.replaceAll("\\$\\{vulnName\\}", v.getName());
@@ -301,6 +303,20 @@ public class DocxUtils {
 							map2.put("${desc}", wrapHTML(mlp, "", customCSS, "desc"));
 						}
 					}
+					if (xml.contains("${details}")) {
+						if (v.getDetails() != null) {
+							String details = v.getDetails();
+							if (v.getCustomFields() != null) {
+								for (CustomField cf : v.getCustomFields()) {
+									details = details.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
+											cf.getValue());
+								}
+							}
+							map2.put("${details}", wrapHTML(mlp, details, customCSS, "details"));
+						} else {
+							map2.put("${details}", wrapHTML(mlp, "", customCSS, "details"));
+						}
+					}
 
 					replaceHTML(table, map2);
 
@@ -325,6 +341,7 @@ public class DocxUtils {
 					nxml = nxml.replaceAll("\\$\\{category\\}", "");
 					nxml = nxml.replaceAll("\\$\\{desc\\}", "");
 					nxml = nxml.replaceAll("\\$\\{rec\\}", "");
+					nxml = nxml.replaceAll("\\$\\{details\\}", "");
 					nxml = nxml.replaceAll("\\$\\{status\\}", "");
 					nxml = nxml.replaceAll("\\$\\{count\\}", "1");
 
@@ -396,9 +413,11 @@ public class DocxUtils {
 		// Update all exploit steps.
 		for (Vulnerability v : a.getVulns()) {
 			HashMap<String, List<Object>> map2 = new HashMap();
-			for (ExploitStep s : v.getSteps()) {
-				map2.put("${exploit." + s.getId() + "." + s.getStepNum() + "}",
-						wrapHTML(mlp, s.getDescription(), customCSS, "exploit"));
+			if(v.getSteps() != null) {
+				for (ExploitStep s : v.getSteps()) {
+					map2.put("${exploit." + s.getId() + "." + s.getStepNum() + "}",
+							wrapHTML(mlp, s.getDescription(), customCSS, "exploit"));
+				}
 			}
 			replaceHTML(mlp.getMainDocumentPart(), map2, false);
 
@@ -415,18 +434,19 @@ public class DocxUtils {
 		return mlp;
 
 	}
+	
 
 	private List<Object> wrapHTML(final WordprocessingMLPackage mlp, Assessment a, String content, String customCSS,
 			String className) throws Docx4JException {
 		XHTMLImporterImpl xhtml = new XHTMLImporterImpl(mlp);
 		RFonts rfonts = Context.getWmlObjectFactory().createRFonts();
 		rfonts.setAscii(this.FONT);
-		//XHTMLImporterImpl.addFontMapping("Arial", rfonts);
-		//XHTMLImporterImpl.addFontMapping("arial", rfonts);
 
 		content = replacement(content, a);
+		System.out.println(content);
 		return xhtml.convert(
-				"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\"><html><head>"
+				//"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\"><html><head>"
+				"<!DOCTYPE html><html><head>"
 						+ "<style>html{padding:0;margin:0;margin-right:30px;}\r\nbody{padding:0;margin:0;font-family:"
 						+ this.FONT + ";}\r\n" + customCSS + "</style>" + "</head><body><div class='" + className + "'>"
 						+ content + "</div></body></html>",
@@ -443,11 +463,11 @@ public class DocxUtils {
 
 		// Fix bad html
 		value = FSUtils.jtidy(value);
-
 		try {
 
 			List<Object> converted = xhtml.convert(
-					"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\"><html><head>"
+					//"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\"><html><head>"
+							"<!DOCTYPE html><html><head>"
 							+ "<style>html{padding:0;margin:0;margin-right:30px;}\r\nbody{padding:0;margin:0;font-family:"
 							+ this.FONT + ";}\r\n" + customCSS + "</style>" + "</head><body><div class='" + className
 							+ "'>" + value + "</div></body></html>",
@@ -688,6 +708,12 @@ public class DocxUtils {
 		} else {
 			map2.put("${rec}", wrapHTML(mlp, "", customCSS, "rec"));
 		}
+		
+		if (v.getDetails() != null) {
+			map2.put("${details}", wrapHTML(mlp, v.getDetails(), customCSS, "details"));
+		} else {
+			map2.put("${details}", wrapHTML(mlp, "", customCSS, "details"));
+		}
 
 		replacementText(mlp, map);
 		replaceHTML(mlp.getMainDocumentPart(), map2);
@@ -889,6 +915,17 @@ public class DocxUtils {
 				map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec"));
 			} else {
 				map2.put("${rec}", wrapHTML(mlp, "", customCSS, "rec"));
+			}
+			if (v.getDetails() != null) {
+				String details = v.getDetails();
+				if (v.getCustomFields() != null) {
+					for (CustomField cf : v.getCustomFields()) {
+						details = details.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
+					}
+				}
+				map2.put("${details}", wrapHTML(mlp, details, customCSS, "details"));
+			} else {
+				map2.put("${details}", wrapHTML(mlp, "", customCSS, "details"));
 			}
 			replaceHTML(mlp.getMainDocumentPart(), map2, true);
 
