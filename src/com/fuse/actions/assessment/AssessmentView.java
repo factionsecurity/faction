@@ -112,17 +112,17 @@ public class AssessmentView extends FSActionSupport {
 		
 		///fix image issue
 		String content = assessment.getSummary();
-		if(content.endsWith("div>")) {
+		if(content != null && content.endsWith("div>")) {
 			content = content + "<p><br/></p>";
 			assessment.setSummary(content);
 		}
 		content = assessment.getRiskAnalysis();
-		if(content.endsWith("div>")) {
+		if(content != null && content.endsWith("div>")) {
 			content = content + "<p><br/></p>";
 			assessment.setRiskAnalysis(content);
 		}
 		content = assessment.getNotes();
-		if(content.endsWith("div>")) {
+		if(content != null && content.endsWith("div>")) {
 			content = content + "<p><br/></p>";
 			assessment.setNotes(content);
 		}

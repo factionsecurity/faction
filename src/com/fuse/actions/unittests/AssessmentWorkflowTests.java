@@ -603,14 +603,10 @@ public class AssessmentWorkflowTests extends StrutsJUnit4TestCase {
 		pr.setSum_notes("test");
 		pr.setRisk_notes("test");
 		pr.setVuln_desc(new HashMap());
-		pr.setSteps_notes(new HashMap());
 		pr.setVuln_desc_notes(new HashMap());
 		for (Vulnerability vuln : r.getAssessment().getVulns()) {
 			pr.getVuln_desc().put("" + vuln.getId(), vuln.getDescription());
 			pr.getVuln_desc_notes().put("" + vuln.getId(), "Notes");
-			for (ExploitStep ex : vuln.getSteps()) {
-				pr.getSteps_notes().put("" + ex.getId(), "notes");
-			}
 		}
 		pr.setAction("completePR");
 		String result = proxy.execute();
@@ -634,14 +630,10 @@ public class AssessmentWorkflowTests extends StrutsJUnit4TestCase {
 		pr.setSum_notes("test");
 		pr.setRisk_notes("test");
 		pr.setVuln_desc(new HashMap());
-		pr.setSteps_notes(new HashMap());
 		pr.setVuln_desc_notes(new HashMap());
 		for (Vulnerability vuln : r.getAssessment().getVulns()) {
 			pr.getVuln_desc().put("" + vuln.getId(), vuln.getDescription());
 			pr.getVuln_desc_notes().put("" + vuln.getId(), "Notes");
-			for (ExploitStep ex : vuln.getSteps()) {
-				pr.getSteps_notes().put("" + ex.getId(), "notes");
-			}
 		}
 		String result = proxy.execute();
 		assertTrue(result == pr.SUCCESSJSON);
