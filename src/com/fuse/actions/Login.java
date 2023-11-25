@@ -1,16 +1,10 @@
 package com.fuse.actions;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
-import java.util.Properties;
 import java.util.UUID;
 
-import javax.inject.Inject;
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpSession;
 
 import org.apache.struts2.ServletActionContext;
@@ -95,34 +89,10 @@ public class Login extends FSActionSupport {
 			return "createAccount";
 		} else if (AccessControl.isAuthenticated(this.JSESSION)) {
 			return redirectIt(this.getSessionUser());
-		} else if (AccessControl.isAuthenticatedOAuthUser(getProfiles(), ServletActionContext.getRequest().getSession(false), em)){ 
-			HttpSession session = ServletActionContext.getRequest().getSession(false);
-			SystemSettings ss = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
-					.findFirst().orElse(null);
-			User user = (User) session.getAttribute("user");
-			String tier = this.getTier();
-			session.setAttribute("tier", tier);
-			if (tier == "consultant") {
-				session.setAttribute("retestsEnabled", false);
-				session.setAttribute("prEnabled", false);
-				session.setAttribute("feedEnabled", false);
-			} else {
-				session.setAttribute("prEnabled", ss.getPeerreview());
-				session.setAttribute("feedEnabled", ss.getEnablefeed());
-				session.setAttribute("retestsEnabled", true);
-			}
-			session.setAttribute("title1", ss.getBoldTitle() == null ? "My" : ss.getBoldTitle());
-			session.setAttribute("title2", ss.getOtherTitle() == null ? "FACTION" : ss.getOtherTitle());
-
-			return redirectIt(user);
-		}else if (username != null && !username.equals("")) {
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-
-			username = username.toLowerCase().trim();
-			HttpSession session = ServletActionContext.getRequest().getSession(true);
-			AuthResult result = AccessControl.Authenticate(username, password, session, em);
+		}else if ( (username != null && !username.equals("")) || (getProfiles() != null && getProfiles().size()>0) ) {
+			AuthResult result = AccessControl.Authenticate(username, password, request, em, getProfiles());
 			if (result == AuthResult.SUCCESS) {
+				HttpSession session = request.getSession();
 				AuditLog.audit(username, this, "Successsfully logged in", AuditLog.Login, false);
 				HibHelper.getInstance().commit();
 				User user = (User) session.getAttribute("user");
@@ -165,6 +135,10 @@ public class Login extends FSActionSupport {
 				return "failedAuth";
 			} else if (result == AuthResult.REDIRECT_OAUTH) {
 				return "redirect_to_oauth";
+			}else if (result == AuthResult.NOT_VALID_OAUTH_ACCOUNT) {
+				failed = true;
+				message = "Not a valid OAuth User. Try another account or contact the administrator.";
+				return "failedAuth";
 			} else {
 				AuditLog.error(username, this, "Access control result of " + result, AuditLog.Login, false);
 				HibHelper.getInstance().commit();
@@ -307,7 +281,7 @@ public class Login extends FSActionSupport {
 			}
 			return SUCCESS;
 
-		} else {
+		}else {
 
 			return SUCCESS;
 		}

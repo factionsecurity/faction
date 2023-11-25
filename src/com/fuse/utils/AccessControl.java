@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.codec.binary.Base64;
@@ -25,7 +26,7 @@ import com.fuse.dao.User;
 public class AccessControl {
 
 	public static enum AuthResult {
-		FAILED_AUTH, LOCKEDOUT, NOACCOUNT, SUCCESS, INACTIVITY, REDIRECT_OAUTH
+		FAILED_AUTH, LOCKEDOUT, NOACCOUNT, SUCCESS, INACTIVITY, REDIRECT_OAUTH, NOT_VALID_OAUTH_ACCOUNT
 	}
 
 	public static boolean isNewInstance(EntityManager em) {
@@ -55,37 +56,49 @@ public class AccessControl {
 			return false;
 	}
 	
-	public static boolean isAuthenticatedOAuthUser(List<UserProfile> profiles, HttpSession jsession, EntityManager em) {
-		for(UserProfile profile : profiles) {
-			String email = (String) profile.getAttribute("email");
-			if(email != null) {
-				User tmp = (User) em.createQuery("from User where email = :email")
-						.setParameter("email", email)
-						.getResultList()
-						.stream()
-						.findFirst()
-						.orElse(null);
-				if(tmp != null) {
-					tmp.setLastLogin(tmp.getLoginTime());
-					tmp.setLoginTime(new Date());
-					tmp.setFailedAuth(0);
-					em.persist(tmp);
-
-					jsession.setAttribute("user", tmp);
-					return true;
-				}
-			}
-		}
-		return false;
-	}
 
 	public static User getAuthenticatedUser(SessionMap jsession) {
 		User user = (User) jsession.get("user");
 		return user;
 	}
 
-	public static AuthResult Authenticate(String user, String pass, HttpSession jsession, EntityManager em) {
+	public static AuthResult Authenticate(String user, String pass, HttpServletRequest request, EntityManager em, List<UserProfile> profiles) {
+		
+		HttpSession jsession = request.getSession(true);
+		
+		//Check oAuth Stuff
+	
+		if( profiles != null && profiles.size() > 0 && (user==null || user.equals(""))) {
+			for(UserProfile profile : profiles) {
+				String email = (String) profile.getAttribute("email");
+				if(email != null) {
+					User tmp = (User) em.createQuery("from User where email = :email")
+							.setParameter("email", email)
+							.getResultList()
+							.stream()
+							.findFirst()
+							.orElse(null);
+					if(tmp != null) {
+						tmp.setLastLogin(tmp.getLoginTime());
+						tmp.setLoginTime(new Date());
+						tmp.setFailedAuth(0);
+						em.persist(tmp);
 
+						jsession.invalidate();
+						jsession = request.getSession(true);
+						jsession.setAttribute("user", tmp);
+						return AuthResult.SUCCESS;
+					}
+				}
+			}
+			//lets invalidate the session that has existing profiles since 
+			// none matched and return an error that oAuth failed. 
+			jsession.invalidate();
+			jsession = request.getSession(true);
+			return AuthResult.NOT_VALID_OAUTH_ACCOUNT;
+		}
+		
+		// Native, LDAP, and OAUTH Redirect processing
 		user = user.trim().toLowerCase();
 		pass = pass==null? "" : pass.trim();
 		SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
