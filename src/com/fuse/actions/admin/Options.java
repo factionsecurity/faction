@@ -370,7 +370,6 @@ public class Options extends FSActionSupport {
 		if (EMS == null) {
 			EMS = new SystemSettings();
 		}
-		EMS.restartOAuthFilter(request.getServletContext());
 		EMS.setPeerreview(Boolean.parseBoolean(this.prChecked));
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
@@ -509,53 +508,6 @@ public class Options extends FSActionSupport {
 		em.persist(t);
 		HibHelper.getInstance().commit();
 		return this.SUCCESSJSON;
-	}
-
-	@Action(value = "UpdateSSO")
-	public String updateSSO() {
-		if (!(this.isAcadmin())) {
-			return LOGIN;
-		}
-		if (!this.testToken())
-			return this.ERRORJSON;
-
-		if (this.username == null || this.username.equals("")) {
-			this._message = "Username Parameter is Missing";
-			return this.ERRORJSON;
-		}
-		if (this.fromaddress == null || this.fromaddress.equals("")) {
-			this._message = "From Address Parameter is Missing";
-			return this.ERRORJSON;
-		}
-		if (this.server == null || this.server.equals("")) {
-			this._message = "SSO Server URL is missing";
-			return this.ERRORJSON;
-		}
-		if (this.useSSO == null) {
-			this._message = "SSO Enabled Setting is missing";
-			return this.ERRORJSON;
-		}
-
-		EMS = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst().orElse(null);
-		if (EMS == null) {
-			EMS = new SystemSettings();
-		}
-
-		EMS.setSsoEnabled(this.useSSO);
-		EMS.setOauthServer(this.server);
-		EMS.setOauthUsername(this.username);
-		EMS.setOauthClientId(this.clientid);
-		EMS.setOauthTokenUrl(this.tokenURL);
-		EMS.setOauthUserInfoUrl(this.userURL);
-		if (!(this.secret == null || this.secret.equals("") || this.secret.equals("***")))
-			EMS.setOauthClientSecret(this.secret);
-		EMS.setOauthProfile(this.profile);
-		HibHelper.getInstance().preJoin();
-		em.joinTransaction();
-		em.persist(EMS);
-		HibHelper.getInstance().commit();
-		return this.SUCCESSJSON;
-
 	}
 
 	@Action("createStatus")
