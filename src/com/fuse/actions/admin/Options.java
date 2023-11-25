@@ -370,6 +370,7 @@ public class Options extends FSActionSupport {
 		if (EMS == null) {
 			EMS = new SystemSettings();
 		}
+		EMS.restartOAuthFilter(request.getServletContext());
 		EMS.setPeerreview(Boolean.parseBoolean(this.prChecked));
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();

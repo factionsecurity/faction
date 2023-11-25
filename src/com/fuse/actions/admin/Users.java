@@ -5,15 +5,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+
+import javax.servlet.FilterRegistration;
 
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
+import org.pac4j.core.client.Client;
+import org.pac4j.core.client.Clients;
+import org.pac4j.core.config.Config;
+import org.pac4j.oidc.client.OidcClient;
+import org.pac4j.core.client.direct.AnonymousClient;
 
 import com.fuse.actions.FSActionSupport;
 import com.fuse.authentication.LDAPValidator;
+import com.fuse.authentication.oauth.SecurityFilterWrapper;
 import com.fuse.dao.APIKeys;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
@@ -71,6 +80,9 @@ public class Users extends FSActionSupport {
 	private Boolean isInsecure=false;
 	private String ldapObjectClass;
 	private String credential;
+	private String oauthClientId;
+	private String oauthClientSecret;
+	private String oauthDiscoveryURI;
 
 	@Action(value = "Users")
 	public String execute() {
@@ -92,6 +104,8 @@ public class Users extends FSActionSupport {
 			this.ldapSecurity = ems.getLdapSecurity();
 			this.isInsecure = ems.getLdapInsecureSSL();
 			this.ldapObjectClass = ems.getLdapObjectClass();
+			this.oauthClientId = ems.getOauthClientId();
+			this.oauthDiscoveryURI = ems.getOauthDiscoveryURI();
 		}
 
 		return SUCCESS;
@@ -694,6 +708,31 @@ public class Users extends FSActionSupport {
 		return "usersJson";
 
 	}
+	
+	@Action(value = "SaveOAUTH")
+	public String saveOAUTH() {
+		if (!(this.isAcadmin())) {
+			return LOGIN;
+		}
+		if (!this.testToken())
+			return this.ERRORJSON;
+
+		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+				.findFirst().orElse(new SystemSettings());
+		settings.setOauthClientId(this.oauthClientId);
+		settings.setOauthDiscoveryURI(this.oauthDiscoveryURI);
+		if(this.oauthClientSecret != null && !this.oauthClientSecret.equals("")) {
+			settings.setOauthClientSecret(FSUtils.encryptPassword(this.oauthClientSecret));
+		}
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		em.persist(settings);
+		HibHelper.getInstance().commit();
+		//update the odic config in the filter
+		settings.updateOdicFilter();
+		
+		return this.SUCCESSJSON;
+	}
 
 	public boolean checkRoleAdded() {
 
@@ -1006,6 +1045,26 @@ public class Users extends FSActionSupport {
 
 	public void setCredential(String credential) {
 		this.credential = credential;
+	}
+
+	public String getOauthClientId() {
+		return oauthClientId;
+	}
+
+	public void setOauthClientId(String oauthClientId) {
+		this.oauthClientId = oauthClientId;
+	}
+
+	public String getOauthDiscoveryURI() {
+		return oauthDiscoveryURI;
+	}
+
+	public void setOauthDiscoveryURI(String oauthDiscoveryURI) {
+		this.oauthDiscoveryURI = oauthDiscoveryURI;
+	}
+
+	public void setOauthClientSecret(String oauthClientSecret) {
+		this.oauthClientSecret = oauthClientSecret;
 	}
 	
 	

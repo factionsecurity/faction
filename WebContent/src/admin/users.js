@@ -271,6 +271,35 @@ $(function() {
 		});
 
 	});
+	
+	function oauthSave(callback){
+		let pdata = "oauthClientId=" + $("#oauthClientId").val();
+		pdata += "&oauthClientSecret=" + $("#oauthClientSecret").val();
+		pdata += "&oauthDiscoveryURI=" + $("#oauthDiscoveryURI").val();
+		pdata += "&_token=" + global._token;
+		$.post("SaveOAUTH", pdata, function(data) {
+			global._token = data.token;
+			callback(data)
+		});
+		
+	}
+	$("#oauthSave").on('click', function() {
+		oauthSave( (data) => {
+			global._token = data.token;
+			if (data.result == "success") {
+				$.alert("OAUTH Settings Saved");
+			} else {
+				$.confirm({
+					title: "Error",
+					content: data.message,
+					buttons: {
+						"OK": function() { return; }
+					}
+				});
+			}
+		});
+
+	});
 	$("#uname").autoComplete({
 		minLength: 2,
 		cache: false,
