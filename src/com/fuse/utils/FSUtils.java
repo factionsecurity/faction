@@ -512,10 +512,9 @@ public class FSUtils {
 				return test;
 			}
 		} catch (Exception ex) {
-
 			ex.printStackTrace();
+			return true;
 		}
-		return false;
 	}
 
 	private static String getDescriptionFromVulnDB(String reference) {
