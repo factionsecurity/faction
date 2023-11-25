@@ -203,6 +203,27 @@
 						</div>
 					</div>
 				</div>
+				<div class="row">
+					<div class="box box-primary">
+						<div class="box-header with-border">
+							<h3 class="box-title">OAUTH2.0 Configuration</h3>
+						</div>
+						<div class="box-body">
+							<div class="row">
+								<bs:inputgroup name="Client Id" colsize="4" id="oauthClientId"
+									placeholder=""><s:property value="oauthClientId" /></bs:inputgroup>
+								<bs:inputgroup name="OAuth Discovery URI" colsize="4" id="oauthDiscoveryURI"
+									placeholder="https://domain/.well-known/openid-configuration"><s:property value="oauthDiscoveryURI" /></bs:inputgroup>
+								<bs:inputgroup name="Client Secret" colsize="4"
+									id="oauthClientSecret" password="true"
+									placeholder=""></bs:inputgroup>
+								<bs:button color="primary" id="oauthSave" text="Save" size="md"
+									colsize="4" addlabel="true"></bs:button>
+							</div>
+
+						</div>
+					</div>
+				</div>
 			</div>
 
 
@@ -261,6 +282,7 @@
 											id="authMethod">
 											<option value="Native">Native</option>
 											<option value="LDAP">LDAP</option>
+											<option value="OAUTH2.0">OAUTH 2.0</option>
 										</select>
 									</div>
 									<div class="form-group">

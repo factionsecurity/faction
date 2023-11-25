@@ -6,14 +6,17 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.struts2.dispatcher.SessionMap;
+import org.pac4j.core.profile.UserProfile;
 
 import com.fuse.authentication.LDAPValidator;
 import com.fuse.dao.Permissions;
@@ -23,37 +26,26 @@ import com.fuse.dao.User;
 public class AccessControl {
 
 	public static enum AuthResult {
-		FAILED_AUTH, LOCKEDOUT, NOACCOUNT, SUCCESS, INACTIVITY
-	}
-
-	public static User fakeAuth(EntityManager em) {
-		// Session s = HibHelper.getSessionFactory().openSession();
-		User tmp = (User) em.createQuery("from User where Id = 158").getSingleResult();
-		// s.close();
-		return tmp;
-
+		FAILED_AUTH, LOCKEDOUT, NOACCOUNT, SUCCESS, INACTIVITY, REDIRECT_OAUTH, NOT_VALID_OAUTH_ACCOUNT
 	}
 
 	public static boolean isNewInstance(EntityManager em) {
-		// Session s = HibHelper.getSessionFactory().openSession();
 		List<User> tmp = (List<User>) em.createQuery("from User").getResultList();
 		if (tmp.size() == 0) {
-			// s.close();
 			return true;
 		} else {
 			for (User u : tmp) {
 				if (u.getPermissions().isAdmin()) {
-					// s.close();
 					return false;
 				}
 			}
-			// s.close();
 			return true;
 		}
 
 	}
 
 	public static boolean isAuthenticated(SessionMap jsession) {
+		
 
 		if (jsession == null)
 			return false;
@@ -63,16 +55,52 @@ public class AccessControl {
 		} else
 			return false;
 	}
+	
 
 	public static User getAuthenticatedUser(SessionMap jsession) {
 		User user = (User) jsession.get("user");
 		return user;
 	}
 
-	public static AuthResult Authenticate(String user, String pass, HttpSession jsession, EntityManager em) {
+	public static AuthResult Authenticate(String user, String pass, HttpServletRequest request, EntityManager em, List<UserProfile> profiles) {
+		
+		HttpSession jsession = request.getSession(true);
+		
+		//Check oAuth Stuff
+	
+		if( profiles != null && profiles.size() > 0 && (user==null || user.equals(""))) {
+			for(UserProfile profile : profiles) {
+				String email = (String) profile.getAttribute("email");
+				if(email != null) {
+					User tmp = (User) em.createQuery("from User where email = :email")
+							.setParameter("email", email)
+							.getResultList()
+							.stream()
+							.findFirst()
+							.orElse(null);
+					if(tmp != null) {
+						tmp.setLastLogin(tmp.getLoginTime());
+						tmp.setLoginTime(new Date());
+						tmp.setFailedAuth(0);
+						em.persist(tmp);
 
+						jsession.invalidate();
+						jsession = request.getSession(true);
+						jsession.setAttribute("user", tmp);
+						return AuthResult.SUCCESS;
+					}
+				}
+			}
+			//lets invalidate the session that has existing profiles since 
+			// none matched and return an error that oAuth failed. 
+			jsession.invalidate();
+			jsession = request.getSession(true);
+			return AuthResult.NOT_VALID_OAUTH_ACCOUNT;
+		}
+		
+		// Native, LDAP, and OAUTH Redirect processing
 		user = user.trim().toLowerCase();
-		pass = pass.trim();
+		pass = pass==null? "" : pass.trim();
 		SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
 				.orElse(null);
 
@@ -85,8 +113,12 @@ public class AccessControl {
 			em.persist(tmp);
 			return AuthResult.LOCKEDOUT;
 		}
+		
+		// redirect to OAUTH
+		if(tmp.getAuthMethod().equals("OAUTH2.0")) {
+				return AuthResult.REDIRECT_OAUTH;
 		// Validate LDAP
-		if (tmp.getAuthMethod().equals("LDAP")) {
+		}else if (tmp.getAuthMethod().equals("LDAP")) {
 			LDAPValidator ldapValidator = new LDAPValidator(ems.getLdapURL(), ems.getLdapBaseDn(),
 					ems.getLdapBindDn(), ems.getLdapSecurity(), ems.getLdapInsecureSSL());
 			if (!ldapValidator.validateCredentials(tmp, pass)) {
@@ -95,7 +127,7 @@ public class AccessControl {
 				return AuthResult.FAILED_AUTH;
 			}
 
-			// Validate Native
+		// Validate Native
 		} else if (!tmp.getPasshash().equals(AccessControl.HashPass(user, pass))) {
 			tmp.setFailedAuth(tmp.getFailedAuth() == null ? 1 : tmp.getFailedAuth() + 1);
 			em.persist(tmp);

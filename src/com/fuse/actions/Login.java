@@ -1,11 +1,8 @@
 package com.fuse.actions;
 
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
 import java.util.UUID;
 
 import javax.servlet.http.HttpSession;
@@ -15,6 +12,13 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 import org.apache.struts2.convention.annotation.ResultPath;
+
+import org.pac4j.core.context.J2EContext;
+import org.pac4j.core.context.WebContext;
+import org.pac4j.core.context.session.J2ESessionStore;
+import org.pac4j.core.context.session.SessionStore;
+import org.pac4j.core.profile.ProfileManager;
+import org.pac4j.core.profile.UserProfile;
 import org.python.icu.text.SimpleDateFormat;
 
 import com.fuse.dao.AssessmentType;
@@ -60,28 +64,35 @@ public class Login extends FSActionSupport {
 	private String ssoURL;
 	// private static final String PROTECTED_RESOURCE_URL =
 	// "https://www.googleapis.com/plus/v1/people/me";
+	
+	private List<UserProfile>getProfiles(){
+		
+		WebContext context = new J2EContext(request,response);
+		SessionStore sessionStore = new J2ESessionStore();
+		ProfileManager pm = new ProfileManager(context, sessionStore);
+		return pm.getAll(true);
+	}
+	
 
 	@Action(value = "index", results = { @Result(name = "createAccount", location = "/WEB-INF/jsp/newInstance.jsp"),
 			@Result(name = "failedAuth", location = "/index.jsp"),
+			@Result(name = "redirect_to_oauth", location = "/oauth"),
 			@Result(name = "assessorQueue", type = "redirectAction", location = "portal/Dashboard"),
 			@Result(name = "engagement", type = "redirectAction", location = "portal/Engagement"),
 			@Result(name = "admin", type = "redirectAction", location = "portal/Users"),
 			@Result(name = "calendar", type = "redirectAction", location = "portal/Calendar"),
 			@Result(name = "remediation", type = "redirectAction", location = "portal/Remediation") })
 	public String execute() {
+		
 
 		if (AccessControl.isNewInstance(em) && action == null) {
 			return "createAccount";
 		} else if (AccessControl.isAuthenticated(this.JSESSION)) {
 			return redirectIt(this.getSessionUser());
-		} else if (username != null && password != null && !username.equals("") && !password.equals("")) {
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-
-			username = username.toLowerCase().trim();
-			HttpSession session = ServletActionContext.getRequest().getSession(true);
-			AuthResult result = AccessControl.Authenticate(username, password, session, em);
+		}else if ( (username != null && !username.equals("")) || (getProfiles() != null && getProfiles().size()>0) ) {
+			AuthResult result = AccessControl.Authenticate(username, password, request, em, getProfiles());
 			if (result == AuthResult.SUCCESS) {
+				HttpSession session = request.getSession();
 				AuditLog.audit(username, this, "Successsfully logged in", AuditLog.Login, false);
 				HibHelper.getInstance().commit();
 				User user = (User) session.getAttribute("user");
@@ -121,6 +132,12 @@ public class Login extends FSActionSupport {
 
 				failed = true;
 				message = "Your account has been locked due to inactivity. Please contact your administrator";
+				return "failedAuth";
+			} else if (result == AuthResult.REDIRECT_OAUTH) {
+				return "redirect_to_oauth";
+			}else if (result == AuthResult.NOT_VALID_OAUTH_ACCOUNT) {
+				failed = true;
+				message = "Not a valid OAuth User. Try another account or contact the administrator.";
 				return "failedAuth";
 			} else {
 				AuditLog.error(username, this, "Access control result of " + result, AuditLog.Login, false);
@@ -264,13 +281,7 @@ public class Login extends FSActionSupport {
 			}
 			return SUCCESS;
 
-		} else {
-			SystemSettings ems = (SystemSettings) em.createQuery("From SystemSettings").getResultList().stream()
-					.findFirst().orElse(null);
-			if (ems != null && ems.getOauthServer() != null && ems.getSsoEnabled()) {
-				this.ssoURL = ems.getOauthServer();
-				this.useSSO = true;
-			}
+		}else {
 
 			return SUCCESS;
 		}

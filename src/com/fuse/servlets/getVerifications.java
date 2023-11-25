@@ -102,10 +102,6 @@ public class getVerifications extends HttpServlet {
 		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
 		response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
 		response.setDateHeader("Expires", 0); // Proxies.
-		//EntityManager em = HibHelper.getEM();
-		//EntityManagerFactory emf = Persistence.createEntityManagerFactory( "Faction" );
-		//EntityManager em = emf.createEntityManager();
-		//User user = (User)AccessControl.fakeAuth(em);
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		User user = (User) request.getSession().getAttribute("user");
 		Long id = Long.parseLong(request.getParameter("id"));

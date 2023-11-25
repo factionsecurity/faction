@@ -1,6 +1,7 @@
 package com.fuse.dao;
 
 import java.util.ArrayList;
+
 import java.util.List;
 
 import javax.persistence.ElementCollection;
@@ -9,8 +10,17 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.TableGenerator;
+import javax.persistence.Transient;
 
+import org.pac4j.core.client.Clients;
+import org.pac4j.core.config.Config;
+import org.pac4j.oidc.client.OidcClient;
+import org.pac4j.oidc.config.OidcConfiguration;
+import org.pac4j.core.client.direct.AnonymousClient;
+
+import com.fuse.authentication.oauth.SecurityFilterWrapper;
 import com.fuse.utils.FSUtils;
+import com.nimbusds.jose.JWSAlgorithm;
 
 @Entity
 public class SystemSettings {
@@ -46,14 +56,10 @@ public class SystemSettings {
 	private String otherTitle = "FACTION";
 	private Long verificationOption;
 	private Boolean enableRandAppId;
-	private String oauthServer;
-	private String oauthUsername;
 	private Boolean ssoEnabled;
 	private String oauthClientId;
 	private String oauthClientSecret;
-	private String oauthProfile;
-	private String oauthUserInfoUrl;
-	private String oauthTokenUrl;
+	private String oauthDiscoveryURI;
 	private Integer inactiveDays;
 	@ElementCollection
 	private List<String> status = new ArrayList<String>();
@@ -378,10 +384,6 @@ public class SystemSettings {
 		return oauthClientSecret;
 	}
 
-	public String getOauthProfile() {
-		return oauthProfile;
-	}
-
 	public void setOauthClientId(String oauthClientId) {
 		this.oauthClientId = oauthClientId;
 	}
@@ -390,48 +392,12 @@ public class SystemSettings {
 		this.oauthClientSecret = oauthClientSecret;
 	}
 
-	public void setOauthProfile(String oauthProfile) {
-		this.oauthProfile = oauthProfile;
-	}
-
-	public String getOauthServer() {
-		return oauthServer;
-	}
-
-	public String getOauthUsername() {
-		return oauthUsername;
-	}
-
 	public Boolean getSsoEnabled() {
 		return ssoEnabled == null ? false : ssoEnabled;
 	}
 
-	public String getOauthUserInfoUrl() {
-		return oauthUserInfoUrl;
-	}
-
-	public String getOauthTokenUrl() {
-		return oauthTokenUrl;
-	}
-
-	public void setOauthServer(String oauthServer) {
-		this.oauthServer = oauthServer;
-	}
-
-	public void setOauthUsername(String oauthUsername) {
-		this.oauthUsername = oauthUsername;
-	}
-
 	public void setSsoEnabled(Boolean ssoEnabled) {
 		this.ssoEnabled = ssoEnabled;
-	}
-
-	public void setOauthUserInfoUrl(String oauthUserInfoUrl) {
-		this.oauthUserInfoUrl = oauthUserInfoUrl;
-	}
-
-	public void setOauthTokenUrl(String oauthTokenUrl) {
-		this.oauthTokenUrl = oauthTokenUrl;
 	}
 
 	public Integer getInactiveDays() {
@@ -523,6 +489,41 @@ public class SystemSettings {
 
 	public void setLdapObjectClass(String ldapObjectClass) {
 		this.ldapObjectClass = ldapObjectClass;
+	}
+	public void setOauthDiscoveryURI(String uri) {
+		this.oauthDiscoveryURI = uri;
+	}
+	
+	public String getOauthDiscoveryURI() {
+		return this.oauthDiscoveryURI;
+	}
+	@Transient
+	public OidcConfiguration getOdicConfig() {
+		OidcConfiguration config = new OidcConfiguration();
+		config.setClientId(this.oauthClientId==null?"":this.oauthClientId);
+		config.setSecret(this.oauthClientSecret==null?"":FSUtils.decryptPassword(oauthClientSecret));
+		config.setDiscoveryURI(this.oauthDiscoveryURI==null?"":this.oauthDiscoveryURI);
+        config.setUseNonce(true);
+        config.setPreferredJwsAlgorithm(JWSAlgorithm.RS256);
+        config.setMaxAge(0);
+        config.addCustomParam("display", "popup");
+        config.addCustomParam("prompt", "select_account");
+        
+        return config;
+	}
+	
+	@Transient
+	public void updateOdicFilter() {
+		OidcClient oidcClient = new OidcClient();
+		
+        oidcClient.setConfiguration(getOdicConfig());
+        oidcClient.setAuthorizationGenerator((ctx, profile) -> {
+            profile.addRole("ROLE_USER");
+            return profile;
+        });
+        Clients clients = new Clients(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback",
+                oidcClient, new AnonymousClient());
+		SecurityFilterWrapper.getInstance().setConfig(new Config(clients));
 	}
 	
 

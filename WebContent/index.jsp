@@ -8,6 +8,7 @@
 <head>
 	<meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="IE=Edge"/> 
+    <meta name="google-signin-client_id" content="656902358214-6qgdm5nsl3plmglgulardai5aph3dsmj.apps.googleusercontent.com">
 </head>
 <body>
 
@@ -19,7 +20,6 @@
 	<link rel="stylesheet" href="${pageContext.request.contextPath}/bootstrap/css/bootstrap.min.css">
 
 	<link rel="stylesheet" href="${pageContext.request.contextPath}/start.css">
-
 
 	<meta name="viewport"
 		content="width=device-width, initial-scale=1, maximum-scale=1" />
@@ -51,7 +51,6 @@
 							<div class="box-footer">
 								<button type="submit" class="btn btn-primary pull-right btn-lg" style="background-color: #a64ed0; border-color: #a64ed0;">Sign
 									in</button>
-				
 							</div>
 							<!-- /.box-footer -->
 						</form>

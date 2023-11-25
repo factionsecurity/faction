@@ -1,12 +1,9 @@
 package com.fuse.actions.admin;
 
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
 import java.util.UUID;
+
 
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
@@ -71,6 +68,9 @@ public class Users extends FSActionSupport {
 	private Boolean isInsecure=false;
 	private String ldapObjectClass;
 	private String credential;
+	private String oauthClientId;
+	private String oauthClientSecret;
+	private String oauthDiscoveryURI;
 
 	@Action(value = "Users")
 	public String execute() {
@@ -92,6 +92,8 @@ public class Users extends FSActionSupport {
 			this.ldapSecurity = ems.getLdapSecurity();
 			this.isInsecure = ems.getLdapInsecureSSL();
 			this.ldapObjectClass = ems.getLdapObjectClass();
+			this.oauthClientId = ems.getOauthClientId();
+			this.oauthDiscoveryURI = ems.getOauthDiscoveryURI();
 		}
 
 		return SUCCESS;
@@ -122,7 +124,7 @@ public class Users extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken()) {
+		if (!this.testToken(false)) {
 			return this.ERRORJSON;
 		}
 
@@ -176,7 +178,8 @@ public class Users extends FSActionSupport {
 				u.setFname(this.fname.trim());
 				u.setLname(this.lname.trim());
 			}
-			u.setAuthMethod(this.authMethod.trim());
+			this.authMethod = this.authMethod.trim();
+			u.setAuthMethod(this.authMethod);
 			String message = "Hello " + this.fname + " " + this.lname + "<br><br>";
 			if (this.ssouser) {
 				this.selectedUser.setPasshash((UUID.randomUUID()).toString());
@@ -187,14 +190,20 @@ public class Users extends FSActionSupport {
 				url = url + request.getContextPath();
 				message += "<a href='" + url + "'>Click here to Login</a><br>";
 
-			} else if (this.authMethod == "LDAP") {
-				u.setPasshash((UUID.randomUUID()).toString());
-
-				message += "Your account has been created. Please access the link below and click to access with your LDAP Credentials<br><br>";
-				String url = request.getRequestURL().toString();
-				url = url.replace(request.getRequestURI(), "");
-				url = url + request.getContextPath();
-				message += "<a href='" + url + "'>Click here to Login</a><br>";
+			} else if (this.authMethod.equals("LDAP") || this.authMethod.equals("OAUTH2.0") ) {
+				User emailExists = (User) em.createQuery("from User where email = :email")
+						.setParameter("email", this.email.trim()).getResultList().stream().findFirst().orElse(null);
+				if(emailExists != null) {
+					this._message = "Can't have two LDAP or OAuth users with the same email address.";
+					return this.ERRORJSON;
+				}else {
+					u.setPasshash((UUID.randomUUID()).toString());
+					message += "Your account has been created. Please access the link below and click to access with your SSO Credentials<br><br>";
+					String url = request.getRequestURL().toString();
+					url = url.replace(request.getRequestURI(), "");
+					url = url + request.getContextPath();
+					message += "<a href='" + url + "'>Click here to Login</a><br>";
+				}
 			} else if(this.credential != null && !this.credential.trim().equals("")){
 				String passErrorMessage = AccessControl.checkPassword(this.credential, this.credential);
 				if(passErrorMessage.equals("")) {
@@ -280,7 +289,7 @@ public class Users extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
@@ -312,7 +321,7 @@ public class Users extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 		User user = this.getSessionUser();
 		Long id = Long.parseLong(userId.replace("user", ""));
@@ -336,7 +345,7 @@ public class Users extends FSActionSupport {
 			return this.ERRORJSON;
 
 		}
-		if(this.credential != null && !this.credential.trim().equals("")) {
+		if(this.authMethod.equals("Native") && this.credential != null && !this.credential.trim().equals("")) {
 			String passErrorMessage = AccessControl.checkPassword(this.credential, this.credential);
 			if(!passErrorMessage.equals("")) {
 					this._message = passErrorMessage;
@@ -368,8 +377,8 @@ public class Users extends FSActionSupport {
 		this.selectedUser.setInActive(inactive);
 		this.selectedUser.getPermissions().setAccessLevel(this.accesscontrol);
 
-		if (this.ssouser) {
-			this.selectedUser.setPasshash("Nope-SSO-User");
+		if (!this.authMethod.equals("Native")) {
+			this.selectedUser.setPasshash(UUID.randomUUID().toString());
 		}
 
 		HibHelper.getInstance().preJoin();
@@ -415,7 +424,7 @@ public class Users extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
@@ -468,7 +477,7 @@ public class Users extends FSActionSupport {
 			return LOGIN;
 		}
 
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
@@ -501,7 +510,7 @@ public class Users extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
@@ -528,7 +537,7 @@ public class Users extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
@@ -569,7 +578,7 @@ public class Users extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
@@ -606,7 +615,7 @@ public class Users extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 		if (this.uioli == null) {
 			this._message = "Invalid number of days";
@@ -634,7 +643,7 @@ public class Users extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
@@ -660,7 +669,7 @@ public class Users extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
@@ -693,6 +702,31 @@ public class Users extends FSActionSupport {
 		password = "";
 		return "usersJson";
 
+	}
+	
+	@Action(value = "SaveOAUTH")
+	public String saveOAUTH() {
+		if (!(this.isAcadmin())) {
+			return LOGIN;
+		}
+		if (!this.testToken(false))
+			return this.ERRORJSON;
+
+		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+				.findFirst().orElse(new SystemSettings());
+		settings.setOauthClientId(this.oauthClientId);
+		settings.setOauthDiscoveryURI(this.oauthDiscoveryURI);
+		if(this.oauthClientSecret != null && !this.oauthClientSecret.equals("")) {
+			settings.setOauthClientSecret(FSUtils.encryptPassword(this.oauthClientSecret));
+		}
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		em.persist(settings);
+		HibHelper.getInstance().commit();
+		//update the odic config in the filter
+		settings.updateOdicFilter();
+		
+		return this.SUCCESSJSON;
 	}
 
 	public boolean checkRoleAdded() {
@@ -1006,6 +1040,26 @@ public class Users extends FSActionSupport {
 
 	public void setCredential(String credential) {
 		this.credential = credential;
+	}
+
+	public String getOauthClientId() {
+		return oauthClientId;
+	}
+
+	public void setOauthClientId(String oauthClientId) {
+		this.oauthClientId = oauthClientId;
+	}
+
+	public String getOauthDiscoveryURI() {
+		return oauthDiscoveryURI;
+	}
+
+	public void setOauthDiscoveryURI(String oauthDiscoveryURI) {
+		this.oauthDiscoveryURI = oauthDiscoveryURI;
+	}
+
+	public void setOauthClientSecret(String oauthClientSecret) {
+		this.oauthClientSecret = oauthClientSecret;
 	}
 	
 	

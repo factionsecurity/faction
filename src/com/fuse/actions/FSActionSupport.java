@@ -15,6 +15,7 @@ import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import javax.transaction.HeuristicMixedException;
 import javax.transaction.HeuristicRollbackException;
@@ -30,6 +31,7 @@ import org.apache.struts2.convention.annotation.Results;
 import org.apache.struts2.dispatcher.SessionMap;
 import org.apache.struts2.interceptor.CookiesAware;
 import org.apache.struts2.interceptor.ServletRequestAware;
+import org.apache.struts2.interceptor.ServletResponseAware;
 import org.apache.struts2.interceptor.SessionAware;
 
 import com.fuse.dao.HibHelper;
@@ -55,12 +57,13 @@ import com.opensymphony.xwork2.interceptor.annotations.Before;
 						"contentType", "application/octet-stream", 
 				        "inputName", "_stream"})
 })
-public class FSActionSupport extends ActionSupport implements SessionAware, ServletRequestAware{
+public class FSActionSupport extends ActionSupport implements SessionAware, ServletRequestAware, ServletResponseAware{
 	
 
 	protected SessionMap<String,Object> JSESSION;  
 	protected Map<String,String> COOKIES;
 	public HttpServletRequest request;
+	public HttpServletResponse response;
 	public String LOGIN = "login";
 	public String SUCCESSJSON = "successJson";
 	public String ERRORJSON = "errorJson";
@@ -90,30 +93,12 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	
 	@Before
 	public String openConnection(){
-		//Check all POST requests for XSRF:
-		/*if(		!(isIndex() || request.getRequestURI().toLowerCase().contains("login") || 
-					request.getRequestURI().toLowerCase().contains("reset") ||
-					request.getRequestURI().toLowerCase().contains("oauth") ||
-					request.getRequestURI().toLowerCase().contains("callback") ||
-					request.getRequestURI().toLowerCase().contains("register") 
-				) &&request.getMethod().equals("POST") && 
-				!this.testToken()) {
-			
-			return this.ERRORJSON;
-		}*/
-		
-		//Set the session timeout
-		//request.getSession().setMaxInactiveInterval(60*60);
-		
 		em = HibHelper.getInstance().getEMF().createEntityManager();
-
-		
 		return null;
 	}
 	
 	@After
 	public String closeConnection(){
-
 		em.close();
 		return null;
 	}
@@ -195,11 +180,15 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 		if(cookies == null)
 			return;
 		for(Cookie c : cookies){
-			/*if(c.getName().equals("faction_menu") && c.getValue().equals("hide")){
+			if(c.getName().equals("faction_menu") && c.getValue().equals("hide")){
 				this.MENUOPTION = "sidebar-collapse";
-			}*/
+			}
 		}
 		
+	}
+	@Override
+	public void setServletResponse(HttpServletResponse arg0) {
+		this.response = arg0;
 	}
 	
 	public String jsonOutput(String json) {
