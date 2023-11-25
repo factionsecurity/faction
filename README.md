@@ -2,7 +2,7 @@
 
 FACTION is your entire assessment workflow in a box. With FACTION you can:
 1. Automate pen testing and security assessment Reports
-1. Peer review and track changes to reports
+1. Peer review and track changes for reports
 1. Create customized DOCX templates for different assessment types and retests
 3. Real-time collaboration with assessors via the web app and [Burp Suite Extensions](https://www.factionsecurity.com/project/faction-burpsuite-extension/)
 4. Customizable vulnerability templates with over 75 prepopulated
@@ -12,8 +12,9 @@ FACTION is your entire assessment workflow in a box. With FACTION you can:
 
 Other Features:           
 1. LDAP Integration       
+1. OAUTH2.0 Integration
 1. SMTP integration 
-1. Extendedable with Custom Plugins similar to Burp Extender.
+1. Extendable with Custom Plugins similar to Burp Extender.
 2. Custom Report Variables
 
 __Want to see it in action?__ -> [Faction Video Overview](https://www.factionsecurity.com/2023/03/24/write-your-first-vulnerability-report-in-faction/)
@@ -43,7 +44,8 @@ You can find out more information about creating your own custom report template
 ## Burp Suite Extension
 [Burp Suite Extensions](https://www.factionsecurity.com/project/faction-burpsuite-extension/)
 
-
+## Manuals and Tutorials
+[Manual](https://www.factionsecurity.com/manual/)
 
 ## Don't want to host it yourself?
-We can provide hosting for your instance. All instances are single tenants so you don't have to worry about sharing infrastructure with untrusted parties. Navigate to https://www.factionsecurity.com to learn more. 
+We can provide hosting for your instance. All instances are single tenants so you don't have to worry about sharing infrastructure with untrusted parties. Navigate to [https://www.factionsecurity.com to learn more](https://www.factionsecurity.com). 
