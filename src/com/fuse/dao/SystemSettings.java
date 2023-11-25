@@ -505,12 +505,17 @@ public class SystemSettings {
 		config.setDiscoveryURI(this.oauthDiscoveryURI==null?"":this.oauthDiscoveryURI);
         config.setUseNonce(true);
         config.setPreferredJwsAlgorithm(JWSAlgorithm.RS256);
+        config.setMaxAge(0);
+        config.addCustomParam("display", "popup");
+        config.addCustomParam("prompt", "select_account");
+        
         return config;
 	}
 	
 	@Transient
 	public void updateOdicFilter() {
 		OidcClient oidcClient = new OidcClient();
+		
         oidcClient.setConfiguration(getOdicConfig());
         oidcClient.setAuthorizationGenerator((ctx, profile) -> {
             profile.addRole("ROLE_USER");
