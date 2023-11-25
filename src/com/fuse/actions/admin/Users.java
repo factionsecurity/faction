@@ -345,7 +345,7 @@ public class Users extends FSActionSupport {
 			return this.ERRORJSON;
 
 		}
-		if(this.authMethod == "Native" && this.credential != null && !this.credential.trim().equals("")) {
+		if(this.authMethod.equals("Native") && this.credential != null && !this.credential.trim().equals("")) {
 			String passErrorMessage = AccessControl.checkPassword(this.credential, this.credential);
 			if(!passErrorMessage.equals("")) {
 					this._message = passErrorMessage;
