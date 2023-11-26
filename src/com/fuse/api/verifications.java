@@ -1,10 +1,8 @@
 package com.fuse.api;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
 
 import javax.persistence.EntityManager;
 import javax.ws.rs.FormParam;
@@ -12,20 +10,16 @@ import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.hibernate.Session;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.fuse.api.util.DateParam;
 import com.fuse.api.util.Support;
-import com.fuse.dao.APIKeys;
 import com.fuse.dao.Assessment;
-import com.fuse.dao.AuditLog;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
 import com.fuse.dao.Verification;
@@ -37,8 +31,6 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
-
-import java.lang.reflect.*;
 
 
 @Api(value="/verifications")

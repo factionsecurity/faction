@@ -16,28 +16,18 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-import org.hibernate.Session;
-import org.hibernate.annotations.Parameter;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.fuse.dao.APIKeys;
-import com.fuse.dao.Assessment;
-import com.fuse.dao.Campaign;
 import com.fuse.dao.DefaultVulnerability;
-import com.fuse.dao.ExploitStep;
-import com.fuse.dao.Feed;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.User;
-//import com.fuse.dao.VTImage;
-import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
-import com.fuse.utils.FSUtils;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;

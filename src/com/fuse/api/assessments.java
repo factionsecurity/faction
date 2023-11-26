@@ -29,11 +29,9 @@ import com.fuse.dao.AssessmentType;
 import com.fuse.dao.Campaign;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.ExploitStep;
-import com.fuse.dao.Feed;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.User;
-//import com.fuse.dao.VTImage;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.utils.FSUtils;
@@ -248,23 +246,14 @@ public class assessments {
 				} else if (v.getRecommendation() == null) {
 					v.setRecommendation("");
 				}
+				if(v.getDetails() == null) {
+					v.setDetails("");
+				}
 				if (v == null)
 					return Response.status(400).entity(String.format(Support.ERROR, "Vulnerability Does Not Exist."))
 							.build();
 				v.updateRiskLevels(em);
 				JSONObject j = Support.dao2JSON(v, Vulnerability.class);
-				JSONArray steps = new JSONArray();
-				for (ExploitStep s : v.getSteps()) {
-					JSONObject tmp = Support.dao2JSON(s, ExploitStep.class);
-					/*
-					 * if(s.getHasImage()){ tmp.put("ScreenShot",
-					 * s.getImages().get(0).getBase64Image()); tmp.put("ImageId",
-					 * s.getImages().get(0).getId()); }
-					 */
-					steps.add(tmp);
-
-				}
-				j.put("Steps", steps);
 				jarray.add(j);
 
 			} else {
@@ -292,8 +281,7 @@ public class assessments {
 			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
 			@ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
 			@ApiParam(value = "Vulnerability Name", required = true) @FormParam("name") String name,
-			@ApiParam(value = "Post to Feed (true or false)", required = true) @FormParam("feed") String feed,
-			@ApiParam(value = "Exploit Step Information (Base64 Encoded)", required = false) @FormParam("message") String message,
+			@ApiParam(value = "Exploit Details Information (Base64 Encoded)", required = false) @FormParam("details") String details,
 			@ApiParam(value = "Severity ID 0-9", required = true) @FormParam("severity") Long severity) {
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		JSONArray jarray = new JSONArray();
@@ -308,7 +296,6 @@ public class assessments {
 				Assessment a = (Assessment) em.createNativeQuery(query, Assessment.class).getResultList().stream()
 						.findFirst().orElse(null);
 				if (a == null) {
-					// em.close();
 					return Response.status(400).entity(String.format(Support.ERROR, "Assessment Not Found.")).build();
 				}
 
@@ -350,36 +337,7 @@ public class assessments {
 					v.setImpact(severity);
 					v.setOverall(severity);
 					v.setAssessmentId(a.getId());
-
-					// We might just want to add a vuln without an exploit step.
-					// if the message is blank or null then don't add exploit steps.
-					if (message != null && !message.equals("")) {
-						List<ExploitStep> exs = new ArrayList<ExploitStep>();
-						ExploitStep ex = new ExploitStep();
-
-						String decoded = "";
-						try {
-							decoded = new String(Base64.decodeBase64(message));
-						} catch (Exception e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
-							return Response.status(400).entity(String.format(Support.ERROR, "Base64 DeEncoding Error"))
-									.build();
-							// String.format(this.ERROR,"Encoding Error");
-						}
-						decoded = FSUtils.sanitizeHTML(decoded);
-						ex.setDescription(decoded.trim());
-
-						ex.setStepNum(1l);
-						ex.setCreator(u);
-						exs.add(ex);
-						v.setSteps(exs);
-
-						if (feed != null && feed.equals("true")) {
-							Feed f = new Feed();
-							f.addNewVulnToFeed(u, v, decoded, Feed.ASSESSMENT, em);
-						}
-					}
+					v.setDetails(decodeAndSanitize(details));
 					if (a.getVulns() == null) {
 						List<Vulnerability> vs = new ArrayList<Vulnerability>();
 						vs.add(v);
@@ -389,12 +347,7 @@ public class assessments {
 					}
 
 					em.persist(a);
-					// FIXME: fails maven compile - AuditLog.saveLog(em, u, this, AuditLog.APIEvent,
-					// "", "Vulnerability " + v.getName() + " was updated via API.",
-					// AuditLog.CompAssessment, a.getId(), false);
 					HibHelper.getInstance().commit();
-
-					// em.close();
 
 					// Return the vulnerability ID of the newly created Vuln.
 					String returnMsg = String.format(Support.SUCCESSMSG, "\"vid\":" + v.getId());
@@ -422,8 +375,7 @@ public class assessments {
 			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
 			@ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
 			@ApiParam(value = "Vulnerability Name", required = true) @FormParam("name") String name,
-			@ApiParam(value = "Post to Feed (true or false)", required = true) @FormParam("feed") String feed,
-			@ApiParam(value = "Exploit Step Information", required = true) @FormParam("message") String message,
+			@ApiParam(value = "Exploit Details Information", required = true) @FormParam("details") String details,
 			@ApiParam(value = "Severity ID 0-9", required = true) @FormParam("severity") Long severity,
 			@ApiParam(value = "Default Vulnerability ID", required = true) @PathParam("default") Long def) {
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
@@ -470,7 +422,7 @@ public class assessments {
 							.entity(String.format(Support.ERROR, "Assessment Locked for Peer Review")).build();
 				}
 
-				if (name != null && message != null) {
+				if (name != null && details != null) {
 					HibHelper.getInstance().preJoin();
 					em.joinTransaction();
 					DefaultVulnerability dv = (DefaultVulnerability) em
@@ -485,22 +437,8 @@ public class assessments {
 					v.setImpact((long) dv.getImpact());
 					v.setOverall(severity);
 					v.setAssessmentId(a.getId());
-					List<ExploitStep> exs = new ArrayList<ExploitStep>();
-					ExploitStep ex = new ExploitStep();
+					v.setDetails(decodeAndSanitize(details));
 
-					String decoded = "";
-					try {
-						decoded = new String(Base64.decodeBase64(message));
-					} catch (Exception e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					decoded = FSUtils.sanitizeHTML(decoded);
-					ex.setDescription(decoded.trim());
-					ex.setStepNum(1l);
-					ex.setCreator(u);
-					exs.add(ex);
-					v.setSteps(exs);
 					if (a.getVulns() == null) {
 						List<Vulnerability> vs = new ArrayList<Vulnerability>();
 						vs.add(v);
@@ -510,10 +448,6 @@ public class assessments {
 					}
 
 					em.persist(a);
-					if (feed != null && feed.equals("true")) {
-						Feed f = new Feed();
-						f.addNewVulnToFeed(u, v, decoded, Feed.ASSESSMENT, em);
-					}
 					HibHelper.getInstance().commit();
 
 					// em.close();
@@ -534,7 +468,7 @@ public class assessments {
 	 * addVuln adds exploit steps to an existing vulnerability.
 	 */
 	@POST
-	@ApiOperation(value = "Add Exploit Steps to an existing vulnerability.", notes = "Vulnerability must already exist.", response = Assessment.class, responseContainer = "List")
+	@ApiOperation(value = "Add Exploit Details to an existing vulnerability.", notes = "Vulnerability must already exist.", response = Assessment.class, responseContainer = "List")
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 400, message = "Bad Request."),
 			@ApiResponse(code = 200, message = "Post Successful.") })
@@ -544,8 +478,7 @@ public class assessments {
 			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
 			@ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
 			@ApiParam(value = "Vulnerability ID", required = true) @PathParam("vid") Long vid,
-			@ApiParam(value = "Post to Feed (true or false)", required = true) @FormParam("feed") String feed,
-			@ApiParam(value = "Exploit Step Information", required = true) @FormParam("message") String message) {
+			@ApiParam(value = "Exploit Detail Information", required = true) @FormParam("details") String details) {
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		JSONArray jarray = new JSONArray();
 		try {
@@ -589,32 +522,16 @@ public class assessments {
 							.entity(String.format(Support.ERROR, "Assessment Locked for Peer Review")).build();
 				}
 
-				if (message != null) {
+				if (details != null) {
 					for (Vulnerability v : a.getVulns()) {
 						if (v.getId() == vid) {
 							HibHelper.getInstance().preJoin();
 							em.joinTransaction();
-
-							ExploitStep ex = new ExploitStep();
-							String decoded = "";
-							try {
-								decoded = new String(Base64.decodeBase64(message));
-							} catch (Exception e) {
-								// TODO Auto-generated catch block
-								e.printStackTrace();
-							}
-							decoded = FSUtils.sanitizeHTML(decoded);
-							ex.setDescription(decoded);
-							ex.setStepNum(v.getSteps().size() + 1);
-							v.getSteps().add(ex);
-							em.persist(a);
+							String previousDetails = v.getDetails();
+							previousDetails = previousDetails == null? "" : previousDetails;
+							v.setDetails(previousDetails + "<br/>" + decodeAndSanitize(details));
+							em.persist(v);
 							HibHelper.getInstance().commit();
-							/*
-							 * if(feed != null && feed.equals("true")){ Feed f = new Feed();
-							 * f.addNewVulnToFeed(u, v, "", Feed.ASSESSMENT, em); }
-							 */
-							// em.close();
-							// return SUCCESS;
 							return Response.status(200).entity(Support.SUCCESS).build();
 
 						}
@@ -757,6 +674,18 @@ public class assessments {
 			em.close();
 		}
 
+	}
+	
+	private String decodeAndSanitize(String encoded) {
+			String decoded = "";
+			try {
+				decoded = new String(Base64.decodeBase64(encoded));
+				return FSUtils.sanitizeHTML(decoded);
+			} catch (Exception e) {
+				e.printStackTrace();
+				return "";
+				
+			}
 	}
 
 }
