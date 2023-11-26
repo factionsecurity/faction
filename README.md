@@ -19,7 +19,6 @@ Other Features:           
 
 __Want to see it in action?__ -> [Faction Video Overview](https://www.factionsecurity.com/2023/03/24/write-your-first-vulnerability-report-in-faction/)
 
-
 ## Quick Setup
 
 Run the following commands to build the war file and deploy it to the docker container. 
@@ -49,3 +48,15 @@ You can find out more information about creating your own custom report template
 
 ## Don't want to host it yourself?
 We can provide hosting for your instance. All instances are single tenants so you don't have to worry about sharing infrastructure with untrusted parties. Navigate to [https://www.factionsecurity.com to learn more](https://www.factionsecurity.com). 
+
+## Screenshots
+__Vulnerability Templates__
+![image](https://github.com/factionsecurity/faction/assets/2343831/b6fa6a0b-34a9-46cf-87cb-6aeb2b5d3347)
+
+__Assessment Scheduling__
+![image](https://github.com/factionsecurity/faction/assets/2343831/515ebaa4-65e2-4843-93a7-4439899a99e3)
+
+__Peer Review and Track Changes__
+![image](https://github.com/factionsecurity/faction/assets/2343831/fa72a72b-2c95-4c2c-bad1-5b34aab7fd13)
+
+
