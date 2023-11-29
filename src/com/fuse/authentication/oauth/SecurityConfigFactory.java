@@ -43,13 +43,16 @@ public class SecurityConfigFactory implements ConfigFactory {
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		SystemSettings ss = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
 					.findFirst().orElse(null);
+		if(ss == null) {
+			ss = new SystemSettings();
+		}
 		final OidcConfiguration oidcConfiguration = ss.getOdicConfig();
 		em.close();
-        oidcClient.setConfiguration(oidcConfiguration);
-        oidcClient.setAuthorizationGenerator((ctx, profile) -> {
-            profile.addRole("ROLE_USER");
-            return profile;
-        });
+		oidcClient.setConfiguration(oidcConfiguration);
+		oidcClient.setAuthorizationGenerator((ctx, profile) -> {
+			profile.addRole("ROLE_USER");
+			return profile;
+		});
 
         final Clients clients = new Clients(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback",
                 oidcClient,  new AnonymousClient());
