@@ -20,6 +20,9 @@ Other Features:           
 __Want to see it in action?__ -> [Faction Video Overview](https://www.factionsecurity.com/2023/03/24/write-your-first-vulnerability-report-in-faction/)
 
 ## Quick Setup
+__Requirements__
+- Java JDK11 
+- Maven (for building the project)
 
 Run the following commands to build the war file and deploy it to the docker container. 
 ```
