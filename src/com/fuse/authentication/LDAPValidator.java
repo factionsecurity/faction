@@ -61,6 +61,12 @@ public class LDAPValidator {
 	}
 
 	public Boolean validateCredentials(User user, String password) {
+		if(user==null) {
+			return false;
+		}
+		if(password == null || password.trim().equals("")) {
+			return false;
+		}
 
 		Hashtable<String, String> env = new Hashtable<>();
 		env.put(Context.INITIAL_CONTEXT_FACTORY, "com.sun.jndi.ldap.LdapCtxFactory");
