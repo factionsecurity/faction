@@ -1,15 +1,29 @@
 package com.fuse.extenderapi;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.persistence.EntityManager;
 
+import org.apache.commons.compress.harmony.unpack200.bytecode.forms.ThisFieldRefForm;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
@@ -18,68 +32,56 @@ import com.fuse.dao.Assessment;
 import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
+import com.fuse.extender.ApplicationInventory;
 import com.fuse.extender.AssessmentManager;
 import com.fuse.extender.VerificationManager;
 import com.fuse.extender.VulnerabilityManager;
 
 public class Extensions {
 
-	public static String INVENTORY = "Inventory";
-	public static String LOGGING = "Logging";
-	public static String VER_MANAGER = "VerificationManager";
-	public static String ASMT_MANAGER = "AssessmentManager";
-	public static String VULN_MANAGER = "VulnerabilityManager";
-
-	public HashMap<String, String> methods = new HashMap();
-
-	public Extensions() {
-		methods.put(INVENTORY, "search");
-		methods.put(ASMT_MANAGER, "assessmentChange");
-		methods.put(VULN_MANAGER, "vulnerabilityChange");
-		methods.put(VER_MANAGER, "verificationChange");
-
+	
+	public enum EventType {
+		INVENTORY, VER_MANAGER, ASMT_MANAGER, VULN_MANAGER
 	}
 
-	public static boolean checkIfExtended(String Module) {
-		try {
-			// Check if the Extender Modules Exits
-			Class.forName("com.fuse.elements.Assessment");
-			// Check if the Module Exists
-			Class.forName("com.fuse.extender.module." + Module);
-			return true;
-		} catch (ClassNotFoundException ex) {
-			return false;
-		}
+	public HashMap<EventType, String> methods = new HashMap();
+	private SortedSet<Class> extendedClasses = new TreeSet<Class>();
+	private String method;
+	private EventType eventType;
+	
+	
 
+	public Extensions(EventType type) {
+		methods.put(EventType.INVENTORY, "search"); //TODO: Change this to be less generic
+		methods.put(EventType.ASMT_MANAGER, "assessmentChange");
+		methods.put(EventType.VULN_MANAGER, "vulnerabilityChange");
+		methods.put(EventType.VER_MANAGER, "verificationChange");
+		this.eventType = type;
+		this.method = this.methods.get(type);
 	}
 
-	public Object execute(String Module, Class[] classes, Object... arguments) {
+	public boolean checkIfExtended() {
+		this.extendedClasses = this.getExtendedClasses();
+		return this.extendedClasses != null && this.extendedClasses.size() != 0;
+	}
+	
+	public Object execute(Class[] classes, Object... arguments) {
 		try {
-			Object ai = Class.forName("com.fuse.extender.module." + Module).newInstance();
-			Method m = ai.getClass().getMethod(methods.get(Module), classes);
+			System.out.println("There are " + (this.extendedClasses.size() -1) +" other matched classes that did not run");
+			Object ai = this.extendedClasses.first().newInstance();
+			Method m = ai.getClass().getMethod(methods.get(this.eventType), classes);
 			return m.invoke(ai, arguments);
-
-		} catch (ClassNotFoundException e) {
-
-			// This is OK... it means no one has extended this feature
-			// e.printStackTrace();
 		} catch (InstantiationException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalAccessException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (NoSuchMethodException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (SecurityException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IllegalArgumentException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InvocationTargetException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
@@ -114,7 +116,7 @@ public class Extensions {
 			tmpAssessment.setCampaign(assessment.getCampaign().getName());
 			tmpAssessment.setType(assessment.getType().getType());
 
-			Object[] updates = (Object[]) this.execute(Extensions.ASMT_MANAGER,
+			Object[] updates = (Object[]) this.execute(
 					new Class[] { com.fuse.elements.Assessment.class, List.class, AssessmentManager.Operation.class },
 					tmpAssessment, tmpVulns, operation);
 
@@ -153,7 +155,7 @@ public class Extensions {
 			copy(assessment, tmpAssessment);
 
 			Object[] updates = (Object[]) this.execute(
-					Extensions.VULN_MANAGER, new Class[] { com.fuse.elements.Assessment.class,
+							new Class[] { com.fuse.elements.Assessment.class,
 							com.fuse.elements.Vulnerability.class, VulnerabilityManager.Operation.class },
 					tmpAssessment, tVuln, operation);
 
@@ -187,7 +189,7 @@ public class Extensions {
 			com.fuse.elements.User user = new com.fuse.elements.User();
 			copy(verification.getAssessor(), user);
 
-			Object[] updates = (Object[]) this.execute(Extensions.VER_MANAGER,
+			Object[] updates = (Object[]) this.execute(
 					new Class[] { com.fuse.elements.User.class, com.fuse.elements.Vulnerability.class, String.class,
 							java.util.Date.class, java.util.Date.class, VerificationManager.Operation.class },
 					user, tVuln, verification.getVerificationItems().get(0).getNotes(), verification.getStart(),
@@ -232,6 +234,87 @@ public class Extensions {
 	private static void copy(Object source, Object dest) {
 		String[] nulls = getNullPropertyNames(source);
 		BeanUtils.copyProperties(source, dest, nulls);
+	}
+	
+	private SortedSet<Class> getExtendedClasses() {
+		SortedSet<Class> classes = new TreeSet<Class>();
+		try {
+			for( String file : this.getJarFiles("/opt/faction/modules/")) {
+				SortedSet<Class> matchedMethods = getExtendedClassesFromFile(file);
+				if(matchedMethods != null && matchedMethods.size()>0) {
+					classes.addAll(matchedMethods);
+				}
+			}
+			return classes;
+		}catch(IOException ex) {
+			ex.printStackTrace();
+			return null;
+		}catch(Throwable ex) {
+			ex.printStackTrace();
+			return null;
+		}
+	}
+	
+	private Set<String> getJarFiles(String dir) throws IOException {
+    try (Stream<Path> stream = Files.list(Paths.get(dir))) {
+	        return stream
+	          .filter(file -> !Files.isDirectory(file))
+	          .map(Path::getFileName)
+	          .map(Path::toString)
+	          .collect(Collectors.toSet());
+	    }
+	}
+	
+	private SortedSet<Class> getExtendedClassesFromFile(String file){
+		JarFile jarFile;
+		try {
+			jarFile = new JarFile("/opt/faction/modules/"+file);
+			Enumeration<JarEntry> e = jarFile.entries();
+
+			URL[] urls = { new URL("jar:file:/opt/faction/modules/" + file + "!/") };
+			URLClassLoader cl = URLClassLoader.newInstance(urls);
+			SortedSet<Class> classes = new TreeSet<Class>();
+
+			while (e.hasMoreElements()) {
+				JarEntry je = e.nextElement();
+				if (je.isDirectory() || !je.getName().endsWith(".class")) {
+					continue;
+				}
+				// -6 because of .class
+				String className = je.getName().substring(0, je.getName().length() - 6);
+				className = className.replace('/', '.');
+				try {
+					Class c = cl.loadClass(className);
+					if(		ApplicationInventory.class.isInstance(c.getClass()) || 
+							AssessmentManager.class.isInstance(c.getClass()) ||
+							VerificationManager.class.isInstance(c.getClass()) ||
+							VulnerabilityManager.class.isInstance(c.getClass())
+								
+							) {
+						Method [] methods = c.getMethods();
+						for(Method m : methods) {
+							System.out.println(m.getName());
+							if(m.getName().endsWith("."+this.method)) {
+								classes.add(c);
+								break;
+							}
+						}
+					}
+					
+				} catch (ClassNotFoundException ex) {
+					System.out.println("Cant load " + className);
+				}catch(Exception ex) {
+					System.out.println("Cant load " + className);
+				}catch(Throwable ex) {
+					System.out.println("Cant load " + className);
+				}
+			}
+			return classes;
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 }

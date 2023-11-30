@@ -37,11 +37,9 @@ import com.fuse.dao.PeerReview;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
-import com.fuse.dao.Vulnerability;
 import com.fuse.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
-import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
 import com.fuse.utils.FSUtils;
 
@@ -265,9 +263,9 @@ public class Engagement  extends FSActionSupport{
 				ex.printStackTrace();
 			}
 			
-			if(Extensions.checkIfExtended(Extensions.ASMT_MANAGER)){
+			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+			if(amgr.checkIfExtended()){
 				try{
-					Extensions amgr = new Extensions();
 					amgr.execute(em, am, AssessmentManager.Operation.Create);
 				}catch(Exception ex){
 					ex.printStackTrace();
@@ -417,9 +415,9 @@ public class Engagement  extends FSActionSupport{
 			
 			
 			
-			if(Extensions.checkIfExtended(Extensions.ASMT_MANAGER)){
+			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+			if(amgr.checkIfExtended()){
 				try{
-					Extensions amgr = new Extensions();
 					amgr.execute(em, a, AssessmentManager.Operation.Delete);
 				}catch(Exception ex){
 					ex.printStackTrace();

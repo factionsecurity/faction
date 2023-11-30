@@ -37,28 +37,6 @@ public class test extends HttpServlet {
     }
 
 	/**
-	 * @see HttpServlet#doGet(HttpServletRequest request, HttpServletResponse response)
-	 */
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		
-		Extensions ex = new Extensions();
-		if(ex.checkIfExtended(Extensions.INVENTORY)){
-			Class[] classes = new Class[2];
-			classes[0] = String.class;
-			classes[1] = String.class;
-			InventoryResult[] j = (InventoryResult[])  ex.execute(Extensions.INVENTORY, classes, "test","test");
-			System.out.println(   j[0].getApplicationName());
-		}else{
-			System.out.println("failed");
-		}
-		
-		
-		
-	}
-	
-
-
-	/**
 	 * @see HttpServlet#doPost(HttpServletRequest request, HttpServletResponse response)
 	 */
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

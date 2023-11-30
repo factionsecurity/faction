@@ -259,11 +259,11 @@ public class uploadAssessment extends HttpServlet {
 			
 				
 		//Check the API Extensions for data		
-		if ( Extensions.checkIfExtended(Extensions.INVENTORY)) {
+		Extensions appInv = new Extensions(Extensions.EventType.ASMT_MANAGER);
+		if ( appInv.checkIfExtended()) {
 			
-			Extensions appInv = new Extensions();
 			InventoryResult[] results = (InventoryResult[]) appInv
-					.execute(Extensions.INVENTORY, new Class[]{String.class,  String.class}, appid, "");
+					.execute(new Class[]{String.class,  String.class}, appid, "");
 			
 			if(results != null && results.length == 1){
 				

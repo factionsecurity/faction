@@ -1,6 +1,12 @@
 package com.fuse.actions.assessment;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -615,9 +621,9 @@ public class AssessmentView extends FSActionSupport {
 			notifiers.add(n);
 			// em.persist(n);
 		}
-		if (Extensions.checkIfExtended(Extensions.ASMT_MANAGER)) {
+		Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+		if (amgr.checkIfExtended()) {
 			try {
-				Extensions amgr = new Extensions();
 				amgr.execute(em, assessment, AssessmentManager.Operation.Finalize);
 			} catch (Exception ex) {
 				ex.printStackTrace();
@@ -915,5 +921,8 @@ public class AssessmentView extends FSActionSupport {
 	public String getUpdatedText() {
 		return this.updatedText;
 	}
+	
+	   
+	
 
 }
