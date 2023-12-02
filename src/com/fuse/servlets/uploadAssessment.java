@@ -26,7 +26,7 @@ import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
-import com.fuse.extender.InventoryResult;
+import com.faction.extender.InventoryResult;
 import com.fuse.extenderapi.Extensions;
 import com.opencsv.CSVReader;
 
@@ -259,11 +259,11 @@ public class uploadAssessment extends HttpServlet {
 			
 				
 		//Check the API Extensions for data		
-		if ( Extensions.checkIfExtended(Extensions.INVENTORY)) {
+		Extensions appInv = new Extensions(Extensions.EventType.ASMT_MANAGER);
+		if ( appInv.checkIfExtended()) {
 			
-			Extensions appInv = new Extensions();
 			InventoryResult[] results = (InventoryResult[]) appInv
-					.execute(Extensions.INVENTORY, new Class[]{String.class,  String.class}, appid, "");
+					.execute(new Class[]{String.class,  String.class}, appid, "");
 			
 			if(results != null && results.length == 1){
 				

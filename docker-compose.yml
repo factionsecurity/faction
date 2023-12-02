@@ -16,6 +16,7 @@ services:
       target: base_app
     volumes:
         - "~/.faction/templates:/opt/faction/templates"
+        - "~/.faction/modules:/opt/faction/modules"
     environment:
         - 'FACTION_REPORT_STORAGE=local'
         - 'FACTION_MONGO_HOST=faction-mongo'
@@ -24,6 +25,8 @@ services:
         - 'FACTION_MONGO_PASSWORD=faction_mongo_pass'
         - 'FACTION_SECRET_KEY=faction_encryption_key'
         - 'FACTION_OAUTH_CALLBACK=http://localhost:8080'
+        - 'JIRA_API_KEY=josh.summitt@fusesoft.co:ATATT3xFfGF0V3ELXx6Fcp56mTfa5-IXcC1aq0g6fBc3O9ER6q2dF397jyUyocLKt36lukYurItdl8T2Dw8a2M9Ufu6fzeCSNLmBIcAGEpz6JPnDJMBmlYUyPSBf7Q9OnMJlZYQfb2ifSPntd6XYdPlCFsK9K7mOxSCthNIex1niemdoy5pExY4=19C4C013'
+        - 'JIRA_HOST=https://factionsecurity.atlassian.net/'
     links:
       - faction-mongo
     command: ["/usr/local/tomcat/bin/catalina.sh", "run"]

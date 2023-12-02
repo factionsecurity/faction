@@ -42,13 +42,14 @@
 .moveDown {
 	z-index: 100000;
 }
+
 tr  td {
-    border-top: 0px !important;
+	border-top: 0px !important;
 }
 
 .disabled {
-opacity: 0.2;
-pointer-events: none;
+	opacity: 0.2;
+	pointer-events: none;
 }
 
 td:first-child {
@@ -56,25 +57,23 @@ td:first-child {
 	border-left-style: solid;
 }
 
-.selected td:first-child{
+.selected td:first-child {
 	border-left-style: dotted;
-	
-}
-.userEdit{
-    background: #f39c12;
-    color: white;
-    font-weight: bold;
-    border-radius: 5px;
-    padding-left: 4px;
-    padding-right: 7px;
-    padding-top: 2px;
-    padding-bottom: 4px;
-    margin-left: 30px;
 }
 
+.userEdit {
+	background: #f39c12;
+	color: white;
+	font-weight: bold;
+	border-radius: 5px;
+	padding-left: 4px;
+	padding-right: 7px;
+	padding-top: 2px;
+	padding-bottom: 4px;
+	margin-left: 30px;
+}
 </style>
 
-<!-- Findings  TABLE -->
 <div class="row">
 	<div class="col-xs-8">
 		<div id="vulnForm" class="box box-danger disabled">
@@ -83,20 +82,20 @@ td:first-child {
 					<i class="fa fa-bug"></i> Vulnerability Details
 				</h3>
 			</div>
-			<!-- /.box-header -->
 			<form>
 				<div class="box-body">
 					<div class="form-horizontal">
 						<div class="form-group">
-							<input type="hidden" id="dvulnerability"/>
-							<label for="title" class="col-sm-2 control-label">Title:
-								<span id="title_header"></span></label>
+							<input type="hidden" id="dvulnerability" /> <label for="title"
+								class="col-sm-2 control-label">Title: <span
+								id="title_header"></span></label>
 							<div class="col-sm-4">
 								<input type="text" class="form-control" id="title"
 									placeholder="Vulnerbility Name">
 							</div>
 							<label for="title" class="col-sm-2 control-label">Overall
-								Severity: <span id="overall_header"></span></label>
+								Severity: <span id="overall_header"></span>
+							</label>
 							<div class="col-sm-2">
 								<select class="select2 form-control" id="overall"
 									style="width: 100%">
@@ -111,7 +110,8 @@ td:first-child {
 						</div>
 						<div class="form-group">
 							<label for="category" class="col-sm-2 control-label">Category:
-								<span id="dcategory_header"></span></label>
+								<span id="dcategory_header"></span>
+							</label>
 							<div class="col-sm-4">
 								<select class="select2 form-control" id="dcategory"
 									style="width: 100%">
@@ -121,7 +121,8 @@ td:first-child {
 								</select>
 							</div>
 							<label for="title" class="col-sm-2 control-label">Impact:
-								<span id="impact_header"></span></label>
+								<span id="impact_header"></span>
+							</label>
 							<div class="col-sm-2">
 								<select class="select2 form-control" id="impact"
 									style="width: 100%">
@@ -137,7 +138,8 @@ td:first-child {
 						<div class="form-group">
 							<div class="col-sm-6"></div>
 							<label for="title" class="col-sm-2 control-label">Likelihood:
-								<span id="likelyhood_header"></span></label>
+								<span id="likelyhood_header"></span>
+							</label>
 							<div class="col-sm-2">
 								<select class="select2 form-control" id="likelyhood"
 									style="width: 100%">
@@ -153,12 +155,18 @@ td:first-child {
 						<br>
 					</div>
 					<div class="row">
-						<s:iterator value="vulntypes">
-							<div class="col-md-4">
-								<div class="form-group">
-									<label title="Variable: &#x24;{cf${variable}}">${key}</label>
-									<textarea type="text" class="form-control pull-right" rows="3"
-										id="type${id}"></textarea>
+							<div class="col-sm-12">
+							<s:if test="customFields != null && customFields.size() >0"><hr></s:if>
+							</div>
+						<s:iterator value="customFields">
+							<div class="form-group">
+								<div class="col-md-6">
+									<label class="col-sm-2 control-label"
+										title="Variable: &#x24;{cf${variable}}">${key}<span id="cust${id}_header"></span></label>
+									<div class="col-md-4">
+										<input type="text" class="form-control pull-right" rows="3"
+											id="cust${id}"></input>
+									</div>
 								</div>
 							</div>
 
@@ -201,8 +209,8 @@ td:first-child {
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="recommendation" toolbar="Full" id="recommendation"
-											clickToEnable="false">
+										<bs:editor name="recommendation" toolbar="Full"
+											id="recommendation" clickToEnable="false">
 
 										</bs:editor>
 									</div>
@@ -217,7 +225,8 @@ td:first-child {
 							<div class="box box-info">
 								<div class="box-header">
 									<h3 class="box-title">
-										<i class="glyphicon glyphicon-edit"></i> Details: <span id="details_header"></span>
+										<i class="glyphicon glyphicon-edit"></i> Details: <span
+											id="details_header"></span>
 									</h3>
 								</div>
 								<!-- /.box-header -->
@@ -266,13 +275,13 @@ td:first-child {
 					<tbody>
 						<s:iterator value="avulns">
 							<tr data-vulnid="${id}">
-								<td class="sev${overallStr}"><input type="checkbox" id="ckl<s:property value="id"/>" /></td>
-								<td data-sort="${overall}"><span class="vulnName"><s:property value="name" /></span><br><span class="category"> <s:property
-										value="category.name" /></span><BR> <span class="severity"
-									><s:property value="overallStr" /></span>
-								</td>
-								<td><span
-									class="vulnControl vulnControl-delete"
+								<td class="sev${overallStr}"><input type="checkbox"
+									id="ckl<s:property value="id"/>" /></td>
+								<td data-sort="${overall}"><span class="vulnName"><s:property
+											value="name" /></span><br> <span class="category"> <s:property
+											value="category.name" /></span><BR> <span class="severity"><s:property
+											value="overallStr" /></span></td>
+								<td><span class="vulnControl vulnControl-delete"
 									id="deleteVuln<s:property value="id"/>"
 									<s:if test="hideit">disabled</s:if>><i
 										class="fa fa-trash" title="Delete Vulnerability"></i></span></td>
@@ -287,10 +296,10 @@ td:first-child {
 		</div>
 		<!-- /.box -->
 	</div>
-	</div>
+</div>
 
 
-	<script>
+<script>
   function getValueFromId(id){
       switch(id){
           <s:iterator value="levels">

@@ -1,6 +1,12 @@
 package com.fuse.actions.assessment;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -39,7 +45,7 @@ import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.dao.query.VulnerabilityQueries;
-import com.fuse.extender.AssessmentManager;
+import com.faction.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.ReportGenThread;
@@ -256,8 +262,8 @@ public class AssessmentView extends FSActionSupport {
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
-		Long lid = Long.parseLong(this.id);
-		Assessment assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid,
+		Long assessmentId = Long.parseLong(this.id);
+		Assessment assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), assessmentId,
 				AssessmentQueries.OnlyNonCompleted);
 
 		if (assessment == null) {
@@ -615,9 +621,9 @@ public class AssessmentView extends FSActionSupport {
 			notifiers.add(n);
 			// em.persist(n);
 		}
-		if (Extensions.checkIfExtended(Extensions.ASMT_MANAGER)) {
+		Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+		if (amgr.checkIfExtended()) {
 			try {
-				Extensions amgr = new Extensions();
 				amgr.execute(em, assessment, AssessmentManager.Operation.Finalize);
 			} catch (Exception ex) {
 				ex.printStackTrace();
@@ -835,7 +841,7 @@ public class AssessmentView extends FSActionSupport {
 			this.opened = opened;
 			this.closed = closed;
 			this.vuln = vuln;
-			this.report = Report.replace("/tmp/", "");
+			this.report = Report != null ? Report.replace("/tmp/", "") : null;
 			this.severity = severity;
 			this.assessor = assessor;
 		}
@@ -915,5 +921,8 @@ public class AssessmentView extends FSActionSupport {
 	public String getUpdatedText() {
 		return this.updatedText;
 	}
+	
+	   
+	
 
 }

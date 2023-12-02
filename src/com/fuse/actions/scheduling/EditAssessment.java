@@ -30,7 +30,7 @@ import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
 import com.fuse.dao.query.AssessmentQueries;
-import com.fuse.extender.AssessmentManager;
+import com.faction.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
 
 @Namespace("/portal")
@@ -273,9 +273,9 @@ public class EditAssessment extends FSActionSupport {
 					AuditLog.audit(this, "Assessment Updated", AuditLog.UserAction, AuditLog.CompAssessment, am.getId(),
 							false);
 
-				if (Extensions.checkIfExtended(Extensions.ASMT_MANAGER)) {
+				Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+				if (amgr.checkIfExtended()) {
 					try {
-						Extensions amgr = new Extensions();
 						amgr.execute(em, am, AssessmentManager.Operation.Update);
 					} catch (Exception ex) {
 						ex.printStackTrace();

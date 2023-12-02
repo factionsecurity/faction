@@ -30,7 +30,6 @@ class SaveQueue {
 		this.locks = new EditLocks(this, assessmentId, updateVulnsCallback);
 	}
 	push(id, key, value){
-		console.log(arguments)
 		this.locks.setLock(id, key);
 		if(document.getElementById(`${key}_header`)){
 			document.getElementById(`${key}_header`).innerHTML="*"
@@ -52,7 +51,7 @@ class SaveQueue {
 		const keys = Object.keys(this.queue);
 		let _this = this;
 		for( let key of keys){
-			const data = `vulnid=${key}&` + Object.keys(this.queue[key]).map( (k) => {
+			let data = Object.keys(this.queue[key]).map( (k) => {
 				if(this.caller.vulnId == key && document.getElementById(`${k}_header`)){
 					document.getElementById(`${k}_header`).innerHTML=""
 				}
@@ -60,10 +59,28 @@ class SaveQueue {
 					_this.locks.clearLock(key, k);
 				}, 5000)
 				return `${k}=${this.queue[key][k]}`
-			}).join("&")
+			})
+			
+			data=`vulnid=${key}&` + _this.handleCustom(data).join("&")
 			this.saveCallback(data, this.caller);
 			delete this.queue[key];
 		}
+	}
+	
+	handleCustom(data){
+		let fields= data
+			.filter( (row) => row.indexOf("cust") ==0)
+			.map( (row) => {
+				let tmp = row.replace("cust", "");
+				let cfId = tmp.split("=")[0];
+				let cfValue = tmp.split("=")[1];
+				return`{"typeid" : ${cfId}, "value" : "${cfValue}"}`;
+			})
+			
+		if(fields.length>0){
+			data.push(`cf=[${fields.join(",")}]`);
+		}
+		return data;
 	}
 	
 }
@@ -285,9 +302,7 @@ class VulnerablilityView {
 		});
 	}
 	saveChanges(data, _this){
-		console.log("save1")
 		data=`${data}&_token=${_this._token}`
-		console.log(data)
 		$.post("updateVulnerability", data, function(resp) {
 			if(resp.result != "success"){
 				$.alert(resp.message);
@@ -519,7 +534,7 @@ class VulnerablilityView {
 			data += "&defaultTitle="
 			data += "&feedMsg="
 			let fields = [];
-			for (let id of vulnTypes) {
+			for (let id of customFields) {
 				let value = $(`#type${id}`).val();
 				fields.push(`{"typeid" : ${id}, "value" : "${value}"}`);
 			}
@@ -650,6 +665,7 @@ class VulnerablilityView {
 		$("#title").attr("intVal", "-1");
 		$("#title").val("");
 		$("#dcategory").val("").trigger('change')
+		$('[id^="cust"]').each((_index, el) => $(el).val(""));
 		
 	}
 	disableAutoSave(){
@@ -667,10 +683,10 @@ class VulnerablilityView {
 		$("#impact").unbind('input');
 		$("#likelyhood").unbind('input');
 		$("#dcategory").unbind('input');
+		$('[id^="cust"]').each((_index, el) => $(el).unbind('input'));
 	}
 
 	enableAutoSave(){
-		console.log("autosave enabled");
 		let _this = this;
 		this.editors.description.onInput = function(contents, core){
 			_this.queue.push(_this.vulnId,"description", encodeURIComponent(contents));
@@ -725,6 +741,10 @@ class VulnerablilityView {
 			$(".selected").find(".category")[0].innerHTML=catName
 			_this.queue.push(_this.vulnId,"dcategory", $(this).val());
 		});
+		$('[id^="cust"]').each((_index, el) => $(el).on('input', function(event){
+			console.log(this.id, $(this).val())
+			_this.queue.push(_this.vulnId, this.id, $(this).val());
+		}));
 		
 	}
 	setEditorContents(type, data){
@@ -756,7 +776,7 @@ class VulnerablilityView {
 			_this.setIntVal(data.impact, 'impact');
 			_this.setIntVal(data.catid, 'dcategory');
 			$(data.cf).each(function(a, b) {
-				$("#type" + b.typeid).val(b.value);
+				$("#cust" + b.typeid).val(b.value);
 			});
 			_this.enableAutoSave()
 		});

@@ -14,7 +14,7 @@ import org.json.simple.JSONObject;
 
 import org.junit.Test;
 
-import com.fuse.extender.InventoryResult;
+import com.faction.extender.InventoryResult;
 
 public class TestAIModule {
 	
@@ -53,12 +53,12 @@ public class TestAIModule {
 	public void test() {
 		addPath("C:/tmp/modules/Inventory.jar");
 	
-		Extensions ex = new Extensions();
-		if(ex.checkIfExtended(Extensions.INVENTORY)){
+		Extensions ex = new Extensions(Extensions.EventType.INVENTORY);
+		if(ex.checkIfExtended()){
 			Class[] classes = new Class[2];
 			classes[0] = String.class;
 			classes[1] = String.class;
-			InventoryResult[] j = (InventoryResult[])  ex.execute(Extensions.INVENTORY, classes, "test","test");
+			InventoryResult[] j = (InventoryResult[])  ex.execute(classes, "test","test");
 			System.out.println(   j[0].getApplicationName());
 		}else{
 			System.out.println("failed");

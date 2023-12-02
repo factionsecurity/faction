@@ -28,7 +28,7 @@ import com.fuse.dao.CustomType;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Integrations;
 import com.fuse.dao.User;
-import com.fuse.extender.InventoryResult;
+import com.faction.extender.InventoryResult;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.utils.FSUtils;
 import com.fuse.utils.Integrate;
@@ -71,6 +71,7 @@ public class applicationInventory extends HttpServlet {
 		//HibHelper hh = new HibHelper();
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		Integrations inv = (Integrations)em.createQuery("from Integrations where name = :name").setParameter("name", "mod1").getResultList().stream().findFirst().orElse(null);
+		Extensions appInv = new Extensions(Extensions.EventType.INVENTORY);
 		if(inv != null && inv.isEnabled()){
 			VTArray json=new VTArray();
 			VTKVPair kv = new VTKVPair();
@@ -88,10 +89,9 @@ public class applicationInventory extends HttpServlet {
 			PrintWriter out = response.getWriter();
 			response.setContentType("application/json");
 			out.print(json.toJSONString());
-		}else if ( Extensions.checkIfExtended(Extensions.INVENTORY)) {
-			Extensions appInv = new Extensions();
+		}else if ( appInv.checkIfExtended()) {
 			InventoryResult[] results = (InventoryResult[]) appInv
-					.execute(Extensions.INVENTORY, new Class[]{String.class,  String.class}, appid,appname);
+					.execute(new Class[]{String.class,  String.class}, appid,appname);
 			JSONArray array = new JSONArray();
 			for(InventoryResult result : results){
 				JSONObject json = new JSONObject();

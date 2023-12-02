@@ -17,7 +17,7 @@ import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.VerificationItem;
 import com.fuse.dao.VulnNotes;
-import com.fuse.extender.VerificationManager;
+import com.faction.extender.VerificationManager;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.TaskQueueExecutor;
@@ -125,13 +125,13 @@ public class VerificationQueue extends FSActionSupport {
 
 					Assessment a = em.find(Assessment.class, vi.getVulnerability().getAssessmentId());
 
-					if (Extensions.checkIfExtended(Extensions.VER_MANAGER)) {
+					Extensions vmgr = new Extensions(Extensions.EventType.VER_MANAGER);
+					if (vmgr.checkIfExtended()) {
 						try {
-							Extensions amgr = new Extensions();
 							if (vi.isPass())
-								amgr.execute(em, v, VerificationManager.Operation.PASS);
+								vmgr.execute(em, v, VerificationManager.Operation.PASS);
 							else
-								amgr.execute(em, v, VerificationManager.Operation.FAIL);
+								vmgr.execute(em, v, VerificationManager.Operation.FAIL);
 						} catch (Exception ex) {
 							ex.printStackTrace();
 						}

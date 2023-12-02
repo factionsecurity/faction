@@ -818,10 +818,10 @@ $(function() {
 	});
 	$(function() {
 		$(".updateCF").click(function() {
-			var id = $(this).attr("for");
-			var data = "cfid=" + id;
-			data += "&id=${id}";
-			data += "&cfValue=" + $("#cust" + id).val();
+			let cfid = $(this).attr("for");
+			let data = `cfid=${cfid}`;
+			data += `&id=${id}`;
+			data += "&cfValue=" + $("#cust" + cfid).val();
 			data += "&_token=" + global._token;
 			$.post("UpdateAsmtCF", data).done(function(resp) {
 				alertMessage(resp, "Parameter Updated.");

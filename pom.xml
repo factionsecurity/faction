@@ -49,6 +49,17 @@
 			</plugin>
 		</plugins>
 	</build>
+	<repositories>
+		<repository>
+			<id>FactionExtender</id>
+			<url>
+				https://github.com/factionsecurity/faction-extender/raw/mvn-repo/</url>
+			<snapshots>
+				<enabled>true</enabled>
+				<updatePolicy>always</updatePolicy>
+			</snapshots>
+		</repository>
+	</repositories>
 	<dependencies>
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
@@ -208,11 +219,9 @@
 			<type>maven-plugin</type>
 		</dependency>
 		<dependency>
-			<groupId>fuse.extender</groupId>
-			<artifactId>fuse-extender</artifactId>
-			<version>1.0</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/extra/Extender.jar</systemPath>
+			<groupId>FactionExtender</groupId>
+			<artifactId>FactionExtender</artifactId>
+			<version>1.1</version>
 		</dependency>
 		<dependency>
 			<groupId>org.docx4j</groupId>
