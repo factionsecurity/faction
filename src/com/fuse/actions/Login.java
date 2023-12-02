@@ -92,6 +92,8 @@ public class Login extends FSActionSupport {
 		}else if ( (username != null && !username.equals("")) || (getProfiles() != null && getProfiles().size()>0) ) {
 			AuthResult result = AccessControl.Authenticate(username, password, request, em, getProfiles());
 			if (result == AuthResult.SUCCESS) {
+				HibHelper.getInstance().preJoin();
+				em.joinTransaction();
 				HttpSession session = request.getSession();
 				AuditLog.audit(username, this, "Successsfully logged in", AuditLog.Login, false);
 				HibHelper.getInstance().commit();
