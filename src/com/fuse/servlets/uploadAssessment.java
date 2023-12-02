@@ -26,7 +26,7 @@ import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
-import com.fuse.extender.InventoryResult;
+import com.faction.extender.InventoryResult;
 import com.fuse.extenderapi.Extensions;
 import com.opencsv.CSVReader;
 

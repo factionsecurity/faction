@@ -71,7 +71,7 @@ public class Assessment {
 	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private PeerReview peerReview;
 
-	private Boolean notes_lock = false;
+	private Boolean notesLock = false;
 	@ManyToOne
 	private User notes_locked_by;
 	private Date notes_lock_time;
@@ -323,11 +323,14 @@ public class Assessment {
 	}
 
 	public Boolean isNotesLock() {
-		return notes_lock != null && notes_lock;
+		return notesLock != null && notesLock;
+	}
+	public Boolean getNotesLock() {
+		return notesLock != null && notesLock;
 	}
 
-	public void setNotesLock(Boolean notes_lock) {
-		this.notes_lock = notes_lock;
+	public void setNotesLock(Boolean notesLock) {
+		this.notesLock = notesLock;
 	}
 
 	public User getNotesLockBy() {
@@ -347,6 +350,9 @@ public class Assessment {
 	}
 
 	public Boolean isSummaryLock() {
+		return summary_lock != null && summary_lock;
+	}
+	public Boolean getSummaryLock() {
 		return summary_lock != null && summary_lock;
 	}
 
@@ -371,6 +377,9 @@ public class Assessment {
 	}
 
 	public Boolean isRiskLock() {
+		return risk_lock != null && risk_lock;
+	}
+	public Boolean getRiskLock() {
 		return risk_lock != null && risk_lock;
 	}
 

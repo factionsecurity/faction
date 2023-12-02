@@ -17,7 +17,7 @@ import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.VerificationItem;
 import com.fuse.dao.VulnNotes;
-import com.fuse.extender.VerificationManager;
+import com.faction.extender.VerificationManager;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.TaskQueueExecutor;

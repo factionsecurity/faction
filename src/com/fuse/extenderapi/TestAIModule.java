@@ -14,7 +14,7 @@ import org.json.simple.JSONObject;
 
 import org.junit.Test;
 
-import com.fuse.extender.InventoryResult;
+import com.faction.extender.InventoryResult;
 
 public class TestAIModule {
 	

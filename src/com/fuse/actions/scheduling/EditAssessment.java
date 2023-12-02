@@ -30,7 +30,7 @@ import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
 import com.fuse.dao.query.AssessmentQueries;
-import com.fuse.extender.AssessmentManager;
+import com.faction.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
 
 @Namespace("/portal")

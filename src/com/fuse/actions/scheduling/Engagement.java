@@ -37,7 +37,7 @@ import com.fuse.dao.PeerReview;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
-import com.fuse.extender.AssessmentManager;
+import com.faction.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.TaskQueueExecutor;

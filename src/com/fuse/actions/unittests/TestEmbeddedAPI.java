@@ -10,7 +10,7 @@ import org.junit.Test;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Verification;
 
-import com.fuse.extender.VerificationManager;
+import com.faction.extender.VerificationManager;
 import com.fuse.extenderapi.Extensions;
 
 public class TestEmbeddedAPI {
@@ -57,7 +57,7 @@ public class TestEmbeddedAPI {
 	@Test
 	public void testVerification() {
 		try{
-			Extensions amgr = new Extensions();
+			Extensions amgr = new Extensions(Extensions.EventType.VER_MANAGER);
 			EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 			Verification ver = em.find(Verification.class, 189l);
 			amgr.execute(em, ver, VerificationManager.Operation.Assigned);

@@ -45,7 +45,7 @@ import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.dao.query.VulnerabilityQueries;
-import com.fuse.extender.AssessmentManager;
+import com.faction.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.ReportGenThread;
@@ -262,8 +262,8 @@ public class AssessmentView extends FSActionSupport {
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
-		Long lid = Long.parseLong(this.id);
-		Assessment assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid,
+		Long assessmentId = Long.parseLong(this.id);
+		Assessment assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), assessmentId,
 				AssessmentQueries.OnlyNonCompleted);
 
 		if (assessment == null) {
@@ -841,7 +841,7 @@ public class AssessmentView extends FSActionSupport {
 			this.opened = opened;
 			this.closed = closed;
 			this.vuln = vuln;
-			this.report = Report.replace("/tmp/", "");
+			this.report = Report != null ? Report.replace("/tmp/", "") : null;
 			this.severity = severity;
 			this.assessor = assessor;
 		}

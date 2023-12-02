@@ -16,7 +16,7 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.json.simple.JSONObject;
 
-import com.fuse.extender.InventoryResult;
+import com.faction.extender.InventoryResult;
 import com.fuse.extenderapi.Extensions;
 
 import org.json.simple.JSONArray;
