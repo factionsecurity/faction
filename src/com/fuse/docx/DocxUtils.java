@@ -763,7 +763,7 @@ public class DocxUtils {
 				: (a.getAssessor().get(0).getFname() + " " + a.getAssessor().get(0).getLname()));
 		content = content.replaceAll("\\$\\{asmtAssessor_Email\\}",
 				a.getAssessor() == null ? "" : (a.getAssessor().get(0).getEmail()));
-		content = content.replaceAll("\\$\\{asmtAssessor_Lines\\}", a.getAssessor() == null ? "" : assessors_nl);
+		content = content.replaceAll("\\$\\{asmtAssessors_Lines\\}", a.getAssessor() == null ? "" : assessors_nl);
 		content = content.replaceAll("\\$\\{asmtAssessors_Comma\\}", a.getAssessor() == null ? "" : assessors_comma);
 		content = content.replaceAll("\\$\\{asmtAssessors_Bullets\\}",
 				a.getAssessor() == null ? "" : assessors_bullets);
