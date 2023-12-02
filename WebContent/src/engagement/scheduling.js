@@ -285,11 +285,6 @@ function checkForms() {
 	}
 
 
-	/*
-	if($("#assessorListSelect option").size()==0){
-		issues += "<li>Missing an Assessor.</li>";
-	}*/
-
 	if (issues != "") {
 		$.alert({
 			type: "red",
@@ -359,16 +354,14 @@ function confirmAndPostIt(messages, index, size) {
 						data += "&distro=" + $("#distlist").val();
 						data += "&campId=" + $("#campName").val();
 						data += "&sdate=" + $("#reservation").val().split("to")[0].trim();
-						console.log("fix iterator");
 						let fields = [];
-						for (let id of customFields) {
-							fields.push(`{"id" : ${id}, "text" : "' + $("#cust${id}").val() + '"}`);
-						}
-						/*
-						<s:iterator value="custom" status="incr">
-						<s:if test="#incr.index != 0">data+=",";</s:if>
-						data+='{"id" : ${id}, "text" : "' + $("#cust${id}").val() + '"}';
-						</s:iterator>*/
+						$('[id^="cust"]').each( (_index,el)=>{
+							let id = el.id;
+							id = id.replace('cust',"");
+							
+							let field = `{"id" : ${id}, "text" : "${$(el).val()}"}`;
+							fields.push(field);
+						})
 						data += '&cf=[' + fields.join(",") + "]";
 
 						let endTmp = $("#reservation").val().split("to")[1];
