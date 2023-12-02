@@ -136,7 +136,7 @@
 								</div>
 								<div class="col-sm-2">
 									<s:if
-										test="assessment.InPr || assessment.prComplete || assessment.finalized">
+										test="!(assessment.InPr || assessment.prComplete || assessment.finalized)">
 										<button class="btn btn-default updateCF" for="${id}">Update</button>
 									</s:if>
 								</div>
