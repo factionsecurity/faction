@@ -65,8 +65,23 @@ import '../scripts/jquery.autocomplete.min';
         };
         var emailSignature = suneditor.create("emailSignature", editorOptions);
 
-		$("#type").DataTable();
-		$("#campaign").DataTable();
+		$("#type").DataTable(
+             {"paging": true,
+             "lengthChange": false,
+             "searching": true,
+             "ordering": true,
+             "info": true,
+             "autoWidth": false}
+		);
+		$("#campaign").DataTable(
+			
+             {"paging": true,
+             "lengthChange": false,
+             "searching": true,
+             "ordering": true,
+             "info": true,
+             "autoWidth": false}
+		);
 		$("#addType").click(function(){
 			let name = $("#typeName").val();
 			let data="action=addType";

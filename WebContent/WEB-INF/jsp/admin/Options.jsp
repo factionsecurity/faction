@@ -25,8 +25,8 @@
 	  <bs:mco colsize="6">
 	  	<bs:box type="success" title="Assessment Type">
 	  		<bs:row>
-	  			<bs:inputgroup name="" colsize="6" id="typeName" placeholder="Enter Assessment Type Name"></bs:inputgroup>
-	  			<bs:button color="success" size="md" colsize="6" text="Add" id="addType"></bs:button>
+	  			<bs:inputgroup name="" colsize="9" id="typeName" placeholder="Enter Assessment Type Name"></bs:inputgroup>
+	  			<bs:button color="success" size="md" colsize="3" text="<i class='fa fa-plus'></i> Add" id="addType"></bs:button>
 	  		</bs:row>
 	  		<br>
 	  		<bs:row>
@@ -51,8 +51,8 @@
 	  <bs:mco colsize="6">
 	  	<bs:box type="warning" title="Campaign">
 	  		<bs:row>
-	  			<bs:inputgroup name="" colsize="6" id="campaignName" placeholder="Enter Campaign Name"></bs:inputgroup>
-	  			<bs:button color="success" size="md" colsize="6" text="Add" id="addCampaign" > </bs:button>
+	  			<bs:inputgroup name="" colsize="9" id="campaignName" placeholder="Enter Campaign Name"></bs:inputgroup>
+	  			<bs:button color="success" size="md" colsize="3" text="<i class='fa fa-plus'></i> Add" id="addCampaign" > </bs:button>
 	  		</bs:row>
 	  		<br>
 	  		<bs:row>
@@ -88,12 +88,11 @@
 	  			<select id="cfType">
 	  				<option value="0">Assessment</option>
 	  				<option value="1">Vulnerability</option>
-	  				<!--  <option value="2">User</option>
-	  				<option value="3">Verification</option>-->
 	  			</select>
 	  			</bs:mco>
 	  			<bs:mco colsize="2"><input type=checkbox id="readonly" /> ReadOnly?</bs:mco>
-	  			<bs:button color="success" size="md" colsize="3" text="Add" id="addCF" > </bs:button>
+	  			<bs:mco colsize="1">&nbsp;</bs:mco>
+	  			<bs:button color="success" size="md" colsize="3" text="<i class='fa fa-plus'></i> Add" id="addCF" > </bs:button>
 	  		</bs:row>
 	  		<br>
 	  		<bs:row>
@@ -140,7 +139,7 @@
 	           </div>
 	           <bs:inputgroup name="Bold Title:" colsize="12" id="title1" placeholder="Fuse">${title[0]}</bs:inputgroup>
 	           <bs:inputgroup name="Secondary Title:" colsize="12" id="title2" placeholder="FACTION">${title[1]}</bs:inputgroup><br>
-	  			<bs:button color="info" size="md" colsize="4" text="Save Titles" id="updateTitles" > </bs:button>
+	  			<bs:button color="info" size="md" colsize="3" text="<i class='fa fa-save'></i> Save Titles" id="updateTitles" > </bs:button>
 	  		</bs:row>
 	  	</bs:box>
 	  	</s:if>
@@ -149,7 +148,7 @@
 	 	
 	  	<bs:box type="primary" title="Assessment Status">
 	  		<bs:inputgroup name="Status Name:" colsize="6" id="asmtStatus"></bs:inputgroup>
-	  		<bs:button color="primary" size="md" colsize="2" text="<i class='fa fa-plus'></i>" id="addstatus" addlabel="true"></bs:button>
+	  		<bs:button color="primary" size="md" colsize="3" text="<i class='fa fa-plus'></i> Add" id="addstatus" addlabel="true"></bs:button>
 	  		<br><br>
 	  		<br><br>
 	  		<bs:mco colsize="12">
@@ -213,8 +212,8 @@
 	  		</bs:row>
 	  		<br>
 	  		<bs:row>
-	  		<bs:button color="info" size="md" colsize="4" text="Save" id="saveEmail" > </bs:button>
-	  		<bs:button color="warning" size="md" colsize="4" text="Save and Test Email" id="testEmail" > </bs:button>
+	  		<bs:button color="info" size="md" colsize="4" text="<i class='fa fa-save'></i> Save" id="saveEmail" > </bs:button>
+	  		<bs:button color="warning" size="md" colsize="4" text="<i class='fa fa-envelope'></i> Save and Test Email" id="testEmail" > </bs:button>
 	  		</bs:row>
 
 	  	</bs:box>

@@ -164,8 +164,8 @@ public class DefaultVulns  extends FSActionSupport{
 				HibHelper.getInstance().commit();
 			}
 			
-		}else if(!(this.isAcadmin() || this.isAcmanager())){
-			return AuditLog.notAuthorized(this, "User is not Manager or Admin", true);
+		}else if(!(this.isAcadmin() || this.isAcmanager() || this.isAcassessor())){
+			return AuditLog.notAuthorized(this, "User is not Accessor, Manager or Admin", true);
 		}
 		
 		

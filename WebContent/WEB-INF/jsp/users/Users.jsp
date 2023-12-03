@@ -34,9 +34,11 @@
 					<div class="box-body">
 
 						<div class="row">
+							<div class="col-xs-6">
 							<div class="col-sm-3" style="margin-bottom: -30px; z-index: 1">
 								<button class="btn btn-block btn-primary btn-sm" id="addUser">Add
 									User</button>
+							</div>
 							</div>
 						</div>
 						<table id="userTable"

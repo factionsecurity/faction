@@ -627,6 +627,7 @@ a:focus {
     position: absolute;
     width: 180px;
     left: 50px;
+     box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
   }
   .sidebar-mini.sidebar-collapse .sidebar-menu > li:hover > a > span {
     top: 0;
@@ -2174,10 +2175,11 @@ a:focus {
  * -----------------
  */
 .btn {
-  border-radius: 3px;
+  border-radius: 0.25rem;
   -webkit-box-shadow: none;
   box-shadow: none;
   border: 1px solid transparent;
+  transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out;
 }
 .btn.uppercase {
   text-transform: uppercase;
@@ -2219,7 +2221,7 @@ a:focus {
 .btn-default {
   background-color: transparent;
   color: #f4f4f4;
-  border-color: #f4f4f4;
+  border-color: #f4f4f499;
 }
 .btn-default:hover,
 .btn-default:active,
@@ -2229,7 +2231,7 @@ a:focus {
 .btn-primary {
 	
   background-color: transparent;
-  border-color: #3c91e6;
+  border-color: #3c91e699;
   //color: #3c91e6;
   
 }
@@ -2240,8 +2242,7 @@ a:focus {
 }
 .btn-success {
   background-color: transparent;
-  border-color: #00a65a;
-  //color: #00a65a;
+  border-color: #00a65a99;
 }
 .btn-success:hover,
 .btn-success:active,
@@ -2250,7 +2251,7 @@ a:focus {
 }
 .btn-info {
   background-color: transparent;
-  border-color: #00c0ef;
+  border-color: #00c0ef99;
   color: #00c0ef;
   
 
@@ -2268,8 +2269,7 @@ a:focus {
 }
 .btn-danger {
   background-color: transparent;
-  border-color: #dd4b39;
-  //color: #dd4b39;
+  border-color: #dd4b3999;
 }
 .btn-danger:hover,
 .btn-danger:active,
@@ -2647,11 +2647,11 @@ a:focus {
  */
 .table > thead > tr > th,
 .table > tbody > tr > th,
-.table > tfoot > tr > th,
+.table > tfoot > tr > th, 
 .table > thead > tr > td,
 .table > tbody > tr > td,
 .table > tfoot > tr > td {
-  border-top: 1px solid #f4f4f4;
+  border-top: 1px solid #607d8b;
 }
 .table > thead > tr > th {
  // border-bottom: 2px solid #f4f4f4;

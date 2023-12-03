@@ -223,8 +223,6 @@
                 <li class="<s:property value="activeOptions"/>" ><a href="Options">Settings</a></li>
                 </s:if>
                 <s:if test="acmanager || acadmin">
-                <li class="<s:property value="activeCms"/>" ><a href="cms">Report Designer</a></li>
-                <li class="<s:property value="activeVulns"/>"><a href="DefaultVulns">Default Vulnerabilities</a></li>
                 <li class="<s:property value="activeChecklist"/>"><a href="Checklists">Checklists</a></li>
                 </s:if>
               </ul>
@@ -236,6 +234,8 @@
                 <!-- <li class="<s:property value="activeVulnTemplates"/>"><a href="VulnerabilityTemplates">Vulnerabilities</a></li>
                 <li class="<s:property value="activeCats"/>" ><a href="Options">Categories</a></li>-->
                 <li class="<s:property value="activeTemplates"/>" ><a href="Templates">Assessment Templates</a></li>
+                <li class="<s:property value="activeCms"/>" ><a href="cms">Report Designer</a></li>
+                <li class="<s:property value="activeVulns"/>"><a href="DefaultVulns">Default Vulnerabilities</a></li>
               </ul>
             </li>
           </ul><!-- /.sidebar-menu -->
