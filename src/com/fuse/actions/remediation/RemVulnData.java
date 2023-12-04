@@ -40,8 +40,6 @@ public class RemVulnData extends FSActionSupport {
 		if (!this.isAcremediation()) {
 			return LOGIN;
 		}
-		// System.out.println(this.request.getPathInfo());
-		// Session session = HibHelper.getSessionFactory().openSession();
 		if (action.equals("insertNote") && vulnId != -1l) {
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();

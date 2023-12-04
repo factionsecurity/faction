@@ -207,7 +207,7 @@
             	</li>
              </s:if>
             <s:if test="acassessor || acremediation || acmanager || acengagement || acadmin">
-            	<li class="<s:property value="activeCal"/>"><a href="Calendar"><i class="glyphicon glyphicon-calendar"></i> <span>Team Calendar</span></a></li>
+            	<li class="<s:property value="activeCal"/>"><a href="Calendar"><i class="fa fa-group"></i> <span>Team Calendar</span></a></li>
             </s:if>
             <s:if test="acassessor || acremediation || acmanager || acengagement || acadmin">
             	<li class="<s:property value="activeMetrics"/>"><a href="Metrics"><i class="glyphicon glyphicon-signal"></i> <span>Metrics</span></a></li>
@@ -229,7 +229,7 @@
             </li>
             </s:if>
             <li class="treeview <s:property value="activeVulnTemplates"/><s:property value="activeCats"/><s:property value="activeTemplates"/>">
-              <a href="#"><i class="glyphicon glyphicon-pencil"></i> <span>Templates</span> <i class="fa fa-angle-left pull-right"></i></a>
+              <a href="#"><i class="glyphicon glyphicon-book"></i> <span>Templates</span> <i class="fa fa-angle-left pull-right"></i></a>
               <ul class="treeview-menu">
                 <!-- <li class="<s:property value="activeVulnTemplates"/>"><a href="VulnerabilityTemplates">Vulnerabilities</a></li>
                 <li class="<s:property value="activeCats"/>" ><a href="Options">Categories</a></li>-->

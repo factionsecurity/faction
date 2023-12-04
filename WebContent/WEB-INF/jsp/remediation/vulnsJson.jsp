@@ -25,9 +25,9 @@
 	"notes" : "<s:property value="assessment.AccessNotes" escapeJavaScript="true"/>",
 	"isVer" : ${isVer},
 	"severity" : {
-		"overall" :  ${vuln.overall},
-		"likelyhood" : ${vuln.likelyhood},
-		"impact" : ${vuln.impact}
+		"overall" :  "${vuln.overall}",
+		"likelyhood" : "${vuln.likelyhood}",
+		"impact" : "${vuln.impact}"
 	}
 }]
 </s:iterator>], 
