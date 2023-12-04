@@ -116,7 +116,7 @@ public class Options extends FSActionSupport {
 		
 
 		if (action != null && action.equals("addType") && this.name != null && !this.name.equals("")) {
-			if (!this.testToken())
+			if (!this.testToken(false))
 				return this.ERRORJSON;
 			if (this.name == null || this.name.equals("")) {
 				this._message = "Name is Empty";
@@ -138,7 +138,7 @@ public class Options extends FSActionSupport {
 			HibHelper.getInstance().commit();
 
 		} else if (action != null && action.equals("delType") && this.id != null) {
-			if (!this.testToken())
+			if (!this.testToken(false))
 				return this.ERRORJSON;
 
 			String mongo = "db.Assessment.count({ type_id: " + this.getId() + "})";
@@ -157,7 +157,7 @@ public class Options extends FSActionSupport {
 			return this.SUCCESSJSON;
 
 		} else if (action != null && action.equals("addCampaign") && this.name != null && !this.name.equals("")) {
-			if (!this.testToken())
+			if (!this.testToken(false))
 				return this.ERRORJSON;
 
 			if (this.name == null || this.name.equals("")) {
@@ -180,7 +180,7 @@ public class Options extends FSActionSupport {
 			HibHelper.getInstance().commit();
 
 		} else if (action != null && action.equals("delCampaign") && this.id != null) {
-			if (!this.testToken())
+			if (!this.testToken(false))
 				return this.ERRORJSON;
 
 			String mongo = "db.Assessment.count({ 'campaign_id' : " + this.getId() + "})";
@@ -197,7 +197,7 @@ public class Options extends FSActionSupport {
 			HibHelper.getInstance().commit();
 
 		} else if (action != null && action.equals("emailSettings") && this.isAcadmin()) {
-			if (!this.testToken())
+			if (!this.testToken(false))
 				return this.ERRORJSON;
 
 			HibHelper.getInstance().preJoin();
@@ -220,7 +220,7 @@ public class Options extends FSActionSupport {
 			AuditLog.audit(this, "Email Settings Updated.", AuditLog.UserAction, false);
 			HibHelper.getInstance().commit();
 		} else if (action != null && action.equals("systemSettings") && this.isAcadmin()) {
-			if (!this.testToken())
+			if (!this.testToken(false))
 				return this.ERRORJSON;
 
 			HibHelper.getInstance().preJoin();
@@ -237,7 +237,7 @@ public class Options extends FSActionSupport {
 			AuditLog.audit(this, "System Settings Updated.", AuditLog.UserAction, false);
 			HibHelper.getInstance().commit();
 		} else if (action != null && action.equals("test")) {
-			if (!this.testToken())
+			if (!this.testToken(false))
 				return this.ERRORJSON;
 			try {
 				HibHelper.getInstance().preJoin();
@@ -281,7 +281,7 @@ public class Options extends FSActionSupport {
 			return LOGIN;
 		}
 
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
@@ -309,7 +309,7 @@ public class Options extends FSActionSupport {
 			return LOGIN;
 		}
 
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
@@ -331,7 +331,7 @@ public class Options extends FSActionSupport {
 		if (!(this.isAcadmin() || this.isAcmanager() || this.isAcengagement())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
@@ -358,7 +358,7 @@ public class Options extends FSActionSupport {
 			return LOGIN;
 		}
 
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		if (this.getTier().equals("consultant")) {
@@ -410,7 +410,7 @@ public class Options extends FSActionSupport {
 			return LOGIN;
 		}
 
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		EMS = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst().orElse(null);
@@ -433,7 +433,7 @@ public class Options extends FSActionSupport {
 			return LOGIN;
 		}
 
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		EMS = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst().orElse(null);
@@ -456,7 +456,7 @@ public class Options extends FSActionSupport {
 			return LOGIN;
 		}
 
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		Campaign c = AssessmentQueries.getCampaignById(em, this.getId());
@@ -485,7 +485,7 @@ public class Options extends FSActionSupport {
 		if (!(this.isAcadmin() || this.isAcmanager() || this.isAcengagement())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 
 		AssessmentType t = AssessmentQueries.getAssessmentTypeById(em, this.getId());
@@ -515,7 +515,7 @@ public class Options extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 		if (status == null || status.trim().equals("")) {
 			this._message = "Status is Empty";
@@ -551,7 +551,7 @@ public class Options extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 		if (status == null || status.trim().equals("")) {
 			this._message = "Status is Empty";
@@ -591,7 +591,7 @@ public class Options extends FSActionSupport {
 		if (!(this.isAcadmin())) {
 			return LOGIN;
 		}
-		if (!this.testToken())
+		if (!this.testToken(false))
 			return this.ERRORJSON;
 		if (status == null || status.trim().equals("")) {
 			this._message = "Status is Empty";

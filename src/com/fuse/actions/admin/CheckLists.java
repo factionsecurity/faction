@@ -112,7 +112,7 @@ public class CheckLists extends FSActionSupport{
 		if(!(this.isAcadmin() || this.isAcmanager()))
 			return AuditLog.notAuthorized(this, "Not an Admin or Manager" , true);
 		
-		if(!this.testToken()) {
+		if(!this.testToken(false)) {
 			return this.ERRORJSON;
 		}
 		
@@ -145,7 +145,7 @@ public class CheckLists extends FSActionSupport{
 			return AuditLog.notAuthorized(this, "Not an Admin or Manager" , true);
 		
 		User user = this.getSessionUser();
-		if(!this.testToken()) {
+		if(!this.testToken(false)) {
 			return this.ERRORJSON;
 		}
 		
@@ -185,7 +185,7 @@ public class CheckLists extends FSActionSupport{
 		if(!(this.isAcadmin() || this.isAcmanager()))
 			return AuditLog.notAuthorized(this, "Not an Admin or Manager", true );
 		
-		if(!this.testToken()) {
+		if(!this.testToken(false)) {
 			return this.ERRORJSON;
 		}
 		
@@ -228,7 +228,7 @@ public class CheckLists extends FSActionSupport{
 		if(!(this.isAcadmin() || this.isAcmanager()))
 			return AuditLog.notAuthorized(this, "Not an Admin or Manager", true );
 		
-		if(!this.testToken()) {
+		if(!this.testToken(false)) {
 			return this.ERRORJSON;
 		}
 		
@@ -259,7 +259,7 @@ public class CheckLists extends FSActionSupport{
 		if(!(this.isAcadmin() || this.isAcmanager()))
 			return AuditLog.notAuthorized(this, "Not an Admin or Manager", true );
 		
-		if(!this.testToken()) {
+		if(!this.testToken(false)) {
 			return this.ERRORJSON;
 		}
 		if(question == null || question.trim().equals("")) {
@@ -394,7 +394,7 @@ public class CheckLists extends FSActionSupport{
 		if(!(this.isAcadmin() || this.isAcmanager()))
 			return AuditLog.notAuthorized(this, "Not an Admin or Manager", true );
 		
-		if(!this.testToken()) {
+		if(!this.testToken(false)) {
 			return this.ERRORJSON;
 		}
 		

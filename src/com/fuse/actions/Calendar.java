@@ -63,7 +63,7 @@ public class Calendar extends FSActionSupport {
 			// session.close();
 			return "searchJSON";
 		} else if (action.equals("add")) {
-			if (!this.testToken())
+			if (!this.testToken(false))
 				return this.ERRORJSON;
 			if (this.isAcmanager()) {
 				HibHelper.getInstance().preJoin();
@@ -103,7 +103,7 @@ public class Calendar extends FSActionSupport {
 			}
 
 		} else if (action.equals("delete")) {
-			if (!this.testToken())
+			if (!this.testToken(false))
 				return this.ERRORJSON;
 			OOO o = (OOO) em.find(OOO.class, oid);
 			if (this.isAcmanager()) {

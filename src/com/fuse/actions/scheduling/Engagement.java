@@ -162,7 +162,7 @@ public class Engagement  extends FSActionSupport{
 			return "assessorJSON";
 		}else if(action!= null && action.equals("createAssessment")){
 
-			if(!this.testToken()) {
+			if(!this.testToken(false)) {
 				return this.ERRORJSON;
 			}
 			
@@ -362,7 +362,7 @@ public class Engagement  extends FSActionSupport{
 		}else if(action != null && action.equals("delete") ){
 			/*Assessment a = (Assessment)session.createQuery("from Assessment where id = :id")
 					.setLong("id", this.appid).uniqueResult();*/
-			if(!this.testToken()) {
+			if(!this.testToken(false)) {
 				return this.ERRORJSON;
 			}
 			Assessment a = em.find(Assessment.class, Long.parseLong(this.appid));

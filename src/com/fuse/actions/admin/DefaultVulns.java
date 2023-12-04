@@ -139,7 +139,7 @@ public class DefaultVulns  extends FSActionSupport{
 			
 			
 		}else if(this.isAcassessor() && action != null && action.equals("importVDB")){
-			if(!this.testToken())
+			if(!this.testToken(false))
 				return this.ERRORJSON;
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
@@ -170,7 +170,7 @@ public class DefaultVulns  extends FSActionSupport{
 		
 		
 		if(action != null && name != null && action.equals("addcat")){
-			if(!this.testToken())
+			if(!this.testToken(false))
 				return this.ERRORJSON;
 			if(this.name ==  null || this.name.equals("")) {
 				this._message = "Empty Category name";
@@ -194,7 +194,7 @@ public class DefaultVulns  extends FSActionSupport{
 				
 			}
 		}else if(action != null && name != null && action.equals("addvuln")){
-			if(!this.testToken())
+			if(!this.testToken(false))
 				return this.ERRORJSON;
 			
 			
@@ -247,7 +247,7 @@ public class DefaultVulns  extends FSActionSupport{
 			}
 		}else if(action != null && name != null && action.equals("savevuln") && vulnId != null ){
 
-			if(!this.testToken())
+			if(!this.testToken(false))
 				return this.ERRORJSON;
 			
 			if(this.name == null || this.name.trim().equals("")) {
@@ -335,7 +335,7 @@ public class DefaultVulns  extends FSActionSupport{
 			
 			
 		}else if(action != null && action.equals("delvuln") && vulnId != null ){
-			if(!this.testToken())
+			if(!this.testToken(false))
 				return this.ERRORJSON;
 		
 			Long count = VulnerabilityQueries.vulnCount(em, this.vulnId);
@@ -355,7 +355,7 @@ public class DefaultVulns  extends FSActionSupport{
 			return this.SUCCESSJSON;
 			
 		}else if(action != null && action.equals("delCat") && catId != null ){
-			if(!this.testToken())
+			if(!this.testToken(false))
 				return this.ERRORJSON;
 			
 			List<DefaultVulnerability> vulns = VulnerabilityQueries.getDefaultVulnerabilityFromCategory(em,this.catId);
@@ -373,7 +373,7 @@ public class DefaultVulns  extends FSActionSupport{
 				return SUCCESSJSON;
 			}
 		}else if(this.action != null && action.equals("updateDates")){
-			if(!this.testToken())
+			if(!this.testToken(false))
 				return this.ERRORJSON;
 			
 			HibHelper.getInstance().preJoin();
@@ -394,7 +394,7 @@ public class DefaultVulns  extends FSActionSupport{
 			return SUCCESSJSON;
 			
 		}else if(action.equals("updateRisk")){
-			if(!this.testToken())
+			if(!this.testToken(false))
 				return this.ERRORJSON;
 			
 			for(RiskLevel level : levels){

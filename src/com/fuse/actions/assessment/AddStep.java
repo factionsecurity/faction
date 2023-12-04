@@ -69,7 +69,7 @@ public class AddStep extends FSActionSupport{
 
 		
 		if(this.vulnid!= null && action != null && action.equals("add")){
-			if(!this.testToken())
+			if(!this.testToken(false))
 				return this.ERRORJSON;
 			
 			//Vulnerability v = (Vulnerability)em.createQuery("from Vulnerability where id = :id").setParameter("id", vulnid).getResultList().stream().findFirst().orElse(null);
@@ -110,7 +110,7 @@ public class AddStep extends FSActionSupport{
 			
 			return "getSteps";
 		}else if(this.vulnid!= null && this.stepId!= null && action != null && action.equals("delete")){
-			if(!this.testToken())
+			if(!this.testToken(false))
 				return this.ERRORJSON;
 			
 
@@ -145,7 +145,7 @@ public class AddStep extends FSActionSupport{
 			
 			
 		}else if(this.vulnid!= null && this.stepId!= null && action != null && action.equals("edit")){
-			if(!this.testToken())
+			if(!this.testToken(false))
 				return this.ERRORJSON;
 			
 			Vulnerability v = em.find(Vulnerability.class, vulnid);
@@ -182,7 +182,7 @@ public class AddStep extends FSActionSupport{
 		if(!(this.isAcassessor() || this.isAcmanager()))
 			return AuditLog.notAuthorized(this, "User is not an assessor or manager", true);
 		
-		if(!this.testToken())
+		if(!this.testToken(false))
 			return this.ERRORJSON;
 		Vulnerability v =em.find(Vulnerability.class, vulnid);
 		Assessment a = em.find(Assessment.class, v.getAssessmentId());
@@ -236,7 +236,7 @@ public class AddStep extends FSActionSupport{
 		if(!(this.isAcassessor() || this.isAcmanager()))
 			return AuditLog.notAuthorized(this, "User is not an assessor or manager", true);
 		
-		if(!this.testToken())
+		if(!this.testToken(false))
 			return this.ERRORJSON;
 		
 		Vulnerability v =em.find(Vulnerability.class, vulnid);

@@ -120,7 +120,7 @@ public class EditAssessment extends FSActionSupport {
 			return "assessorJSON";
 		} else if (action != null && action.equals("update")) {
 
-			if (!this.testToken()) {
+			if (!this.testToken(false)) {
 				return this.ERRORJSON;
 			}
 

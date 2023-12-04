@@ -141,7 +141,7 @@ public class CheckListView extends FSActionSupport{
 		if(!(this.isAcassessor() || this.isAcmanager()))
 			return LOGIN;
 		
-		if(!this.testToken())
+		if(!this.testToken(false))
 			return this.ERRORJSON;
 		
 		User user = this.getSessionUser();
