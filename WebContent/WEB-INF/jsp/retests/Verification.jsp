@@ -76,15 +76,13 @@
 						<bs:mco colsize="12">
 							<bs:row>
 								<bs:mco colsize="6">
-								<center>
-									<div class="form-group" style="font-size: xx-large">
+									<div class="form-group" style="font-size: xx-large; padding-left:30px">
 										<label> <input type="radio" name="r3"
-											class="flat-green" value="1"> Pass <input
+											class="flat-green" value="1"> Pass <br/><input
 											type="radio" name="r3" class="flat-red" checked value="0">
 											Fail
 										</label>
 									</div>
-								</center>
 								</bs:mco>
 								<bs:mco colsize="6">
 									<bs:button color="info" size="md" colsize="12"
