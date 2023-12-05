@@ -233,8 +233,8 @@ public class GenerateReport {
 		a.setAssessor(hacker);
 		a.setRemediation(u);
 		a.setAppId("1337");
-		a.setRiskAnalysis("This is a test report.");
-		a.setSummary("This is a test report.");
+		a.setRiskAnalysis("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
+		a.setSummary("This is a test report with a table <br> <table><tr><th>Site</th><th>Description</th></tr><tr><td><a href='https://www.factionsecurity.com'>https://www.factionsecurity.com</a></td><td>Something Descriptive</td></tr></table>");
 		Vulnerability v0 = new Vulnerability();
 		v0.setLevels(riskLevels);
 		Vulnerability v1 = new Vulnerability();
@@ -245,8 +245,8 @@ public class GenerateReport {
 		v0.setImpact(5l);
 		v0.setLikelyhood(5l);
 		v0.setOverall(5l);
-		v0.setRecommendation("Test Recommendation");
-		v0.setDescription("Test Description");
+		v0.setRecommendation("Test Recommendation with table <br> <table><tr><th>Site</th><th>Description</th></tr><tr><td><a href='https://www.factionsecurity.com'>https://www.factionsecurity.com</a></td><td>Something Descriptive</td></tr></table><br>");
+		v0.setDescription("Test Description with table <br> <table><tr><th>Site</th><th>Description</th></tr><tr><td><a href='https://www.factionsecurity.com'>https://www.factionsecurity.com</a></td><td>Something Descriptive</td></tr></table><br>");
 		v0.setDetails(details);
 		v0.setTracking("VID-1234");
 		v1.setName("Test Issue 2");
