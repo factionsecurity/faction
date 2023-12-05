@@ -767,6 +767,8 @@ class VulnerablilityView {
 			_this.vulnTable.order([1, 'desc']).draw();
 			_this.updateColors()
 			_this.queue.push(_this.vulnId, "overall", $(this).val());
+			_this.queue.push(_this.vulnId, "likelyhood", $(this).val());
+			_this.queue.push(_this.vulnId, "impact", $(this).val());
 		});
 		$("#impact").on('input', function(event) {
 			_this.queue.push(_this.vulnId, "impact", $(this).val());
