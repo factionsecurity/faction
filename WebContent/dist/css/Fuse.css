@@ -5023,3 +5023,6 @@ table.dataTable.no-footer{
 .vulnControl-delete i:hover {
 	color: #de4b39 !important;
 }
+.mdEnabled{
+	color: black !important;
+}

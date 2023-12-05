@@ -13,6 +13,7 @@ import 'jquery-ui';
 import 'jquery-confirm';
 import 'datatables.net-bs';
 import { } from 'icheck'
+import { marked } from 'marked';
 
 $(function() {
 	$("#uploadedFiles").DataTable({
@@ -89,12 +90,48 @@ const editorConfig = {
 	allowedClassNames: ".*",
 	height: 500
 };
+let fromMarkdown = {
+	name: 'fromMarkdown',
+	display: 'command',
+	title: 'Convert Markdown',
+	buttonClass: '',
+	innerHTML: '<i class="fa-brands fa-markdown" style="color:lightgray"></i>',
+	add: function(core, targetElement) {
+		core.context.fromMarkdown = {
+			targetButton: targetElement,
+			preElement: null
+		}
+	},
+	active: function(element) {
+		if (element) {
+			this.util.addClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
+			this.context.fromMarkdown.preElement = element;
+			return true;
+		} else {
+			this.util.removeClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
+			this.context.fromMarkdown.preElement = null;
+		}
+		return false;
+	},
+	action: function() {
+		let selected = this.getSelectedElements();
+		const md = selected.reduce( (acc,item) => acc + item.innerText +"\n", "") ;
+		const html = marked.parse(md);
+		const div = document.createElement("div");
+		div.innerHTML = html;
+		const parent = selected[0].parentNode;
+		parent.insertBefore(div, selected[0]);
+		for(let i=0; i<selected.length; i++){
+			selected[i].remove();
+		}
+	}
+}
 const notesConfig = {
 	codeMirror: CodeMirror,
-	plugins: [font, fontColor, fontSize, image, align, imageGallery, list, formatBlock, table, blockquote],
+	plugins: [font, fontColor, fontSize, image, align, imageGallery, list, formatBlock, table, blockquote, fromMarkdown],
 	buttonList: [
 		['undo', 'redo', 'font', 'fontSize', 'formatBlock'],
-		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
+		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat', 'fromMarkdown'],
 	],
 	defaultStyle: 'font-family: arial; font-size: 18px',
 	allowedClassNames: ".*",

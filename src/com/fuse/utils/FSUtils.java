@@ -112,7 +112,7 @@ public class FSUtils {
 						"tfoot", "table", "td", "th", "tr", "colgroup", "fieldset", "legend", "span")
 				.allowAttributes("data-changedata", "data-cid", "data-last-change-time", "data-time", "data-userid",
 						"data-username", "title")
-				.onElements("span").allowAttributes("border", "cellpadding", "cellspacing").onElements("table")
+				.onElements("span").allowAttributes("border", "cellpadding", "cellspacing", "style", "class").onElements("table")
 				.allowStandardUrlProtocols()
 				.allowElements("a", "label", "h1", "h2", "h3", "h4", "h5", "h6", "p", "i", "b", "u", "strong", "em",
 						"small", "big", "pre", "code", "cite", "samp", "sub", "sup", "strike", "center", "blockquote",
