@@ -442,6 +442,9 @@ $(function() {
 							clearInterval(checkStatus);
 							clearLoading($(".reportLoading")[0])
 							$("#genreport").html("Generate Report");
+							if(typeof $("#dlreport").attr('id') == 'undefined'){
+								location.reload();
+							}
 						}
 					});
 				},2000);
