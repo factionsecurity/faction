@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.faction</groupId>
 	<artifactId>faction</artifactId>
-	<version>1.1.8-SNAPSHOT</version>
+	<version>1.1.8</version>
 	<packaging>war</packaging>
 	<name>Faction</name>
 	<scm>
@@ -10,7 +10,7 @@
 		<connection>scm:git:https://github.com/factionsecurity/faction.git</connection>
 		<developerConnection>
 			scm:git:https://github.com/factionsecurity/faction.git</developerConnection>
-		<tag>1.1.0</tag>
+		<tag>1.1.8</tag>
 	</scm>
 	<properties>
 		<aws.java.sdk.version>2.18.16</aws.java.sdk.version>
@@ -415,7 +415,7 @@
         <repository>
             <id>github</id>
             <name>GitHub Faction Security Packages</name>
-            <url>https://maven.pkg.github.com/factionsecurity/faction</url>
+            <url>https://github.com/factionsecurity/faction/releases</url>
         </repository>
     </distributionManagement>
 </project>
