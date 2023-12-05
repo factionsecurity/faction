@@ -19,6 +19,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.codec.binary.Base64;
+import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -35,6 +36,16 @@ import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.utils.FSUtils;
+
+import com.vladsch.flexmark.profile.pegdown.Extensions;
+import com.vladsch.flexmark.profile.pegdown.PegdownOptionsAdapter;
+import com.vladsch.flexmark.util.ast.Document;
+import com.vladsch.flexmark.util.data.DataHolder;
+
+import ch.qos.logback.core.pattern.parser.Node;
+
+import com.vladsch.flexmark.html.HtmlRenderer;
+import com.vladsch.flexmark.parser.Parser;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -246,7 +257,7 @@ public class assessments {
 				} else if (v.getRecommendation() == null) {
 					v.setRecommendation("");
 				}
-				if(v.getDetails() == null) {
+				if (v.getDetails() == null) {
 					v.setDetails("");
 				}
 				if (v == null)
@@ -271,7 +282,7 @@ public class assessments {
 	 */
 
 	@POST
-	@ApiOperation(value = "Add a new vulnerability to the assessment.", notes = "Leaves the Decription and Recommendations blank.", response = Assessment.class, responseContainer = "List")
+	@ApiOperation(value = "Add a new vulnerability to the assessment. All Base64 encoded inputs supoort HTML and Markdown syntax", notes = "Suports HTML and MarkDown Syntax", response = Assessment.class, responseContainer = "List")
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 400, message = "Bad Request."),
 			@ApiResponse(code = 200, message = "Returns the ID of the newly created vulnerability.") })
@@ -281,7 +292,10 @@ public class assessments {
 			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
 			@ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
 			@ApiParam(value = "Vulnerability Name", required = true) @FormParam("name") String name,
+			@ApiParam(value = "Vulnerability Description (Base64 Encoded)", required = false) @FormParam("description") String description,
+			@ApiParam(value = "Vulnerability Recommendation (Base64 Encoded)", required = false) @FormParam("recommendation") String recommendation,
 			@ApiParam(value = "Exploit Details Information (Base64 Encoded)", required = false) @FormParam("details") String details,
+			@ApiParam(value = "Default Vulnerability ID", required = false) @FormParam("default_vuln_id") Long defaultVulnId,
 			@ApiParam(value = "Severity ID 0-9", required = true) @FormParam("severity") Long severity) {
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		JSONArray jarray = new JSONArray();
@@ -330,14 +344,29 @@ public class assessments {
 				if (name != null && !name.equals("")) {
 					HibHelper.getInstance().preJoin();
 					em.joinTransaction();
-
 					Vulnerability v = new Vulnerability();
+					if (defaultVulnId != null) {
+						DefaultVulnerability dv = (DefaultVulnerability) em
+								.createQuery("from DefaultVulnerability where id = :id")
+								.setParameter("id", defaultVulnId).getResultList().stream().findFirst().orElse(null);
+						v.setDefaultVuln(dv);
+						v.setDescription(dv.getDescription());
+						v.setRecommendation(dv.getRecommendation());
+						v.setCategory(dv.getCategory());
+					}
+
 					v.setName(name);
 					v.setLikelyhood(severity);
 					v.setImpact(severity);
 					v.setOverall(severity);
 					v.setAssessmentId(a.getId());
-					v.setDetails(decodeAndSanitize(details));
+					if (description != null)
+						v.setDescription(decodeAndSanitize(description));
+					if (recommendation != null)
+						v.setRecommendation(decodeAndSanitize(recommendation));
+					if (details != null)
+						v.setDetails(decodeAndSanitize(details));
+
 					if (a.getVulns() == null) {
 						List<Vulnerability> vs = new ArrayList<Vulnerability>();
 						vs.add(v);
@@ -370,14 +399,14 @@ public class assessments {
 			@ApiResponse(code = 400, message = "Bad Request."),
 			@ApiResponse(code = 200, message = "Post Successful.") })
 	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/addDefaultVuln/{aid}/{default}")
+	@Path("/addDefaultVuln/{aid}/{default_vuln_id}")
 	public Response addNewVuln(
 			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
 			@ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
 			@ApiParam(value = "Vulnerability Name", required = true) @FormParam("name") String name,
 			@ApiParam(value = "Exploit Details Information", required = true) @FormParam("details") String details,
 			@ApiParam(value = "Severity ID 0-9", required = true) @FormParam("severity") Long severity,
-			@ApiParam(value = "Default Vulnerability ID", required = true) @PathParam("default") Long def) {
+			@ApiParam(value = "Default Vulnerability ID", required = true) @PathParam("default_vuln_id") Long defaultVulnId) {
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		JSONArray jarray = new JSONArray();
 		try {
@@ -426,7 +455,7 @@ public class assessments {
 					HibHelper.getInstance().preJoin();
 					em.joinTransaction();
 					DefaultVulnerability dv = (DefaultVulnerability) em
-							.createQuery("from DefaultVulnerability where id = :id").setParameter("id", def)
+							.createQuery("from DefaultVulnerability where id = :id").setParameter("id", defaultVulnId)
 							.getResultList().stream().findFirst().orElse(null);
 					Vulnerability v = new Vulnerability();
 					v.setDefaultVuln(dv);
@@ -528,7 +557,7 @@ public class assessments {
 							HibHelper.getInstance().preJoin();
 							em.joinTransaction();
 							String previousDetails = v.getDetails();
-							previousDetails = previousDetails == null? "" : previousDetails;
+							previousDetails = previousDetails == null ? "" : previousDetails;
 							v.setDetails(previousDetails + "<br/>" + decodeAndSanitize(details));
 							em.persist(v);
 							HibHelper.getInstance().commit();
@@ -675,17 +704,36 @@ public class assessments {
 		}
 
 	}
-	
+
+	private String convertFromMarkDown(String text) {
+		try {
+			DataHolder options = PegdownOptionsAdapter.flexmarkOptions(Extensions.ALL);
+
+			Parser parser = Parser.builder(options).build();
+			HtmlRenderer renderer = HtmlRenderer.builder(options).build();
+			Document document = parser.parse(text);
+			String converted = renderer.render(document);
+			converted = converted.replaceAll("<code>", "<pre>").replaceAll("</code>", "</pre>");
+			converted = converted.replaceAll("</p>", "<br/>");
+			converted += "<br>";
+			return converted;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return text;
+		}
+	}
+
 	private String decodeAndSanitize(String encoded) {
-			String decoded = "";
-			try {
-				decoded = new String(Base64.decodeBase64(encoded));
-				return FSUtils.sanitizeHTML(decoded);
-			} catch (Exception e) {
-				e.printStackTrace();
-				return "";
-				
-			}
+		String decoded = "";
+		try {
+			decoded = new String(Base64.decodeBase64(encoded));
+			decoded = convertFromMarkDown(decoded);
+			return FSUtils.sanitizeHTML(decoded);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return "";
+
+		}
 	}
 
 }

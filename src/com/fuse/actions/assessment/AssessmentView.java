@@ -115,8 +115,8 @@ public class AssessmentView extends FSActionSupport {
 
 		if (assessment == null)
 			return SUCCESS;
-		
-		///fix image issue
+	
+		//This fixes an image issue
 		String content = assessment.getSummary();
 		if(content != null && content.endsWith("div>")) {
 			content = content + "<p><br/></p>";

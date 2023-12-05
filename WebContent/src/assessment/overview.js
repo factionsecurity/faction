@@ -17,6 +17,7 @@ import 'bootstrap';
 import 'jquery-ui';
 import 'jquery-confirm';
 import '../scripts/jquery.autocomplete.min';
+import { marked } from 'marked';
 
 
 global._token = $("#_token")[0].value;
@@ -45,6 +46,43 @@ plugins.table.createCells = function (nodeName, cnt, returnElement) {
     }
 
 global.editors = editors;
+let fromMarkdown = {
+	name: 'fromMarkdown',
+	display: 'command',
+	title: 'Convert Markdown',
+	buttonClass: '',
+	innerHTML: '<i class="fa-brands fa-markdown" style="color:lightgray"></i>',
+	add: function(core, targetElement) {
+		core.context.fromMarkdown = {
+			targetButton: targetElement,
+			preElement: null
+		}
+	},
+	active: function(element) {
+		if (element) {
+			this.util.addClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
+			this.context.fromMarkdown.preElement = element;
+			return true;
+		} else {
+			this.util.removeClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
+			this.context.fromMarkdown.preElement = null;
+		}
+		return false;
+	},
+	action: function() {
+		let selected = this.getSelectedElements();
+		const md = selected.reduce( (acc,item) => acc + item.innerText +"\n", "") ;
+		const html = marked.parse(md);
+		const div = document.createElement("div");
+		div.innerHTML = html;
+		const parent = selected[0].parentNode;
+		parent.insertBefore(div, selected[0]);
+		for(let i=0; i<selected.length; i++){
+			selected[i].remove();
+		}
+	}
+}
+plugins['fromMarkdown'] = fromMarkdown;
 var editorOptions = {
 	codeMirror: CodeMirror,
 	plugins: plugins,
@@ -52,7 +90,7 @@ var editorOptions = {
 		['undo', 'redo','fontSize', 'formatBlock','textStyle'],
 		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
 		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks'],
+		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown'],
 
 	],
 	defaultStyle: 'font-family: arial; font-size: 18px',
@@ -102,7 +140,7 @@ function alertMessage(resp, success) {
 }
 
 function getEditorText(name) {
-	let html = editors[name].getContents();
+	let html = editors[name].getContents(true);
 	return Array.from($(html)).filter( a => a.innerHTML != "<br>").map( a => a.outerHTML).join("")
 }
 function showLoading(com) {
@@ -404,6 +442,9 @@ $(function() {
 							clearInterval(checkStatus);
 							clearLoading($(".reportLoading")[0])
 							$("#genreport").html("Generate Report");
+							if(typeof $("#dlreport").attr('id') == 'undefined'){
+								location.reload();
+							}
 						}
 					});
 				},2000);

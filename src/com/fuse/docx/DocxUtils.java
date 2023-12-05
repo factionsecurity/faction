@@ -33,6 +33,7 @@ import org.docx4j.wml.R;
 import org.docx4j.wml.RFonts;
 import org.docx4j.wml.STTabTlc;
 import org.docx4j.wml.Tbl;
+import org.docx4j.wml.TblWidth;
 import org.docx4j.wml.Tc;
 import org.docx4j.wml.TcPr;
 import org.docx4j.wml.Tr;
@@ -123,6 +124,30 @@ public class DocxUtils {
 		}
 
 	}
+	
+	private boolean cellContains(Tc cell, String variable) {
+		for (Object obj : cell.getContent()) {
+			String xml = XmlUtils.marshaltoString(obj, false, false);
+
+			if(xml.contains(variable)) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
+	private Map<String,BigInteger> setWidths(Tc cell, String variable, Map<String, BigInteger> widths){
+		if(cellContains(cell, "${" + variable + "}")) {
+			if(cell.getTcPr() != null && cell.getTcPr().getTcW() != null) {
+				BigInteger margin = BigInteger.valueOf(200); //TODO: This should not be hardcoded
+				widths.put(variable, cell.getTcPr().getTcW().getW().subtract(margin));
+			}else {
+				widths.put(variable, BigInteger.valueOf(-1));
+			}
+		}
+		return widths;
+		
+	}
 
 	private void checkTables(final WordprocessingMLPackage mlp, Assessment a, String variable, String customCSS)
 			throws JAXBException, Docx4JException {
@@ -130,6 +155,15 @@ public class DocxUtils {
 		List<Object> tables = getAllElementFromObject(mlp.getMainDocumentPart(), Tbl.class);
 		for (Object table : tables) {
 			List<Object> paragraphs = getAllElementFromObject(table, P.class);
+			// This is to get a list of widths to ensure elements in tables behave
+			List<Object> cells = getAllElementFromObject(table, Tc.class);
+			Map<String, BigInteger> widths = new HashMap<>();
+			for(Object cell : cells) {
+				Tc tc = (Tc)cell;
+				widths = setWidths(tc, "desc", widths);
+				widths = setWidths(tc, "rec", widths);
+				widths = setWidths(tc, "details", widths);
+			}
 			String txt = getMatchingText(paragraphs, "${" + variable + "}");
 			if (txt == null)
 				continue;
@@ -175,7 +209,7 @@ public class DocxUtils {
 			if (index == -1)
 				continue;
 
-			List<String> xmls = new LinkedList();
+			List<String> xmls = new LinkedList<>();
 			for (int i = 0; i <= rowsPlus; i++) {
 				Tr row = (Tr) ((Tbl) table).getContent().get(index + i);
 				String xml = XmlUtils.marshaltoString(row, false, false);
@@ -266,7 +300,7 @@ public class DocxUtils {
 											cf.getValue());
 								}
 							}
-							map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec"));
+							map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec", widths.get("rec")));
 						} else if (v.getRecommendation() != null) {
 							String rec = v.getRecommendation();
 							if (v.getCustomFields() != null) {
@@ -275,7 +309,7 @@ public class DocxUtils {
 											cf.getValue());
 								}
 							}
-							map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec"));
+							map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec", widths.get("rec")));
 						} else {
 							map2.put("${rec}", wrapHTML(mlp, "", customCSS, "rec"));
 						}
@@ -289,7 +323,7 @@ public class DocxUtils {
 											cf.getValue());
 								}
 							}
-							map2.put("${desc}", wrapHTML(mlp, desc, customCSS, "desc"));
+							map2.put("${desc}", wrapHTML(mlp, desc, customCSS, "desc", widths.get("desc")));
 						} else if (v.getDescription() != null) {
 							String desc = v.getDescription();
 							if (v.getCustomFields() != null) {
@@ -298,7 +332,7 @@ public class DocxUtils {
 											cf.getValue());
 								}
 							}
-							map2.put("${desc}", wrapHTML(mlp, desc, customCSS, "desc"));
+							map2.put("${desc}", wrapHTML(mlp, desc, customCSS, "desc", widths.get("desc")));
 						} else {
 							map2.put("${desc}", wrapHTML(mlp, "", customCSS, "desc"));
 						}
@@ -312,7 +346,7 @@ public class DocxUtils {
 											cf.getValue());
 								}
 							}
-							map2.put("${details}", wrapHTML(mlp, details, customCSS, "details"));
+							map2.put("${details}", wrapHTML(mlp, details, customCSS, "details", widths.get("details")));
 						} else {
 							map2.put("${details}", wrapHTML(mlp, "", customCSS, "details"));
 						}
@@ -398,18 +432,9 @@ public class DocxUtils {
 
 		// Convert all tables and match and replace values
 		checkTables(mlp, a, "vulnTable", customCSS);
-		// convert all exploit steps for each vulnerability
-		for (Vulnerability v : a.getVulns()) {
-			checkTableSteps(mlp, v.getSteps(), customCSS);
-		}
 
 		// look for findings areass {fiBegin/fiEnd}
 		setFindings(mlp, a.getVulns(), customCSS);
-		// Add all technical descriptions
-		for (Vulnerability v : a.getVulns()) {
-			setExamples(mlp, v.getSteps(), customCSS);
-		}
-		// setExploits(mlp, a.getVulns(), customCSS);
 		// Update all exploit steps.
 		for (Vulnerability v : a.getVulns()) {
 			HashMap<String, List<Object>> map2 = new HashMap();
@@ -445,15 +470,17 @@ public class DocxUtils {
 		content = replacement(content, a);
 		System.out.println(content);
 		return xhtml.convert(
-				//"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\"><html><head>"
 				"<!DOCTYPE html><html><head>"
-						+ "<style>html{padding:0;margin:0;margin-right:30px;}\r\nbody{padding:0;margin:0;font-family:"
+						+ "<style>html{padding:0;margin:0;margin-right:0px;}\r\nbody{padding:0;margin:0;font-family:"
 						+ this.FONT + ";}\r\n" + customCSS + "</style>" + "</head><body><div class='" + className + "'>"
 						+ content + "</div></body></html>",
 				null);
 	}
+	private List<Object> wrapHTML(WordprocessingMLPackage mlp, String value, String customCSS, String className) throws Docx4JException{
+		return wrapHTML(mlp, value, customCSS, className, BigInteger.valueOf(-1));
+	}
 
-	private List<Object> wrapHTML(WordprocessingMLPackage mlp, String value, String customCSS, String className)
+	private List<Object> wrapHTML(WordprocessingMLPackage mlp, String value, String customCSS, String className, BigInteger maxWidth)
 			throws Docx4JException {
 		XHTMLImporterImpl xhtml = new XHTMLImporterImpl(mlp);
 		RFonts rfonts = Context.getWmlObjectFactory().createRFonts();
@@ -466,9 +493,8 @@ public class DocxUtils {
 		try {
 
 			List<Object> converted = xhtml.convert(
-					//"<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01 Transitional//EN\" \"http://www.w3.org/TR/html4/loose.dtd\"><html><head>"
 							"<!DOCTYPE html><html><head>"
-							+ "<style>html{padding:0;margin:0;margin-right:30px;}\r\nbody{padding:0;margin:0;font-family:"
+							+ "<style>html{padding:0;margin:0;margin-right:0px;}\r\nbody{padding:0;margin:0;font-family:"
 							+ this.FONT + ";}\r\n" + customCSS + "</style>" + "</head><body><div class='" + className
 							+ "'>" + value + "</div></body></html>",
 					null);
@@ -482,6 +508,14 @@ public class DocxUtils {
 						BigInteger indValue = indent.getLeft();
 						indent.setRight(indValue);
 						p.getPPr().setInd(indent);
+					}
+				}
+				
+				if(maxWidth.intValue() > -1 && o instanceof Tbl ) {
+					Tbl t = (Tbl) o;
+					if(t.getTblPr() != null && t.getTblPr().getTblW() != null) {
+						t.getTblPr().getTblW().setType("dxa");
+						t.getTblPr().getTblW().setW(maxWidth);
 					}
 				}
 			}
@@ -937,45 +971,6 @@ public class DocxUtils {
 			}
 
 			replacementText(mlp, map1);
-		}
-
-	}
-
-	private void setExamples(final WordprocessingMLPackage mlp, List<ExploitStep> steps, String customCSS)
-			throws Docx4JException, JAXBException {
-		int begin = getIndex(mlp.getMainDocumentPart(), "${exBegin}");
-		int end = getIndex(mlp.getMainDocumentPart(), "${exEnd}");
-
-		if (begin == -1)
-			return;
-		if (end == -1)
-			return;
-		// Get relevent parts of the document and put them into a
-		// temporary array.
-		List<String> exampleTemplate = new LinkedList();
-
-		for (int i = begin; i <= end; i++) {
-			exampleTemplate.add(XmlUtils.marshaltoString(mlp.getMainDocumentPart().getContent().get(i)));
-
-		}
-
-		// Remove the elements from the doc. These will be replaced with
-		// out temp array when its updated later on
-		for (int i = end; i >= begin; i--) {
-			mlp.getMainDocumentPart().getContent().remove(i);
-		}
-
-		int stepNum = 1;
-		for (ExploitStep s : steps) {
-
-			for (String obj : exampleTemplate) {
-				if (obj.contains("${exploit}"))
-					obj = obj.replace("${exploit}", "${exploit." + s.getId() + "." + (stepNum++) + "}");
-
-				mlp.getMainDocumentPart().getContent().add(begin++, XmlUtils.unmarshalString(obj));
-
-			}
-
 		}
 
 	}
