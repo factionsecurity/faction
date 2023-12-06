@@ -94,7 +94,8 @@ var editorOptions = {
 
 	],
 	defaultStyle: 'font-family: arial; font-size: 18px',
-	height: 500
+	height: "auto",
+	minHeight: 500
 };
 let engagementOptions = {
 	defaultStyle: 'font-family: arial; font-size: 18px',

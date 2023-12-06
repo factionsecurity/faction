@@ -207,7 +207,7 @@
             	</li>
              </s:if>
             <s:if test="acassessor || acremediation || acmanager || acengagement || acadmin">
-            	<li class="<s:property value="activeCal"/>"><a href="Calendar"><i class="fa fa-group"></i> <span>Team Calendar</span></a></li>
+            	<li class="<s:property value="activeCal"/>"><a href="Calendar"><i class="fa fa-people-group"></i> <span>Team Calendar</span></a></li>
             </s:if>
             <s:if test="acassessor || acremediation || acmanager || acengagement || acadmin">
             	<li class="<s:property value="activeMetrics"/>"><a href="Metrics"><i class="glyphicon glyphicon-signal"></i> <span>Metrics</span></a></li>
