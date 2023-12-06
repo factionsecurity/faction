@@ -9,7 +9,7 @@
         <div class="pull-right hidden-xs">
         </div>
         <!-- Default to the left -->
-        <strong>Copyright &copy; ${Year.now().getValue()} <a href="https://www.factionsecurity.com">FACTION</a>.</strong> All rights reserved. <small>Version 1.100.0</small>
+        <strong>Copyright &copy; ${Year.now().getValue()} <a href="https://www.factionsecurity.com">FACTION</a>.</strong> All rights reserved. <small>Version ${version}</small>
       </footer>
     </div><!-- ./wrapper -->
 

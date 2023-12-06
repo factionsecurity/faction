@@ -37,6 +37,7 @@ import org.apache.struts2.interceptor.SessionAware;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
 import com.fuse.utils.CSRF;
+import com.fuse.utils.FSUtils;
 import com.opensymphony.xwork2.ActionContext;
 import com.opensymphony.xwork2.ActionSupport;
 import com.opensymphony.xwork2.interceptor.annotations.After;
@@ -83,6 +84,8 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	public boolean userLimitReached=false;
 	public boolean expireDateApproaching=false;
 	public boolean licenseExpired=false;
+	protected String version="";
+	
 	
 	private boolean isIndex() {
 		String resultPath = request.getRequestURI().toString().replace(request.getContextPath(), "");
@@ -114,6 +117,19 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 			tier = (String) (JSESSION.get("tier") == null ? "" : JSESSION.get("tier"));
 			_title1 = (String)JSESSION.get("title1");
 			_title2 = (String)JSESSION.get("title2");
+			version = (String)JSESSION.get("version");
+			if(version == null) {
+				try {
+					version = FSUtils.getVersion(ServletActionContext.getServletContext());
+					version = version.replace("-SNAPSHOT", "");
+					JSESSION.put("version", version);
+				}catch(Exception ex) {
+					ex.printStackTrace();
+					version = "-";
+					JSESSION.put("version", version);
+				}
+			}
+			
 		}
 		
 	}
@@ -291,5 +307,8 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 			return true;
 		
 		return false;
+	}
+	public String getVersion() {
+		return this.version; 
 	}
 }

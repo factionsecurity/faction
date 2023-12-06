@@ -24,6 +24,7 @@ import java.util.Properties;
 import java.util.Scanner;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -35,6 +36,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import javax.persistence.EntityManager;
+import javax.servlet.ServletContext;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
@@ -561,6 +563,20 @@ public class FSUtils {
 	public static String getEnv(String ENV_VAR) {
 		String var = System.getenv(ENV_VAR);
 		return var == null ? "" : var;
+	}
+	
+	public static String getVersion(ServletContext servletContext) {
+		InputStream inputStream = servletContext.getResourceAsStream("/META-INF/MANIFEST.MF");
+		Manifest manifest;
+		try {
+			manifest = new Manifest(inputStream);
+			return "Version " + manifest.getMainAttributes().getValue("Implementation-Version");
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return "";
+		
 	}
 
 }
