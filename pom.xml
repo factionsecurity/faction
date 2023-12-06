@@ -411,11 +411,4 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-	<distributionManagement>
-		<repository>
-			<id>github</id>
-			<name>GitHub Faction Security Packages</name>
-			<url>https://github.com/factionsecurity/faction/releases</url>
-		</repository>
-	</distributionManagement>
 </project>
