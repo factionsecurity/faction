@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.faction</groupId>
 	<artifactId>faction</artifactId>
-	<version>1.1.10-SNAPSHOT</version>
+	<version>1.1.11-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>Faction</name>
 	<scm>
@@ -66,6 +66,11 @@
 						node_modules/,.env/,.node_env/,WEB-INF/lib-bk/</warSourceExcludes>
 					<manifestEntries>
 					</manifestEntries>
+					<archive>
+						<manifest>
+							<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+						</manifest>
+					</archive>
 				</configuration>
 			</plugin>
 		</plugins>
