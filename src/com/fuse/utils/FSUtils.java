@@ -51,6 +51,8 @@ import org.w3c.tidy.Tidy;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.Category;
 import com.fuse.dao.DefaultVulnerability;
+import com.fuse.dao.HibHelper;
+import com.fuse.dao.ReportOptions;
 import com.fuse.dao.Vulnerability;
 
 public class FSUtils {
@@ -577,6 +579,86 @@ public class FSUtils {
 		}
 		return "";
 		
+	}
+	
+	public static ReportOptions getOrCreateReportOptionsIfNotExist(EntityManager em) {
+		ReportOptions RPO = (ReportOptions) em.createQuery("from ReportOptions").getResultList().stream()
+		.findFirst().orElse(null);
+		
+		if (RPO == null) {
+			HibHelper.getInstance().preJoin();
+			em.joinTransaction();
+			RPO = new ReportOptions();
+			RPO.setFont("Arial");
+			RPO.setSize("12px");
+			RPO.setBodyCss("body{ \r\n"
+					+ "    font-size: 15px; \r\n"
+					+ "} \r\n"
+					+ "figure{  \r\n"
+					+ "    text-align: center;  \r\n"
+					+ "    padding: 0px;  \r\n"
+					+ "    margin: 10px 0px;  \r\n"
+					+ "    display: inline-block; \r\n"
+					+ "    border: none; \r\n"
+					+ "} \r\n"
+					+ "img{ \r\n"
+					+ "    max-width: 600px; \r\n"
+					+ "    height: auto !important; \r\n"
+					+ "    display: block; \r\n"
+					+ "    margin: auto !important\r\n"
+					+ "} \r\n"
+					+ "p{ \r\n"
+					+ "    padding:0px !important; \r\n"
+					+ "    margin:0px !important; \r\n"
+					+ "    margin-bottom: 10px !important; \r\n"
+					+ "} \r\n"
+					+ "li{ \r\n"
+					+ "    margin-bottom: 10px !important; \r\n"
+					+ "} \r\n"
+					+ "code { \r\n"
+					+ "    font-family: monospace!important; \r\n"
+					+ "    color: #666; \r\n"
+					+ "    background-color: #eeeeee !important; \r\n"
+					+ "    border-radius: 6px !important; \r\n"
+					+ "    padding-left: 100px !important; \r\n"
+					+ "} \r\n"
+					+ "code span{ \r\n"
+					+ "    font-family: monospace!important; \r\n"
+					+ "    color: #666; \r\n"
+					+ "    background-color: #eeeeee !important; \r\n"
+					+ "    border-radius: 6px !important; \r\n"
+					+ "} \r\n"
+					+ "table {\r\n"
+					+ "    font-family: Arial, Helvetica, sans-serif;\r\n"
+					+ "    border-collapse: collapse;\r\n"
+					+ "    width: 100%;\r\n"
+					+ "}\r\n"
+					+ "td, th {\r\n"
+					+ "    border: 0.3px solid #acb9ca;\r\n"
+					+ "    padding: 2px;\r\n"
+					+ "  	padding-left: 8px;\r\n"
+					+ "}\r\n"
+					+ "td div {\r\n"
+					+ "   word-break: break-all !important;\r\n"
+					+ "}\r\n"
+					+ "th {\r\n"
+					+ "  white-space: nowrap !important;\r\n"
+					+ "  background-color: #afbfcf;\r\n"
+					+ "  display: table-cell;\r\n"
+					+ "  vertical-align: inherit;\r\n"
+					+ "  font-weight: normal;\r\n"
+					+ "}\r\n"
+					+ "pre{ \r\n"
+					+ "    background-color:#eeeeee !important; \r\n"
+					+ "    border:1px solid #cccccc !important; \r\n"
+					+ "    font-size:15px; \r\n"
+					+ "    padding: 10px 15px; \r\n"
+					+ "}\r\n");
+			
+			em.persist(RPO);
+			HibHelper.getInstance().commit();
+			}
+		return RPO;
 	}
 
 }

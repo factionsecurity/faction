@@ -18,6 +18,7 @@ import com.fuse.dao.ReportOptions;
 import com.fuse.dao.ReportPage;
 import com.fuse.dao.ReportTemplates;
 import com.fuse.dao.Teams;
+import com.fuse.utils.FSUtils;
 import com.fuse.utils.reporttemplate.ReportTemplate;
 import com.fuse.utils.reporttemplate.ReportTemplateFactory;
 
@@ -70,16 +71,13 @@ public class CMS extends FSActionSupport {
 		if (this.action != null && this.action.equals("updateCSS")) {
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
-			ReportOptions rpo = (ReportOptions) em.createQuery("from ReportOptions").getResultList().stream()
-					.findFirst().orElse(null);
-			if (rpo == null)
-				rpo = new ReportOptions();
-
+			
+			ReportOptions rpo = FSUtils.getOrCreateReportOptionsIfNotExist(em);
 			if (this.css == null) {
 				rpo.setFont(this.fontname);
-				// rpo.setSize(this.fontsize);
-			} else
+			} else {
 				rpo.setBodyCss(this.css.trim());
+			}
 
 			em.persist(rpo);
 			HibHelper.getInstance().commit();
@@ -197,8 +195,7 @@ public class CMS extends FSActionSupport {
 				HibHelper.getInstance().commit();
 				if (file_data != null) {
 
-					ReportOptions RPO = (ReportOptions) em.createQuery("from ReportOptions").getResultList().stream()
-							.findFirst().orElse(null);
+					ReportOptions RPO = FSUtils.getOrCreateReportOptionsIfNotExist(em);
 					this.fontname = RPO.getFont();
 					this.fontsize = RPO.getSize();
 					this.css = RPO.getBodyCss();
@@ -207,92 +204,10 @@ public class CMS extends FSActionSupport {
 					return this.SUCCESSJSON;
 			}
 		} else {
-
-			ReportOptions RPO = (ReportOptions) em.createQuery("from ReportOptions").getResultList().stream()
-					.findFirst().orElse(null);
-			if (RPO == null) {
-				HibHelper.getInstance().preJoin();
-				em.joinTransaction();
-				this.fontsize = "12px";
-				this.fontname = "Arial";
-				RPO = new ReportOptions();
-				RPO.setFont(this.fontname);
-				RPO.setBodyCss("body{ \r\n"
-						+ "    font-size: 15px; \r\n"
-						+ "} \r\n"
-						+ "figure{  \r\n"
-						+ "    text-align: center;  \r\n"
-						+ "    padding: 0px;  \r\n"
-						+ "    margin: 10px 0px;  \r\n"
-						+ "    display: inline-block; \r\n"
-						+ "    border: none; \r\n"
-						+ "} \r\n"
-						+ "img{ \r\n"
-						+ "    max-width: 600px; \r\n"
-						+ "    height: auto !important; \r\n"
-						+ "    display: block; \r\n"
-						+ "    margin: auto !important\r\n"
-						+ "} \r\n"
-						+ "p{ \r\n"
-						+ "    padding:0px !important; \r\n"
-						+ "    margin:0px !important; \r\n"
-						+ "    margin-bottom: 10px !important; \r\n"
-						+ "} \r\n"
-						+ "li{ \r\n"
-						+ "    margin-bottom: 10px !important; \r\n"
-						+ "} \r\n"
-						+ "code { \r\n"
-						+ "    font-family: monospace!important; \r\n"
-						+ "    color: #666; \r\n"
-						+ "    background-color: #eeeeee !important; \r\n"
-						+ "    border-radius: 6px !important; \r\n"
-						+ "    padding-left: 100px !important; \r\n"
-						+ "} \r\n"
-						+ "code span{ \r\n"
-						+ "    font-family: monospace!important; \r\n"
-						+ "    color: #666; \r\n"
-						+ "    background-color: #eeeeee !important; \r\n"
-						+ "    border-radius: 6px !important; \r\n"
-						+ "} \r\n"
-						+ "table {\r\n"
-						+ "    font-family: Arial, Helvetica, sans-serif;\r\n"
-						+ "    border-collapse: collapse;\r\n"
-						+ "    width: 100%;\r\n"
-						+ "}\r\n"
-						+ "td, th {\r\n"
-						+ "    border: 0.3px solid #acb9ca;\r\n"
-						+ "    padding: 2px;\r\n"
-						+ "  	padding-left: 8px;\r\n"
-						+ "}\r\n"
-						+ "td div {\r\n"
-						+ "   word-break: break-all !important;\r\n"
-						+ "}\r\n"
-						+ "th {\r\n"
-						+ "  white-space: nowrap !important;\r\n"
-						+ "  background-color: #afbfcf;\r\n"
-						+ "  display: table-cell;\r\n"
-						+ "  vertical-align: inherit;\r\n"
-						+ "  font-weight: normal;\r\n"
-						+ "}\r\n"
-						+ "pre{ \r\n"
-						+ "    background-color:#eeeeee !important; \r\n"
-						+ "    border:1px solid #cccccc !important; \r\n"
-						+ "    font-size:15px; \r\n"
-						+ "    padding: 10px 15px; \r\n"
-						+ "}\r\n");
-				
-				em.persist(RPO);
-				HibHelper.getInstance().commit();
-				// session.getTransaction().begin();
-				// session.save(RPO);
-				// session.getTransaction().commit();
-
-			} else {
-				this.fontname = RPO.getFont();
-				this.fontsize = RPO.getSize();
-				this.css = RPO.getBodyCss();
-
-			}
+			ReportOptions RPO = FSUtils.getOrCreateReportOptionsIfNotExist(em);
+			this.fontname = RPO.getFont();
+			this.fontsize = RPO.getSize();
+			this.css = RPO.getBodyCss();
 		}
 
 		return SUCCESS;

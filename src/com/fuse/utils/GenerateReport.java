@@ -121,7 +121,7 @@ public class GenerateReport {
 
 		// String debug = "false";
 
-		ReportOptions RPO = (ReportOptions) em.createQuery("from ReportOptions").getSingleResult();
+		ReportOptions RPO = FSUtils.getOrCreateReportOptionsIfNotExist(em);
 
 		String customCSS = css + (RPO == null ? "" : RPO.getBodyCss());
 
@@ -167,7 +167,7 @@ public class GenerateReport {
 
 		String debug = (String) props.get("fusevt.debug");
 
-		ReportOptions RPO = (ReportOptions) em.createQuery("from ReportOptions").getSingleResult();
+		ReportOptions RPO = FSUtils.getOrCreateReportOptionsIfNotExist(em);
 
 		String customCSS = css + (RPO == null ? "" : RPO.getBodyCss());
 
@@ -285,7 +285,7 @@ public class GenerateReport {
 
 		String guid = UUID.randomUUID().toString();
 
-		ReportOptions RPO = (ReportOptions) em.createQuery("from ReportOptions").getSingleResult();
+		ReportOptions RPO = FSUtils.getOrCreateReportOptionsIfNotExist(em);
 
 		String customCSS = this.css + (RPO == null ? "" : RPO.getBodyCss());
 
