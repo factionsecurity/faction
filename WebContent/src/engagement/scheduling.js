@@ -70,7 +70,7 @@ let editorOptions = {
 		['undo', 'redo', 'font', 'fontSize', 'formatBlock'],
 		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
 		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks', 'codeView', 'preview'],
+		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown'],
 
 	],
 	defaultStyle: 'font-family: arial; font-size: 18px',
@@ -208,22 +208,7 @@ $(function() {
 		calendar.gotoDate(new Date(one));
 	}
 
-
-	/* let url = document.location.toString();
-		   if (url.match('#')) {
-			   $('.nav-tabs a[href=#'+url.split('#')[1]+']').tab('show') ;
-		   } 
-		   $('.nav-tabs a').on('click', ()=>{ 
-				 let hash = $(this).attr('href');
-				 window.location.hash=hash;
-			   });*/
-
 	$(".select2").select2();
-	/*$("#engName").select2('val', engName);
-	$("#remName").select2('val', remName);
-	$("#campName").select2('val', campName);
-	$("#assType").select2('val', assType);
-	$("#statName").select2('val', statName);*/
 	if(engName != '') $("#engName").val(engName).trigger("change")
 	if(remName != '') $("#remName").val(remName).trigger("change");
 	if(campName != '') $("#campName").val(campName).trigger("change");
@@ -386,7 +371,6 @@ function confirmAndPostIt(messages, index, size) {
 						index = 0;
 						value3.each(function(option) {
 							data += "&assessorId[" + (index++) + "]=" + $(this).val() + "";
-							console.log(data);
 						});
 						data += "&notes=" + encodeURIComponent(getEditorText("notes"));
 						data += "&distro=" + $("#distlist").val();
@@ -396,8 +380,13 @@ function confirmAndPostIt(messages, index, size) {
 						$('[id^="cust"]').each( (_index,el)=>{
 							let id = el.id;
 							id = id.replace('cust',"");
+							let val = $(el).val();
 							
-							let field = `{"id" : ${id}, "text" : "${$(el).val()}"}`;
+							if(el.type == 'checkbox'){
+								val = $(el).is(':checked')
+							}
+								
+							let field = `{"id" : ${id}, "text" : "${val}"}`;
 							fields.push(field);
 						})
 						data += '&cf=[' + fields.join(",") + "]";
@@ -552,7 +541,7 @@ $(function() {
 			});
 		},
 		onSelect: function(e, term, item) {
-			console.log(term);
+				console.log("RUnning this");
 			let appid = term.split("<a> </a>")[0];
 			let appName = term.split("<a> </a>")[1];
 			let others = term.split("<a> </a>")[2];
@@ -573,7 +562,16 @@ $(function() {
 			$("#remName").val(json.remediationId).trigger("change");
 			$("[id^=cust]").val("");
 			$(json.fields).each(function(a, b) {
-				$("#cust" + b.fid).val(b.value);
+				console.log("RUnning this");
+				let el = $("#cust" + b.fid)
+				if(el.type == 'checkbox' && b.value == "true"){
+					$(el).prop('checked', true);
+				}else if(el.type == 'checkbox'){
+					$(el).prop('checked', false);
+				}else{
+					$(el).val(b.value);
+				}
+				
 			});
 
 		}
@@ -629,7 +627,6 @@ $(function() {
 });
 function isInList(option) {
 	let val = $(option).val();
-	console.log(val);
 	if ($("#assessorListSelect option[value='" + val + "']").length > 0)
 		return true;
 	else return false;
@@ -653,9 +650,7 @@ function updateCalendar(user, userid) {
 	copiedEventObject.end = end;
 	calendar.addEvent(copiedEventObject, true);
 	$.post('../service/getAssessments', 'id=' + userid).done((adata) => {
-		console.log(adata);
 		let json = JSON.parse(adata);
-		console.log(json);
 		let N = json.count;
 
 		for (let i = 0; i < N; i++) {
@@ -677,7 +672,6 @@ function updateCalendar(user, userid) {
 				tmpdate = tmpdate.setDate(tmpdate.getDate() + 1);
 				copiedEventObject.end = tmpdate;
 				copiedEventObject.editable = false;
-				console.log("6")
 				calendar.addEvent(copiedEventObject, true);
 
 			}
@@ -712,7 +706,6 @@ function updateCalendar(user, userid) {
 function getAssessors() {
 	assessors = {};
 	calendar.removeAllEvents();
-	//console.log($(this).val());
 	let range = $("#reservation").val().trim();
 	if (range == "" || range == "to" || range == "-") {
 		return;
@@ -728,10 +721,8 @@ function getAssessors() {
 	$.post("Engagement", data).done(function(resp) {
 		$("#assessors").html("");
 		for (let N in resp.users) {
-			console.log(N);
 			let d = resp.users[N];
 			let ocText = " <span>[ Not Free ]</span>";
-			console.log(d.count);
 			if (d.count <= 0)
 				ocText = " <span style='color:green'>[ Open ]</span>"
 

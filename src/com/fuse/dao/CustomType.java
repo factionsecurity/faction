@@ -19,6 +19,27 @@ public class CustomType {
 	private String variable;
 	private int type;
 	private Boolean readonly =  false;
+	private String defaultValue = "";
+	private Integer fieldType = 0;
+	private Boolean deleted = false;
+	static public enum FieldType { STRING(0), BOOLEAN(1), LIST(2);
+		int value;
+		FieldType(int v){
+			value = v;
+		}
+		public  int getValue(){
+			return value;
+		}
+		public static FieldType getProp(int value){
+
+			switch(value){
+				case 0: return STRING;
+				case 1: return BOOLEAN;
+				case 2: return LIST;
+				default : return STRING;
+			}
+		}
+	};
 	
 	static public enum ObjType { ASMT(0), VULN(1), USER(2), VER(3);
 		int value;
@@ -59,6 +80,9 @@ public class CustomType {
 	public int getType() {
 		return type;
 	}
+	public int getFieldType() {
+		return fieldType == null? 0 : fieldType;
+	}
 	public void setId(Long id) {
 		this.id = id;
 	}
@@ -71,11 +95,30 @@ public class CustomType {
 	public void setType(int type) {
 		this.type = type;
 	}
+	public void setFieldType(Integer fieldType) {
+		this.fieldType = fieldType;
+	}
 	public Boolean getReadonly() {
 		return readonly;
 	}
 	public void setReadonly(Boolean readonly) {
 		this.readonly = readonly;
+	}
+
+	public String getDefaultValue() {
+		return defaultValue;
+	}
+
+	public void setDefaultValue(String defaultValue) {
+		this.defaultValue = defaultValue;
+	}
+
+	public Boolean getDeleted() {
+		return deleted;
+	}
+
+	public void setDeleted(Boolean deleted) {
+		this.deleted = deleted;
 	}
 
 	@Transient
@@ -86,6 +129,19 @@ public class CustomType {
 			case 2: return "User";
 			case 3: return "Retest";
 			default: return "Undefined";
+		}
+	}
+	@Transient
+	public String getFieldTypeStr(){
+		if(this.fieldType == null) {
+			return "String";
+		}else {
+			switch(this.fieldType){
+				case 0: return "String";
+				case 1: return "Boolean";
+				case 2: return "List";
+				default: return "String";
+			}
 		}
 	}
 	

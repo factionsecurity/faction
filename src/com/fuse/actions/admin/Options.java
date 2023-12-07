@@ -57,6 +57,8 @@ public class Options extends FSActionSupport {
 	private String cfname;
 	private String cfvar;
 	private Integer cftype;
+	private Integer cffieldtype;
+	private String cfdefault;
 	private String prChecked;
 	private String feedChecked;
 	private String[] title = { "Fuse", "FACTION" };
@@ -85,7 +87,7 @@ public class Options extends FSActionSupport {
 		types = (List<AssessmentType>) em.createQuery("from AssessmentType").getResultList();
 		campaigns = (List<Campaign>) em.createQuery("from Campaign").getResultList();
 		EMS = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst().orElse(null);
-		custom = (List<CustomType>) em.createQuery("from CustomType").getResultList();
+		custom = (List<CustomType>) em.createQuery("from CustomType where deleted = false or deleted IS NULL").getResultList();
 		if (EMS != null) {
 			if(EMS.getServer() == null || EMS.getServer().equals("")) {
 				EMS.initSMTPSettings();
@@ -284,14 +286,19 @@ public class Options extends FSActionSupport {
 		if (!this.testToken(false))
 			return this.ERRORJSON;
 
-		User user = this.getSessionUser();
-		List<CustomType> types = em.createQuery("from CustomType where variable = :var").setParameter("var", this.cfvar)
-				.getResultList();
-		if (types != null && types.size() != 0) {
+		CustomType foundType = (CustomType) em.createQuery("from CustomType where variable = :variable").setParameter("variable", this.cfvar)
+				.getResultList().stream().findFirst().orElse(null);
+		if (foundType != null && foundType.getDeleted() != null && foundType.getDeleted()) {
+			message = "This variable has already been used by a deleted field";
+			return this.ERRORJSON;
+		}else if (foundType != null && (foundType.getDeleted() == null || !foundType.getDeleted())) {
+			message = "This variable has already been used by an active field";
 			return this.ERRORJSON;
 		}
 
 		CustomType type = new CustomType(this.cfname, this.cfvar.replaceAll(" ", ""), this.cftype);
+		type.setDefaultValue(this.cfdefault);
+		type.setFieldType(this.cffieldtype);
 		type.setReadonly(this.readonly);
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
@@ -312,14 +319,24 @@ public class Options extends FSActionSupport {
 		if (!this.testToken(false))
 			return this.ERRORJSON;
 
-		User user = this.getSessionUser();
-		CustomType type = (CustomType) em.createQuery("from CustomType where id = :var").setParameter("var", this.cfid)
+		CustomType foundType = (CustomType) em.createQuery("from CustomType where variable = :variable").setParameter("variable", this.cfvar)
+				.getResultList().stream().findFirst().orElse("null");
+		if (foundType != null && foundType.getDeleted()) {
+			message = "This variable has already been used by a deleted field";
+			return this.ERRORJSON;
+		}else if (foundType != null && !foundType.getDeleted()) {
+			message = "This variable has already been used by an active field";
+			return this.ERRORJSON;
+		}
+		
+		CustomType type = (CustomType) em.createQuery("from CustomType where id = :id").setParameter("id", this.cfid)
 				.getResultList().stream().findFirst().orElse(null);
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		type.setKey(this.cfname);
 		type.setVariable(this.cfvar.replaceAll(" ", ""));
 		type.setReadonly(this.readonly);
+		type.setDefaultValue(cfdefault);
 		em.persist(type);
 		HibHelper.getInstance().commit();
 
@@ -335,18 +352,19 @@ public class Options extends FSActionSupport {
 			return this.ERRORJSON;
 
 		User user = this.getSessionUser();
-		CustomType type = (CustomType) em.createQuery("from CustomType where id = :var").setParameter("var", this.cfid)
+		CustomType type = (CustomType) em.createQuery("from CustomType where id = :id").setParameter("id", this.cfid)
 				.getResultList().stream().findFirst().orElse(null);
 		String query = "{ 'type_id' : " + type.getId() + "}";
 		List<CustomField> fields = em.createNativeQuery(query, CustomField.class).getResultList();
-		if (fields != null && fields.size() != 0) {
-			return this.ERRORJSON;
-		}
-
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
-		em.remove(type);
-
+		
+		if (fields != null && fields.size() != 0) {
+			//perform a soft delete since its used by other assessment or vulns
+			type.setDeleted(true); 
+		}else {
+			em.remove(type);
+		}
 		HibHelper.getInstance().commit();
 
 		return this.SUCCESSJSON;
@@ -919,5 +937,15 @@ public class Options extends FSActionSupport {
 	public void setStatus(String status) {
 		this.status = status;
 	}
+
+	public void setCffieldtype(Integer cffieldtype) {
+		this.cffieldtype = cffieldtype;
+	}
+
+	public void setCfdefault(String cfdefault) {
+		this.cfdefault = cfdefault;
+	}
+	
+	
 
 }

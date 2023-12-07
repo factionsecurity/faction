@@ -30,6 +30,7 @@ import '../scripts/jquery.autocomplete.min';
    	$(function(){
         $("input").each((index,el) => {if(el.type == "checkbox"){$(el).addClass("icheckbox_minimal-blue");}});
         $("#cfType").select2();
+        $("#cfFieldType").select2();
    	
    		$('.statuscheck').on('click', function(event){
             $(".statuscheck").each( (index, el)  => { $(el).removeAttr("checked");});
@@ -269,13 +270,79 @@ import '../scripts/jquery.autocomplete.min';
     
     $(function(){
     	$("#addCF").click(function(){
-    		let data="cftype=" + $("#cfType").val();
-    		data+="&cfname="+$("#cfName").val();
-    		data+="&readonly="+$("#readonly").is(":checked");
-    		data+="&cfvar="+$("#cfVar").val();
-    		data+="&_token=" + _token;
-    		$.post("CreateCF", data).done(function(resp){
-    			alertRedirect(resp);
+			$.confirm({
+				escapeKey: true,
+    			backgroundDismiss: false,
+				title: 'Add Custom Field',
+				content: `
+				<div class="col-md-12">
+					<div class="row">
+						<div class="form-group">
+							<label title="This is the name that is shown in UI">Field Display Name</label><input type="text" placeholder="" class="form-control pull-right" id="cfName" value="">
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-group">
+							<label title="This variable will be populated in reports">Variable Name (No Spaces) <i class="fa-solid fa-question"></i></label><input type="text" placeholder="" class="form-control pull-right" id="cfVar" value="">
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-group">
+							<label title="The Default Value that will be populated in the UI">Default Value (Optional) <i class="fa-solid fa-question"></i></label><input type="text" placeholder="" class="form-control pull-right" id="cfDefault" value="">
+						</div>
+					</div>
+					<div class="row">
+						<br>
+						<div class="form-group">
+						<label title="Strings will display as input boxes, Boolean will be checkboxes, and Lists will be dropdowns">Data Type <i class="fa-solid fa-question"></i></label>
+						<select id="cfFieldType" style="width:100%">
+							  <option value="0">String</option>
+							  <option value="1">Boolean</option>
+							  <option value="2">List</option>
+						  </select>
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-group">
+						  <label title="The location where the field is valid">Applied to <i class="fa-solid fa-question"></i></label>
+						  <select id="cfType" style="width:100%">
+							  <option value="0">Assessment</option>
+							  <option value="1">Vulnerability</option>
+						  </select>
+						</div>
+					</div>
+					<div class="row">
+						<div class="form-group">
+							<label title="Read Only fields cannot be edited in assessments">Read Only <i class="fa-solid fa-question"></i></label><br/>
+							<input type="checkbox" id="readonly" class="icheckbox_minimal-blue">
+						</div>
+					</div>
+				</div>
+				`,
+				onContentReady: function () {
+					console.log("content loaded")
+					$("#cfType").select2();
+					$("#cfFieldType").select2();
+				},
+				buttons: {
+					cancel: () => {},
+					save: () => {
+						let data="cftype=" + $("#cfType").val();
+						data+="&cfname="+$("#cfName").val();
+						data+="&readonly="+$("#readonly").is(":checked");
+						data+="&cfvar="+$("#cfVar").val();
+						data+="&cffieldtype="+$("#cfFieldType").val();
+						data+="&cfdefault="+$("#cfDefault").val();
+						data+="&_token=" + _token;
+						$.post("CreateCF", data).done(function(resp){
+							if(resp.message){
+    							alertMessage(resp,"Custom Field Updated");
+							}else{
+								alertRedirect(resp);
+							}
+						});
+					}
+				}
     		});
     		
     	});

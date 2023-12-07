@@ -6,6 +6,10 @@
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 <link rel="stylesheet" href="../plugins/iCheck/all.css">
 <style>
+.select2-dropdown {
+  z-index: 99999999;
+  box-shadow: rgba(0, 0, 0, 0.15) 1.95px 1.95px 2.6px;
+}
 
 </style>
 
@@ -82,24 +86,18 @@
 	 <s:if test="acadmin == true && tier != 'consultant'">
 	 <bs:box type="primary" title="Custom Fields">
 	  		<bs:row>
-	  			<bs:inputgroup name="" colsize="2" id="cfName" placeholder="Field Name"></bs:inputgroup >
-	  			<bs:inputgroup name="" colsize="2" id="cfVar" placeholder="Variable Name (No Spaces)"></bs:inputgroup>
-	  			<bs:mco colsize="2">
-	  			<select id="cfType">
-	  				<option value="0">Assessment</option>
-	  				<option value="1">Vulnerability</option>
-	  			</select>
-	  			</bs:mco>
-	  			<bs:mco colsize="2"><input type=checkbox id="readonly" /> ReadOnly?</bs:mco>
-	  			<bs:mco colsize="1">&nbsp;</bs:mco>
 	  			<bs:button color="success" size="md" colsize="3" text="<i class='fa fa-plus'></i> Add" id="addCF" > </bs:button>
 	  		</bs:row>
 	  		<br>
 	  		<bs:row>
 	  			<bs:mco colsize="12">
-	  				<bs:datatable columns="Name,Variable,Type,ReadOnly,Edit" classname="" id="campaign">
+	  				<bs:datatable columns="Name,Variable,Default,Field Type,Applied To,ReadOnly,Edit" classname="" id="campaign">
 	  					<s:iterator value="custom">
-	  						<tr><td><input value="${key}" id="key${id}" class="form-control pull-right" /></td><td><input id="var${id}" value="${variable}" class="form-control pull-right" /></td>
+	  						<tr>
+	  							<td><input value="${key}" id="key${id}" class="form-control pull-right" /></td>
+	  							<td><input id="var${id}" value="${variable}" class="form-control pull-right" /></td>
+	  							<td><input id="default${id}" value="${defaultValue}" class="form-control pull-right" /></td>
+	  						<td>${fieldTypeStr}</td>
 	  						<td>${typeStr}</td>
 	  						<s:if test="readonly">
 	  							<td><input type=checkbox id="ro${id}" checked/></td>
