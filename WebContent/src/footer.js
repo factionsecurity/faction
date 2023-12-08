@@ -66,7 +66,7 @@ import 'jquery-confirm';
 				);
         }
 		
-		global._token = resp.token;
+		//global._token = resp.token;
     };
     
     

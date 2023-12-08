@@ -324,7 +324,7 @@ public class Options extends FSActionSupport {
 		if (foundType != null && foundType.getDeleted()) {
 			message = "This variable has already been used by a deleted field";
 			return this.ERRORJSON;
-		}else if (foundType != null && !foundType.getDeleted()) {
+		}else if (foundType != null && !foundType.getDeleted() && !foundType.getId().equals(this.cfid)) {
 			message = "This variable has already been used by an active field";
 			return this.ERRORJSON;
 		}

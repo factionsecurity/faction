@@ -213,7 +213,7 @@
             	<li class="<s:property value="activeMetrics"/>"><a href="Metrics"><i class="glyphicon glyphicon-signal"></i> <span>Metrics</span></a></li>
             </s:if>
             <s:if test="acmanager || acadmin || acengagement">
-            <li class="treeview <s:property value="activeChecklist"/><s:property value="activeRConfig"/><s:property value="activeAPI"/><s:property value="activeCms"/><s:property value="activeUsers"/><s:property value="activeVulns"/><s:property value="activeOptions"/><s:property value="activeLicense"/>">
+            <li class="treeview <s:property value="activeChecklist"/><s:property value="activeUsers"/><s:property value="activeOptions"/>">
               <a href="#"><i class="glyphicon glyphicon-user"></i> <span>Admin</span> <i class="fa fa-angle-left pull-right"></i></a>
               <ul class="treeview-menu">
               	<s:if test="acadmin == true ">
@@ -228,7 +228,7 @@
               </ul>
             </li>
             </s:if>
-            <li class="treeview <s:property value="activeVulnTemplates"/><s:property value="activeCats"/><s:property value="activeTemplates"/>">
+            <li class="treeview <s:property value="activeVulns"/><s:property value="activeCms"/><s:property value="activeTemplates"/>">
               <a href="#"><i class="glyphicon glyphicon-book"></i> <span>Templates</span> <i class="fa fa-angle-left pull-right"></i></a>
               <ul class="treeview-menu">
                 <!-- <li class="<s:property value="activeVulnTemplates"/>"><a href="VulnerabilityTemplates">Vulnerabilities</a></li>
