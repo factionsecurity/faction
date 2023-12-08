@@ -168,8 +168,9 @@ $(function(){
             
         });
         $("#editCSS").click(function (){
-            $("#cssModal").modal("show");
-            console.log(editor)
+            $("#cssModal").modal({	show: true,
+            						keyboard: false,
+            						backdrop: 'static'});
             if(!editor){
                 editor = CodeMirror.fromTextArea(document.getElementById("css"), {
                     lineNumbers: true,

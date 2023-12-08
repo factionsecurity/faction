@@ -116,12 +116,16 @@ public class Login extends FSActionSupport {
 
 				return redirectIt(user);
 			} else if (result == AuthResult.FAILED_AUTH) {
+				HibHelper.getInstance().preJoin();
+				em.joinTransaction();
 				AuditLog.notAuthorized(username, this, " Failed Authentication", false);
 				HibHelper.getInstance().commit();
 				failed = true;
 				message = "Username and/or Password was incorrect.";
 				return "failedAuth";
 			} else if (result == AuthResult.LOCKEDOUT) {
+				HibHelper.getInstance().preJoin();
+				em.joinTransaction();
 				AuditLog.notAuthorized(username, this, username + " Account Lock Out", false);
 				HibHelper.getInstance().commit();
 
@@ -129,6 +133,8 @@ public class Login extends FSActionSupport {
 				message = "Your account has been locked.";
 				return "failedAuth";
 			} else if (result == AuthResult.INACTIVITY) {
+				HibHelper.getInstance().preJoin();
+				em.joinTransaction();
 				AuditLog.notAuthorized(username, this, username + " Account was Lock Out due to inactivity", false);
 				HibHelper.getInstance().commit();
 
@@ -142,6 +148,8 @@ public class Login extends FSActionSupport {
 				message = "Not a valid OAuth User. Try another account or contact the administrator.";
 				return "failedAuth";
 			} else {
+				HibHelper.getInstance().preJoin();
+				em.joinTransaction();
 				AuditLog.error(username, this, "Access control result of " + result, AuditLog.Login, false);
 				HibHelper.getInstance().commit();
 

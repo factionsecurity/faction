@@ -130,9 +130,31 @@
 
 							<s:if test="!type.readonly">
 								<div class="col-sm-8">
-									<input type="text" class="form-control" id="cust${id}"
-										value='${value}'
-										<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if>>
+									<s:if test="type.fieldType == 0">
+										<input type="text" class="form-control" id="cust${id}"
+											value='${value}'
+											<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
+									</s:if>
+									<s:if test="type.fieldType == 1">
+										<br>
+										<input type="checkbox" class="icheckbox_minimal-blue"
+											style="width: 20px; height: 20px; position: absolute; margin-top: -13px"
+											id="cust<s:property value="id"/>"
+											<s:if test="value == 'true'">checked</s:if>
+											<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
+									</s:if>
+									<s:if test="type.fieldType == 2">
+										<select class='form-control select2 ' style='width: 100%;'
+											id="cust<s:property value="id"/>"
+											<s:if test="currentAssessment.finalized">readonly</s:if>>
+											<s:iterator value="type.defaultValue.split(',')" var="option">
+												<s:set var="aOption" value="option" />
+												<option value="<s:property value="option"/>"
+													<s:if test="value.equals(#aOption)">selected</s:if>><s:property
+														value="option" /></option> 
+											</s:iterator>
+										</select>
+									</s:if>
 								</div>
 								<div class="col-sm-2">
 									<s:if
@@ -233,14 +255,15 @@
 						<div class="col-md-1"></div>
 						<div class="col-md-11" style="padding-top: 8px">
 							<span id="saveTemplateSideBar"
-								class="vulnControl vulnControl-add saveTemplate" for="summary" title='Save or Create Template'>
-								<i class="fa fa-save"></i>
+								class="vulnControl vulnControl-add saveTemplate" for="summary"
+								title='Save or Create Template'> <i class="fa fa-save"></i>
 							</span> <span id="addTemplateSideBar"
-								class="vulnControl vulnControl-add addTemplate" for="summary" title='Add Templates to Editor'>
-								<i class="fa fa-plus"></i>
+								class="vulnControl vulnControl-add addTemplate" for="summary"
+								title='Add Templates to Editor'> <i class="fa fa-plus"></i>
 							</span> <span id="deleteTemplateSideBar"
-								class="vulnControl vulnControl-delete deleteTemplate" title='Delete Selected Templates'
-								for="summary"> <i class="fa fa-trash"></i>
+								class="vulnControl vulnControl-delete deleteTemplate"
+								title='Delete Selected Templates' for="summary"> <i
+								class="fa fa-trash"></i>
 							</span>
 						</div>
 					</div>
@@ -304,7 +327,7 @@
 						class="form-control templates">
 						<s:iterator value="riskTemplates">
 							<option value="${id}" title="${user.fname } ${user.lname}"
-								global="${global}" 
+								global="${global}"
 								<s:if test="global == true">
 								class='globalTemplate'>
 							</s:if><s:else>
@@ -324,13 +347,14 @@
 						<div class="col-md-1"></div>
 						<div class="col-md-11" style="padding-top: 8px">
 							<span id="saveTemplateSideBar"
-								class="vulnControl vulnControl-add saveTemplate" for="risk" title='Save or Create Template'>
-								<i class="fa fa-save"></i>
+								class="vulnControl vulnControl-add saveTemplate" for="risk"
+								title='Save or Create Template'> <i class="fa fa-save"></i>
 							</span> <span id="addTemplateSideBar"
-								class="vulnControl vulnControl-add addTemplate" for="risk" title='Add Templates to Editor'>
-								<i class="fa fa-plus"></i>
-							</span> <span class="vulnControl vulnControl-delete deleteTemplate" title='Delete Templates'
-								for="risk"> <i class="fa fa-trash"></i>
+								class="vulnControl vulnControl-add addTemplate" for="risk"
+								title='Add Templates to Editor'> <i class="fa fa-plus"></i>
+							</span> <span class="vulnControl vulnControl-delete deleteTemplate"
+								title='Delete Templates' for="risk"> <i
+								class="fa fa-trash"></i>
 							</span>
 						</div>
 					</div>

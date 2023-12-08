@@ -101,7 +101,9 @@
 		let sDate="${startStr}";
 		let eDate="${endStr}";
     	<s:iterator value="currentAssessment.CustomFields">
-    		$("#cust${type.id}").val("${value}");
+    		<s:if test="type.fieldType == 1 && value == 'true'"> $("#cust${type.id}").prop('checked', true);</s:if>
+    		<s:elseif test="type.fieldType == 1 && value == 'false'"> $("#cust${type.id}").prop('checked', false);</s:elseif>
+    		<s:else>$("#cust${type.id}").val("${value}");</s:else>
 			customFields.push(${type.id});
     	</s:iterator>
 	</script>

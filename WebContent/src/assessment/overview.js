@@ -17,6 +17,7 @@ import 'bootstrap';
 import 'jquery-ui';
 import 'jquery-confirm';
 import '../scripts/jquery.autocomplete.min';
+import 'select2';
 import { marked } from 'marked';
 
 
@@ -859,11 +860,19 @@ $(function() {
 		});
 	});
 	$(function() {
+		$(".select2").select2();
 		$(".updateCF").click(function() {
 			let cfid = $(this).attr("for");
+			let el = $("#cust" + cfid);
+			let val = "";
+			if(el[0].type =='checkbox'){
+				val = $(el).is(":checked");
+			}else{
+				val = $(el).val();
+			}
 			let data = `cfid=${cfid}`;
 			data += `&id=${id}`;
-			data += "&cfValue=" + $("#cust" + cfid).val();
+			data += `&cfValue=${val}`;
 			data += "&_token=" + global._token;
 			$.post("UpdateAsmtCF", data).done(function(resp) {
 				alertMessage(resp, "Parameter Updated.");

@@ -41,7 +41,31 @@
 			 <bs:mco colsize="4">
 			 <div class="form-group">
 			     <label><s:property value="key"/>:</label>
-			       <input type="text" class="form-control" id="cust<s:property value="id"/>" <s:if test="currentAssessment.finalized">readonly</s:if>/>
+			     	<s:if test="fieldType == 0">
+			       		<input type="text" 
+			       			class="form-control" 
+			       			id="cust<s:property value="id"/>" 
+			       			<s:if test="currentAssessment.finalized">readonly</s:if> 
+			       			value="<s:property value="defaultValue"/>"/>
+			       	</s:if>
+			       	<!--  ${fieldType} -->
+			     	<s:if test="fieldType == 1">
+			       		<br><input type="checkbox" 
+			       			class="icheckbox_minimal-blue" style="height:34px"
+			       			id="cust<s:property value="id"/>" 
+			       			<s:if test="currentAssessment.finalized">readonly</s:if> 
+			       			<s:if test="defaultValue == 'true'">checked</s:if>/>
+			       	</s:if>
+			     	<s:if test="fieldType == 2">
+			       		<select
+			       			class='form-control select2 ' style='width: 100%;'
+			       			id="cust<s:property value="id"/>" 
+			       			<s:if test="currentAssessment.finalized">readonly</s:if> >
+								<s:iterator value="defaultValue.split(',')" var="option">
+									<option value="<s:property value="option"/>"><s:property value="option"/></option>
+								</s:iterator>
+			       			</select>
+			       	</s:if>
 			   </div><!-- /.form group -->
 			 </bs:mco>
 		 </s:iterator>

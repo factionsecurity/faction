@@ -135,7 +135,7 @@ public class AssessmentView extends FSActionSupport {
 
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 
-		vulntypes = em.createQuery("from CustomType where type = 1").getResultList();
+		vulntypes = em.createQuery("from CustomType where type = 1 and (deleted IS NULL or deleted = false)").getResultList();
 
 		summaryTemplates = em.createQuery("from BoilerPlate where (user = :user or global = true) and type='summary' and active = true")
 				.setParameter("user", user).getResultList();

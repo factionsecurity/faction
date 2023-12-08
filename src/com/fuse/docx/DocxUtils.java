@@ -249,7 +249,7 @@ public class DocxUtils {
 					}
 					nxml = nxml.replaceAll("\\$\\{likelihood\\}", v.getLikelyhoodStr());
 					nxml = nxml.replaceAll("\\$\\{category\\}",
-							v.getDefaultVuln() == null ? "Unassigned" : v.getDefaultVuln().getCategory().getName());
+							v.getCategory() == null ? "UnCategorized" : v.getCategory().getName());
 					if (v.getClosed() == null)
 						nxml = nxml.replaceAll("\\$\\{status\\}", "Open");
 					else
@@ -879,7 +879,7 @@ public class DocxUtils {
 				// nxml = nxml.replaceAll("\\$\\{vulnerability.LIKELIHOOD\\}",
 				// v.getLikelyhoodStr());
 				nxml = nxml.replaceAll("\\$\\{category\\}",
-						v.getDefaultVuln() == null ? "Unassigned" : v.getDefaultVuln().getCategory().getName());
+						v.getCategory() == null ? "UnCategorized" : v.getCategory().getName());
 				if (v.getClosed() == null) {
 					nxml = nxml.replaceAll("\\$\\{status\\}", "Open");
 					// nxml = nxml.replaceAll("\\$\\{vulnerability.STATUS\\}", "Open");

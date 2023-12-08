@@ -69,9 +69,9 @@ class SaveQueue {
 
 	handleCustom(data) {
 		let fields = data
-			.filter((row) => row.indexOf("cust") == 0)
+			.filter((row) => row.indexOf("type") == 0)
 			.map((row) => {
-				let tmp = row.replace("cust", "");
+				let tmp = row.replace("type", "");
 				let cfId = tmp.split("=")[0];
 				let cfValue = tmp.split("=")[1];
 				return `{"typeid" : ${cfId}, "value" : "${cfValue}"}`;
@@ -197,10 +197,11 @@ class VulnerablilityView {
 		};
 		this.editorTimeout = {};
 		this.clearLockTimeout = {};
-		$("#overall").select2()
+		/*$("#overall").select2()
 		$("#likelyhood").select2()
 		$("#impact").select2()
-		$("#dcategory").select2()// {matcher: this.catHearder})
+		$("#dcategory").select2()// {matcher: this.catHearder})*/
+		$(".select2").select2();
 
 		this.vulnTable = $('#vulntable').DataTable({
 			"paging": false,
@@ -518,7 +519,16 @@ class VulnerablilityView {
 										_this.updateColors()
 
 										$(data.cf).each(function(a, b) {
-											$("#type" + b.typeid).val(b.value);
+											let el = $("#type" + b.typeid);
+											if(el.type == 'checkbox' && b.value == 'true'){
+												$(el).prop('checked', true)		
+											}
+											else if(el.type == 'checkbox' && b.value == 'false'){
+												$(el).prop('checked', false)		
+											}
+											else {
+												$(el).val(b.value).trigger('change');
+											}
 										});
 									});
 
@@ -535,7 +545,6 @@ class VulnerablilityView {
 							_this.setIntVal(data.likelyhood, 'likelyhood');
 							_this.setIntVal(data.impact, 'impact');
 							_this.setIntVal(data.overall, 'overall');
-							//_this.setIntVal(data.catid, 'dcategory');
 							const severity = $("#overall").select2('data')[0].text;
 							$(".selected").find(".severity")[0].innerHTML = severity;
 							$(".selected").children()[0].className = `sev${severity}`
@@ -544,7 +553,16 @@ class VulnerablilityView {
 							_this.vulnTable.order([1, 'desc']).draw();
 							_this.updateColors()
 							$(data.cf).each(function(a, b) {
-								$("#type" + b.typeid).val(b.value);
+								let el = $("#type" + b.typeid);
+								if(el.type == 'checkbox' && b.value == 'true'){
+									$(el).prop('checked', true)		
+								}
+								else if(el.type == 'checkbox' && b.value == 'false'){
+									$(el).prop('checked', false)		
+								}
+								else {
+									$(el).val(b.value).trigger('change');
+								}
 							});
 						});
 				}
@@ -573,7 +591,8 @@ class VulnerablilityView {
 			data += "&feedMsg="
 			let fields = [];
 			for (let id of customFields) {
-				let value = $(`#type${id}`).val();
+				let value = $(`#type${id}`).data('default');
+				$(`#type${id}`).val(value).trigger('change');
 				fields.push(`{"typeid" : ${id}, "value" : "${value}"}`);
 			}
 			data += '&cf=[' + fields.join(",") + "]";
@@ -703,7 +722,11 @@ class VulnerablilityView {
 		$("#title").attr("intVal", "-1");
 		$("#title").val("");
 		$("#dcategory").val("").trigger('change')
-		$('[id^="cust"]').each((_index, el) => $(el).val(""));
+		$('[id^="type"]').each((_index, el) => {
+			let value = $(el).data('default');
+			$(el).val(value);
+			}
+		);
 
 	}
 	disableAutoSave() {
@@ -721,7 +744,7 @@ class VulnerablilityView {
 		$("#impact").unbind('input');
 		$("#likelyhood").unbind('input');
 		$("#dcategory").unbind('input');
-		$('[id^="cust"]').each((_index, el) => $(el).unbind('input'));
+		$('[id^="type"]').each((_index, el) => $(el).unbind('input'));
 	}
 
 	enableAutoSave() {
@@ -781,9 +804,14 @@ class VulnerablilityView {
 			$(".selected").find(".category")[0].innerHTML = catName
 			_this.queue.push(_this.vulnId, "dcategory", $(this).val());
 		});
-		$('[id^="cust"]').each((_index, el) => $(el).on('input', function(event) {
-			console.log(this.id, $(this).val())
-			_this.queue.push(_this.vulnId, this.id, $(this).val());
+		$('[id^="type"]').each((_index, el) => $(el).on('input', function(event) {
+			let val = "";
+			if(this.type == 'checkbox'){
+				val = $(this).is(":checked");
+			}else{
+				val = $(this).val();
+			}
+			_this.queue.push(_this.vulnId, this.id, `${val}`);
 		}));
 
 	}
@@ -816,7 +844,18 @@ class VulnerablilityView {
 			_this.setIntVal(data.impact, 'impact');
 			_this.setIntVal(data.catid, 'dcategory');
 			$(data.cf).each(function(a, b) {
-				$("#cust" + b.typeid).val(b.value);
+				let el = $("#type" + b.typeid);
+				if(el[0].type == 'checkbox' && b.value == 'true'){
+					$(el).prop('checked', true);
+					
+				}
+				else if(el[0].type == 'checkbox' && b.value == 'false'){
+					$(el).prop('checked', false);
+				}
+				else{
+					$(el).val(b.value).trigger('change');
+				}
+				
 			});
 			_this.enableAutoSave()
 		});

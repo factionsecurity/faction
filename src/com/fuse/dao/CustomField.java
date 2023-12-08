@@ -34,15 +34,4 @@ public class CustomField {
 	public void setValue(String value) {
 		this.value = value;
 	}
-
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
 }
