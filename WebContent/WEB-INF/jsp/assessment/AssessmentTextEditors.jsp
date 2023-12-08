@@ -130,26 +130,31 @@
 
 							<s:if test="!type.readonly">
 								<div class="col-sm-8">
-			     					<s:if test="type.fieldType == 0">
+									<s:if test="type.fieldType == 0">
 										<input type="text" class="form-control" id="cust${id}"
 											value='${value}'
-											<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if>/>
+											<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
 									</s:if>
-									 <s:if test="type.fieldType == 1">
-										   <br><input type="checkbox" 
-											   class="icheckbox_minimal-blue" style="width:20px; height:20px; position: absolute; margin-top:-13px"
-											   id="cust<s:property value="id"/>" <s:if test="value == 'true'">checked</s:if><s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if>/>
-									   </s:if>
-										<s:if test="type.fieldType == 2">
-										   <select
-											   class='form-control select2 ' style='width: 100%;'
-											   id="cust<s:property value="id"/>" 
-											   <s:if test="currentAssessment.finalized">readonly</s:if> >
-												<s:iterator value="type.defaultValue.split(',')" var="option">
-													<option value="<s:property value="option"/>" <s:if test="option == value">selected</s:if>><s:property value="option"/></option>
-												</s:iterator>
-											 </select>
-										</s:if>
+									<s:if test="type.fieldType == 1">
+										<br>
+										<input type="checkbox" class="icheckbox_minimal-blue"
+											style="width: 20px; height: 20px; position: absolute; margin-top: -13px"
+											id="cust<s:property value="id"/>"
+											<s:if test="value == 'true'">checked</s:if>
+											<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
+									</s:if>
+									<s:if test="type.fieldType == 2">
+										<select class='form-control select2 ' style='width: 100%;'
+											id="cust<s:property value="id"/>"
+											<s:if test="currentAssessment.finalized">readonly</s:if>>
+											<s:iterator value="type.defaultValue.split(',')" var="option">
+												<s:set var="aOption" value="option" />
+												<option value="<s:property value="option"/>"
+													<s:if test="value.equals(#aOption)">selected</s:if>><s:property
+														value="option" /></option> 
+											</s:iterator>
+										</select>
+									</s:if>
 								</div>
 								<div class="col-sm-2">
 									<s:if
@@ -188,11 +193,7 @@
 					<i class="glyphicon glyphicon-edit"></i> High Level Summary <span
 						id="summary_header" class="edited"></span><small></small>
 				</h3>
-				<div class="box-tools pull-right">
-					<a
-						href="https://www.factionsecurity.com/project/custom-security-report-templates/"><i
-						class="fa-regular fa-circle-question"></i> Variables</a>
-				</div>
+				<div class="box-tools pull-right"></div>
 			</div>
 			<!-- /.box-header -->
 			<div class="box-body pad">
@@ -277,20 +278,16 @@
 <!-- </div>
    <div class="row">  -->
 
-<!-- Scoping Section -->
+<!-- Risk Analysis Section -->
 <div class="row">
 	<div class="col-md-10">
 		<div class="box box-danger">
 			<div class="box-header">
 				<h3 class="box-title">
-					<i class="glyphicon glyphicon-asterisk"></i> Objective and Scope <span
-						id="risk_header" class="edited"></span><small></small>
+					<i class="glyphicon glyphicon-asterisk"></i> Detailed Summary /
+					Risk Analysis<span id="risk_header" class="edited"></span><small></small>
 				</h3>
-				<div class="box-tools pull-right">
-					<a
-						href="https://www.factionsecurity.com/project/custom-security-report-templates/"><i
-						class="fa-regular fa-circle-question"></i> Variables</a>
-				</div>
+				<div class="box-tools pull-right"></div>
 			</div>
 			<!-- /.box-header -->
 			<div class="box-body pad">

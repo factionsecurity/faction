@@ -162,10 +162,35 @@ td:first-child {
 							<div class="form-group">
 								<div class="col-md-6">
 									<label class="col-sm-2 control-label"
-										title="Variable: &#x24;{cf${variable}}">${key}<span id="cust${id}_header"></span></label>
-									<div class="col-md-4">
-										<input type="text" class="form-control pull-right" rows="3"
-											id="cust${id}"></input>
+										title="Variable: &#x24;{cf${variable}}">${key}<span id="type${id}_header"></span></label>
+									<div class="col-md-4" style="height:50px">
+										<s:if test="fieldType == 0">
+											<input type="text" class="form-control pull-right" id="type${id}"
+												value='${defaultValue}' data-default='${defaultValue}'
+												<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized || readOnly">disabled</s:if> />
+										</s:if>
+										<s:if test="fieldType == 1">
+											<br>
+											<input type="checkbox" class="icheckbox_minimal-blue"
+												style="width: 20px; height: 20px; position: absolute; margin-top: -13px"
+												data-default='${defaultValue}'
+												id="type<s:property value="id"/>"
+												<s:if test="defaultValue == 'true'">checked</s:if>
+												<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized || readonly">disabled</s:if> />
+										</s:if>
+										<s:if test="fieldType == 2">
+											<select class='form-control select2 ' style='width: 100%;'
+												id="type<s:property value="id"/>"
+												data-default='${defaultValue.split(",")[0]}'
+												<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized || readonly">disabled</s:if>>
+												<s:if test="currentAssessment.finalized">readonly</s:if>>
+												<s:iterator value="defaultValue.split(',')" var="option">
+													<option value="<s:property value="option"/>"
+														<s:if test="option == defaultValue">selected</s:if>><s:property
+															value="option" /></option>
+												</s:iterator>
+											</select>
+										</s:if>
 									</div>
 								</div>
 							</div>
