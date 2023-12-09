@@ -157,7 +157,7 @@ public class Comment {
 			json.put("desc_notes", v.getDesc_notes());
 			json.put("detail_notes", v.getDetail_notes());
 		}
-		json.put("dv", v.getDefaultVuln().getId());
+		json.put("dv", v.getDefaultVuln() == null? null : v.getDefaultVuln().getId());
 		json.put("overall", v.getOverall());
 		json.put("likelihood", v.getLikelyhood());
 		json.put("impact", v.getImpact());
@@ -197,8 +197,13 @@ public class Comment {
 
 		this.summary2 = c.getSummary1();
 		this.summary2_notes = c.getSummary1_notes();
-
-		this.vulnerabilities = c.getVulnerabilities();
+		
+		List<String>vulnsClone = new ArrayList<>();
+		for(String v : c.getVulnerabilities()) {
+			vulnsClone.add(v);
+		}
+		this.vulnerabilities = vulnsClone;
+		
 	}
 
 	@Transient

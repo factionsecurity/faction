@@ -56,7 +56,9 @@ let acceptAllChanges = {
 		this.tracking.lastchange = this.context.element.wysiwygFrame.innerHTML;
 		this.tracker.acceptAll();
 		this.history.push(true)
-		queueSave();
+		let id = this.context.element.originElement.id
+		if(id == "appsum"){ id = "summary"}
+		queueSave(id);
 	}
 }
 let rejectAllChanges = {
@@ -71,7 +73,9 @@ let rejectAllChanges = {
 		this.tracking.lastchange = this.context.element.wysiwygFrame.innerHTML;
 		this.tracker.rejectAll();
 		this.history.push(true);
-		queueSave();
+		let id = this.context.element.originElement.id
+		if(id == "appsum"){ id = "summary"}
+		queueSave(id);
 	}
 }
 
@@ -90,7 +94,9 @@ let undoLastChange = {
 		this.tracking.startTracking(element)
 		this.tracking.lastchange = this.context.element.wysiwygFrame.innerHTML;
 		this.history.push(true)
-		queueSave();
+		let id = this.context.element.originElement.id
+		if(id == "appsum"){ id = "summary"}
+		queueSave(id);
 	}
 }
 
@@ -123,7 +129,9 @@ let acceptSingleChange = {
 			this.tracking.lastchange = this.context.element.wysiwygFrame.innerHTML;
 			this.tracker.acceptChange(element);
 			this.history.push(true)
-			queueSave();
+			let id = this.context.element.originElement.id
+			if(id == "appsum"){ id = "summary"}
+			queueSave(id);
 		}
 	}
 }
@@ -156,7 +164,9 @@ let rejectSingleChange = {
 			this.tracking.lastchange = this.context.element.wysiwygFrame.innerHTML;
 			this.tracker.rejectChange(element);
 			this.history.push(true)
-			queueSave();
+			let id = this.context.element.originElement.id
+			if(id == "appsum"){ id = "summary"}
+			queueSave(id);
 		}
 	}
 }
@@ -179,7 +189,8 @@ const editorConfig = {
 	defaultStyle: 'font-family: arial; font-size: 18px',
 	attributesWhitelist: { 'all': "class|data-cid|data-userid|data-username|date-time|title" },
 	allowedClassNames: ".*",
-	height: 500
+	height: "auto",
+	minHeight: 500
 };
 const noteConfig = {
 	codeMirror: CodeMirror,
@@ -204,31 +215,12 @@ function updateVulnEditors() {
 			editorConfig.allowedClassNames=".*";
 			editors[id] = suneditor.create(id, editorConfig)
 			editors[id].onKeyDown = function(contents, core) {
-				queueSave();
+				queueSave(id);
 			}
 		} else {
 			editors[id] = suneditor.create(id, noteConfig)
 			editors[id].disabled()
 		}
-	});
-}
-function updateStepEditors() {
-	$.each($("[id^=step]"), function(_id, obj) {
-		let id = $(obj).attr("id");
-		if(id.indexOf("header") != -1) {
-			return;
-		}
-		if (id.indexOf("notes") == -1) {
-			editorConfig.allowedClassNames=".*";
-			editors[id] = suneditor.create(id, editorConfig)
-			editors[id].onKeyDown = function(contents, core) {
-				queueSave();
-			}
-		} else {
-			editors[id] = suneditor.create(id, noteConfig)
-			editors[id].disabled()
-		}
-
 	});
 }
 function saveAllEditors(isComplete=false){
@@ -242,9 +234,9 @@ function saveAllEditors(isComplete=false){
 		}
 		data += `&prid=${prid}`;
 		data += "&risk=" + encodeURIComponent(editors.risk.getContents());
-		data += "&summary=" + encodeURIComponent(editors.appsum.getContents());
+		data += "&summary=" + encodeURIComponent(editors.summary.getContents());
 		data += "&risk_notes=" + encodeURIComponent(editors.risk_notes.getContents());
-		data += "&sum_notes=" + encodeURIComponent(editors.appsum_notes.getContents());
+		data += "&sum_notes=" + encodeURIComponent(editors.summary_notes.getContents());
 		let index = 0;
 		$.each($("[id^=vuln_]"), function(_id, obj) {
 			let id = $(obj).attr("id");
@@ -286,91 +278,77 @@ function saveAllEditors(isComplete=false){
 }
 
 let editorTimeout = {};
-function queueSave() {
-	$(".box-title").each((a, b) => {
-		const title = b.innerHTML.split("*")[0]
-		b.innerHTML = title + " *"
+
+function saveEditor(type) {
+	let action = "SaveTrackChanges?action=type";
+	let data = `prid=${prid}`;
+	if (type == "risk_notes")
+		data += "&risk_notes=" + encodeURIComponent(editors.risk_notes.getContents());
+	else if (type == "summary_notes")
+		data += "&sum_notes=" + encodeURIComponent(editors.summary_notes.getContents());
+	else if (type == "risk")
+		data += "&risk=" + encodeURIComponent(editors.risk.getContents());
+	else if (type == "summary")
+		data += "&summary=" + encodeURIComponent(editors.summary.getContents());
+	else
+		data += "&" + type + "=" + encodeURIComponent(editors[type].getContents());
+
+	$.post(action, data).done(function(resp) {
+
+		if (resp.result == "success") {
+			document.getElementById(`${type}_header`).innerHTML = ""
+		} else if (resp.result == "complete") {
+			clearTimeout(clearLockTimeout[type]);
+			$.post(`PRClearLock`, `field=${type}&prid=${prid}`).done(() => {
+				document.location = "PeerReview";
+			});
+		}
 	})
+
+}
+
+function queueSave(type) {
+	document.getElementById(`${type}_header`).innerHTML = "*"
 	clearTimeout(editorTimeout);
 	editorTimeout = setTimeout(() => {
-		saveAllEditors();
+		saveEditor(type);
 	}, 2000)
 
 }
 $(function() {
 
 
-	editors['appsum'] = suneditor.create('appsum', editorConfig)
+	editors['summary'] = suneditor.create('appsum', editorConfig)
 	editorConfig.allowedClassNames=".*";
-	editors.appsum.onKeyDown = function(contents, core) {
-		queueSave();
+	editors.summary.onKeyDown = function(contents, core) {
+		queueSave("summary");
 	}
 	editors['risk'] = suneditor.create('risk', editorConfig)
 	editorConfig.allowedClassNames=".*";
 	editors.risk.onKeyDown = function(contents, core) {
-		queueSave();
+		queueSave("risk");
 	}
 	editors['risk_notes'] = suneditor.create('risk_notes', noteConfig)
 	editors['risk_notes'].disabled()
-	editors['appsum_notes'] = suneditor.create('appsum_notes', noteConfig)
-	editors['appsum_notes'].disabled()
+	editors['summary_notes'] = suneditor.create('appsum_notes', noteConfig)
+	editors['summary_notes'].disabled()
 
 	updateVulnEditors()
-	updateStepEditors()
 
 
 	$(".save, .complete").click(function() {
-		if ($(this).hasClass("complete")){
-			saveAllEditors(true);
-		}else{
-			saveAllEditors(false);
-		}
-
-	});
-	$(".closeit").click(function() {
-		$.confirm({
-			title: 'Confirm!',
-			content: 'Unsaved changes will be lost!',
-			buttons: {
-				confirm: function() {
-					window.history.back();
-				},
-				cancel: function() {
-				}
-			}
-
-		});
-
-	});
-	$(".complete2").click(function() {
-		let data = "action=complete";
-		data += `&prid=${prid}`;
-		data += "&risk=" + encodeURIComponent(editors.risk.getContents());
-		data += "&summary=" + encodeURIComponent(editors.appsum.getContents());
-		data += "&risk_notes=" + encodeURIComponent(editors.risk_notes.getContents());
-		data += "&sum_notes=" + encodeURIComponent(editors.appsum_notes.getContents());
-		let index = 0;
-		$.each($("[id^=vuln_]"), function(_id, obj) {
-			let id = $(obj).attr("id");
-			data += "&" + id + "=" + encodeURIComponent(editors[id].getContents());
-		});
-		$.each($("[id^=step]"), function(_id, obj) {
-			let id = $(obj).attr("id");
-			let step = editors[id].getContents();
-			//replaces br inside pre that gets removed from ckeditor
-			let div = $("<div/>").html(step);
-			console.log(div.html());
-			div.find("pre").each(function(i, el) {
-				let newHTML = $(el).html().replace(/\n/g, "<br/>");
-				$(el).html(newHTML);
-			});
-			data += "&" + id + "=" + encodeURIComponent(step);
-		});
-
-		$.post("CompleteChanges", data).done(function(resp) {
-			if (resp.result == "success") {
-				document.location = `Assessment?id=app${asmtId}#tab_3`;
-			} else {
+	let data = `prid=${prid}`;
+	$.post("CompleteChanges", data).done(function(resp) {
+		if (resp.result == "success") {
+				$(".box-title").each((a, b) => {
+					const title = b.innerHTML.split("*")[0]
+					b.innerHTML = title
+				})
+				/*$.alert({
+					title: "Saved",
+					content: "Peer Review Has been Saved."
+				});*/
+			} else if (resp.errors) {
 				let errors = resp.errors;
 				let bullets = "<ul>";
 				$.each(errors, function(_id, error) {
@@ -381,22 +359,17 @@ $(function() {
 					title: 'Alert!',
 					content: bullets,
 				});
+			}else if(resp.message){
+				$.alert({
+					title: 'Error!',
+					content: resp.message,
+				});
+			}else if(resp.result == "complete"){
+				document.location = `Assessment?id=app${asmtId}#tab_3`;
 			}
-		})
-	});
-
-	setup(2000);
-	$(".nav-tabs").click(function() {
-		console.log("resize");
-		setup(500);
+		
+	})
 
 	});
-
-
 
 });
-function setup(time) {
-	setTimeout(() => {
-
-	}, time)
-}

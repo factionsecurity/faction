@@ -88,7 +88,8 @@ const editorConfig = {
 	defaultStyle: 'font-family: arial; font-size: 18px',
 	attributesWhitelist: { 'all': "class|data-cid|data-userid|data-username|date-time|title" },
 	allowedClassNames: ".*",
-	height: 500
+	minHeight: 500,
+	height: "auto"
 };
 let fromMarkdown = {
 	name: 'fromMarkdown',
