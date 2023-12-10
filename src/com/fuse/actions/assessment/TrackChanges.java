@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.struts2.convention.annotation.Action;
@@ -78,36 +79,42 @@ public class TrackChanges extends FSActionSupport {
 	}
 
 	private Comment createUpdatedCommentFromPeerReview(PeerReview pr) {
-		Assessment asmt = pr.getAssessment();
 		Comment review = pr.getComments().get(pr.getComments().size() - 1);
-		if (this.summary != null)
-			review.setSummary1(this.summary);
-		if (this.risk != null)
-			review.setSummary2(this.risk);
-		if (this.sum_notes != null)
-			review.setSummary1_notes(this.sum_notes);
-		if (this.risk_notes != null)
-			review.setSummary2_notes(this.risk_notes);
+		Assessment asmt;
+		try {
+			asmt = review.exportAssessment(em);
+			if (this.summary != null)
+				review.setSummary1(this.summary);
+			if (this.risk != null)
+				review.setSummary2(this.risk);
+			if (this.sum_notes != null)
+				review.setSummary1_notes(this.sum_notes);
+			if (this.risk_notes != null)
+				review.setSummary2_notes(this.risk_notes);
 
-		for (Vulnerability v : asmt.getVulns()) {
-			long id = v.getId();
-			if (vuln_desc != null && vuln_desc.get("" + id) != null)
-				v.setDescription(vuln_desc.get("" + id));
-			if (vuln_desc_notes != null && vuln_desc_notes.get("" + id) != null)
-				v.setDesc_notes(vuln_desc_notes.get("" + id));
-			if (vuln_rec != null && vuln_rec.get("" + id) != null)
-				v.setRecommendation(vuln_rec.get("" + id));
-			if (vuln_rec_notes != null && vuln_rec_notes.get("" + id) != null)
-				v.setRec_notes(vuln_rec_notes.get("" + id));
-			if (vuln_details != null && vuln_details.get("" + id) != null)
-				v.setDetails(vuln_details.get("" + id));
-			if (vuln_detail_notes != null && vuln_detail_notes.get("" + id) != null)
-				v.setDetail_notes(vuln_detail_notes.get("" + id));
+			for (Vulnerability v : asmt.getVulns()) {
+				long id = v.getId();
+				if (vuln_desc != null && vuln_desc.get("" + id) != null)
+					v.setDescription(vuln_desc.get("" + id));
+				if (vuln_desc_notes != null && vuln_desc_notes.get("" + id) != null)
+					v.setDesc_notes(vuln_desc_notes.get("" + id));
+				if (vuln_rec != null && vuln_rec.get("" + id) != null)
+					v.setRecommendation(vuln_rec.get("" + id));
+				if (vuln_rec_notes != null && vuln_rec_notes.get("" + id) != null)
+					v.setRec_notes(vuln_rec_notes.get("" + id));
+				if (vuln_details != null && vuln_details.get("" + id) != null)
+					v.setDetails(vuln_details.get("" + id));
+				if (vuln_detail_notes != null && vuln_detail_notes.get("" + id) != null)
+					v.setDetail_notes(vuln_detail_notes.get("" + id));
+			}
+			// Remove the vulns currently there and add our Updated ones.
+			review.deleteAllVulns();
+			review.addVulns(asmt.getVulns(), false);
+			return review;
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return review;
 		}
-		// Remove the vulns currently there and add our Updated ones.
-		review.deleteAllVulns();
-		review.addVulns(asmt.getVulns(), false);
-		return review;
 
 	}
 
@@ -119,8 +126,7 @@ public class TrackChanges extends FSActionSupport {
 			return AuditLog.notAuthorized(this, "User was not an Assessor or Manager", true);
 		}
 
-		PeerReview pr = (PeerReview) this.em.createQuery("from PeerReview where id = :id").setParameter("id", prid)
-				.getSingleResult();
+		PeerReview pr = (PeerReview) this.em.find(PeerReview.class, prid);
 		if (pr == null)
 			return this.SUCCESSJSON;
 
@@ -147,7 +153,9 @@ public class TrackChanges extends FSActionSupport {
 		HibHelper.getInstance().commit();
 		return this.SUCCESSJSON;
 	}
-
+	/*
+	 * This completeAdOwner Method allows the assessor to accept Peer Review changes
+	 */
 	@Action(value = "CompleteChanges", results = {
 			@Result(name = "completeErrors", location = "/WEB-INF/jsp/peerreviews/completeErrors.jsp"),
 			@Result(name = "completeJSON", location = "/WEB-INF/jsp/peerreviews/completeJson.jsp") })
@@ -156,8 +164,8 @@ public class TrackChanges extends FSActionSupport {
 			return AuditLog.notAuthorized(this, "User was not an Assessor or Manager", true);
 		}
 
-		PeerReview pr = (PeerReview) this.em.createQuery("from PeerReview where id = :id").setParameter("id", prid)
-				.getSingleResult();
+		System.out.println(this.prid);
+		PeerReview pr = em.find(PeerReview.class, this.prid);
 		if (pr == null)
 			return this.SUCCESSJSON;
 
@@ -176,22 +184,20 @@ public class TrackChanges extends FSActionSupport {
 		}
 
 		Assessment assessment = pr.getAssessment();
+		Comment comment = pr.getComments().get(pr.getComments().size() - 1);
+		Assessment updatedAssessment = comment.exportAssessment(em);
+		comment.setAcceptedEdits(true);
 
 		// Save Everything...
-		assessment.setRiskAnalysis(this.risk);
-		assessment.setSummary(this.summary);
-		assessment.setPr_sum_notes(this.sum_notes);
-		assessment.setPr_risk_notes(this.risk_notes);
-	
+		assessment.setRiskAnalysis(updatedAssessment.getRiskAnalysis());
+		assessment.setSummary(updatedAssessment.getSummary());
 		assessment.setAcceptedEdits();
 		for (Vulnerability v : assessment.getVulns()) {
 			long id = v.getId();
-			v.setDescription(vuln_desc.get("" + id));
-			v.setDesc_notes(vuln_desc_notes.get("" + id));
-			v.setRecommendation(vuln_rec.get("" + id));
-			v.setRec_notes(vuln_rec_notes.get("" + id));
-			v.setDetails(vuln_details.get("" + id));
-			v.setDetail_notes(vuln_detail_notes.get("" + id) == null? "" : vuln_detail_notes.get("" + id));
+			Vulnerability updated = updatedAssessment.getVulns().stream().filter( a -> a.getId() == id).findFirst().orElse(null);
+			v.setDescription(updated.getDescription());
+			v.setRecommendation(updated.getRecommendation());
+			v.setDetails(updated.getDetails());
 		}
 
 		// Check if there are any un-accepted edits. These will html from track changes
@@ -209,13 +215,6 @@ public class TrackChanges extends FSActionSupport {
 			if (v.getDescription().matches(trackChangesTest)) {
 				errors.add("Vulnerability " + v.getName() + " Description contains UnAccepted Edits");
 			}
-			int i = 1;
-			for (ExploitStep step : v.getSteps()) {
-				if (step.getDescription().matches(trackChangesTest)) {
-					errors.add(
-							"Vulnerability " + v.getName() + " Exploit Step #" + (i++) + "  contains UnAccepted Edits");
-				}
-			}
 		}
 		JSONObject result = new JSONObject();
 		if (errors.size() > 0) {
@@ -227,11 +226,9 @@ public class TrackChanges extends FSActionSupport {
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
 			for (Vulnerability v : assessment.getVulns()) {
-				for (ExploitStep ex : v.getSteps()) {
-					em.persist(ex);
-				}
 				em.persist(v);
 			}
+			em.persist(comment);
 			em.persist(assessment);
 
 			ReportGenThread reportThread = new ReportGenThread("", assessment, assessment.getAssessor());
@@ -248,6 +245,11 @@ public class TrackChanges extends FSActionSupport {
 
 	}
 
+	
+	/*
+	 * This completeAsPeerReviewer Method is used the the peer reviewer to complete the PR process and kick the 
+	 * report back to the assessor
+	 */
 	@Action(value = "CompletePR", results = {
 			@Result(name = "completeErrors", location = "/WEB-INF/jsp/peerreviews/completeErrors.jsp"),
 			@Result(name = "completeJSON", location = "/WEB-INF/jsp/peerreviews/completeJson.jsp") })
@@ -282,7 +284,15 @@ public class TrackChanges extends FSActionSupport {
 
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
-
+		
+		//Create a copy of the comment and save it. This new copy is what the original assessors
+		// will update in their dashboard. This allows the original review from the peer reviewers 
+		// to be kept for later review.
+		Comment newComment = new Comment();
+		newComment.copyComment(comment);
+		newComment.setDateOfComment(new Date());
+		pr.getComments().add(newComment);
+		em.persist(newComment);
 		// Close the PR object
 		pr.setCompleted(new Date());
 		comment.setDateOfComment(new Date());
@@ -323,8 +333,7 @@ public class TrackChanges extends FSActionSupport {
 
 		User user = this.getSessionUser();
 
-		PeerReview pr = (PeerReview) this.em.createQuery("from PeerReview where id = :id").setParameter("id", prid)
-				.getSingleResult();
+		PeerReview pr = (PeerReview) this.em.find(PeerReview.class, prid);
 		if (pr == null)
 			return this.SUCCESSJSON;
 
@@ -360,8 +369,7 @@ public class TrackChanges extends FSActionSupport {
 		}
 		User user = this.getSessionUser();
 
-		PeerReview pr = (PeerReview) this.em.createQuery("from PeerReview where id = :id").setParameter("id", prid)
-				.getSingleResult();
+		PeerReview pr = (PeerReview) this.em.find(PeerReview.class, prid);
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 		if (pr == null)
 			return "redirect";
@@ -389,6 +397,7 @@ public class TrackChanges extends FSActionSupport {
 		asmt = new Assessment();
 		Comment com = pr.getComments().get(pr.getComments().size() - 1);
 		asmt = com.exportAssessment(em);
+		asmt.setWorkflow(pr.getAssessment().getWorkflow());
 		asmt.setAnswers(pr.getAssessment().getAnswers());
 		asmt.setId(pr.getAssessment().getId());
 		asmt.setAppId(pr.getAssessment().getAppId());
@@ -462,13 +471,13 @@ public class TrackChanges extends FSActionSupport {
 			return LOGIN;
 		}
 		user = this.getSessionUser();
-		PeerReview pr = (PeerReview) this.em.createQuery("from PeerReview where id = :id").setParameter("id", prid)
-				.getSingleResult();
+		PeerReview pr = (PeerReview) this.em.find(PeerReview.class, prid);
 		if(pr == null) {
 			this._message ="Peer Review has been completed.";
 			return this.ERRORJSON;
 		}
-		if(pr.getCompleted().getTime() != 0l) {
+		Boolean currentAssessor = pr.getAssessment().getAssessor().stream().anyMatch( u -> u.getId() == user.getId());
+		if(pr.getCompleted().getTime() != 0l && !currentAssessor) {
 			this._message ="Peer Review has been completed.";
 			return this.ERRORJSON;
 		}
@@ -528,8 +537,7 @@ public class TrackChanges extends FSActionSupport {
 		}
 		user = this.getSessionUser();
 		asmt = new Assessment();
-		PeerReview pr = (PeerReview) this.em.createQuery("from PeerReview where id = :id").setParameter("id", prid)
-				.getSingleResult();
+		PeerReview pr = (PeerReview) this.em.find(PeerReview.class, prid);
 		Comment com = pr.getComments().get(pr.getComments().size() - 1);
 		if (com == null) {
 			return ERROR;
@@ -568,8 +576,7 @@ public class TrackChanges extends FSActionSupport {
 			return LOGIN;
 		}
 		user = this.getSessionUser();
-		PeerReview pr = (PeerReview) this.em.createQuery("from PeerReview where id = :id").setParameter("id", prid)
-				.getSingleResult();
+		PeerReview pr = (PeerReview) this.em.find(PeerReview.class, prid);
 		Comment com = pr.getComments().get(pr.getComments().size() - 1);
 		if (com == null) {
 			return ERROR;

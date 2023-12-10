@@ -32,8 +32,6 @@ public class PeerReview {
 	private Assessment assessment;
 	private Date created;
 	private Date completed;
-	private String appsum_notes;
-	private String risk_notes;
 	private Date acceptedEdits;
 	
 	

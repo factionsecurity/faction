@@ -7,6 +7,7 @@
 <jsp:include page="../header.jsp" />
 <link rel="stylesheet" href="../plugins/iCheck/all.css">
 <link rel="stylesheet" href="../plugins/ice.css">
+<link href="../dist/css/throbber.css" media="all" rel="stylesheet" type="text/css" />
 <script src="../plugins/ice_patched.js"></script>
 <style>
 .rating{
@@ -43,6 +44,8 @@ line-height: 30px;
 .catName {
 color:white;
 }
+
+
 </style>
 <style>
 
@@ -302,12 +305,10 @@ colors = ["#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39
    </script>
 	
    <s:if test="prqueue">
-   		<!--<jsp:include page="peerReviewerLogic.jsp" />-->
 		<script src="../dist/js/peerreviewedit.js"></script>
    </s:if>
    <s:else>
 		<script src="../dist/js/assessorreviewedit.js"></script>
-   		<!--<jsp:include page="ownerLogic.jsp" />-->
    </s:else>
    <script>
 	$("input[type=radio]").iCheck({

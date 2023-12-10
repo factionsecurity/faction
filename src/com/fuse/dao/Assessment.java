@@ -240,19 +240,23 @@ public class Assessment {
 		this.campaign = campaign;
 	}
 
+	@Transient
 	public String getPr_sum_notes() {
 		return pr_sum_notes;
 	}
 
+	@Transient
 	public void setPr_sum_notes(String pr_sum_notes) {
 		pr_sum_notes = FSUtils.sanitizeHTML(pr_sum_notes);
 		this.pr_sum_notes = pr_sum_notes;
 	}
 
+	@Transient
 	public String getPr_risk_notes() {
 		return pr_risk_notes;
 	}
 
+	@Transient
 	public void setPr_risk_notes(String pr_risk_notes) {
 		pr_risk_notes = FSUtils.sanitizeHTML(pr_risk_notes);
 		this.pr_risk_notes = pr_risk_notes;
