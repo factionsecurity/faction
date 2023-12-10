@@ -7,6 +7,7 @@
 <jsp:include page="../header.jsp" />
 <link rel="stylesheet" href="../plugins/iCheck/all.css">
 <link rel="stylesheet" href="../plugins/ice.css">
+<link href="../dist/css/throbber.css" media="all" rel="stylesheet" type="text/css" />
 <script src="../plugins/ice_patched.js"></script>
 <style>
 .rating{
@@ -43,6 +44,8 @@ line-height: 30px;
 .catName {
 color:white;
 }
+
+
 </style>
 <style>
 

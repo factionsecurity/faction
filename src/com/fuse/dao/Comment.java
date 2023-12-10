@@ -45,6 +45,7 @@ public class Comment {
 	private String summary2;
 	private String summary1_notes;
 	private String summary2_notes;
+	private Boolean acceptedEdits=false;
 	@ElementCollection
 	private List<String> vulnerabilities;
 
@@ -137,6 +138,15 @@ public class Comment {
 	public void setCommeters(List<User> commenters) {
 		this.commenters = (List<User>) commenters;
 	}
+	
+
+	public Boolean getAcceptedEdits() {
+		return acceptedEdits;
+	}
+
+	public void setAcceptedEdits(Boolean acceptedEdits) {
+		this.acceptedEdits = acceptedEdits;
+	}
 
 	@Transient
 	private void addVuln(Vulnerability v, boolean blankNotes) {
@@ -169,6 +179,7 @@ public class Comment {
 
 	}
 
+
 	@Transient
 	public void addVulns(List<Vulnerability> vulns, boolean blankNotes) {
 		for (Vulnerability v : vulns) {
@@ -195,8 +206,8 @@ public class Comment {
 		this.summary1 = c.getSummary1();
 		this.summary1_notes = c.getSummary1_notes();
 
-		this.summary2 = c.getSummary1();
-		this.summary2_notes = c.getSummary1_notes();
+		this.summary2 = c.getSummary2();
+		this.summary2_notes = c.getSummary2_notes();
 		
 		List<String>vulnsClone = new ArrayList<>();
 		for(String v : c.getVulnerabilities()) {
@@ -213,8 +224,8 @@ public class Comment {
 		a.setRiskAnalysis(this.summary2);
 		a.setPr_sum_notes(this.summary1_notes);
 		a.setPr_risk_notes(this.summary2_notes);
-		a.setVulns(new ArrayList());
 		JSONParser parse = new JSONParser();
+		List<Vulnerability> vulns = new ArrayList<>();
 		for (String json : this.vulnerabilities) {
 			Vulnerability v = new Vulnerability();
 			JSONObject vuln = (JSONObject) parse.parse(json);
@@ -236,8 +247,10 @@ public class Comment {
 			v.setLikelyhood((Long) vuln.get("likelihood"));
 			v.setDesc_notes("" + (vuln.get("desc_notes") == null ? "" : vuln.get("desc_notes")));
 			v.setRec_notes("" + (vuln.get("rec_notes") == null ? "" : vuln.get("rec_notes")));
-			a.getVulns().add(v);
+			vulns.add(v);
 		}
+		vulns.sort((Vulnerability s1, Vulnerability s2)->s2.getOverall().compareTo(s1.getOverall()));
+		a.setVulns(vulns);
 		return a;
 	}
 

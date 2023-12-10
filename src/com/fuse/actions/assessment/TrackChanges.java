@@ -79,36 +79,42 @@ public class TrackChanges extends FSActionSupport {
 	}
 
 	private Comment createUpdatedCommentFromPeerReview(PeerReview pr) {
-		Assessment asmt = pr.getAssessment();
 		Comment review = pr.getComments().get(pr.getComments().size() - 1);
-		if (this.summary != null)
-			review.setSummary1(this.summary);
-		if (this.risk != null)
-			review.setSummary2(this.risk);
-		if (this.sum_notes != null)
-			review.setSummary1_notes(this.sum_notes);
-		if (this.risk_notes != null)
-			review.setSummary2_notes(this.risk_notes);
+		Assessment asmt;
+		try {
+			asmt = review.exportAssessment(em);
+			if (this.summary != null)
+				review.setSummary1(this.summary);
+			if (this.risk != null)
+				review.setSummary2(this.risk);
+			if (this.sum_notes != null)
+				review.setSummary1_notes(this.sum_notes);
+			if (this.risk_notes != null)
+				review.setSummary2_notes(this.risk_notes);
 
-		for (Vulnerability v : asmt.getVulns()) {
-			long id = v.getId();
-			if (vuln_desc != null && vuln_desc.get("" + id) != null)
-				v.setDescription(vuln_desc.get("" + id));
-			if (vuln_desc_notes != null && vuln_desc_notes.get("" + id) != null)
-				v.setDesc_notes(vuln_desc_notes.get("" + id));
-			if (vuln_rec != null && vuln_rec.get("" + id) != null)
-				v.setRecommendation(vuln_rec.get("" + id));
-			if (vuln_rec_notes != null && vuln_rec_notes.get("" + id) != null)
-				v.setRec_notes(vuln_rec_notes.get("" + id));
-			if (vuln_details != null && vuln_details.get("" + id) != null)
-				v.setDetails(vuln_details.get("" + id));
-			if (vuln_detail_notes != null && vuln_detail_notes.get("" + id) != null)
-				v.setDetail_notes(vuln_detail_notes.get("" + id));
+			for (Vulnerability v : asmt.getVulns()) {
+				long id = v.getId();
+				if (vuln_desc != null && vuln_desc.get("" + id) != null)
+					v.setDescription(vuln_desc.get("" + id));
+				if (vuln_desc_notes != null && vuln_desc_notes.get("" + id) != null)
+					v.setDesc_notes(vuln_desc_notes.get("" + id));
+				if (vuln_rec != null && vuln_rec.get("" + id) != null)
+					v.setRecommendation(vuln_rec.get("" + id));
+				if (vuln_rec_notes != null && vuln_rec_notes.get("" + id) != null)
+					v.setRec_notes(vuln_rec_notes.get("" + id));
+				if (vuln_details != null && vuln_details.get("" + id) != null)
+					v.setDetails(vuln_details.get("" + id));
+				if (vuln_detail_notes != null && vuln_detail_notes.get("" + id) != null)
+					v.setDetail_notes(vuln_detail_notes.get("" + id));
+			}
+			// Remove the vulns currently there and add our Updated ones.
+			review.deleteAllVulns();
+			review.addVulns(asmt.getVulns(), false);
+			return review;
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return review;
 		}
-		// Remove the vulns currently there and add our Updated ones.
-		review.deleteAllVulns();
-		review.addVulns(asmt.getVulns(), false);
-		return review;
 
 	}
 
@@ -180,6 +186,7 @@ public class TrackChanges extends FSActionSupport {
 		Assessment assessment = pr.getAssessment();
 		Comment comment = pr.getComments().get(pr.getComments().size() - 1);
 		Assessment updatedAssessment = comment.exportAssessment(em);
+		comment.setAcceptedEdits(true);
 
 		// Save Everything...
 		assessment.setRiskAnalysis(updatedAssessment.getRiskAnalysis());
@@ -221,6 +228,7 @@ public class TrackChanges extends FSActionSupport {
 			for (Vulnerability v : assessment.getVulns()) {
 				em.persist(v);
 			}
+			em.persist(comment);
 			em.persist(assessment);
 
 			ReportGenThread reportThread = new ReportGenThread("", assessment, assessment.getAssessor());
@@ -394,9 +402,6 @@ public class TrackChanges extends FSActionSupport {
 		asmt.setId(pr.getAssessment().getId());
 		asmt.setAppId(pr.getAssessment().getAppId());
 		asmt.setName(pr.getAssessment().getName());
-		List<Vulnerability> vulns = asmt.getVulns();
-		vulns.sort((Vulnerability s1, Vulnerability s2)->s2.getOverall().compareTo(s1.getOverall()));
-		asmt.setVulns(vulns);
 
 		files = (List<Files>) em.createQuery("from Files where type = :type and entityId = :id")
 				.setParameter("type", Files.ASSESSMENT).setParameter("id", pr.getAssessment().getId()).getResultList();

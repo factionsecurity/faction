@@ -80,7 +80,12 @@
 			<s:iterator value="comments">
 				<s:if test="dateOfComment != null ">
 				<div class="timeline-body">
+				<s:if test="acceptedEdits">
+				<span class="time"><i class="fa fa-clock-o"></i>&nbsp;&nbsp;${dateOfComment}&nbsp;-&nbsp;Accepted Edits by: <b><u>
+				</s:if>
+				<s:else>
 				<span class="time"><i class="fa fa-clock-o"></i>&nbsp;&nbsp;${dateOfComment}&nbsp;-&nbsp;Completed by: <b><u>
+				</s:else>
 					<s:iterator value="commenters" status="stat">
 						<s:property value="fname"/> <s:property value="lname"/><s:if test="!#stat.last">,</s:if>
 					</s:iterator>

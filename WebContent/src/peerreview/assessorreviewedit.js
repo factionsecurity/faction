@@ -296,6 +296,8 @@ function saveEditor(type) {
 	$.post(action, data).done(function(resp) {
 
 		if (resp.result == "success") {
+			$(".complete").html("<i class='fa fa-check'></i> Complete");
+			$(".complete").prop("disabled", false);
 			document.getElementById(`${type}_header`).innerHTML = ""
 		} else if (resp.result == "complete") {
 			clearTimeout(clearLockTimeout[type]);
@@ -309,6 +311,8 @@ function saveEditor(type) {
 
 function queueSave(type) {
 	document.getElementById(`${type}_header`).innerHTML = "*"
+	$(".complete").html("<div title='Saving...' class='throbber-loader'>Saving...</div>");
+	$(".complete").prop("disabled", true);
 	clearTimeout(editorTimeout);
 	editorTimeout = setTimeout(() => {
 		saveEditor(type);

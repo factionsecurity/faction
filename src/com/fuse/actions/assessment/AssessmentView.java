@@ -358,11 +358,6 @@ public class AssessmentView extends FSActionSupport {
 
 		// Comments will be stored with an empty user to indicate
 		// that this is not an actual comment yet.
-		// When a user actually comments on the PR the user info
-		// will be saved.
-		//
-		// Each user that comments will create a new comment Object
-		// in the list. This is updated in the TrackChanges action.
 		//
 		Comment newComment = new Comment();
 		newComment.copyAssessment(asmt, true);

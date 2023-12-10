@@ -288,6 +288,8 @@ function saveEditor(type) {
 	$.post(action, data).done(function(resp) {
 
 		if (resp.result == "success") {
+			$(".complete").html("<i class='fa fa-check'></i> Complete");
+			$(".complete").prop("disabled", false);
 			document.getElementById(`${type}_header`).innerHTML = ""
 			clearLockTimeout[type] = setTimeout(() => {
 				$.post(`PRClearLock`, `field=${type}&prid=${prid}`).done();
@@ -314,6 +316,8 @@ let clearLockTimeout = {};
 function queueSave(type) {
 	$.post(`PRSetLock`, `field=${type}&prid=${prid}`).done((resp) => {
 		if (resp.result == "success") {
+			$(".complete").html("<div class='throbber-loader'>Loading…</div>");
+			$(".complete").prop("disabled", true);
 			document.getElementById(`${type}_header`).innerHTML = "*"
 			clearTimeout(editorTimeout[type]);
 			clearTimeout(clearLockTimeout[type]);
