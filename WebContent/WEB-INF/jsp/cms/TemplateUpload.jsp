@@ -70,32 +70,15 @@ $(function(){
 	
 	$("#image").fileinput({
 		 allowedFileExtensions : ['docx'],
-		previewFileExtSettings: { // configure the logic for determining icon file extensions
+		previewFileExtSettings: { 
 	        'doc': function(ext) {
-	            return ext.match(/(doc|docx)$/i);
-	        },
-	        'xls': function(ext) {
-	            return ext.match(/(xls|xlsx)$/i);
-	        },
-	        'ppt': function(ext) {
-	            return ext.match(/(ppt|pptx)$/i);
-	        },
-	        'zip': function(ext) {
-	            return ext.match(/(zip|rar|tar|gzip|gz)$/i);
-	        },
-	        'txt': function(ext) {
-	            return ext.match(/(txt|csv)$/i);
-	        },
-	       	'pdf': function(ext) {
-            return 	ext.match(/(pdf)$/i);
-        }
+	            return ext.match(/(docx)$/i);
+	        }
 	    },
 	   preferIconicPreview: true, 
 		 previewFileIconSettings: {
-	        'doc': '<i class="fa fa-file-word-o text-primary"></i>',
+	        'doc': '<i class="fa fa-file-word text-primary"></i>',
 	    }
-	
-	
 	  });
 });
 </script>

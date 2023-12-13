@@ -62,6 +62,8 @@ $(function() {
 		allowedFileExtensions: ['jpg', 'gif', 'png', 'pdf', 'doc', 'xls', 'xlsx', 'docx', 'txt', 'csv', 'bmp', 'jpeg', 'xml', 'zip', 'rar', 'tar', 'gzip', 'tar.gz'],
 		initialPreview: filesPreview,
 		initialPreviewConfig: previewConfig
+	}).on("filebatchselected", function(event, files) {
+    	$("#files").fileinput("upload");
 	});
 
 	$('#reservation').daterangepicker({

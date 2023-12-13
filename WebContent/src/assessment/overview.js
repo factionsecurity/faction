@@ -383,9 +383,6 @@ $(function() {
 			'zip': function(ext) {
 				return ext.match(/(zip|rar|tar|gzip|gz)$/i);
 			},
-			'txt': function(ext) {
-				return ext.match(/(txt|csv)$/i);
-			},
 			'pdf': function(ext) {
 				return ext.match(/(pdf)$/i);
 			},
@@ -393,7 +390,7 @@ $(function() {
 				return ext.match(/(xml)$/i);
 			},
 			'img': function(ext) {
-				return ext.match(/(png,jpg,svg,jpeg,gif)$/i);
+				return ext.match(/(png|jpg|svg|jpeg|gif)$/i);
 			},
 			'txt': function(ext) {
 				return ext.match(/(msg|csv|txt)$/i);
@@ -401,14 +398,14 @@ $(function() {
 		},
 		preferIconicPreview: true,
 		previewFileIconSettings: {
-			'doc': '<i class="fa fa-file-word-o text-primary"></i>',
-			'xls': '<i class="fa fa-file-excel-o text-success"></i>',
-			'ppt': '<i class="fa fa-file-powerpoint-o text-danger"></i>',
-			'pdf': '<i class="fa fa-file-pdf-o text-danger"></i>',
-			'zip': '<i class="fa fa-file-archive-o text-muted"></i>',
-			'xml': '<i class="fa fa-file-code-o text-muted"></i>',
-			'img': '<i class="fa fa-file-image-o text-muted"></i>',
-			'txt': '<i class="fa fa-file-text-o text-muted"></i>',
+			'doc': '<i class="fa fa-file-word text-primary"></i>',
+			'xls': '<i class="fa fa-file-excel text-success"></i>',
+			'ppt': '<i class="fa fa-file-powerpoint text-warning"></i>',
+			'pdf': '<i class="fa fa-file-pdf text-danger"></i>',
+			'zip': '<i class="fa fa-file-archive text-info"></i>',
+			'xml': '<i class="fa fa-file-code text-info"></i>',
+			'img': '<i class="fa fa-file-image text-success"></i>',
+			'txt': '<i class="fa fa-file-text text-info"></i>',
 		},
 		initialPreviewDownloadUrl: '../service/fileUpload?id={key}',
 		allowedPreviewTypes: ['image'], // allow only preview of image & text files
@@ -416,6 +413,8 @@ $(function() {
 		initialPreviewFileType: 'text',
 		initialPreview: getFileIds(),
 		initialPreviewConfig: getPreviewConfig(),
+	}).on("filebatchselected", function(event, files) {
+    	$("#files").fileinput("upload");
 	});
 
 

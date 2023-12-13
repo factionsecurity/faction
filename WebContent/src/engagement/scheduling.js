@@ -152,11 +152,10 @@ $(function() {
 	$("#files").fileinput({
 		overwriteInitial: false,
 		uploadUrl: "UploadFile",
-		//uploadUrl: "../service/fileUpload",
 		uploadAsync: true,
 		minFileCount: 0,
 		maxFileCount: 5,
-		allowedFileExtensions: ['msg', 'csv', 'jpg', 'gif', 'png', 'pdf', 'doc', 'xls', 'xlsx', 'docx', 'txt', 'bmp', 'jpeg', 'xml', 'zip', 'rar', 'tar', 'gzip', 'gz'],
+		allowedFileExtensions: ['msg', 'csv', 'jpg', 'gif', 'png', 'pdf', 'doc', 'xls', 'xlsx', 'docx', 'txt', 'bmp', 'jpeg', 'xml', 'zip', 'rar', 'tar', 'gzip', 'gz', 'xml'],
 		previewFileExtSettings: { // configure the logic for determining icon file extensions
 			'doc': function(ext) {
 				return ext.match(/(doc|docx)$/i);
@@ -191,6 +190,8 @@ $(function() {
 		initialPreviewFileType: 'text',
 		initialPreview: initialPreviewData || [],
 		initialPreviewConfig: initialPreviewConfigData || [],
+	}).on("filebatchselected", function(event, files) {
+    	$("#files").fileinput("upload");
 	});
 
 	$("#assessmentFiles").fileinput({

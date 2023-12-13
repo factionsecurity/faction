@@ -6,7 +6,6 @@ import CodeMirror from 'codemirror';
 import 'codemirror/mode/htmlmixed/htmlmixed';
 import 'codemirror/lib/codemirror.css';
 import 'bootstrap';
-//import 'jquery-fileinput';
 import '../scripts/fileupload/js/fileinput.min';
 import 'jquery-ui';
 import 'jquery-confirm';
@@ -17,9 +16,7 @@ $(function(){
     let editor;
     $(".select2").select2();
     
-    $("#image").fileinput({
-            allowedFileExtensions : ['docx']
-        });
+	
     $("#sample").click(function(){
         let retest="false";
         if($('#doRetest').is(":checked"))
@@ -32,7 +29,7 @@ $(function(){
     $("#addTemplate").click(function(){
         
         $.confirm({
-            title:"Add a new Template",
+            title:"Update Template",
             content: 'url:cms?action=templateUpload',
             contentLoaded: function(){
                setTimeout(() => {
@@ -92,7 +89,7 @@ $(function(){
         let id = $(this).attr("id");
         id=id.replace("tmpEdit","");
         $.confirm({
-            title:"Add a new Template",
+            title:"Update Template",
             content: 'url:cms?action=templateUpload&id='+id,
             contentLoaded:function(){
                 console.log("loaded");
@@ -114,7 +111,15 @@ $(function(){
                     data+="&retest="+$("#retest").is(':checked');
                     $.post("cms",data).done(function(resp){
                         if(resp.result == "success"){
-                            document.location=document.location;
+							if($(".file-caption-name")[0].title != ""){
+								console.log("Submit")
+								$("#imgForm").submit();
+								setTimeout( function(){
+                            		document.location=document.location;
+								}, 2000);
+							}else{
+                            	document.location=document.location;
+							}
                         }else{
                             $.alert({
                                 title: "Error!",
@@ -124,14 +129,11 @@ $(function(){
                     }).error(function(){
                         console.log("error");
                     });
-                    if(typeof $(".kv-preview-data").attr("data") !='undefined'){
-                        $("#imgForm").submit();
-                    }
                 }
             },
-            "Upload File":function(){
+            /*"Upload File":function(){
                 $("#imgForm").submit();
-            },
+            },*/
             cancel: function(){}
             }
         });
