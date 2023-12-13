@@ -15,7 +15,6 @@ import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AssessmentType;
-import com.fuse.dao.ExploitStep;
 import com.fuse.dao.ReportOptions;
 import com.fuse.dao.ReportTemplates;
 import com.fuse.dao.RiskLevel;
