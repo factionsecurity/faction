@@ -176,7 +176,6 @@ public class Engagement  extends FSActionSupport{
 			if(assessorId != null) {
 				
 				for(Integer aid : assessorId){
-					//User assessor = (User)session.createQuery("from User where Id = :id").setLong("id", aid).uniqueResult();
 					User assessor = em.find(User.class, (long)aid);
 					hackers.add(assessor);
 				}
@@ -184,11 +183,15 @@ public class Engagement  extends FSActionSupport{
 			
 				for(Assessment a : asmts){
 					if(a.getAssessor().containsAll(hackers) && a.getName().equals(appName)){
-						this._message = "Assessment has already been assigned.";
+						this._message = "Assessment has already been assigned. Choose different dates.";
 						return this.ERRORJSON;
 					}
 					
 				}
+			}
+			if(hackers.size() == 0) {
+				this._message = "Assessment Must Have an Assessor";
+				return this.ERRORJSON;
 			}
 			
 			if(this.appid == null || this.appid.equals("")) {
@@ -301,6 +304,8 @@ public class Engagement  extends FSActionSupport{
 			EmailThread emailThread = new EmailThread(am, "New Assessment Assigned to You", email);
 			TaskQueueExecutor.getInstance().execute(emailThread);
 			
+			return this.SUCCESSJSON;
+			
 			
 		}else if(action != null && action.equals("search") ){
 			String comma = "";
@@ -360,8 +365,6 @@ public class Engagement  extends FSActionSupport{
 			return "searchJSON";
 			
 		}else if(action != null && action.equals("delete") ){
-			/*Assessment a = (Assessment)session.createQuery("from Assessment where id = :id")
-					.setLong("id", this.appid).uniqueResult();*/
 			if(!this.testToken(false)) {
 				return this.ERRORJSON;
 			}

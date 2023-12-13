@@ -150,7 +150,7 @@
 	  		<br><br>
 	  		<br><br>
 	  		<bs:mco colsize="12">
-		  	<bs:datatable columns="Status,Default,Edit" classname="" id="">
+		  	<bs:datatable columns="Status,Default,Delete" classname="" id="">
 		  	<s:iterator value="EMS.status" var="stat" >
 		  		<tr><td><s:property value="stat"/></td>
 		  		<td width="50px" status="<s:property value="stat"/>">

@@ -33,7 +33,7 @@
 <br>
 <bs:row>
 <div class="col-xs-12">
-	<bs:datatable columns="App Id,Name,Assessor(s),Type,Campaign,Start, End, Completed,Status,Report,Controls" classname="box-primary" id="searchResults"></bs:datatable>
+	<bs:datatable columns="App Id,Name,Status, Assessor(s),Type,Campaign,Start, End, Completed,Report,Delete" classname="box-primary" id="searchResults"></bs:datatable>
 </div>
 </bs:row>
 

@@ -292,7 +292,7 @@ function checkForms() {
 	if (dates[0].trim() == "" || dates[1].trim() == "") {
 		issues += "<li>Missing Start and End Dates</li>";
 	}
-	if ($("#distlist").val() == null || $("#distlist").val().trim() != "") {
+	if ($("#distlist").val() != null && $("#distlist").val().trim() != "") {
 		let reg = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
 		let emails = $("#distlist").val().split(";");
 		let tests = true;
@@ -306,7 +306,10 @@ function checkForms() {
 		}
 
 	}
-
+	
+	if ($("#assessorListSelect option").length == 0) {
+		issues += "<li>Missing an Assessor.</li>";
+	}
 
 	if (issues != "") {
 		$.alert({
@@ -329,9 +332,6 @@ function checkForms() {
 
 		if ($("#campName").val().trim() == "" || $("#campName").val().trim() == "-1") {
 			optional[index++] = "Do you want to add to a Campaign?";
-		}
-		if ($("#assessorListSelect option").length == 0) {
-			optional[index] = "<li>Missing an Assessor.</li>";
 		}
 		confirmAndPostIt(optional, 0, optional.length);
 
@@ -356,7 +356,6 @@ function confirmAndPostIt(messages, index, size) {
 				text: cButton,
 				btnClass: 'btn-orange',
 				action: function(confirm) {
-					$(".content").loading({ overlay: true, base: 0.3 });
 
 					if (index == size - 1 || size == 0) {
 
@@ -409,8 +408,17 @@ function confirmAndPostIt(messages, index, size) {
 							data += "&action=createAssessment";
 						}
 						data += "&_token=" + global._token;
-						$.post(location.pathname, data).done(function() {
-							location.reload();
+						$.post(location.pathname, data).done(function( resp ) {
+							if(resp.result == "success"){
+								location.reload();
+							}else{
+								$.alert({
+									type: "red",
+									title: 'Error!',
+									content: resp.message
+								});
+							}
+						
 						});
 					} else {
 						confirmAndPostIt(messages, index + 1, size);
@@ -424,11 +432,7 @@ function confirmAndPostIt(messages, index, size) {
 
 
 let invData = {};
-global.edit = function edit(id) {
-	document.location = "EditAssessment?action=get&aid=" + id;
-}
-let sample;
-global.del = function del(el, id) {
+function deleteAssessment(el, id) {
 	$.confirm({
 		title: "Are you sure?",
 		content: "Deleting this assessment is permenant and cannot be restored.</br>Are your sure?",
@@ -457,24 +461,53 @@ $(function() {
 	//This is to set the dataTable on the second tab to full width	
 	$("ul.nav li").click(() => { $("#searchResults").css("width", "100%") });
 
-	$('#searchResults').DataTable({
+	let searchTable = $('#searchResults').DataTable({
 		"destroy": true,
-
 		"paging": true,
 		"pageLength": 10,
 		"lengthChange": false,
 		"searching": false,
 		"ordering": true,
 		"info": true,
-		//"autoWidth": true,
+		"autoWidth": true,
 		"order": [[4, "desc"]],
+		 columnDefs: [
+			{
+				target: 11,
+				visible: false,
+				searchable: false
+			}
+        ],
 		serverSide: true,
 		ajax: {
-			"url": "Engagement?appid=&assessorId=&engId=&appName=&statusName=&action=search&max=10",
-			"type": "POST"
-		}
+			"url": "Engagement",
+			"type": "POST",
+			"data": function ( d ) {
+				 return $.extend( {}, d, {
+				   "appid": $("#search_appid").val(),
+				   "assessorId": $("#search_assessorid").val(),
+				   "engId": $("#search_engagementid").val(),
+				   "appName": $("#search_appname").val(),
+				   "statusName": $("#statusSearch").val(),
+				   "action": "search",
+				   "max": 10
+				 } );
+			   }
+			 }
 
 
+	});
+	searchTable.on('draw', function(){
+		$('#searchResults').unbind('click', 'tr');
+		$('#searchResults').on('click', 'tr', function(event){
+			const id = searchTable.row(this).data()[11]
+			console.log(event.target.outerHTML)
+			if(event.target.outerHTML.indexOf('trash') != -1){
+				deleteAssessment(this,id);
+			}else{
+				window.open(`EditAssessment?action=get&aid=${id}`, '_blank');
+			}
+		});
 	});
 
 	$("#searchBtn, #search_appid, #search_appname, #statusSearch").bind("click keypress", function(evt) {
@@ -482,40 +515,7 @@ $(function() {
 			return;
 		if (evt.type == "keypress" && evt.which != 13)
 			return;
-		let appid = $("#search_appid").val();
-		let assessor = $("#search_assessorid").val();
-		let engagement = $("#search_engagementid").val();
-		let appname = $("#search_appname").val();
-		let statname = $("#statusSearch").val();
-		let data = "appid=" + appid;
-		data += "&assessorId=" + assessor;
-		data += "&engId=" + engagement;
-		data += "&appName=" + appname;
-		data += "&statusName=" + statname;
-		data += "&action=search";
-		data += "&max=10";
-
-		$('#searchResults').DataTable({
-			"destroy": true,
-
-			"paging": true,
-			"pageLength": 10,
-			"lengthChange": false,
-			"searching": false,
-			"ordering": true,
-			"info": true,
-			"autoWidth": true,
-			"order": [[4, "desc"]],
-			serverSide: true,
-			ajax: {
-				"url": "Engagement?" + data,
-				"type": "POST"
-			}
-
-		}
-		);
-
-
+		searchTable.draw();
 
 	});
 
