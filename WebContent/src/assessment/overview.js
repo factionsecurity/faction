@@ -382,8 +382,10 @@ function setEditorContents(contents, editor, isEncoded) {
 		contents = b64DecodeUnicode(contents)
 	}
 	//This fixes issuen with images that makes it hard to edit
-	if (contents.endsWith("</div>")) {
+	if (contents.endsWith("</div>") || contents.endsWith("</table>")) {
 		editors[editor].setContents(contents + "<p><br></p>");
+	}else{
+		editors[editor].setContents(contents);
 	}
 }
 $(function() {
