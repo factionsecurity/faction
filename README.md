@@ -59,7 +59,8 @@ __Vulnerability Templates__
 ![image](https://github.com/factionsecurity/faction/assets/2343831/b6fa6a0b-34a9-46cf-87cb-6aeb2b5d3347)
 
 __Assessment Scheduling__
-![image](https://github.com/factionsecurity/faction/assets/2343831/515ebaa4-65e2-4843-93a7-4439899a99e3)
+![image](https://github.com/factionsecurity/faction/assets/2343831/7410f74e-3854-41e9-843f-7ca44d79cc54)
+
 
 __Peer Review and Track Changes__
 ![image](https://github.com/factionsecurity/faction/assets/2343831/fa72a72b-2c95-4c2c-bad1-5b34aab7fd13)
