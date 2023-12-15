@@ -197,10 +197,6 @@ class VulnerablilityView {
 		};
 		this.editorTimeout = {};
 		this.clearLockTimeout = {};
-		/*$("#overall").select2()
-		$("#likelyhood").select2()
-		$("#impact").select2()
-		$("#dcategory").select2()// {matcher: this.catHearder})*/
 		$(".select2").select2();
 
 		this.vulnTable = $('#vulntable').DataTable({
@@ -209,15 +205,21 @@ class VulnerablilityView {
 			"searching": false,
 			"ordering": true,
 			"info": false,
-			"autoWidth": true,
+			"autoWidth": false,
 			"order": [[1, "desc"]],
 			"columns": [
 				{ width: "10px" }, //checkbox
 				null, //name
 				{ width: "10px" } //controls
 
+			],
+			columnDefs: [
+    			{ orderable: false, targets: '_all' }
 			]
 		});
+		$(window).on('resize', () => {
+	   		this.vulnTable.columns.adjust();
+		} );
 		this.setUpEventHandlers()
 		this.updateColors();
 		this.editors.description = suneditor.create("description", this.editorOptions);
@@ -247,7 +249,7 @@ class VulnerablilityView {
 
 		});
 
-		$("#vulntable tr").on('click', function(event) {
+		$("#vulntable tbody tr").on('click', function(event) {
 			_this.vulnId = $(this).data("vulnid");
 			$(".selected").each((_a, s) => $(s).removeClass("selected"))
 			$(this).addClass("selected");
@@ -296,16 +298,13 @@ class VulnerablilityView {
 			const risk = $(box).find("p")[0].innerText;
 			$(`.severity:contains('${risk}')`).css("color", colors[colorCount]).css("font-weight", "bold");
 			$(box).css("border-color", colors[colorCount]);
-			//$(`.sev${risk}`).css("border-left", `5px solid ${colors[colorCount]}`)
 			$(`.sev${risk}`).css("border-left-color", `${colors[colorCount]}`)
 			$(box).css("color", colors[colorCount--]);
 		});
 	}
 	updateSeverityCount(box, sevId) {
-		console.log(box, sevId);
 		let count = Array.from($("#vulntable td")).filter(td => $(td).attr('data-sort') == sevId).length;
-		console.log(count)
-		$(box).find("h3")[0].innerText = count;
+		window.postMessage({"type": "updateVuln", "sevId": sevId, "count": count})
 	}
 	reasign() {
 		let _this = this;
@@ -364,7 +363,7 @@ class VulnerablilityView {
 				this.setLockScreen();
 			}
 			$(`#deleteVuln${vuln.id}`).hide();
-			$("#vulntable tr").each((_a, el) => {
+			$("#vulntable tbody tr").each((_a, el) => {
 				if ($(el).data('vulnid') == vuln.id) {
 					if ($(el).find(".userEdit").length == 0) {
 						let vulnName = $(el).find(".vulnName")[0].outerHTML;
@@ -375,7 +374,7 @@ class VulnerablilityView {
 			});
 		}
 		const vulnIds = lockedVulns.map(v => v.id);
-		$("#vulntable tr").each((_a, el) => {
+		$("#vulntable tbody tr").each((_a, el) => {
 			let vulnId = $(el).data('vulnid');
 			if (vulnIds.indexOf(`${vulnId}`) == -1 && this.vulnId == vulnId && $("#vulnForm").hasClass("disabled")) {
 				this.getVuln(vulnId);
@@ -384,7 +383,7 @@ class VulnerablilityView {
 				$(`#deleteVuln${vulnId}`).show();
 			}
 		});
-		const activeVulns = Array.from($("#vulntable tr")).map(tr => `${$(tr).data("vulnid")}`).filter(tr => tr != "undefined");
+		const activeVulns = Array.from($("#vulntable tbody tr")).map(tr => `${$(tr).data("vulnid")}`).filter(tr => tr != "undefined");
 
 		for (let vuln of data.current) {
 			//vuln was added by another user so add it to the table
@@ -403,7 +402,7 @@ class VulnerablilityView {
 				this.rebindTable();
 				this.updateColors();
 			} else {
-				let row = Array.from($("#vulntable tr")).filter((el) => $(el).data('vulnid') == vuln.id);
+				let row = Array.from($("#vulntable tbody tr")).filter((el) => $(el).data('vulnid') == vuln.id);
 				if (row.length > 0 && vuln.id != this.vulnId) {
 
 					let vulnName = $(row[0]).find(".vulnName")[0].innerHTML;
@@ -435,8 +434,9 @@ class VulnerablilityView {
 		// delete rows of vulns that have been deleted by another user
 		for (let vuln of activeVulns) {
 			if (serverVulns.indexOf(vuln) == -1) {
-				let row = Array.from($("#vulntable tr")).filter((el) => $(el).data('vulnid') == vuln);
+				let row = Array.from($("#vulntable tbody tr")).filter((el) => $(el).data('vulnid') == vuln);
 				this.vulnTable.row($(row[0])).remove().draw();
+				window.postMessage({"type": "updateStats"})	
 				if (this.vulnId == vuln) {
 					this.vulnId = -1;
 					this.deleteVulnForm();
@@ -509,7 +509,7 @@ class VulnerablilityView {
 										_this.setIntVal(data.likelyhood, 'likelyhood');
 										_this.setIntVal(data.impact, 'impact');
 										_this.setIntVal(data.overall, 'overall');
-										_this.setIntVal(data.catid, 'dcategory');
+										_this.setIntVal(data.category, 'dcategory');
 										const severity = $("#overall").select2('data')[0].text;
 										$(".selected").find(".severity")[0].innerHTML = severity;
 										$(".selected").children()[0].className = `sev${severity}`
@@ -517,6 +517,7 @@ class VulnerablilityView {
 										_this.vulnTable.row($(".selected")).invalidate()
 										_this.vulnTable.order([1, 'desc']).draw();
 										_this.updateColors()
+										postMessage({"type": "updateStats"})
 
 										$(data.cf).each(function(a, b) {
 											let el = $("#type" + b.typeid);
@@ -575,8 +576,6 @@ class VulnerablilityView {
 		let _this = this;
 		$("#addVuln").click(function() {
 			_this.disableAutoSave();
-			//TODO: delete this line most likely
-			//$("#dtitle").click(function() { $("#dtitle").val(""); $("#dcategory").val(""); });
 			const desc = _this.getEditorText("description");
 			const rec = _this.getEditorText("recommendation");
 			let data = "id=" + _this.assesssmentId;
@@ -605,7 +604,6 @@ class VulnerablilityView {
 				if (respData != "error") {
 					_this.deleteVulnForm();
 					$("#vulnForm").removeClass("disabled");
-					//$("#vulntable").append(respData[0]);
 					const row = _this.vulnTable.row.add($(respData[0])).draw().node()
 					_this.vulnId = resp.vulnId;
 					const vulnId = resp.vulnId;
@@ -624,11 +622,11 @@ class VulnerablilityView {
 	}
 	rebindTable() {
 		let _this = this;
-		$("#vulntable tr").unbind()
+		$("#vulntable tbody tr").unbind()
 		$("#vulntable span[id^=deleteVuln]").each((_index, element) => {
 			$(element).unbind();
 		});
-		$("#vulntable tr").on('click', function(event) {
+		$("#vulntable tbody tr").on('click', function(event) {
 			_this.vulnId = $(this).data("vulnid");
 			$(".selected").each((_a, s) => $(s).removeClass("selected"))
 			$(this).addClass("selected");
@@ -675,6 +673,7 @@ class VulnerablilityView {
 						_this._token = resp.token;
 						_this.deleteVulnForm();
 						_this.alertMessage(resp, "Vulnerabilties Deleted Successfully");
+						window.postMessage({"type": "updateStats"})	
 					});
 
 				},
@@ -802,6 +801,7 @@ class VulnerablilityView {
 		$("#dcategory").on('input', function(event) {
 			const catName = $(this).select2('data')[0].text
 			$(".selected").find(".category")[0].innerHTML = catName
+			window.postMessage( {"type": "updateStats"});
 			_this.queue.push(_this.vulnId, "dcategory", $(this).val());
 		});
 		$('[id^="type"]').each((_index, el) => $(el).on('input', function(event) {
@@ -826,7 +826,7 @@ class VulnerablilityView {
 		this.vulnId = id;
 		this.disableAutoSave()
 		$(`#deleteVuln${id}`).show();
-		$("#vulntable tr").each((_a, el) => {
+		$("#vulntable tbody tr").each((_a, el) => {
 			if ($(el).data('vulnid') == id) {
 				$(el).find(".userEdit").each((_a, el) => el.remove())
 			}
@@ -876,6 +876,7 @@ class VulnerablilityView {
 					data += "&_token=" + _this._token;
 					$.post('AddVulnerability', data).done(function(resp) {
 						const isError = getData(resp);
+						window.postMessage({"type": "updateStats"})	
 						if (isError != "error") {
 							_this.vulnTable.row(row).remove().draw();
 							_this.deleteVulnForm();

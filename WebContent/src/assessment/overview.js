@@ -19,6 +19,7 @@ import 'jquery-confirm';
 import '../scripts/jquery.autocomplete.min';
 import 'select2';
 import { marked } from 'marked';
+import Chart from 'chart.js/auto';
 
 
 global._token = $("#_token")[0].value;
@@ -29,22 +30,22 @@ var editors = {
 };
 
 
-plugins.table.createCells = function (nodeName, cnt, returnElement) {
-        nodeName = nodeName.toLowerCase();
+plugins.table.createCells = function(nodeName, cnt, returnElement) {
+	nodeName = nodeName.toLowerCase();
 
-        if (!returnElement) {
-            let cellsHTML = '';
-            while (cnt > 0) {
-                cellsHTML += '<' +nodeName + '>&nbsp;</' + nodeName + '>';
-                cnt--;
-            }
-            return cellsHTML;
-        } else {
-            const cell = this.util.createElement(nodeName);
-            cell.innerHTML = '&nbsp;';
-            return cell;
-        }
-    }
+	if (!returnElement) {
+		let cellsHTML = '';
+		while (cnt > 0) {
+			cellsHTML += '<' + nodeName + '>&nbsp;</' + nodeName + '>';
+			cnt--;
+		}
+		return cellsHTML;
+	} else {
+		const cell = this.util.createElement(nodeName);
+		cell.innerHTML = '&nbsp;';
+		return cell;
+	}
+}
 
 global.editors = editors;
 let fromMarkdown = {
@@ -72,13 +73,13 @@ let fromMarkdown = {
 	},
 	action: function() {
 		let selected = this.getSelectedElements();
-		const md = selected.reduce( (acc,item) => acc + item.innerText +"\n", "") ;
+		const md = selected.reduce((acc, item) => acc + item.innerText + "\n", "");
 		const html = marked.parse(md);
 		const div = document.createElement("div");
 		div.innerHTML = html;
 		const parent = selected[0].parentNode;
 		parent.insertBefore(div, selected[0]);
-		for(let i=0; i<selected.length; i++){
+		for (let i = 0; i < selected.length; i++) {
 			selected[i].remove();
 		}
 	}
@@ -88,7 +89,7 @@ var editorOptions = {
 	codeMirror: CodeMirror,
 	plugins: plugins,
 	buttonList: [
-		['undo', 'redo','fontSize', 'formatBlock','textStyle'],
+		['undo', 'redo', 'fontSize', 'formatBlock', 'textStyle'],
 		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
 		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
 		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown'],
@@ -103,6 +104,7 @@ let engagementOptions = {
 	buttonList: [],
 	height: 500
 }
+
 function setEditorText_bk(id, data) {
 	if (typeof editors[id] == 'undefined') {
 		$('#' + id).html(data);
@@ -120,7 +122,7 @@ function alertMessage(resp, success) {
 				columnClass: 'small',
 				autoClose: 'ok|1000',
 				buttons: {
-					ok: function(){}
+					ok: function() { }
 				}
 			}
 		);
@@ -133,7 +135,7 @@ function alertMessage(resp, success) {
 				columnClass: 'small',
 				autoClose: 'ok|3000',
 				buttons: {
-					ok: function(){}
+					ok: function() { }
 				}
 			}
 		);
@@ -143,7 +145,7 @@ function alertMessage(resp, success) {
 
 function getEditorText(name) {
 	let html = editors[name].getContents(true);
-	return Array.from($(html)).filter( a => a.innerHTML != "<br>").map( a => a.outerHTML).join("")
+	return Array.from($(html)).filter(a => a.innerHTML != "<br>").map(a => a.outerHTML).join("")
 }
 function showLoading(com) {
 	$(com).loading({ overlay: true, base: 0.3 });
@@ -185,9 +187,9 @@ function getData(resp) {
 		return "error";
 	}
 }
-function saveAllEditors(showLoadingScreen=false) {
-	
-	if(showLoadingScreen){
+function saveAllEditors(showLoadingScreen = false) {
+
+	if (showLoadingScreen) {
 		showLoading(".content");
 	}
 	let risk = getEditorText('risk');
@@ -200,13 +202,13 @@ function saveAllEditors(showLoadingScreen=false) {
 	data += "&update=true";
 	data += "&_token=" + global._token;
 	$.post("Assessment.action", data).done(function(resp) {
-		$(".edited").each( (a,b) => {
-			b.innerHTML=""
+		$(".edited").each((a, b) => {
+			b.innerHTML = ""
 		})
-		if(showLoadingScreen){
+		if (showLoadingScreen) {
 			clearLoading(".content");
 		}
-		if(resp.result != "success"){
+		if (resp.result != "success") {
 			$.alert(resp.message);
 		}
 		global._token = resp.token;
@@ -216,40 +218,40 @@ function saveAllEditors(showLoadingScreen=false) {
 }
 
 function saveEditor(type) {
-	
+
 	let edits = getEditorText(type);
-	let data="";
-	if(type == "notes"){
+	let data = "";
+	if (type == "notes") {
 		data += "notes=" + encodeURIComponent(edits);
 	}
-	else if(type == "risk"){
+	else if (type == "risk") {
 		data += "riskAnalysis=" + encodeURIComponent(edits);
 	}
-	else if(type == "summary"){
+	else if (type == "summary") {
 		data += "summary=" + encodeURIComponent(edits);
 	}
 	data += "&id=app" + $("#appid")[0].value
 	data += "&update=true";
 	data += "&_token=" + global._token;
 	$.post("Assessment.action", data).done(function(resp) {
-		document.getElementById(`${type}_header`).innerHTML=""
-		if(resp.result != "success"){
+		document.getElementById(`${type}_header`).innerHTML = ""
+		if (resp.result != "success") {
 			$.alert(resp.message);
 		}
 		global._token = resp.token;
 		clearTimeout(clearLockTimeout[type]);
 		clearLockTimeout[type] = setTimeout(() => {
 			$.get(`ClearLock?action=${type}`).done();
-			}, 5000);
+		}, 5000);
 	});
 
 }
 let editorTimeout = {};
 let clearLockTimeout = {};
 function queueSave(type) {
-	$.get(`SetLock?action=${type}`).done( (resp) => {
-		if(resp.result == "success"){
-			document.getElementById(`${type}_header`).innerHTML="*"
+	$.get(`SetLock?action=${type}`).done((resp) => {
+		if (resp.result == "success") {
+			document.getElementById(`${type}_header`).innerHTML = "*"
 			clearTimeout(editorTimeout[type]);
 			clearTimeout(clearLockTimeout[type]);
 			editorTimeout[type] = setTimeout(() => {
@@ -265,14 +267,16 @@ function b64DecodeUnicode(str) {
 		return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
 	}).join(''));
 }
-function setEditorContents(contents, editor, isEncoded){
-		if(isEncoded){
-			contents = b64DecodeUnicode(contents)
-		}
-		//This fixes issuen with images that makes it hard to edit
-		if(contents.endsWith("</div>")){
-			editors[editor].setContents(contents + "<p><br></p>");
-		}
+function setEditorContents(contents, editor, isEncoded) {
+	if (isEncoded) {
+		contents = b64DecodeUnicode(contents)
+	}
+	//This fixes issuen with images that makes it hard to edit
+	if (contents.endsWith("</div>") || contents.endsWith("</table>")) {
+		editors[editor].setContents(contents + "<p><br></p>");
+	}else{
+		editors[editor].setContents(contents);
+	}
 }
 $(function() {
 	global._token = $("#_token")[0].value;
@@ -281,19 +285,19 @@ $(function() {
 		queueSave("summary");
 	}
 	editors.summary.onChange = function(contents, core) {
-		setEditorContents(contents,'summary', false);
-		if(document.getElementById(`summary_header`).innerHTML == ""){
+		setEditorContents(contents, 'summary', false);
+		if (document.getElementById(`summary_header`).innerHTML == "") {
 			queueSave("summary");
 		}
 	}
-	
+
 	editors.risk = suneditor.create("riskAnalysis", editorOptions);
 	editors.risk.onInput = function(contents, core) {
 		queueSave("risk");
 	}
 	editors.risk.onChange = function(contents, core) {
-		setEditorContents(contents,'risk', false);
-		if(document.getElementById(`risk_header`).innerHTML == ""){
+		setEditorContents(contents, 'risk', false);
+		if (document.getElementById(`risk_header`).innerHTML == "") {
 			queueSave("risk");
 		}
 	}
@@ -302,32 +306,32 @@ $(function() {
 		queueSave("notes");
 	}
 	editors.notes.onChange = function(contents, core) {
-		setEditorContents(contents,'notes', false);
-		if(document.getElementById(`notes_header`).innerHTML == ""){
+		setEditorContents(contents, 'notes', false);
+		if (document.getElementById(`notes_header`).innerHTML == "") {
 			queueSave("notes");
 		}
 	}
 	suneditor.create("engagmentnotes", engagementOptions);
-	
-	setInterval( () => {
-		$.get("CheckLocks").done( (resp) =>{
-				["notes","risk","summary"].forEach( function(type){
-					if(resp[type] && resp[type].isLock){
-						editors[type].core.context.element.wysiwygFrame.classList.add("disabled");
-						document.getElementById(`${type}_header`).innerHTML=`<i class="lockUser">Editing by ${resp[type].lockBy} ${resp[type].lockAt}</i>`
-						editors[type].disabled();
-						setEditorContents(resp[type].updatedText, type, true);
-					}else{
-						editors[type].enable();
-						if(document.getElementById(`${type}_header`).innerHTML.indexOf("*") == -1){
-							document.getElementById(`${type}_header`).innerHTML="";
-						}
-						editors[type].core.context.element.wysiwygFrame.classList.remove("disabled");
+
+	setInterval(() => {
+		$.get("CheckLocks").done((resp) => {
+			["notes", "risk", "summary"].forEach(function(type) {
+				if (resp[type] && resp[type].isLock) {
+					editors[type].core.context.element.wysiwygFrame.classList.add("disabled");
+					document.getElementById(`${type}_header`).innerHTML = `<i class="lockUser">Editing by ${resp[type].lockBy} ${resp[type].lockAt}</i>`
+					editors[type].disabled();
+					setEditorContents(resp[type].updatedText, type, true);
+				} else {
+					editors[type].enable();
+					if (document.getElementById(`${type}_header`).innerHTML.indexOf("*") == -1) {
+						document.getElementById(`${type}_header`).innerHTML = "";
 					}
-				});
-			}
+					editors[type].core.context.element.wysiwygFrame.classList.remove("disabled");
+				}
+			});
+		}
 		)
-		
+
 	}, 1000);
 
 
@@ -414,7 +418,7 @@ $(function() {
 		initialPreview: getFileIds(),
 		initialPreviewConfig: getPreviewConfig(),
 	}).on("filebatchselected", function(event, files) {
-    	$("#files").fileinput("upload");
+		$("#files").fileinput("upload");
 	});
 
 
@@ -423,487 +427,487 @@ $(function() {
 		saveAllEditors(true);
 
 	});
+});
+
+//<!-- Controls Section -->
+$(function() {
+
+	let checkStatus = {};
+	$("#genreport").click(function() {
+		$("#genreport").html("<div class='throbber-loader'>Loading…</div>");
+		$(".reportLoading").loading({ overlay: true });
+		$.get("Assessment?action=genreport&id=" + $("#appid")[0].value, function(resp) {
+			global._token = resp.token;
+			clearInterval(checkStatus);
+			checkStatus = setInterval(function() {
+				$.get("CheckStatus").done(function(resp, _message, http) {
+					if (http.status != 202) {
+						const updatedDate = resp.message;
+						$("#updatedDate").html(updatedDate);
+						clearInterval(checkStatus);
+						clearLoading($(".reportLoading")[0])
+						$("#genreport").html("Generate Report");
+						if (typeof $("#dlreport").attr('id') == 'undefined') {
+							location.reload();
+						}
+					}
+				});
+			}, 2000);
+
+
+		});
 	});
+	$("#dlreport").click(function() {
+		var id = $(this).attr("rpt");
+		var win = window.open('../service/Report.pdf?id=' + $("#appid")[0].value.replace("app", ""), '_blank');
+	});
+	$("#prsubmit").click(function() {
+		$(".content").loading({ overlay: true, base: 0.3 });
+		var data = "action=prsubmit";
+		data += "&id=" + $("#appid")[0].value.replace("app", "");
+		data += "&_token=" + global._token;
+		$.post("SendToPR", data).done(function(resp) {
+			global._token = resp.token;
+			if (resp.result === "success") {
+				$.alert({
+					type: "green",
+					title: 'Success!',
+					content: "Assessment has been submitted for PR",
+					buttons: {
+						ok: function() { location.reload(); }
+					}
+				});
 
-	//<!-- Controls Section -->
-	$(function() {
+			} else {
+				$(".content").loading({ destroy: true });
+				$.alert({
+					type: "red",
+					title: 'Error!',
+					content: resp.errors,
+				});
+			}
 
-		let checkStatus ={};
-		$("#genreport").click(function() {
-			$("#genreport").html("<div class='throbber-loader'>Loading…</div>");
-        	$(".reportLoading").loading({overlay: true});
-			$.get("Assessment?action=genreport&id=" + $("#appid")[0].value, function(resp){
-				global._token = resp.token;
-				clearInterval(checkStatus);
-				checkStatus = setInterval(function(){
-					$.get("CheckStatus").done(function(resp, _message, http){
-						if(http.status != 202){
-							const updatedDate = resp.message;
-							$("#updatedDate").html(updatedDate);
-							clearInterval(checkStatus);
-							clearLoading($(".reportLoading")[0])
-							$("#genreport").html("Generate Report");
-							if(typeof $("#dlreport").attr('id') == 'undefined'){
-								location.reload();
+		});
+	});
+	$("#finalize").click(function() {
+		$(".content").loading({ overlay: true, base: 0.3 });
+		$.confirm({
+			title: 'Are you sure!',
+			content: "Once you finalize the assessment all vulnerabilities will be opened in the tracking system. And the assessment will drop out of your assesement queue.",
+			buttons: {
+				confirm: function() {
+					$(".content").loading({ overlay: true, base: 0.3 });
+
+					var data = "action=finalize";
+					data += "&id=" + $("#appid")[0].value.replace("app", "");
+					data += "&_token=" + global._token;
+					$.post("Assessment", data).done(function(resp) {
+						global._token = resp.token;
+						if (resp.result === "success") {
+							$.alert({
+								type: "green",
+								title: 'Success!',
+								content: "Assessment has been finalized",
+								buttons: {
+									ok: function() { location.reload(); }
+								}
+							});
+						} else {
+							$(".content").loading({ destroy: true });
+							var error = ""
+							if (typeof resp.errors == 'undefined')
+								error = "<br>" + resp.message;
+							else {
+								error = resp.errors
 							}
+
+							$.alert({
+								type: "red",
+								title: 'Alert!',
+								content: error,
+							});
 						}
 					});
-				},2000);
-				
-				
+				},
+				cancel: function() { }
+			}
+		});
+
+	});
+});
+
+//<!-- History section -->
+$(function() {
+	$('#history').DataTable({
+		"paging": true,
+		"lengthChange": false,
+		"searching": true,
+		"ordering": true,
+		"info": true,
+		"autoWidth": true
+	});
+
+	var colors = ["#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"];
+	var boxCount = $("#infobar").find("div.row").find("[class^=col-sm]").length;
+	var width = 100 / boxCount;
+	$("#infobar").find("div.row").find("[class^=col-sm]").css("width", width + "%").css("min-width", "100px");
+	var boxes = $("#infobar").find("[class=small-box]");
+	var count = 9;
+	boxes.each((index, box) => {
+		$(box).css("border-color", colors[count]);
+		$(box).css("color", colors[count--]);
+	});
+
+
+});
+//   <!-- PR Options -->
+$(function() {
+	$("#showPR").click(function() {
+		var prid = $(this).attr('prid');
+		document.location = "TrackChanges?prid=" + prid;
+	});
+
+	$("#openICS").click(function() {
+		document.getElementById('dlFrame').src = `Assessment?action=ics&id=${id}`;
+	})
+
+});
+
+//  <!-- Template Search and Save -->
+$(function() {
+	$.ajaxSetup({ cache: false });
+	$(".saveTemp").click(function() {
+		var id = $(this).attr("for");
+		var data = "term=" + $("#" + id).val();
+		data += "&summary=" + encodeURIComponent(getEditorText($("#" + id).attr("for")));
+		if ($("#" + id).attr("for") == "step_description")
+			data += "&exploit=true";
+		data += "&_token=" + global._token;
+		$.post("tempSave", data).done(function(resp) {
+			alertMessage(resp, "Template Updated.");
+		});
+	});
+	$(".deleteTemp").click(function() {
+		var el = $(this).parent().parent().find("[id^=tempSearch]");
+
+
+		var data = "tmpId=" + $(el).attr("tmpId");
+		$.confirm({
+			title: "Confirm?",
+			content: "Are you sure you want to delete the template?",
+			buttons: {
+				confirm: function() {
+					$.post("tempDelete", data).done(function(resp) {
+						$(el).val("");
+						$(el).attr("tmpId", "");
+						alertMessage(resp, "Template Deleted.");
+					});
+				},
+				cancel: function() { }
+			}
+		});
+
+
+	});
+
+
+	$(".saveTemplate").on('click', async (event) => {
+		let type = $(event.currentTarget).attr("for")
+		let selected = $(`#${type}Templates option:selected`);
+		let selectedText = Array.from(selected).map((t) => t.innerHTML)
+		let contentMessage = "";
+		let buttons = {
+			save: function() {
+				selectedText = selectedText.join(",")
+				if (selected.length == 0) {
+					selectedText = $("#tempName").val();
+				}
+				let data = `term=${selectedText.trim()}`
+				data += "&summary=" + encodeURIComponent(getEditorText(type));
+				data += `&type=${type}`;
+				data += "&active=true"
+				data += "&_token=" + global._token;
+				$.post("tempSave", data).done(function(resp) {
+					_token = resp.token;
+					const template = resp.templates[0]
+					if (!Array.from($(`#${type}Templates option`))
+						.some((t) => $(t).val() == template.tmpId)) {
+						let option = document.createElement("option");
+						$(option).attr("global", "false")
+						$(option).addClass("userTemplate")
+						$(option).val(template.tmpId)
+						$(option).html(template.title)
+						$(`#${type}Templates`).append(option).trigger("change")
+					}
+					alertMessage(resp, "Template Updated.");
+				});
+
+			},
+			cancel: function() { }
+		}
+		if (selectedText.length > 1) {
+			$.confirm({
+				title: "Error",
+				content: "You can only select one template name to save.",
+				buttons: {
+					ok: function() { }
+				}
 			});
+			return;
+
+		} else if (selectedText.length == 0) {
+			contentMessage = "Enter a Template name: <input id='tempName' class='form-control'></input>";
+		} else {
+			contentMessage = "Do you want to save the template <b>" + selectedText + "</b> or create a new template?<input id='updateTemplateName' type='hidden' value=" + selectedText + "'/>";
+			buttons["new"] = function() {
+				$(`#${type}Templates`).val(null).trigger('change');
+				let saveButtons = $(".saveTemplate")
+				for (let button of saveButtons) {
+					if ($(button).attr('for') == type) {
+						$(button).click();
+					}
+				}
+			}
+			const isGlobal = $(selected[0]).attr("global")
+			if (isGlobal == "true") {
+				buttons["new"]()
+				return;
+			}
+		}
+		$.confirm({
+			title: "Save Template",
+			content: contentMessage,
+			buttons: buttons
+
+		})
+
+	});
+	$(".deleteTemplate").on('click', async (event) => {
+		let type = $(event.currentTarget).attr("for")
+		let selected = Array.from($(`#${type}Templates option:selected`)).filter((t) => $(t).attr("global") != "true");
+		if (selected.length == 0) {
+			alertMessage({ message: "No Valid Templates to Delete" }, null)
+			return;
+		}
+		let textData = [];
+		const selectedText = selected.map((t) => t.innerHTML).join(",");
+
+		$.confirm({
+			title: "Confirm?",
+			content: "Are you sure you want to delete these templates?<br><b>" + selectedText + "</b>",
+			buttons: {
+				confirm: async function() {
+					let messages = []
+					$(`#${type}Templates`).val(null).trigger('change');
+					for await (const option of selected) {
+						await $.post(`tempDelete`, `tmpId=${$(option).val()}`).done(function(resp) {
+							_token = resp.token;
+							messages.push(resp);
+							option.remove();
+						});
+					}
+					alertMessage(messages[0], "Templates Deleted.");
+				},
+				cancel: function() { }
+			}
 		});
-		$("#dlreport").click(function() {
-			var id = $(this).attr("rpt");
-			var win = window.open('../service/Report.pdf?id=' + $("#appid")[0].value.replace("app", ""), '_blank');
+	});
+	$(".addTemplate").on('click', async (event) => {
+		let type = $(event.currentTarget).attr("for")
+		let selected = $(`#${type}Templates option:selected`);
+		let textData = []
+		for await (const option of selected) {
+			await $.get('tempSearchDetail?tmpId=' + $(option).val())
+				.done(function(data) {
+					textData.push(data.templates[0].text);
+				});
+		}
+		let text = textData.join("\n");
+		$.confirm({
+			title: "Confirm?",
+			content: "Are you sure you want to Overwrite, Append, or Prepend the current text?",
+			buttons: {
+				overWrite: {
+					text: "OverWrite",
+					action: function() {
+						setEditorContents(text, type, false);
+					}
+				},
+				prepend: {
+					text: "Prepend",
+					action: function() {
+						text = text + "\n" + getEditorText(type);
+						setEditorContents(text, type, false);
+					}
+				},
+				append: {
+					text: "Append",
+					action: function() {
+						text = getEditorText(type) + "\n" + text;
+						setEditorContents(text, type, false);
+					}
+				},
+				cancel: function() {
+
+				}
+			}
+
 		});
-		$("#prsubmit").click(function() {
-			$(".content").loading({ overlay: true, base: 0.3 });
-			var data = "action=prsubmit";
-			data += "&id=" + $("#appid")[0].value.replace("app", "");
-			data += "&_token=" + global._token;
-			$.post("SendToPR", data).done(function(resp) {
-				global._token = resp.token;
-				if (resp.result === "success") {
-					$.alert({
-						type: "green",
-						title: 'Success!',
-						content: "Assessment has been submitted for PR",
-						buttons: {
-							ok: function() { location.reload(); }
+
+	})
+	$(".tempSearch").each(function(i, el) {
+		var el = $(el)[0];
+		var id = $(el).attr("id");
+
+
+		$(el).autoComplete({
+			minChars: 1,
+			cacheLength: 0,
+			source: function(term, response) {
+				const type = $("#" + $(el).attr("id")).attr("for");
+				$.ajaxSetup({ cache: false });
+				$.getJSON(`tempSearch?term=${term}&type=${type}`,
+					function(data) {
+						_token = data.token
+						var tmps = data.templates;
+						var list = [];
+						for (i = 0; i < tmps.length; i++) {
+							list[i] = tmps[i].tmpId + ": " + tmps[i].title
+
 						}
+						response(list);
+					}
+				);
+			},
+			onSelect: function(e, term, item) {
+				var s = getEditorText($(el).attr("for"));
+				var tmpId = term.split(":")[0];
+				$(el).val(term.split(":")[1].trim());
+				$(el).attr("tmpId", tmpId);
+
+				if ((s).trim() != "") {
+					$.confirm({
+						title: "Confirm?",
+						content: "Are you sure you want to Overwrite, Append, or Prepend the current text?",
+						buttons: {
+							overWrite: {
+								text: "OverWrite",
+								action: function() {
+									$.get('tempSearchDetail?tmpId=' + tmpId)
+										.done(function(data) {
+											let type = $(el).attr("for");
+											let text = data.templates[0].text;
+											setEditorContents(text, type, false);
+										});
+								}
+
+							},
+							prepend: {
+								text: "Prepend",
+								action: function() {
+									$.get('tempSearchDetail?tmpId=' + tmpId)
+										.done(function(data) {
+											var text = "<br />" + getEditorText($(el).attr("for"));
+											let type = $(el).attr("for");
+											setEditorContents(text, type, false);
+										});
+								}
+
+							},
+							append: {
+								text: "Append",
+								action: function() {
+									$.get('tempSearchDetail?tmpId=' + tmpId)
+										.done(function(data) {
+											var text = getEditorText($(el).attr("for")) + "<br />";
+											let type = $(el).attr("for");
+											setEditorContents(text, type, false);
+										});
+								}
+
+							},
+							cancel: function() {
+
+							}
+						}
+
 					});
 
 				} else {
-					$(".content").loading({ destroy: true });
-					$.alert({
-						type: "red",
-						title: 'Error!',
-						content: resp.errors,
-					});
-				}
-
-			});
-		});
-		$("#finalize").click(function() {
-			$(".content").loading({ overlay: true, base: 0.3 });
-			$.confirm({
-				title: 'Are you sure!',
-				content: "Once you finalize the assessment all vulnerabilities will be opened in the tracking system. And the assessment will drop out of your assesement queue.",
-				buttons: {
-					confirm: function() {
-						$(".content").loading({ overlay: true, base: 0.3 });
-
-						var data = "action=finalize";
-						data += "&id=" + $("#appid")[0].value.replace("app", "");
-						data += "&_token=" + global._token;
-						$.post("Assessment", data).done(function(resp) {
-							global._token = resp.token;
-							if (resp.result === "success") {
-								$.alert({
-									type: "green",
-									title: 'Success!',
-									content: "Assessment has been finalized",
-									buttons: {
-										ok: function() { location.reload(); }
-									}
-								});
-							} else {
-								$(".content").loading({ destroy: true });
-								var error = ""
-								if (typeof resp.errors == 'undefined')
-									error = "<br>" + resp.message;
-								else {
-									error = resp.errors
-								}
-
-								$.alert({
-									type: "red",
-									title: 'Alert!',
-									content: error,
-								});
-							}
+					$.get('tempSearchDetail?tmpId=' + tmpId)
+						.done(function(data) {
+							let type = $(el).attr("for");
+							let text = data.templates[0].text;
+							setEditorContents(text, type, false);
 						});
-					},
-					cancel: function() { }
 				}
-			});
-
-		});
-	});
-
-	//<!-- History section -->
-	$(function() {
-		$('#history').DataTable({
-			"paging": true,
-			"lengthChange": false,
-			"searching": true,
-			"ordering": true,
-			"info": true,
-			"autoWidth": true
-		});
-
-		var colors = ["#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"];
-		var boxCount = $("#infobar").find("div.row").find("[class^=col-sm]").length;
-		var width = 100 / boxCount;
-		$("#infobar").find("div.row").find("[class^=col-sm]").css("width", width + "%").css("min-width", "100px");
-		var boxes = $("#infobar").find("[class=small-box]");
-		var count = 9;
-		boxes.each((index, box) => {
-			$(box).css("border-color", colors[count]);
-			$(box).css("color", colors[count--]);
-		});
 
 
-	});
-	//   <!-- PR Options -->
-	$(function() {
-		$("#showPR").click(function() {
-			var prid = $(this).attr('prid');
-			document.location = "TrackChanges?prid=" + prid;
-		});
-
-		$("#openICS").click(function() {
-			document.getElementById('dlFrame').src = `Assessment?action=ics&id=${id}`;
-		})
-
-	});
-
-	//  <!-- Template Search and Save -->
-	$(function() {
-		$.ajaxSetup({ cache: false });
-		$(".saveTemp").click(function() {
-			var id = $(this).attr("for");
-			var data = "term=" + $("#" + id).val();
-			data += "&summary=" + encodeURIComponent(getEditorText($("#" + id).attr("for")));
-			if ($("#" + id).attr("for") == "step_description")
-				data += "&exploit=true";
-			data += "&_token=" + global._token;
-			$.post("tempSave", data).done(function(resp) {
-				alertMessage(resp, "Template Updated.");
-			});
-		});
-		$(".deleteTemp").click(function() {
-			var el = $(this).parent().parent().find("[id^=tempSearch]");
-
-
-			var data = "tmpId=" + $(el).attr("tmpId");
-			$.confirm({
-				title: "Confirm?",
-				content: "Are you sure you want to delete the template?",
-				buttons: {
-					confirm: function() {
-						$.post("tempDelete", data).done(function(resp) {
-							$(el).val("");
-							$(el).attr("tmpId", "");
-							alertMessage(resp, "Template Deleted.");
-						});
-					},
-					cancel: function() { }
-				}
-			});
-
-
-		});
-		
-		
-		$(".saveTemplate").on('click', async (event) =>{
-			let type = $(event.currentTarget).attr("for")
-			let selected = $(`#${type}Templates option:selected`);
-			let selectedText = Array.from(selected).map( (t)=> t.innerHTML)
-			let contentMessage="";
-			let buttons = {
-					save: function(){
-						selectedText = selectedText.join(",")
-						if(selected.length == 0){
-							selectedText = $("#tempName").val();
-						}
-						let data = `term=${selectedText.trim()}`
-						data += "&summary=" + encodeURIComponent(getEditorText(type));
-						data += `&type=${type}`;
-						data += "&active=true"
-						data += "&_token=" + global._token;
-						$.post("tempSave", data).done(function(resp) {
-							_token = resp.token;
-							const template = resp.templates[0]
-							if(!Array.from( $(`#${type}Templates option`) )
-									.some( (t) => $(t).val() == template.tmpId)){
-								let option = document.createElement("option");
-								$(option).attr("global", "false")
-								$(option).addClass("userTemplate")
-								$(option).val(template.tmpId)
-								$(option).html(template.title)
-								$(`#${type}Templates`).append(option).trigger("change")
-							}
-							alertMessage(resp, "Template Updated.");
-						});
-						
-					},
-					cancel: function(){}
-				}
-			if(selectedText.length > 1){
-				$.confirm({
-					title: "Error",
-					content: "You can only select one template name to save.",
-					buttons: {
-						ok: function(){}
-						}
-				});
-				return;
-				
-			}else if(selectedText.length == 0){
-				contentMessage = "Enter a Template name: <input id='tempName' class='form-control'></input>";
-			}else{
-				contentMessage = "Do you want to save the template <b>"+selectedText+"</b> or create a new template?<input id='updateTemplateName' type='hidden' value=" + selectedText + "'/>";
-				buttons["new"] = function(){
-						$(`#${type}Templates`).val(null).trigger('change');
-						let saveButtons = $(".saveTemplate")
-						for( let button of saveButtons){
-							if($(button).attr('for') == type){
-								$(button).click();
-							}
-						}
-				}
-				const isGlobal = $(selected[0]).attr("global")
-				if(isGlobal == "true"){
-					buttons["new"]()
-					return;
-				}
+				return false;
 			}
-			$.confirm({
-				title: "Save Template",
-				content: contentMessage,
-				buttons: buttons
-				
-			})
-			
-		});
-		$(".deleteTemplate").on('click', async (event) =>{
-			let type = $(event.currentTarget).attr("for")
-			let selected = Array.from($(`#${type}Templates option:selected`)).filter( (t) => $(t).attr("global") != "true");
-			if(selected.length == 0){
-				alertMessage({message: "No Valid Templates to Delete"}, null)		
-				return;
-			}
-			let textData=[];
-			const selectedText = selected.map( (t)=> t.innerHTML).join(",");
-			
-			$.confirm({
-				title: "Confirm?",
-				content: "Are you sure you want to delete these templates?<br><b>"+selectedText+"</b>",
-				buttons: {
-					confirm: async function() {
-						let messages=[]
-						$(`#${type}Templates`).val(null).trigger('change');
-						for await (const option of selected){
-							await $.post(`tempDelete`, `tmpId=${$(option).val()}`).done(function(resp) {
-								_token=resp.token;
-								messages.push(resp);
-								option.remove();
-								});
-						}
-						alertMessage(messages[0], "Templates Deleted.");
-					},
-					cancel: function() { }
-				}
-			});
-		});
-		$(".addTemplate").on('click', async (event) =>{
-			let type = $(event.currentTarget).attr("for")
-			let selected = $(`#${type}Templates option:selected`);
-			let textData=[]
-			for await (const option of selected){
-				await $.get('tempSearchDetail?tmpId=' + $(option).val())
-					.done(function(data) {
-						textData.push(data.templates[0].text);
-					});
-			}
-			let text = textData.join("\n");
-			$.confirm({
-				title: "Confirm?",
-				content: "Are you sure you want to Overwrite, Append, or Prepend the current text?",
-				buttons: {
-					overWrite: {
-						text: "OverWrite",
-						action: function() {
-								setEditorContents(text,type, false);
-						}
-					},
-					prepend: {
-						text: "Prepend",
-						action: function() {
-								text = text + "\n" + getEditorText(type);
-								setEditorContents(text,type, false);
-						}
-					},
-					append: {
-						text: "Append",
-						action: function() {
-								text = getEditorText(type) + "\n" + text;
-								setEditorContents(text,type, false);
-						}
-					},
-					cancel: function() {
 
-					}
-				}
-
-			});
-			
-		})
-		$(".tempSearch").each(function(i, el) {
-			var el = $(el)[0];
-			var id = $(el).attr("id");
-			
-
-			$(el).autoComplete({
-				minChars: 1,
-				cacheLength: 0,
-				source: function(term, response) {
-					const type = $("#" + $(el).attr("id")).attr("for");
-					$.ajaxSetup({ cache: false });
-					$.getJSON(`tempSearch?term=${term}&type=${type}`,
-						function(data) {
-							_token = data.token
-							var tmps = data.templates;
-							var list = [];
-							for (i = 0; i < tmps.length; i++) {
-								list[i] = tmps[i].tmpId + ": " + tmps[i].title
-
-							}
-							response(list);
-						}
-					);
-				},
-				onSelect: function(e, term, item) {
-					var s = getEditorText($(el).attr("for"));
-					var tmpId = term.split(":")[0];
-					$(el).val(term.split(":")[1].trim());
-					$(el).attr("tmpId", tmpId);
-
-					if ((s).trim() != "") {
-						$.confirm({
-							title: "Confirm?",
-							content: "Are you sure you want to Overwrite, Append, or Prepend the current text?",
-							buttons: {
-								overWrite: {
-									text: "OverWrite",
-									action: function() {
-										$.get('tempSearchDetail?tmpId=' + tmpId)
-											.done(function(data) {
-												let type = $(el).attr("for");
-												let text = data.templates[0].text;
-												setEditorContents(text,type, false);
-											});
-									}
-
-								},
-								prepend: {
-									text: "Prepend",
-									action: function() {
-										$.get('tempSearchDetail?tmpId=' + tmpId)
-											.done(function(data) {
-												var text = "<br />" + getEditorText($(el).attr("for"));
-												let type = $(el).attr("for");
-												setEditorContents(text,type, false);
-											});
-									}
-
-								},
-								append: {
-									text: "Append",
-									action: function() {
-										$.get('tempSearchDetail?tmpId=' + tmpId)
-											.done(function(data) {
-												var text = getEditorText($(el).attr("for")) + "<br />";
-												let type = $(el).attr("for");
-												setEditorContents(text,type, false);
-											});
-									}
-
-								},
-								cancel: function() {
-
-								}
-							}
-
-						});
-
-					} else {
-						$.get('tempSearchDetail?tmpId=' + tmpId)
-							.done(function(data) {
-								let type = $(el).attr("for");
-								let text = data.templates[0].text;
-								setEditorContents(text,type, false);
-							});
-					}
-
-
-					return false;
-				}
-
-			});
 		});
 	});
-	//<!-- Click events for upper banners -->
-	$(function() {
-		$(".small-box").click(function(el) {
-			var p = $(this).find("p")[0];
-			var filter = $(p).html();
-			$('#vulntable').DataTable().column(4).search(filter).draw();
-		});
-		$("#removeFilter").click(function() {
-			$('#vulntable').DataTable().search('')
-				.columns().search('')
-				.draw();
-		});
+});
+//<!-- Click events for upper banners -->
+$(function() {
+	$(".small-box").click(function(el) {
+		var p = $(this).find("p")[0];
+		var filter = $(p).html();
+		$('#vulntable').DataTable().column(4).search(filter).draw();
 	});
-	$(function() {
-		$(".select2").select2();
-		$(".updateCF").click(function() {
-			let cfid = $(this).attr("for");
-			let el = $("#cust" + cfid);
-			let val = "";
-			if(el[0].type =='checkbox'){
-				val = $(el).is(":checked");
-			}else{
-				val = $(el).val();
-			}
-			let data = `cfid=${cfid}`;
-			data += `&id=${id}`;
-			data += `&cfValue=${val}`;
-			data += "&_token=" + global._token;
-			$.post("UpdateAsmtCF", data).done(function(resp) {
-				alertMessage(resp, "Parameter Updated.");
-			});
-		});
-
+	$("#removeFilter").click(function() {
+		$('#vulntable').DataTable().search('')
+			.columns().search('')
+			.draw();
 	});
-	$(function() {
-		$("#uploadVulns").click(function() {
-			$.confirm({
-				title: 'Upload a XML Report',
-				columnClass: 'large',
-				content: "URL:ReportUploadView?id=${id}",
-				buttons: {
-					cancel: function() { console.log("closed"); this.close(); return 0; },
-					close: function() { console.log("close"); }
-				}
-			});
-		});
-	});
-
-	$(function() {
-
-		var url = document.location.toString();
-		if (url.match('#')) {
-			$('.nav-tabs a[href="' + location.hash + '"]').tab('show');
+});
+$(function() {
+	$(".select2").select2();
+	$(".updateCF").click(function() {
+		let cfid = $(this).attr("for");
+		let el = $("#cust" + cfid);
+		let val = "";
+		if (el[0].type == 'checkbox') {
+			val = $(el).is(":checked");
+		} else {
+			val = $(el).val();
 		}
-		$("a").click(evt => {
-			if (evt.target.href.indexOf("tab_3") != -1) {
-				location.href = "#tab_3"
-			} else if (evt.target.href.indexOf("tab_1") != -1) {
-				location.href = "#tab_1"
-			}
-		})
+		let data = `cfid=${cfid}`;
+		data += `&id=${id}`;
+		data += `&cfValue=${val}`;
+		data += "&_token=" + global._token;
+		$.post("UpdateAsmtCF", data).done(function(resp) {
+			alertMessage(resp, "Parameter Updated.");
+		});
 	});
+
+});
+$(function() {
+	$("#uploadVulns").click(function() {
+		$.confirm({
+			title: 'Upload a XML Report',
+			columnClass: 'large',
+			content: "URL:ReportUploadView?id=${id}",
+			buttons: {
+				cancel: function() { console.log("closed"); this.close(); return 0; },
+				close: function() { console.log("close"); }
+			}
+		});
+	});
+});
+
+$(function() {
+
+	var url = document.location.toString();
+	if (url.match('#')) {
+		$('.nav-tabs a[href="' + location.hash + '"]').tab('show');
+	}
+	$("a").click(evt => {
+		if (evt.target.href.indexOf("tab_3") != -1) {
+			location.href = "#tab_3"
+		} else if (evt.target.href.indexOf("tab_1") != -1) {
+			location.href = "#tab_1"
+		}
+	})
+});

@@ -24,6 +24,7 @@ public class AssessmentAuditLog extends FSActionSupport{
 	private Assessment assessment;
 	private List<RiskLevel> levels=new ArrayList();
 	private HashMap<Integer, Integer> counts = new HashMap();
+	private Long id;
 	
 	@Action(value="AuditLog")
 	public String getLog() {

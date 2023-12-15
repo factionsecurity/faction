@@ -87,19 +87,6 @@
                  
                 </ul>
               </li>
-              
-              <!-- Tasks Menu -->
-             <!--  <li class="dropdown tasks-menu">
-                <!-- Menu Toggle Button -->
-              <!--   <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-                  <i class="fa fa-flag-o"></i>
-                  <span class="label label-danger"></span>
-                </a>
-                <ul class="dropdown-menu">
-     				
-                </ul>
-              </li> -->
-              
               <!-- User Account Menu -->
               <li class="dropdown user user-menu">
                 <!-- Menu Toggle Button -->

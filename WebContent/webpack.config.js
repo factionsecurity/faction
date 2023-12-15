@@ -27,7 +27,8 @@ module.exports = {
 		verification: path.resolve(__dirname, './src/retests/verification.js'),
 		verification_queue: path.resolve(__dirname, './src/retests/verification_queue.js'),
 		ice: path.resolve(__dirname, './src/ice_patched.js'),
-		templates: path.resolve(__dirname, './src/templates/templates.js')
+		templates: path.resolve(__dirname, './src/templates/templates.js'),
+		assessment_stats: path.resolve(__dirname, './src/assessment/assessment_stats.js')
 	},
 	output: {
 		filename: '[name].js',

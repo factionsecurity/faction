@@ -12,6 +12,7 @@
     "@popperjs/core": "^2.11.6",
     "adminlte": "^2.4.1",
     "bootstrap": "^3.4.1",
+    "chart.js": "^4.4.1",
     "codemirror": "file:codemirror",
     "css-loader": "^6.7.1",
     "datatables.net": "^1.13.1",

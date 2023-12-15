@@ -9,13 +9,16 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
@@ -82,6 +85,8 @@ public class AssessmentView extends FSActionSupport {
 	private User user;
 	private List<BoilerPlate> summaryTemplates;
 	private List<BoilerPlate> riskTemplates;
+	LinkedHashMap<String, Integer> vulnMap = new LinkedHashMap<>();
+	LinkedHashMap<String, Integer> catMap = new LinkedHashMap<>();
 
 	@Action(value = "Assessment", results = { @Result(name = "ics", location = "/WEB-INF/jsp/assessment/ics.jsp"),
 			@Result(name = "finerrorJson", location = "/WEB-INF/jsp/assessment/finerrorJson.jsp") })
@@ -249,6 +254,7 @@ public class AssessmentView extends FSActionSupport {
 
 		return SUCCESS;
 	}
+	
 
 	private Long cfid;
 	private String cfValue;
@@ -288,6 +294,43 @@ public class AssessmentView extends FSActionSupport {
 		}
 		return this.ERRORJSON;
 
+	}
+	
+	@Action(value = "GetStats", results = {
+			@Result(name = "assessmentStats", location = "/WEB-INF/jsp/assessment/assessmentStatsJson.jsp") })
+	public String getAssessmentStats() {
+		if (!(this.isAcassessor() || this.isAcmanager()))
+			return LOGIN;
+		User user = this.getSessionUser();
+		Long assessmentId = (Long)this.getSession("asmtid");
+		assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), assessmentId, AssessmentQueries.All);
+		List<Vulnerability> vulns = assessment.getVulns();
+		List<RiskLevel> levels = em
+				.createQuery("from RiskLevel where risk IS NOT Null and risk != '' order by riskId")
+				.getResultList();
+		HashMap<Long,String> levelMap = new HashMap<>();
+		levels.forEach( (level) -> {
+			levelMap.put(level.getId(), level.getRisk());
+			vulnMap.put(level.getRisk(), 0);
+		});
+		
+		vulns.stream().forEach( (vuln) -> {
+			String severity = levelMap.get(vuln.getOverall()+1);
+			Integer count = vulnMap.get(severity);
+			vulnMap.put(severity, ++count);
+		});
+		vulns.stream().forEach( (vuln) -> {
+			String category = vuln.getCategory().getName(); 
+			Integer count = catMap.get(category);
+			if(count == null) {
+				catMap.put(category, 1);
+			}else {
+				catMap.put(category, ++count);
+			}
+		});
+		
+		return "assessmentStats";
+		
 	}
 
 	@Action(value = "SetAssessment", results = {
@@ -915,6 +958,17 @@ public class AssessmentView extends FSActionSupport {
 
 	public String getUpdatedText() {
 		return this.updatedText;
+	}
+	
+	public LinkedHashMap<String, Integer> getVulnMap(){
+		return vulnMap;
+	}
+	public LinkedHashMap<String, Integer> getCatMap(){
+		return catMap;
+	}
+	
+	public List<String> getColors() {
+		return new ArrayList<String>(Arrays.asList("#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"));
 	}
 	
 	   

@@ -37,10 +37,10 @@ color:#00a65a
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
   <!-- Content Header (Page header) -->
-  <section class="content-header">
+  <section class="content-header" style="text-align: center; margin-top:-35px;">
     <h1>
     
-     <i class="glyphicon glyphicon-th-list"></i> Assessment
+     <i class="glyphicon glyphicon-th-list"></i>&nbsp;&nbsp;&nbsp;Assessment
       <b><s:property value="assessment.appId"/> - <s:property value="assessment.name"/></b>
       <small>
       <s:if test="assessment.InPr"> <span class="text-warning fa fa-eye"></span><b class="text-warning"> (in Peer Review)</b></s:if>
@@ -54,7 +54,7 @@ color:#00a65a
 
   <!-- Main content -->
   <section class="content">
-  <div id="infobar" style="width:90%; margin-right:auto;margin-left:auto">
+  <div id="infobar" style="width:90%; margin-right:auto;margin-left:auto; display:none">
   <bs:row>
 
   <s:iterator value="levels" begin="9" end="0" step="-1" status="stat">
@@ -83,6 +83,7 @@ color:#00a65a
 </bs:row>
 </div> 	
 
+<jsp:include page="AssessmentStats.jsp" />
   
    <!-- START TABS -->
         

@@ -293,7 +293,7 @@ td:first-child {
 					<thead class="theader">
 						<tr>
 							<th></th>
-							<th>Name</th>
+							<th>Finding</th>
 							<th></th>
 						</tr>
 					</thead>
