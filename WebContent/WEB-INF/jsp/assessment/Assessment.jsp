@@ -94,23 +94,9 @@ color: white;
 </s:iterator>
 </bs:row>
 </div> 	
-<bs:row>
-<bs:mco colsize="8">
-<canvas id="vulnStats" style="height: 150px"></canvas>
-</bs:mco>
-<bs:mco colsize="2">
-</bs:mco>
-<bs:mco colsize="2">
-<div style="height: 150px; width: 150px; ">
-<canvas id="catStats" ></canvas>
-</div>
-</bs:mco>
-</bs:row>
 
+<jsp:include page="AssessmentStats.jsp" />
 
-  
-   <!-- START TABS -->
-        
 <div class="row">
 <div class="col-md-12">
  <div class="nav-tabs-custom">

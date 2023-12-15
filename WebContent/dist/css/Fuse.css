@@ -5026,3 +5026,30 @@ table.dataTable.no-footer{
 .mdEnabled{
 	color: black !important;
 }
+/* Custom invisible Scroll bar */
+/* width */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: #030d1c; 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  background: #030d1c; 
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: #030d1c; 
+}
+body {
+  overflow-y: scroll;
+}
+
+button {
+	overflow: hidden;
+}

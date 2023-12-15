@@ -254,6 +254,7 @@ public class AssessmentView extends FSActionSupport {
 
 		return SUCCESS;
 	}
+	
 
 	private Long cfid;
 	private String cfValue;
@@ -301,7 +302,7 @@ public class AssessmentView extends FSActionSupport {
 		if (!(this.isAcassessor() || this.isAcmanager()))
 			return LOGIN;
 		User user = this.getSessionUser();
-		Long assessmentId = Long.parseLong(this.id);
+		Long assessmentId = (Long)this.getSession("asmtid");
 		assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), assessmentId, AssessmentQueries.All);
 		List<Vulnerability> vulns = assessment.getVulns();
 		List<RiskLevel> levels = em
@@ -314,7 +315,7 @@ public class AssessmentView extends FSActionSupport {
 		});
 		
 		vulns.stream().forEach( (vuln) -> {
-			String severity = levelMap.get(vuln.getOverall());
+			String severity = levelMap.get(vuln.getOverall()+1);
 			Integer count = vulnMap.get(severity);
 			vulnMap.put(severity, ++count);
 		});
