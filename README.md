@@ -1,4 +1,6 @@
 # FACTION PenTesting Report Generation and Collaboration Engine
+![image](https://github.com/factionsecurity/faction/assets/2343831/d9237bed-302f-4e6a-9716-22ae88d0dc36)
+
 
 FACTION is your entire assessment workflow in a box. With FACTION you can:
 1. Automate pen testing and security assessment Reports
