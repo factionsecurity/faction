@@ -5062,3 +5062,8 @@ button {
 	margin-right: 8px;
 	z-index: 99999;
 }
+.dashboardButton {
+	margin-top: -40px !important;
+	padding-top: 10px !important;
+	padding-bottom: 10px !important;
+}

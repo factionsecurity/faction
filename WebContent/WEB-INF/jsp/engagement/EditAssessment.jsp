@@ -23,8 +23,7 @@
    left:0;
 }
 .breadcrumb {
-	background-color: #030d1c;
-}
+	background-color: #030d1c !important;
 </style>
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
@@ -48,6 +47,9 @@
 			<li class="breadcrumb-item">
 				<a href="Assessment">Assessment</a>
 			</li>
+			<li class="breadcrumb-item">
+				<a href="">Edit Assessment</a>
+			</li>
 		</ol>
 	</s:if>
 	<s:else>
@@ -57,6 +59,9 @@
 			</li>
 			<li class="breadcrumb-item">
 				<a href="Engagement#tab_3">Assessment Search</a>
+			</li>
+			<li class="breadcrumb-item">
+				<a href="">Edit Assessment</a>
 			</li>
 		</ol>
 	</s:else>

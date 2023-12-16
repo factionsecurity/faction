@@ -85,6 +85,7 @@ public class Engagement  extends FSActionSupport{
 	private List<String> status;
 	private String statusName;
 	private String defaultStatus;
+	private String back;
 	
 
 	
@@ -693,7 +694,13 @@ public class Engagement  extends FSActionSupport{
 		return defaultStatus;
 	}
 	
+	public String getBack() {
+		return back;
+	}
 	
+	public void setBack(String back) {
+		this.back = back;
+	}
 	
 	
 	

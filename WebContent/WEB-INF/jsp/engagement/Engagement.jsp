@@ -41,6 +41,9 @@ label{
   overflow: hidden;
 }
 
+.breadcrumb {
+	background-color: #030d1c !important;
+}
 </style>
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
@@ -54,6 +57,20 @@ label{
 
   <!-- Main content -->
   <section class="content">
+	<bs:row>
+	<bs:mco colsize="4">
+	<s:if test="back=='assessment'">
+		<ol class="breadcrumb">
+			<li class="breadcrumb-item">
+				<a href="Dashboard">Assessment Dashboard</a>
+			</li>
+			<li class="breadcrumb-item">
+				<a href="Engagement?back=assessment">Create Assessment</a>
+			</li>
+		</ol>
+	</s:if>
+	</bs:mco>
+	</bs:row>
   <div class="row">
 <div class="col-md-12">
  <div class="nav-tabs-custom">
