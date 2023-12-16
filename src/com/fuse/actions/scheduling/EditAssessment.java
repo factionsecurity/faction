@@ -78,7 +78,7 @@ public class EditAssessment extends FSActionSupport {
 			return LOGIN;
 		}
 
-		custom = em.createQuery("from CustomType where type = 0").getResultList();
+		custom = em.createQuery("from CustomType where type = 0 and (deleted IS NULL or deleted = false)").getResultList();
 
 		users = em.createQuery("from User").getResultList();
 		teams = em.createQuery("from Teams").getResultList();

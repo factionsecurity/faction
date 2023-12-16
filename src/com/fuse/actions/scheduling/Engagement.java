@@ -102,7 +102,7 @@ public class Engagement  extends FSActionSupport{
 		
 		//Session session = HibHelper.getSessionFactory().openSession();
 		
-		custom = em.createQuery("from CustomType where type = 0").getResultList();
+		custom = em.createQuery("from CustomType where type = 0 and (deleted IS NULL or deleted = false)").getResultList();
 		users = em.createQuery("from User").getResultList();
 		teams = em.createQuery("from Teams").getResultList();
 		assessmentTypes = em.createQuery("from AssessmentType").getResultList();
