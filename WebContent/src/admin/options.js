@@ -394,6 +394,18 @@ import '../scripts/jquery.autocomplete.min';
 				
     		});
     	});
+    	$("#prSelfReview").on("change",function(){
+    		
+    		let data="selfPeerReview=" + $("#prSelfReview").is(":checked");
+    		data+="&_token=" + _token;
+    		$.post("updatePrConfig", data).done(function(resp){
+				if(resp.message){
+					$("#selfPeerReview").prop("checked", false)
+				}
+    			alertMessage(resp,"PR Config Updated");
+				
+    		});
+    	});
     	$("#feedEnabled").on("change",function(){
     	
     		let data="feedChecked=" + $("#feedEnabled").is(":checked");

@@ -61,8 +61,6 @@ public class RemediationQueue extends FSActionSupport{
 		if(!this.isAcremediation())
 			return LOGIN;
 		Long uid = this.getSessionUser().getId();
-		//EntityManager em = HibHelper.getEM();
-		//Session session = HibHelper.getSessionFactory().openSession();
 		List<Verification>vs;
 		List<Assessment>as;
 		if(this.all){
@@ -74,8 +72,6 @@ public class RemediationQueue extends FSActionSupport{
 					.setParameter("wf2", Verification.AssessorCompleted)
 					.setParameter("wf3", Verification.AssessorCancelled)
 					.getResultList();
-			//Get completed assessments
-			//as = (List<Assessment>)em.createQuery("from Assessment where workflow = 4").getResultList();
 		}else{
 			vs = (List<Verification>)em
 					.createQuery("from Verification v "

@@ -51,8 +51,6 @@ public class Options extends FSActionSupport {
 	private boolean sslischecked;
 	private String sender;
 	private String to;
-	private String riskName;
-	private Long riskId;
 	private List<CustomType> custom = new ArrayList();
 	private String cfname;
 	private String cfvar;
@@ -66,13 +64,10 @@ public class Options extends FSActionSupport {
 	private String randChecked;
 	private Boolean readonly;
 	private String ssoChecked;
-	private Boolean useSSO;
 	private String clientid;
-	private String secret;
 	private String profile;
-	private String tokenURL;
-	private String userURL;
 	private String status;
+	private String selfPeerReview;
 
 	@Action(value = "Options")
 	public String execute() {
@@ -112,6 +107,7 @@ public class Options extends FSActionSupport {
 		this.prChecked = EMS.getPeerreview() == null || !EMS.getPeerreview() ? "" : "checked";
 		this.feedChecked = EMS.getEnablefeed() == null || !EMS.getEnablefeed() ? "" : "checked";
 		this.randChecked = EMS.getEnableRandAppId() == null || !EMS.getEnableRandAppId() ? "" : "checked";
+		this.selfPeerReview = EMS.getSelfPeerReview() == null || !EMS.getSelfPeerReview() ? "" : "checked";
 		this.title[0] = EMS.getBoldTitle() == null ? "Fuse" : EMS.getBoldTitle();
 		this.title[1] = EMS.getOtherTitle() == null ? "FACTION" : EMS.getOtherTitle();
 		
@@ -388,7 +384,11 @@ public class Options extends FSActionSupport {
 		if (EMS == null) {
 			EMS = new SystemSettings();
 		}
-		EMS.setPeerreview(Boolean.parseBoolean(this.prChecked));
+		if(this.prChecked != null) {
+			EMS.setPeerreview(Boolean.parseBoolean(this.prChecked));
+		}else if(this.selfPeerReview != null) {
+			EMS.setSelfPeerReview(Boolean.parseBoolean(this.selfPeerReview));
+		}
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		em.persist(EMS);
@@ -898,13 +898,6 @@ public class Options extends FSActionSupport {
 		this.readonly = readonly;
 	}
 
-	public String getSsoChecked() {
-		return ssoChecked;
-	}
-
-	public void setUseSSO(Boolean useSSO) {
-		this.useSSO = useSSO;
-	}
 
 	public String getClientid() {
 		return clientid;
@@ -914,24 +907,12 @@ public class Options extends FSActionSupport {
 		this.clientid = clientid;
 	}
 
-	public void setSecret(String secret) {
-		this.secret = secret;
-	}
-
 	public String getProfile() {
 		return profile;
 	}
 
 	public void setProfile(String profile) {
 		this.profile = profile;
-	}
-
-	public void setTokenURL(String tokenURL) {
-		this.tokenURL = tokenURL;
-	}
-
-	public void setUserURL(String userURL) {
-		this.userURL = userURL;
 	}
 
 	public void setStatus(String status) {
@@ -946,6 +927,12 @@ public class Options extends FSActionSupport {
 		this.cfdefault = cfdefault;
 	}
 	
+	public void setSelfPeerReview(String selfPeerReview) {
+		this.selfPeerReview = selfPeerReview;
+	}
+	public String getSelfPeerReview() {
+		return this.selfPeerReview;
+	}
 	
 
 }

@@ -134,13 +134,6 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 		
 	}
 
-	/*@Override
-	public void setServletRequest(HttpServletRequest request) {
-		this.request = request;
-		JSESSION = request.getSession();
-		em = HibHelper.getEM();
-		
-	}*/
 	private boolean getRole(String role){
 		return (boolean) (ActionContext.getContext().get(role) == null ? false :ActionContext.getContext().get(role)) ;
 	}

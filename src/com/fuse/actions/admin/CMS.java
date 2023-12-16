@@ -416,5 +416,6 @@ public class CMS extends FSActionSupport {
 	public String getMessage() {
 		return message;
 	}
+	
 
 }

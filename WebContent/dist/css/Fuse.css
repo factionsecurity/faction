@@ -5067,3 +5067,7 @@ button {
 	padding-top: 10px !important;
 	padding-bottom: 10px !important;
 }
+
+.checkbox label {
+	margin-left: 10px;
+}

@@ -51,6 +51,7 @@ public class SystemSettings {
 	private Boolean tls;
 	private Boolean emailAuth;
 	private Boolean peerreview;
+	private Boolean selfPeerReview;
 	private Boolean enablefeed;
 	private String boldTitle = "Fuse";
 	private String otherTitle = "FACTION";
@@ -497,6 +498,15 @@ public class SystemSettings {
 	public String getOauthDiscoveryURI() {
 		return this.oauthDiscoveryURI;
 	}
+	
+	public void setSelfPeerReview(Boolean selfPeerReview) {
+		this.selfPeerReview = selfPeerReview;
+	}
+	
+	public Boolean getSelfPeerReview() {
+		return this.selfPeerReview;
+	}
+	
 	@Transient
 	public OidcConfiguration getOdicConfig() {
 		OidcConfiguration config = new OidcConfiguration();
