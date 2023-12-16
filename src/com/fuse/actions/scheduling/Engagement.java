@@ -42,6 +42,7 @@ import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.TaskQueueExecutor;
 import com.fuse.utils.FSUtils;
+import com.opensymphony.xwork2.ActionContext;
 
 
 @Namespace("/portal")

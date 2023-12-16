@@ -79,6 +79,9 @@ let editorOptions = {
 };
 global.calendar = {};
 $(function() {
+	if(location.hash == "#tab_3"){
+		$('.nav-tabs a[href="#tab_3"]')[0].click()
+	}
 	global.readonly_select = function readonly_select(objs, action) {
 		if (action === true) {
 			objs.prepend('<div class="disabled-select"></div>');

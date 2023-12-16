@@ -29,15 +29,7 @@ color:#00a65a
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
   <!-- Content Header (Page header) -->
-  <section class="content-header" style="text-align: center; margin-top:-35px;">
-    <h1>
-    
-      <i class="glyphicon glyphicon-th-list"></i>&nbsp;&nbsp;&nbsp;Assessment
-      <s:if test="!(!prSubmitted || prComplete)"> <span class="text-success fa fa-eye"></span><b class="text-success"> (in Peer Review)</b></s:if>
-      <s:if test="notowner"> <span class="text-warning fa fa-warning"></span><b  class="text-warning"> (Manger View)</b></s:if> <b><s:property value="assessment.appId"/> - <s:property value="assessment.name"/></b>
-      <small></small>
-    </h1>
-  </section>
+  <jsp:include page="AssessmentHeading.jsp" />
 
   <!-- Main content -->
   <section class="content">

@@ -5031,7 +5031,7 @@ table.dataTable.no-footer{
 ::-webkit-scrollbar {
   width: 10px;
 }
-
+dd
 /* Track */
 ::-webkit-scrollbar-track {
   background: #030d1c; 
@@ -5052,4 +5052,13 @@ body {
 
 button {
 	overflow: hidden;
+}
+
+.content-header button {
+	position: relative;
+	padding-top: 0;
+	padding-bottom: 0;
+	margin-top: -9px;
+	margin-right: 8px;
+	z-index: 99999;
 }

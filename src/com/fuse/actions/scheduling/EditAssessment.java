@@ -68,16 +68,16 @@ public class EditAssessment extends FSActionSupport {
 	private Boolean randId = true;
 	private List<AuditLog> logs;
 	private String updatedText = "";
+	private String back;
 
 	@Action(value = "EditAssessment")
 	public String execute() throws ParseException {
-
-		if (!(this.isAcengagement() || this.isAcmanager())) {
+		//TODO: Update this method into separate methods for each function
+		User user = this.getSessionUser();
+		if (!(this.isAcengagement() || this.isAcmanager() || this.isAcassessor())) {
 			return LOGIN;
 		}
-		User user = this.getSessionUser();
 
-		// Session session = HibHelper.getSessionFactory().openSession();
 		custom = em.createQuery("from CustomType where type = 0").getResultList();
 
 		users = em.createQuery("from User").getResultList();
@@ -99,13 +99,6 @@ public class EditAssessment extends FSActionSupport {
 		this.status = ss.getStatus();
 
 		if (action != null && action.equals("get")) {
-			/*
-			 * currentAssessment = (Assessment) session
-			 * .createQuery("from Assessment where id = :id") .setLong("id", this.aid)
-			 * .uniqueResult(); files = (List<Files>)
-			 * session.createQuery("from Files where entityId = :id" ).setLong("id",
-			 * this.aid).list();
-			 */
 			currentAssessment = em.find(Assessment.class, (long) this.aid);
 			files = (List<Files>) em.createQuery("from Files where entityId = :id").setParameter("id", (long) this.aid)
 					.getResultList();
@@ -123,14 +116,24 @@ public class EditAssessment extends FSActionSupport {
 			if (!this.testToken(false)) {
 				return this.ERRORJSON;
 			}
+			//Check that the user has permissions to edit the assessment
+			/// They must be either a manager, an admin, or an assessor of
+			/// the assessment
+			if( user.getPermissions().isAssessor() 
+					&&  !(user.getPermissions().isAdmin() || user.getPermissions().isManager())
+					&&  !assessors.stream().anyMatch( u -> u.getId() == user.getId() )
+			) {
+				this._message = "Not Authorized to Update This assessment. You must be a manager, admin, or contributer to the assessment";
+				return this.ERRORJSON;
+			}
 
-			List<User> hackers = new ArrayList<User>();
+			List<User> assessors = new ArrayList<User>();
 			if (assessorId != null) {
 				for (Integer asid : assessorId) {
 
 					User assessor = em.find(User.class, asid.longValue());
 					if (assessor != null && assessor.getPermissions().isAssessor())
-						hackers.add(assessor);
+						assessors.add(assessor);
 				}
 			}
 
@@ -145,17 +148,8 @@ public class EditAssessment extends FSActionSupport {
 
 			Campaign camp = null;
 			if (campId != null && campId != -1) {
-				/*
-				 * camp = (Campaign)session.createQuery("from Campaign where id = :id")
-				 * .setLong("id", campId) .uniqueResult();
-				 */
 				camp = em.find(Campaign.class, campId);
 			}
-			/*
-			 * Assessment am = (Assessment) session
-			 * .createQuery("from Assessment where id = :id") .setLong("id", this.aid)
-			 * .uniqueResult();
-			 */
 			Assessment am = em.find(Assessment.class, (long) this.aid);
 
 			if (am == null) {
@@ -203,7 +197,7 @@ public class EditAssessment extends FSActionSupport {
 					am.setEnd(this.edate);
 					am.setEngagement(engagement);
 					am.setRemediation(remediation);
-					am.setAssessor(hackers);
+					am.setAssessor(assessors);
 					am.setType(Type);
 					am.setAccessNotes(this.notes);
 					am.setDistributionList(this.distro);
@@ -289,6 +283,7 @@ public class EditAssessment extends FSActionSupport {
 		}
 		return SUCCESS;
 	}
+	
 
 	private String getChanges(Assessment a) {
 		String changes = "";
@@ -585,6 +580,14 @@ public class EditAssessment extends FSActionSupport {
 
 	public List<AuditLog> getLogs() {
 		return logs;
+	}
+	
+	public String getBack() {
+		return back;
+	}
+	
+	public void setBack(String back) {
+		this.back = back;
 	}
 
 	public void validate() {
