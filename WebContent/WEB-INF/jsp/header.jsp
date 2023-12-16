@@ -201,7 +201,7 @@
             </s:if>
             <s:if test="acmanager || acadmin || acengagement">
             <li class="treeview <s:property value="activeChecklist"/><s:property value="activeUsers"/><s:property value="activeOptions"/>">
-              <a href="#"><i class="glyphicon glyphicon-user"></i> <span>Admin</span> <i class="fa fa-angle-left pull-right"></i></a>
+              <a href="#"><i class="glyphicon glyphicon-cog"></i> <span>Admin</span> <i class="fa fa-angle-left pull-right"></i></a>
               <ul class="treeview-menu">
               	<s:if test="acadmin == true ">
                 <li class="<s:property value="activeUsers"/>"><a href="Users">Users</a></li>
