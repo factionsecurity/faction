@@ -4,8 +4,18 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 
+ 
 <bs:row>
 <bs:mco colsize="6">
+ <bs:row>
+ &nbsp;
+ </bs:row>
+ <bs:row>
+   <bs:button size="lg" color="primary" colsize="2" text="<i class='glyphicon glyphicon-plus'></i> Save" id="AddAssessment"></bs:button>
+ </bs:row>
+ <bs:row>
+ &nbsp;
+ </bs:row>
 	<bs:row>
 		 <!--<bs:inputgroup name="App ID:" id="appId" colsize="3"><s:property value="currentAssessment.appId"/></bs:inputgroup>
 		 <bs:button color="primary" size="md" colsize="1" text="<i class='glyphicon glyphicon-equalizer'></i>" id="random"></bs:button>-->
@@ -173,9 +183,6 @@
 	     <br>
      </bs:row>
      <br>
-     <bs:row>
-       <bs:button size="lg" color="primary" colsize="12" text="<i class='glyphicon glyphicon-plus'></i> Save Assessment" id="AddAssessment"></bs:button>
-     </bs:row>
 </bs:mco> <!--  End of Top col -->
 
 <bs:mco colsize="6">
