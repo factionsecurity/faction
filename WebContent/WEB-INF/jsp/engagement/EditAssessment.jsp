@@ -22,6 +22,8 @@
    right:0;
    left:0;
 }
+.breadcrumb {
+	background-color: #030d1c !important;
 </style>
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
@@ -35,6 +37,36 @@
 
   <!-- Main content -->
   <section class="content">
+	<bs:row>
+	<bs:mco colsize="4">
+	<s:if test="back=='assessment'">
+		<ol class="breadcrumb">
+			<li class="breadcrumb-item">
+				<a href="AssessmentQueue">Assessment Queue</a>
+			</li>
+			<li class="breadcrumb-item">
+				<a href="Assessment">Assessment</a>
+			</li>
+			<li class="breadcrumb-item">
+				<a href="">Edit Assessment</a>
+			</li>
+		</ol>
+	</s:if>
+	<s:else>
+		<ol class="breadcrumb">
+			<li class="breadcrumb-item">
+				<a href="Engagement">Assessment Scheduling</a>
+			</li>
+			<li class="breadcrumb-item">
+				<a href="Engagement#tab_3">Assessment Search</a>
+			</li>
+			<li class="breadcrumb-item">
+				<a href="">Edit Assessment</a>
+			</li>
+		</ol>
+	</s:else>
+	</bs:mco>
+	</bs:row>
 	<div class="row">
 	<div class="col-md-12">
 	 <div class="nav-tabs-custom">

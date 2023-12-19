@@ -19,6 +19,7 @@
       <i class="glyphicon glyphicon-dashboard"></i> Dashboard
      
     </h1>
+  <button class="btn btn-success pull-right dashboardButton" onClick="location.href='Engagement?back=assessment'"><i class="fa fa-plus"></i> Create Assessment</button>
   </section>
 
   <!-- Main content -->

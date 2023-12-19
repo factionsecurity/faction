@@ -52,20 +52,7 @@ color: white;
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
   <!-- Content Header (Page header) -->
-  <section class="content-header" style="text-align: center; margin-top:-35px;">
-    <h1>
-    
-     <i class="glyphicon glyphicon-th-list"></i>&nbsp;&nbsp;&nbsp;Assessment
-      <b><s:property value="assessment.appId"/> - <s:property value="assessment.name"/></b>
-      <small>
-      <s:if test="assessment.InPr"> <span class="text-warning fa fa-eye"></span><b class="text-warning"> (in Peer Review)</b></s:if>
-      <s:if test="assessment.prComplete"> <span class="text-success fa fa-eye"></span><b class="text-success"> (Peer Review Completed)</b></s:if>
-      <s:if test="notowner"> <span class="text-warning fa fa-warning"></span><b  class="text-warning"> (Manager View)</b></s:if>
-      </small>
-    </h1>
-  </section>
-  <s:hidden value="%{id}" name="appid"></s:hidden>
-
+  <jsp:include page="AssessmentHeading.jsp" />
   <!-- Main content -->
   <section class="content">
   <div id="infobar" style="width:90%; margin-right:auto;margin-left:auto; display: none">

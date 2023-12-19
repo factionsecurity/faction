@@ -153,7 +153,8 @@
 						title: "SUCCESS!",
 						type:"green",
 						content: success,
-						columnClass: 'small'
+						columnClass: 'small',
+						autoClose: 'ok|2000'
 					}
 				);
 		else

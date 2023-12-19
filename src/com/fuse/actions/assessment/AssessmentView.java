@@ -320,7 +320,14 @@ public class AssessmentView extends FSActionSupport {
 			vulnMap.put(severity, ++count);
 		});
 		vulns.stream().forEach( (vuln) -> {
-			String category = vuln.getCategory().getName(); 
+			String category;
+			if(vuln.getCategory() == null && vuln.getDefaultVuln() != null) {
+				category = vuln.getDefaultVuln().getCategory().getName();
+			}else if(vuln.getCategory() == null) {
+				category = "Uncategorized";
+			}else {
+				category = vuln.getCategory().getName(); 
+			}
 			Integer count = catMap.get(category);
 			if(count == null) {
 				catMap.put(category, 1);

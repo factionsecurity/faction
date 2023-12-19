@@ -13,6 +13,7 @@ import com.fuse.dao.Comment;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.RiskLevel;
+import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.TaskQueueExecutor;
@@ -40,7 +41,8 @@ public class PeerReviews extends FSActionSupport{
 		User user = this.getSessionUser();
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 		
-		//Session session = HibHelper.getSessionFactory().openSession();
+		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst().orElse(null);
+		
 
 		
 		if(action==null){
@@ -52,7 +54,11 @@ public class PeerReviews extends FSActionSupport{
 					 reviews.add(pr);
 				 }
 				 else if(pr.getAssessment().getAssessor().get(0).getTeam().getId().longValue() == user.getTeam().getId().longValue()
-						 && !pr.getAssessment().getAssessor().stream().anyMatch(uid -> uid.getId() == user.getId())){
+						 && (
+								 (settings != null && settings.getSelfPeerReview() != null && settings.getSelfPeerReview())
+								 || !pr.getAssessment().getAssessor().stream().anyMatch(uid -> uid.getId() == user.getId())
+						    )
+				){
 					 reviews.add(pr);
 				 }
 			 }

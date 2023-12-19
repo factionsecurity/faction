@@ -42,6 +42,7 @@ import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.TaskQueueExecutor;
 import com.fuse.utils.FSUtils;
+import com.opensymphony.xwork2.ActionContext;
 
 
 @Namespace("/portal")
@@ -84,6 +85,7 @@ public class Engagement  extends FSActionSupport{
 	private List<String> status;
 	private String statusName;
 	private String defaultStatus;
+	private String back;
 	
 
 	
@@ -100,7 +102,7 @@ public class Engagement  extends FSActionSupport{
 		
 		//Session session = HibHelper.getSessionFactory().openSession();
 		
-		custom = em.createQuery("from CustomType where type = 0").getResultList();
+		custom = em.createQuery("from CustomType where type = 0 and (deleted IS NULL or deleted = false)").getResultList();
 		users = em.createQuery("from User").getResultList();
 		teams = em.createQuery("from Teams").getResultList();
 		assessmentTypes = em.createQuery("from AssessmentType").getResultList();
@@ -692,7 +694,13 @@ public class Engagement  extends FSActionSupport{
 		return defaultStatus;
 	}
 	
+	public String getBack() {
+		return back;
+	}
 	
+	public void setBack(String back) {
+		this.back = back;
+	}
 	
 	
 	

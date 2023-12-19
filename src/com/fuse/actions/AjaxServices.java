@@ -20,6 +20,7 @@ import com.fuse.dao.CustomField;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.RiskLevel;
+import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
@@ -44,25 +45,24 @@ public class AjaxServices extends FSActionSupport {
 
 			try {
 
-				// String query = "{ $query : {\"assessor\" : "+user.getId() +", \"completed\" :
-				// {$exists: false}}, $orderby :{ \"start\" : +1}}";
 				String query = "db.Assessment.find({ \"$query\" : {\"assessor\" : " + user.getId()
 						+ ", \"completed\" : {\"$exists\": false}} , \"$orderby\": { \"start\" : 1 }})";
 
-				//String query = "db.Assessment.find({\"assessor\" : " + user.getId() + "})";
+				SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst().orElse(null);
 				
 				List<Assessment> assessments = (List<Assessment>) em.createNativeQuery(query, Assessment.class)
 						.setMaxResults(50).getResultList();
 				List<RiskLevel> levels = (List<RiskLevel>) em.createQuery("from RiskLevel order by riskId desc")
 						.getResultList();
-
 				List<PeerReview> prs = (List<PeerReview>) em.createQuery("from PeerReview where completed = :date")
 						.setParameter("date", new Date(0)).getResultList();
 
-				// remove PR's of which i am a user
+				// remove PR's of which i am a user unless settings allows it
+				if(!(settings != null && settings.getSelfPeerReview() != null && settings.getSelfPeerReview())) {
 				prs = prs.stream().filter(
 						pr -> !pr.getAssessment().getAssessor().stream().anyMatch(u -> u.getId() == user.getId()))
 						.collect(Collectors.toList());
+				}
 				// remove PRs from different teams
 				prs = prs.stream()
 						.filter(pr -> pr.getAssessment().getAssessor().stream()
