@@ -1,4 +1,4 @@
-# FACTION PenTesting Report Generation and Collaboration Engine
+# FACTION PenTesting Report Generation and Collaboration Framework
 ![image](https://github.com/factionsecurity/faction/assets/2343831/d9237bed-302f-4e6a-9716-22ae88d0dc36)
 
 
