@@ -63,11 +63,12 @@ public class Options extends FSActionSupport {
 	private String message;
 	private String randChecked;
 	private Boolean readonly;
-	private String ssoChecked;
 	private String clientid;
 	private String profile;
 	private String status;
 	private String selfPeerReview;
+	private String riskName;
+	private Long riskId;
 
 	@Action(value = "Options")
 	public String execute() {
@@ -101,8 +102,6 @@ public class Options extends FSActionSupport {
 			sslChecked = "checked";
 		if (EMS.getTls() != null && EMS.getTls())
 			tlsChecked = "checked";
-		if (EMS.getSsoEnabled() != null && EMS.getSsoEnabled())
-			ssoChecked = "checked";
 
 		this.prChecked = EMS.getPeerreview() == null || !EMS.getPeerreview() ? "" : "checked";
 		this.feedChecked = EMS.getEnablefeed() == null || !EMS.getEnablefeed() ? "" : "checked";

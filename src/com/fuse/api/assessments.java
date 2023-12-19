@@ -28,6 +28,7 @@ import com.fuse.api.util.Support;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AssessmentType;
 import com.fuse.dao.Campaign;
+import com.fuse.dao.Category;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.ExploitStep;
 import com.fuse.dao.HibHelper;
@@ -345,14 +346,45 @@ public class assessments {
 					HibHelper.getInstance().preJoin();
 					em.joinTransaction();
 					Vulnerability v = new Vulnerability();
+					DefaultVulnerability dv = null;
 					if (defaultVulnId != null) {
-						DefaultVulnerability dv = (DefaultVulnerability) em
+						dv = (DefaultVulnerability) em
 								.createQuery("from DefaultVulnerability where id = :id")
 								.setParameter("id", defaultVulnId).getResultList().stream().findFirst().orElse(null);
 						v.setDefaultVuln(dv);
 						v.setDescription(dv.getDescription());
 						v.setRecommendation(dv.getRecommendation());
 						v.setCategory(dv.getCategory());
+					}else {
+						dv = em.createQuery("from DefaultVulnerability where name = 'Generic Vulnerability'", DefaultVulnerability.class).getResultList().stream().findFirst().orElse(null);
+						Category cat = em.createQuery("from Category where name = 'Uncategorized'", Category.class).getResultList().stream().findFirst().orElse(null);
+						if(cat == null) {
+							cat = new Category();
+							cat.setName("Uncategorized");
+							HibHelper.getInstance().preJoin();
+							em.joinTransaction();
+							em.persist(cat);
+							em.persist(dv);
+							HibHelper.getInstance().commit();
+						}
+						if(dv == null) {
+							dv = new DefaultVulnerability();
+							dv.setActive(true);
+							dv.setCategory(cat);
+							dv.setName("Generic Vulnerability");
+							dv.setLikelyhood(4);
+							dv.setOverall(4);
+							dv.setImpact(4);
+							dv.setDescription("");
+							dv.setRecommendation("");
+							HibHelper.getInstance().preJoin();
+							em.joinTransaction();
+							em.persist(cat);
+							em.persist(dv);
+							HibHelper.getInstance().commit();
+						}
+						v.setDefaultVuln(dv);
+						v.setCategory(cat);
 					}
 
 					v.setName(name);
@@ -404,7 +436,7 @@ public class assessments {
 			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
 			@ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
 			@ApiParam(value = "Vulnerability Name", required = true) @FormParam("name") String name,
-			@ApiParam(value = "Exploit Details Information", required = true) @FormParam("details") String details,
+			@ApiParam(value = "Exploit Details Information", required = false) @FormParam("details") String details,
 			@ApiParam(value = "Severity ID 0-9", required = true) @FormParam("severity") Long severity,
 			@ApiParam(value = "Default Vulnerability ID", required = true) @PathParam("default_vuln_id") Long defaultVulnId) {
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
@@ -419,7 +451,6 @@ public class assessments {
 				Assessment a = (Assessment) em.createNativeQuery(query, Assessment.class).getResultList().stream()
 						.findFirst().orElse(null);
 				if (a == null) {
-					// em.close();
 					return Response.status(400).entity(String.format(Support.ERROR, "Assessment Not Found")).build();
 				}
 
@@ -461,6 +492,7 @@ public class assessments {
 					v.setDefaultVuln(dv);
 					v.setDescription(dv.getDescription());
 					v.setRecommendation(dv.getRecommendation());
+					v.setCategory(dv.getCategory());
 					v.setName(name);
 					v.setLikelyhood((long) dv.getLikelyhood());
 					v.setImpact((long) dv.getImpact());
