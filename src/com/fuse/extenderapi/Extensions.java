@@ -4,16 +4,21 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -37,6 +42,7 @@ import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
 import com.faction.extender.ApplicationInventory;
 import com.faction.extender.AssessmentManager;
+import com.faction.extender.AssessmentManagerResult;
 import com.faction.extender.VerificationManager;
 import com.faction.extender.VulnerabilityManager;
 
@@ -47,7 +53,10 @@ public class Extensions {
 	}
 
 	public HashMap<EventType, String> methods = new HashMap();
-	private List<Class> extendedClasses = new ArrayList<Class>();
+	private List<AssessmentManager> assessmentManagers = new ArrayList<>();
+	private List<VulnerabilityManager> vulnerabilityManagers = new ArrayList<>();
+	private List<VerificationManager> verificationManagers = new ArrayList<>();
+	private List<ApplicationInventory> inventoryManagers = new ArrayList<>();
 	private String method;
 	private EventType eventType;
 
@@ -58,37 +67,18 @@ public class Extensions {
 		methods.put(EventType.VER_MANAGER, "verificationChange");
 		this.eventType = type;
 		this.method = this.methods.get(type);
-	}
-
-	public boolean checkIfExtended() {
-		this.extendedClasses = this.getExtendedClasses();
-		return this.extendedClasses != null && this.extendedClasses.size() != 0;
-	}
-
-	public Object execute(Class[] classes, Object... arguments) {
+		
 		try {
-			System.out.println(
-					"There are " + (this.extendedClasses.size() - 1) + " other matched classes that did not run");
-			Class classToLoad = this.extendedClasses.get(0);
-			Method classMethod = classToLoad.getDeclaredMethod(methods.get(this.eventType), classes);
-			Object instance = classToLoad.newInstance();
-			return classMethod.invoke(instance, arguments);
-		} catch (InstantiationException e) {
-			e.printStackTrace();
-		} catch (IllegalAccessException e) {
-			e.printStackTrace();
-		} catch (NoSuchMethodException e) {
-			e.printStackTrace();
-		} catch (SecurityException e) {
-			e.printStackTrace();
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
-		} catch (InvocationTargetException e) {
+			this.loadExtensions();
+		} catch (MalformedURLException e) {
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return null;
+		
 	}
 
+
+	@SuppressWarnings("unchecked")
 	public void execute(EntityManager em, Assessment assessment, AssessmentManager.Operation operation) {
 		try {
 
@@ -106,43 +96,60 @@ public class Extensions {
 			com.faction.elements.User rem = new com.faction.elements.User();
 			copy(assessment.getRemediation(), rem);
 			List<com.faction.elements.User> assessors = new ArrayList<com.faction.elements.User>();
-			for (User u : assessment.getAssessor()) {
-				com.faction.elements.User assessor = new com.faction.elements.User();
-				copy(u, assessor);
-				assessors.add(assessor);
+			if(assessment.getAssessor() != null) {
+				for (User u : assessment.getAssessor()) {
+					com.faction.elements.User assessor = new com.faction.elements.User();
+					copy(u, assessor);
+					assessors.add(assessor);
+				}
 			}
-			List<CustomField>fields = assessment.getCustomFields();
+			List<CustomField> fields = assessment.getCustomFields();
 			List<com.faction.elements.CustomField> tmpFields = new ArrayList<>();
-			for(CustomField field : fields) {
-				com.faction.elements.CustomField tmpField = new com.faction.elements.CustomField();
-				com.faction.elements.CustomType tmpType = new com.faction.elements.CustomType();
-				tmpType.setKey(field.getType().getKey());
-				tmpType.setVariable(field.getType().getVariable());
-				tmpField.setType(tmpType);
-				tmpField.setValue(field.getValue());
-				tmpFields.add(tmpField);
-				
+			if(fields != null) {
+				for (CustomField field : fields) {
+					com.faction.elements.CustomField tmpField = new com.faction.elements.CustomField();
+					com.faction.elements.CustomType tmpType = new com.faction.elements.CustomType();
+					tmpType.setKey(field.getType().getKey());
+					tmpType.setVariable(field.getType().getVariable());
+					tmpField.setType(tmpType);
+					tmpField.setValue(field.getValue());
+					tmpFields.add(tmpField);
+
+				}
 			}
 			tmpAssessment.setCustomFields(tmpFields);
 
 			tmpAssessment.setEngagementContact(eng);
 			tmpAssessment.setRemediationContact(rem);
 			tmpAssessment.setAssessors(assessors);
-			tmpAssessment.setCampaign(assessment.getCampaign().getName());
-			tmpAssessment.setType(assessment.getType().getType());
+			if(assessment.getCampaign() != null) {
+				tmpAssessment.setCampaign(assessment.getCampaign().getName());
+			}
+			if(assessment.getType() != null) {
+				tmpAssessment.setType(assessment.getType().getType());
+			}
+			
+			Object[] updates = {tmpAssessment, tmpVulns};
+			for(AssessmentManager mgr : this.assessmentManagers) {
+				
+				AssessmentManagerResult result = mgr.assessmentChange(
+						(com.faction.elements.Assessment) updates[0], 
+						(List<com.faction.elements.Vulnerability>) updates[1], 
+						operation);
+				if(result != null) {
+					updates[0] = result.getAssessment();
+					updates[1] = result.getVulnerabilities();
+				}
+			}
 
-			Object[] updates = (Object[]) this
-					.execute(
-							new Class[] { com.faction.elements.Assessment.class,
-									List.class, AssessmentManager.Operation.class },
-							tmpAssessment, tmpVulns, operation);
 			if (updates != null && updates[0] != null) {
 				copy(updates[0], assessment);
-				List<com.faction.elements.CustomField> updatedFields = ((com.faction.elements.Assessment) updates[0]).getCustomFields();				
-				if(updatedFields != null && updatedFields.size() > 0) {
-					for(com.faction.elements.CustomField updatedField : updatedFields) {
-						for(CustomField originalField : fields) {
-							if(updatedField.getType().getId() == originalField.getType().getId()) {
+				List<com.faction.elements.CustomField> updatedFields = ((com.faction.elements.Assessment) updates[0])
+						.getCustomFields();
+				if (updatedFields != null && updatedFields.size() > 0) {
+					for (com.faction.elements.CustomField updatedField : updatedFields) {
+						for (CustomField originalField : fields) {
+							if (updatedField.getType().getId() == originalField.getType().getId()) {
 								originalField.setValue(updatedField.getValue());
 							}
 						}
@@ -151,8 +158,9 @@ public class Extensions {
 				assessment.setCustomFields(fields);
 
 			}
-			
-			if (updates != null && updates[1] != null && ((List<com.faction.elements.Vulnerability>)updates[1]).size() >0) {
+
+			if (updates != null && updates[1] != null
+					&& ((List<com.faction.elements.Vulnerability>) updates[1]).size() > 0) {
 				for (com.faction.elements.Vulnerability tVuln : ((List<com.faction.elements.Vulnerability>) updates[1])) {
 					for (Vulnerability v : assessment.getVulns()) {
 						if (tVuln.getId() == v.getId()) {
@@ -162,7 +170,7 @@ public class Extensions {
 					}
 				}
 			}
-			if (updates != null) {
+			if (em != null && updates != null) {
 				em.persist(assessment);
 			}
 		} catch (Exception ex) {
@@ -182,12 +190,20 @@ public class Extensions {
 			copy(vuln, tVuln);
 
 			copy(assessment, tmpAssessment);
-
-			Object[] updates = (Object[]) this
-					.execute(
-							new Class[] { com.faction.elements.Assessment.class,
-									com.faction.elements.Vulnerability.class, VulnerabilityManager.Operation.class },
-							tmpAssessment, tVuln, operation);
+			
+			Object[] updates = {tmpAssessment, tVuln};
+			for(VulnerabilityManager mgr : this.vulnerabilityManagers) {
+				
+				com.faction.elements.Vulnerability updatedVuln = mgr.vulnChange(
+						(com.faction.elements.Assessment) updates[0], 
+						(com.faction.elements.Vulnerability) updates[1],
+						operation);
+				if(updatedVuln != null) {
+					updates[1] = updatedVuln;
+				}
+			}
+			
+			
 
 			if (updates != null && updates[0] != null) {
 				copy(updates[0], assessment);
@@ -202,7 +218,7 @@ public class Extensions {
 				}
 
 			}
-			if (updates != null) {
+			if (em!= null && updates != null) {
 				em.persist(assessment);
 			}
 		} catch (Exception ex) {
@@ -214,33 +230,28 @@ public class Extensions {
 	public void execute(EntityManager em, Verification verification, VerificationManager.Operation operation) {
 		try {
 
-			com.faction.elements.Vulnerability tVuln = new com.faction.elements.Vulnerability();
-			copy(verification.getVerificationItems().get(0).getVulnerability(), tVuln);
-			com.faction.elements.User user = new com.faction.elements.User();
-			copy(verification.getAssessor(), user);
-
-			Object[] updates = (Object[]) this.execute(
-					new Class[] { com.faction.elements.User.class, com.faction.elements.Vulnerability.class,
-							String.class, java.util.Date.class, java.util.Date.class,
-							VerificationManager.Operation.class },
-					user, tVuln, verification.getVerificationItems().get(0).getNotes(), verification.getStart(),
-					verification.getEnd(), operation);
-
-			if (updates != null && updates[0] != null) {
-				copy(updates[0], verification.getAssessment());
-			}
-			if (updates != null && updates[1] != null) {
-				com.faction.elements.Vulnerability uVuln = (com.faction.elements.Vulnerability) updates[1];
-				for (Vulnerability v : verification.getAssessment().getVulns()) {
-					if (tVuln.getId() == v.getId()) {
-						copy(uVuln, v);
-						break;
-					}
+			com.faction.elements.Vulnerability clonedVuln = new com.faction.elements.Vulnerability();
+			Vulnerability vulnerability = verification.getVerificationItems().get(0).getVulnerability();
+			copy(vulnerability, clonedVuln);
+			com.faction.elements.User clonedUser = new com.faction.elements.User();
+			copy(verification.getAssessor(), clonedUser);
+			com.faction.elements.Verification clonedVerification = new com.faction.elements.Verification();
+			copy(verification, verification);
+			
+			for(VerificationManager mgr : this.verificationManagers) {
+			
+				com.faction.elements.Vulnerability updatedVuln = mgr.verificationChange(
+						clonedUser, 
+						clonedVuln, 
+						clonedVerification,
+						operation);
+				if(updatedVuln != null) {
+					clonedVuln = updatedVuln;
 				}
-
 			}
-			if (updates != null) {
-				em.persist(verification);
+			if (clonedVuln != null) {
+				copy(clonedVuln, vulnerability);
+				em.persist(vulnerability);
 			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -263,63 +274,84 @@ public class Extensions {
 	}
 
 	private static void copy(Object source, Object dest) {
-		String[] nulls = getNullPropertyNames(source);
-		BeanUtils.copyProperties(source, dest, nulls);
+		if(source == null) {
+			dest =null;
+		}else {
+			String[] nulls = getNullPropertyNames(source);
+			BeanUtils.copyProperties(source, dest, nulls);
+		}
 	}
 
-	private List<Class> getExtendedClasses() {
-		List<Class> classes = new ArrayList<Class>();
+
+	private URLClassLoader createExtensionClassLoader(String modulePath) {
+		File dir = new File(modulePath);
+		URL[] urls = Arrays.stream(Optional.of(dir.listFiles()).orElse(new File[] {})).sorted().map(File::toURI)
+				.map(t -> {
+					try {
+						return t.toURL();
+					} catch (MalformedURLException e) {
+						e.printStackTrace();
+						return null;
+					}
+				}).filter(t -> t != null).toArray(URL[]::new);
+		return new URLClassLoader(urls);
+	}
+
+	public void loadExtensions() throws MalformedURLException {
+		URLClassLoader extensionLoader = createExtensionClassLoader("/opt/faction/modules");
+		ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
 		try {
-			for (String file : this.getJarFiles("/opt/faction/modules/")) {
-				Class extendedClass= getExtendedClassFromFile(file);
-				if (extendedClass != null) {
-					classes.add(extendedClass);
+			Thread.currentThread().setContextClassLoader(extensionLoader);
+			for (AssessmentManager asmtMgr : ServiceLoader.load(AssessmentManager.class, extensionLoader)) {
+				if (asmtMgr != null) {
+					assessmentManagers.add(asmtMgr);
 				}
 			}
-			return classes;
-		} catch (IOException ex) {
+		} catch(Throwable ex) {
 			ex.printStackTrace();
-			return null;
-		} catch (Throwable ex) {
-			ex.printStackTrace();
-			return null;
+		}finally {
+			Thread.currentThread().setContextClassLoader(currentClassLoader);
 		}
-	}
-
-	private Set<String> getJarFiles(String dir) throws IOException {
-		try (Stream<Path> stream = Files.list(Paths.get(dir))) {
-			return stream.filter(file -> !Files.isDirectory(file)).map(Path::getFileName).map(Path::toString)
-					.collect(Collectors.toSet());
-		}
-	}
-
-	private Class getExtendedClassFromFile(String file) {
-		JarFile jarFile;
+		
 		try {
-			jarFile = new JarFile("/opt/faction/modules/" + file);
-			Manifest m = jarFile.getManifest();
-			String moduleString = (String) m.getMainAttributes().getValue("Import-Library");
-			URL[] urls = { new URL("jar:file:/opt/faction/modules/" + file + "!/") };
-			URLClassLoader child = new URLClassLoader(
-			        urls,
-			        this.getClass().getClassLoader()
-			);
-			Class classToLoad = Class.forName(moduleString, true, child);
-			for(Method method : classToLoad.getMethods()) {
-				if(method.getName().endsWith(this.method)) {
-					return classToLoad;
+			Thread.currentThread().setContextClassLoader(extensionLoader);
+			for (VulnerabilityManager vulnMgr : ServiceLoader.load(VulnerabilityManager.class, extensionLoader)) {
+				if (vulnMgr != null) {
+					vulnerabilityManagers.add(vulnMgr);
 				}
 			}
-			return null;
-		} catch (ClassNotFoundException ex) {
-			System.out.println("Cant load " + file);
-		} catch (Exception ex) {
-			System.out.println("Cant load " + file);
-		} catch (Throwable ex) {
-			System.out.println("Cant load " + file);
+		} catch(Throwable ex) {
 			ex.printStackTrace();
+		} finally {
+			Thread.currentThread().setContextClassLoader(currentClassLoader);
 		}
-		return null;
+		
+		try {
+			Thread.currentThread().setContextClassLoader(extensionLoader);
+			for (VerificationManager verMgr : ServiceLoader.load(VerificationManager.class, extensionLoader)) {
+				if (verMgr != null) {
+					verificationManagers.add(verMgr);
+				}
+			}
+		} catch(Throwable ex) {
+			ex.printStackTrace();
+		} finally {
+			Thread.currentThread().setContextClassLoader(currentClassLoader);
+		}
+		
+		try {
+			Thread.currentThread().setContextClassLoader(extensionLoader);
+			for (ApplicationInventory invMgr : ServiceLoader.load(ApplicationInventory.class, extensionLoader)) {
+				if (invMgr != null) {
+					inventoryManagers.add(invMgr);
+				}
+			}
+		} catch(Throwable ex) {
+			ex.printStackTrace();
+		} finally {
+			Thread.currentThread().setContextClassLoader(currentClassLoader);
+		}
 	}
+
 
 }

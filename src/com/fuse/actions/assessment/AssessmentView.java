@@ -667,12 +667,10 @@ public class AssessmentView extends FSActionSupport {
 			// em.persist(n);
 		}
 		Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-		if (amgr.checkIfExtended()) {
-			try {
-				amgr.execute(em, assessment, AssessmentManager.Operation.Finalize);
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
+		try {
+			amgr.execute(em, assessment, AssessmentManager.Operation.Finalize);
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		}
 		// AuditLog.audit(this, "Assessment Finalized", AuditLog.UserAction,
 		// AuditLog.CompAssessment, assessment.getId(), false);
