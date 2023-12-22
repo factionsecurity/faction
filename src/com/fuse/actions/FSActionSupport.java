@@ -58,13 +58,13 @@ import com.opensymphony.xwork2.interceptor.annotations.Before;
 						"contentType", "application/octet-stream", 
 				        "inputName", "_stream"})
 })
-public class FSActionSupport extends ActionSupport implements SessionAware, ServletRequestAware, ServletResponseAware{
+public class FSActionSupport extends ActionSupport { 
 	
 
 	protected SessionMap<String,Object> JSESSION;  
 	protected Map<String,String> COOKIES;
-	public HttpServletRequest request;
-	public HttpServletResponse response;
+	public HttpServletRequest request = ServletActionContext.getRequest();
+	public HttpServletResponse response = ServletActionContext.getResponse();
 	public String LOGIN = "login";
 	public String SUCCESSJSON = "successJson";
 	public String ERRORJSON = "errorJson";
@@ -87,12 +87,6 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	protected String version="";
 	
 	
-	private boolean isIndex() {
-		String resultPath = request.getRequestURI().toString().replace(request.getContextPath(), "");
-		if(resultPath.equals("/"))
-			return true;
-		else return false;
-	}
 	
 	@Before
 	public String openConnection(){
@@ -106,7 +100,7 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 		return null;
 	}
 	
-	@Override
+	/*@Override
 	public void setSession(Map<String, Object> arg0) {
 		JSESSION = (SessionMap)arg0;
 		
@@ -132,7 +126,7 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 			
 		}
 		
-	}
+	}*/
 
 	private boolean getRole(String role){
 		return (boolean) (ActionContext.getContext().get(role) == null ? false :ActionContext.getContext().get(role)) ;
@@ -182,7 +176,7 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 		return MENUOPTION;
 	}
 
-	@Override
+	/*@Override
 	public void setServletRequest(HttpServletRequest arg0) {
 		this.request=arg0;
 		Cookie [] cookies = request.getCookies();
@@ -198,7 +192,7 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	@Override
 	public void setServletResponse(HttpServletResponse arg0) {
 		this.response = arg0;
-	}
+	}*/
 	
 	public String jsonOutput(String json) {
 		try {

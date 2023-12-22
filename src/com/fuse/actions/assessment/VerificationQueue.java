@@ -125,17 +125,7 @@ public class VerificationQueue extends FSActionSupport {
 
 					Assessment a = em.find(Assessment.class, vi.getVulnerability().getAssessmentId());
 
-					Extensions vmgr = new Extensions(Extensions.EventType.VER_MANAGER);
-					if (vmgr.checkIfExtended()) {
-						try {
-							if (vi.isPass())
-								vmgr.execute(em, v, VerificationManager.Operation.PASS);
-							else
-								vmgr.execute(em, v, VerificationManager.Operation.FAIL);
-						} catch (Exception ex) {
-							ex.printStackTrace();
-						}
-					}
+					
 					String status = "Passed";
 					if (!vi.isPass())
 						status = "Failed";
@@ -160,6 +150,13 @@ public class VerificationQueue extends FSActionSupport {
 
 					EmailThread emailThread = new EmailThread(a, Subject, email);
 					TaskQueueExecutor.getInstance().execute(emailThread);
+					
+					// Run all Extensions
+					Extensions vmgr = new Extensions(Extensions.EventType.VER_MANAGER);
+					if (vi.isPass())
+						vmgr.execute(v, VerificationManager.Operation.PASS);
+					else
+						vmgr.execute(v, VerificationManager.Operation.FAIL);
 
 					return "successJson";
 

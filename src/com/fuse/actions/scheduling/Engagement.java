@@ -268,15 +268,6 @@ public class Engagement  extends FSActionSupport{
 				ex.printStackTrace();
 			}
 			
-			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-			if(amgr.checkIfExtended()){
-				try{
-					amgr.execute(em, am, AssessmentManager.Operation.Create);
-				}catch(Exception ex){
-					ex.printStackTrace();
-				}
-			}
-			
 			
 			em.persist(am);
 			AuditLog.audit(this, "Assessment Created" , AuditLog.UserAction,
@@ -305,6 +296,10 @@ public class Engagement  extends FSActionSupport{
 			
 			EmailThread emailThread = new EmailThread(am, "New Assessment Assigned to You", email);
 			TaskQueueExecutor.getInstance().execute(emailThread);
+			
+			// Run All extensions
+			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+			amgr.execute(am, AssessmentManager.Operation.Create);
 			
 			return this.SUCCESSJSON;
 			
@@ -420,20 +415,15 @@ public class Engagement  extends FSActionSupport{
 			
 			
 			
-			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-			if(amgr.checkIfExtended()){
-				try{
-					amgr.execute(em, a, AssessmentManager.Operation.Delete);
-				}catch(Exception ex){
-					ex.printStackTrace();
-				}
-			}
 			
 			AuditLog.audit(this, "Assessment " + a.getAppId() + " " + a.getName() 
 			+ " Deleted" , AuditLog.UserAction, AuditLog.CompAssessment, a.getId(), false);
 
 			em.createNativeQuery("db.Assessment.remove({ '_id': " + a.getId() + " })").executeUpdate();
 			HibHelper.getInstance().commit();
+			
+			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+			amgr.execute(a, AssessmentManager.Operation.Delete);
 			
 			return SUCCESSJSON;
 				

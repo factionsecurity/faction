@@ -5,6 +5,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.struts2.ServletActionContext;
@@ -94,7 +96,7 @@ public class Login extends FSActionSupport {
 			if (result == AuthResult.SUCCESS) {
 				HibHelper.getInstance().preJoin();
 				em.joinTransaction();
-				HttpSession session = request.getSession();
+				HttpSession session = ServletActionContext.getRequest().getSession();
 				AuditLog.audit(username, this, "Successsfully logged in", AuditLog.Login, false);
 				HibHelper.getInstance().commit();
 				User user = (User) session.getAttribute("user");

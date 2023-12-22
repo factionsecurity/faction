@@ -267,14 +267,9 @@ public class EditAssessment extends FSActionSupport {
 					AuditLog.audit(this, "Assessment Updated", AuditLog.UserAction, AuditLog.CompAssessment, am.getId(),
 							false);
 
+				// Run All extensions
 				Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-				if (amgr.checkIfExtended()) {
-					try {
-						amgr.execute(em, am, AssessmentManager.Operation.Update);
-					} catch (Exception ex) {
-						ex.printStackTrace();
-					}
-				}
+				amgr.execute(am, AssessmentManager.Operation.Update);
 			} finally {
 				HibHelper.getInstance().commit();
 			}

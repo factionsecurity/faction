@@ -77,14 +77,17 @@ public class TestExtensionAPIModule {
 	public void testAssessmentManagerExtension() throws InterruptedException, ExecutionException {
 		Extensions ex = new Extensions(Extensions.EventType.ASMT_MANAGER, "extra/test");
 		assertTrue(assessment.getVulns().get(0).getTracking().matches("^VID-[0-9]+"));
-		CompletableFuture<Boolean> future = ex.execute(em, assessment, Operation.Finalize);
+		CompletableFuture<Boolean> future = ex.execute(assessment, Operation.Finalize);
 		while (!future.isDone()) {
 			Thread.sleep(200);
 		}
 		Boolean result = future.get(); 
 		assertTrue(result);
-		System.out.println(assessment.getVulns().get(0).getTracking());
-		assertTrue(assessment.getVulns().get(0).getTracking().equals("TEST-123"));
+		em.close();
+		em = HibHelper.getInstance().getEMF().createEntityManager();
+		Assessment updatedAssessment = em.find(Assessment.class, assessment.getId());
+		System.out.println(updatedAssessment.getVulns().get(0).getTracking());
+		assertTrue(updatedAssessment.getVulns().get(0).getTracking().equals("TEST-123"));
 	}
 	
 	@Test
@@ -103,12 +106,15 @@ public class TestExtensionAPIModule {
 		em.persist(verification);
 		HibHelper.getInstance().commit();
 		
-		CompletableFuture<Boolean> future =ex.execute(em, verification, com.faction.extender.VerificationManager.Operation.FAIL);
+		CompletableFuture<Boolean> future =ex.execute(verification, com.faction.extender.VerificationManager.Operation.FAIL);
 		while (!future.isDone()) {
 			Thread.sleep(200);
 		}
 		Boolean result = future.get(); 
 		assertTrue(result);
+		em.close();
+		em = HibHelper.getInstance().getEMF().createEntityManager();
+		vuln = em.find(Vulnerability.class, vuln.getId());
 		assertTrue(vuln.getDescription().contains("Updated By Fail"));
 	}
 	
@@ -116,12 +122,15 @@ public class TestExtensionAPIModule {
 	public void testVulnerabilityManagerExtension() throws InterruptedException, ExecutionException {
 		Extensions ex = new Extensions(Extensions.EventType.VER_MANAGER, "extra/test");
 		assertTrue(assessment.getVulns().get(0).getTracking().matches("^VID-[0-9]+"));
-		CompletableFuture<Boolean> future =ex.execute(em, assessment, vuln, com.faction.extender.VulnerabilityManager.Operation.Update);
+		CompletableFuture<Boolean> future =ex.execute(assessment, vuln, com.faction.extender.VulnerabilityManager.Operation.Update);
 		while (!future.isDone()) {
 			Thread.sleep(200);
 		}
 		Boolean result = future.get(); 
 		assertTrue(result);
+		em.close();
+		em = HibHelper.getInstance().getEMF().createEntityManager();
+		vuln = em.find(Vulnerability.class, vuln.getId());
 		assertTrue(vuln.getDescription().contains("Updated By Update"));
 	}
 	

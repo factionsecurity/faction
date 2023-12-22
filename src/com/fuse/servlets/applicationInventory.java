@@ -67,31 +67,10 @@ public class applicationInventory extends HttpServlet {
 		String campname = request.getParameter("campname") == null ? "" : request.getParameter("campname");
 		
 		
-		//Session session = HibHelper.getSessionFactory().openSession();
-		//HibHelper hh = new HibHelper();
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
-		Integrations inv = (Integrations)em.createQuery("from Integrations where name = :name").setParameter("name", "mod1").getResultList().stream().findFirst().orElse(null);
 		Extensions appInv = new Extensions(Extensions.EventType.INVENTORY);
-		if(inv != null && inv.isEnabled()){
-			VTArray json=new VTArray();
-			VTKVPair kv = new VTKVPair();
-			kv.put("appid", appid);
-			kv.put("appname", appname);
-			try{
-				Object vti = Integrate.create(inv);
-				json = ((VTIntegration)vti).runit(kv);
-			}catch(VTPythonException ex){
-				json = ex.getArray();
-			}catch(Exception ex){
-				VTPythonException e = new VTPythonException(ex);
-				json=e.getArray();
-			}
-			PrintWriter out = response.getWriter();
-			response.setContentType("application/json");
-			out.print(json.toJSONString());
-		}else if ( appInv.checkIfExtended()) {
-			InventoryResult[] results = (InventoryResult[]) appInv
-					.execute(new Class[]{String.class,  String.class}, appid,appname);
+		List<InventoryResult> results = appInv.execute(appid,appname);
+		if(results != null) {
 			JSONArray array = new JSONArray();
 			for(InventoryResult result : results){
 				JSONObject json = new JSONObject();

@@ -59,11 +59,11 @@ public class Extensions {
 	private List<VulnerabilityManager> vulnerabilityManagers = new ArrayList<>();
 	private List<VerificationManager> verificationManagers = new ArrayList<>();
 	private List<ApplicationInventory> inventoryManagers = new ArrayList<>();
-	private EventType eventType;
 	private String extensionPath = "/opt/faction/modules";
+	private EventType type;
 	
 	public Extensions(EventType type) {
-		this.eventType = type;
+		this.type = type;
 		try {
 			this.loadExtensions();
 		} catch (MalformedURLException e) {
@@ -73,11 +73,26 @@ public class Extensions {
 	
 	public Extensions(EventType type, String extensionPath) {
 		this.extensionPath = extensionPath;
-		this.eventType = type;
+		this.type = type;
 		try {
 			this.loadExtensions();
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
+		}
+		
+	}
+	public boolean isExtended() {
+		switch(this.type) {
+			case INVENTORY:
+				return this.inventoryManagers.size() >0;
+			case ASMT_MANAGER:
+				return this.assessmentManagers.size() >0;
+			case VULN_MANAGER:
+				return this.vulnerabilityManagers.size() >0;
+			case VER_MANAGER:
+				return this.verificationManagers.size() >0;
+			default:
+				return false;
 		}
 		
 	}
@@ -90,12 +105,10 @@ public class Extensions {
 							copy(cloneVuln, daoVuln);
 							List<CustomField> fields = daoVuln.getCustomFields();
 							fields = updateCustomFields(cloneVuln.getCustomFields(), fields);
-							if (em != null) {
-								HibHelper.getInstance().preJoin();
-								em.joinTransaction();
-								em.persist(daoVuln);
-								HibHelper.getInstance().commit();
-							}
+							HibHelper.getInstance().preJoin();
+							em.joinTransaction();
+							em.persist(daoVuln);
+							HibHelper.getInstance().commit();
 							break;
 						}
 					}
@@ -156,15 +169,20 @@ public class Extensions {
 	}
 	
 	@SuppressWarnings("unchecked")
-	public CompletableFuture<Boolean> execute(EntityManager em, Assessment assessment, AssessmentManager.Operation operation) {
-		return CompletableFuture.supplyAsync( () -> {
+	public CompletableFuture<Boolean> execute(Assessment assessment, AssessmentManager.Operation operation) {
+		if(!this.isExtended()) return null;
+		
+ 		return CompletableFuture.supplyAsync( () -> {
+			
+			EntityManager em = HibHelper.getInstance().getEM();
 			try {
+				Assessment localAssessment = em.find(Assessment.class, assessment.getId());
 				// Clone Assessment
 				com.faction.elements.Assessment tmpAssessment = new com.faction.elements.Assessment();
-				copy(assessment, tmpAssessment);
+				copy(localAssessment, tmpAssessment);
 				// Clone Vulns
 				List<com.faction.elements.Vulnerability> tmpVulns = new ArrayList();
-				List<Vulnerability> vulnerabilities = assessment.getVulns();
+				List<Vulnerability> vulnerabilities = localAssessment.getVulns();
 				for (Vulnerability v : vulnerabilities) {
 					com.faction.elements.Vulnerability tVuln = new com.faction.elements.Vulnerability();
 					copy(v, tVuln);
@@ -172,16 +190,16 @@ public class Extensions {
 				}
 				// Clone Engagement
 				com.faction.elements.User eng = new com.faction.elements.User();
-				copy(assessment.getEngagement(), eng);
+				copy(localAssessment.getEngagement(), eng);
 				tmpAssessment.setEngagementContact(eng);
 				// Clone Remediation
 				com.faction.elements.User rem = new com.faction.elements.User();
-				copy(assessment.getRemediation(), rem);
+				copy(localAssessment.getRemediation(), rem);
 				tmpAssessment.setRemediationContact(rem);
 				// Clone Assessors
 				List<com.faction.elements.User> assessors = new ArrayList<com.faction.elements.User>();
-				if(assessment.getAssessor() != null) {
-					for (User u : assessment.getAssessor()) {
+				if(localAssessment.getAssessor() != null) {
+					for (User u : localAssessment.getAssessor()) {
 						com.faction.elements.User assessor = new com.faction.elements.User();
 						copy(u, assessor);
 						assessors.add(assessor);
@@ -189,13 +207,13 @@ public class Extensions {
 				}
 				tmpAssessment.setAssessors(assessors);
 				// Clone Custom Fields
-				tmpAssessment.setCustomFields(cloneCustomFields(assessment));
+				tmpAssessment.setCustomFields(cloneCustomFields(localAssessment));
 				// Clone Campaign
-				if(assessment.getCampaign() != null) {
-					tmpAssessment.setCampaign(assessment.getCampaign().getName());
+				if(localAssessment.getCampaign() != null) {
+					tmpAssessment.setCampaign(localAssessment.getCampaign().getName());
 				}
-				if(assessment.getType() != null) {
-					tmpAssessment.setType(assessment.getType().getType());
+				if(localAssessment.getType() != null) {
+					tmpAssessment.setType(localAssessment.getType().getType());
 				}
 				// Execute Extensions
 				AssessmentManagerResult clonedArguments = new AssessmentManagerResult();
@@ -215,7 +233,7 @@ public class Extensions {
 					}
 					if(result != null && result.getAssessment() != null) {
 						clonedArguments.setAssessment(result.getAssessment());
-						this.persistAssessment(em, result.getAssessment(), assessment);
+						this.persistAssessment(em, result.getAssessment(), localAssessment);
 					}
 				}
 				return true;
@@ -224,24 +242,31 @@ public class Extensions {
 				ex.printStackTrace();
 			} catch (Throwable ex) {
 				ex.printStackTrace();
+			}finally {
+				em.close();
 			}
 			return false;
 		});
 
 	}
 
-	public CompletableFuture<Boolean> execute(EntityManager em, Assessment assessment, Vulnerability vuln,
+	public CompletableFuture<Boolean> execute(Assessment assessment, Vulnerability vuln,
 			VulnerabilityManager.Operation operation) {
+		if(!this.isExtended()) return null;
+		
 		return CompletableFuture.supplyAsync( () -> {
+			EntityManager em = HibHelper.getInstance().getEM();
+			Assessment localAssessment = em.find(Assessment.class, assessment.getId());
+			Vulnerability localVuln = em.find(Vulnerability.class, vuln.getId());
 			try {
 
 				com.faction.elements.Assessment tmpAssessment = new com.faction.elements.Assessment();
 				com.faction.elements.Vulnerability tmpVuln = new com.faction.elements.Vulnerability();
 				
 				//Clone Vulnerability
-				copy(vuln, tmpVuln);
+				copy(localVuln, tmpVuln);
 				//Clone Assessment
-				copy(assessment, tmpAssessment);
+				copy(localAssessment, tmpAssessment);
 				
 				
 				//Execute Extensions
@@ -256,32 +281,38 @@ public class Extensions {
 						tmpVuln = updatedVuln;
 						persistVulnerabilities(em, 
 								Arrays.asList(tmpVuln) , 
-								Arrays.asList(vuln));
+								Arrays.asList(localVuln));
 						
 					}
 				}
 				return true;
 			} catch (Exception ex) {
 				ex.printStackTrace();
+			}finally {
+				em.close();
 			}
 			return false;
 		});
 
 	}
 
-	public CompletableFuture<Boolean> execute(EntityManager em, Verification verification, VerificationManager.Operation operation) {
+	public CompletableFuture<Boolean> execute(Verification verification, VerificationManager.Operation operation) {
+		if(!this.isExtended()) return null;
+		
 		return CompletableFuture.supplyAsync( () -> {
+			EntityManager em = HibHelper.getInstance().getEM();
 			try {
+				Verification localVerification = em.find(Verification.class, verification.getId());
 				//Clone Vulnerability
 				com.faction.elements.Vulnerability clonedVuln = new com.faction.elements.Vulnerability();
-				Vulnerability vulnerability = verification.getVerificationItems().get(0).getVulnerability();
+				Vulnerability vulnerability = localVerification.getVerificationItems().get(0).getVulnerability();
 				copy(vulnerability, clonedVuln);
 				// Clone User
 				com.faction.elements.User clonedUser = new com.faction.elements.User();
-				copy(verification.getAssessor(), clonedUser);
+				copy(localVerification.getAssessor(), clonedUser);
 				//Clone Verification
 				com.faction.elements.Verification clonedVerification = new com.faction.elements.Verification();
-				copy(verification, verification);
+				copy(localVerification, clonedVerification);
 			
 				//Execute Extensions
 				for(VerificationManager mgr : this.verificationManagers) {
@@ -302,6 +333,8 @@ public class Extensions {
 				return true;
 			} catch (Exception ex) {
 				ex.printStackTrace();
+			}finally {
+				em.close();
 			}
 			return false;
 		});
@@ -309,6 +342,8 @@ public class Extensions {
 	}
 	
 	public List<InventoryResult> execute(String appId, String appName) {
+		if(!this.isExtended()) return null;
+		
 		List<InventoryResult> allResults = new ArrayList<>();
 		try {
 			for(ApplicationInventory mgr : this.inventoryManagers) {
