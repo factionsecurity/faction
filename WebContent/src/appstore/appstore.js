@@ -15,10 +15,23 @@ class AppStore {
 	}
 	
 	setupSortableLists(){
-		let config = { animation: 100, group: 'list-1', draggable: '.list-group-item', handle: '.list-group-item', sort: true, filter: '.sortable-disabled', chosenClass: 'active' };
+		let config = { animation: 100, 
+			group: 'assessment', 
+			draggable: '.list-group-item', 
+			handle: '.list-group-item', 
+			filter: '.sortable-disabled', 
+			ghostClass: 'active',
+			onChoose: function(event){
+				$(".list-group-item").removeClass("active");
+				$(event.item).addClass("active");
+				
+			}};
 		Sortable.create($("#assessmentExtensions")[0], config);
+		config.group = 'vulnerability';
 		Sortable.create($("#vulnerabilityExtensions")[0], config);
+		config.group = 'verification';
 		Sortable.create($("#verificationExtensions")[0], config);
+		config.group = 'inventory';
 		Sortable.create($("#inventoryExtensions")[0], config);
 	}
 	
@@ -79,6 +92,10 @@ class AppStore {
 const apps = new AppStore();
 apps.setupFileUpload();
 apps.setupSortableLists();
-apps.addCard("#assessmentExtensions", "Test1", "testUser", "https://www.google.com");
+apps.addCard("#assessmentExtensions", "Procyon lotor Extension", "Rocky", "https://www.google.com");
 apps.addCard("#assessmentExtensions", "Test3", "testUse2", "https://www.google.com");
+apps.addCard("#verificationExtensions", "Test1", "testUser", "https://www.google.com");
+apps.addCard("#vulnerabilityExtensions", "Test3", "testUse2", "https://www.google.com");
+apps.addCard("#vulnerabilityExtensions", "Test1", "testUser", "https://www.google.com");
+apps.addCard("#verificationExtensions", "Test3", "testUse2", "https://www.google.com");
 $('input[type="checkbox"]').bootstrapSwitch("size", "mini");

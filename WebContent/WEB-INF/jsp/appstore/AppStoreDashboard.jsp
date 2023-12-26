@@ -13,7 +13,7 @@
 }
 
 .list-group-item {
-	background-color: #192339 !important;
+	background-color: #192339;
 	border-top: 0px;
 	border-left: 0px;
 	border-right: 0px;
@@ -44,13 +44,39 @@
 .handle-container {
 	height: 65px;
 }
+
 .bootstrap-switch .bootstrap-switch-handle-on.bootstrap-switch-primary,
-.bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-primary {
-  color: #fff;
-  background: #a64ed0;
+	.bootstrap-switch .bootstrap-switch-handle-off.bootstrap-switch-primary
+	{
+	color: #fff;
+	background: #a64ed0;
+}
+
+.active{
+	background-color: #FFFFFF22 !important;
+}
+.extensionDescription{
+	min-height: 500px;
+	padding: 30px;
+	
+}
+.disabled{
+	//opacity: 0.2;
+    pointer-events: none;
+}
+.appLogo{
+  border-radius: 25px;
+  height: 150px;
+}
+.appAuthor{
+font-weight: normal;
+}
+.appDescription{
+ padding-top: 50px;
+ font-size: large;
+ padding-left: 50px;
 }
 </style>
-<!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
 	<!-- Content Header (Page header) -->
 	<section class="content-header">
@@ -64,41 +90,77 @@
 	<section class="content">
 		<bs:row>
 			<bs:mco colsize="6">
-				<bs:box type="primary" title="Installed Assessment Extensions">
-					<ul id="assessmentExtensions" class="list-group">
-					</ul>
-				</bs:box>
-			</bs:mco>
-			<bs:mco colsize="6">
-				<bs:box type="primary" title="Installed Vulnerability Extensions">
-					<ul id="vulnerabilityExtensions" class="list-group">
-					</ul>
-				</bs:box>
-			</bs:mco>
-			<bs:mco colsize="6">
-				<bs:box type="primary" title="Installed Verification Extensions">
-					<ul id="verificationExtensions" class="list-group">
-					</ul>
-				</bs:box>
-			</bs:mco>
-			<bs:mco colsize="6">
-				<bs:box type="primary" title="Installed Application Inventory Extensions">
-					<ul id="inventoryExtensions" class="list-group">
-					</ul>
-				</bs:box>
-			</bs:mco>
-			<bs:mco colsize="6">
-				<bs:box type="primary" title="Disabled Extensions">
-					<ul id="disabledExtensions" class="list-group">
-					</ul>
-				</bs:box>
-			</bs:mco>
-			<bs:mco colsize="6">
-				<bs:box type="primary" title="Install Custom Apps">
+				<bs:mco colsize="12">
+					<bs:box type="primary" title="Installed Assessment Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
+						<ul id="assessmentExtensions" class="list-group">
+						</ul>
+					</bs:box>
+				</bs:mco>
+				<bs:mco colsize="12">
+					<bs:box type="primary" title="Installed Vulnerability Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
+						<ul id="vulnerabilityExtensions" class="list-group">
+						</ul>
+					</bs:box>
+				</bs:mco>
+				<bs:mco colsize="12">
+					<bs:box type="primary" title="Installed Verification Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
+						<ul id="verificationExtensions" class="list-group">
+						</ul>
+					</bs:box>
+				</bs:mco>
+				<bs:mco colsize="12">
+					<bs:box type="primary"
+						title="Installed Application Inventory Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
+						<ul id="inventoryExtensions" class="list-group">
+						</ul>
+					</bs:box>
+				</bs:mco>
+				<bs:mco colsize="12">
+					<bs:box type="primary" title="Disabled Extensions">
+						<ul id="disabledExtensions" class="list-group">
+						</ul>
+					</bs:box>
+				</bs:mco>
+				<!--<bs:mco colsize="12">
+				<bs:box type="primary" title="Install Custom Extensions">
 					<div class="form-group">
 						<label>Upload Extension</label> <input id="appFile" type="file"
 							multiple name="file_data" />
 					</div>
+				</bs:box>
+			</bs:mco>-->
+			</bs:mco>
+			<bs:mco colsize="6">
+				<bs:box type="primary disabled" title="Extension Description">
+					<div class="extensionDescription">
+					<bs:row>
+						<bs:mco colsize="2"><img id="appLogo" src="../app-default.png" class="appLogo"/></bs:mco>
+						<bs:mco colsize="8">
+							<h1 id="appTitle">Procyon lotor Extension</h1>
+							By: <span id="appAuthor" class="appAuthor"> Rocky</span> <br/>
+							Link: <a href="" id="appLink">www.yoursite.com</a>
+
+						</bs:mco>
+					</bs:row>
+					<bs:row>
+						<bs:mco colsize="12">
+						<div id="appDescription" class="appDescription">
+						This is a FACTION extension that will totally change your live for ever. Here are just a few of the amazing things this extension can do for you:
+						<br/>
+						<br/>
+						<ol>
+						<li> Eats Trash</li>
+						<li> Lives in a Garbage Can</li>
+						<li> Has Cool Stripes</li>
+						<li> Looks cuddly but will cut you</li>
+						</ol>
+						<br/>
+						This extension is actually a Raccon. 🦝	 Have fun. 		
+						</div>
+						</bs:mco>
+					</bs:row>
+					</div>
+				
 				</bs:box>
 			</bs:mco>
 		</bs:row>
