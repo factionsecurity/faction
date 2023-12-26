@@ -46,10 +46,10 @@ You can find out more information about creating your own custom report template
 [Custom Security Report Templates - Faction Security](https://www.factionsecurity.com/project/custom-security-report-templates/)
 
 ## Burp Suite Extension
-[Burp Suite Extensions](https://www.factionsecurity.com/project/faction-burpsuite-extension/)
+[Burp Suite Extensions](https://github.com/factionsecurity/Faction-Burp)
 
 ## Manuals and Tutorials
-[Manual](https://www.factionsecurity.com/manual/)
+[Manual](https://docs.factionsecurity.com/)
 
 ## Don't want to host it yourself?
 We can provide hosting for your instance. All instances are single tenants so you don't have to worry about sharing infrastructure with untrusted parties. Navigate to [https://www.factionsecurity.com to learn more](https://www.factionsecurity.com). 
