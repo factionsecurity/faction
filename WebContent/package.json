@@ -11,7 +11,8 @@
   "dependencies": {
     "@popperjs/core": "^2.11.6",
     "adminlte": "^2.4.1",
-    "bootstrap": "^3.4.1",
+    "bootstrap": "^5.3.2",
+    "bootstrap-switch": "^3.4.0",
     "chart.js": "^4.4.1",
     "codemirror": "file:codemirror",
     "css-loader": "^6.7.1",
@@ -44,6 +45,7 @@
     "popper.js": "^1.16.1",
     "select2": "^4.1.0-rc.0",
     "simplemde": "^1.11.2",
+    "sortablejs": "^1.15.1",
     "style-loader": "^3.3.1",
     "suneditor": "^2.45.1",
     "u": "^0.1.0",
