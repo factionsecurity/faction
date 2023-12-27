@@ -10,22 +10,24 @@ import Sortable from 'sortablejs/modular/sortable.core.esm.js';
 
 
 class AppStore {
-	constructor(){
-		
+	constructor() {
+
 	}
-	
-	setupSortableLists(){
-		let config = { animation: 100, 
-			group: 'assessment', 
-			draggable: '.list-group-item', 
-			handle: '.list-group-item', 
-			filter: '.sortable-disabled', 
+
+	setupSortableLists() {
+		let config = {
+			animation: 100,
+			group: 'assessment',
+			draggable: '.list-group-item',
+			handle: '.list-group-item',
+			filter: '.sortable-disabled',
 			ghostClass: 'active',
-			onChoose: function(event){
+			onChoose: function(event) {
 				$(".list-group-item").removeClass("active");
 				$(event.item).addClass("active");
-				
-			}};
+
+			}
+		};
 		Sortable.create($("#assessmentExtensions")[0], config);
 		config.group = 'vulnerability';
 		Sortable.create($("#vulnerabilityExtensions")[0], config);
@@ -34,15 +36,15 @@ class AppStore {
 		config.group = 'inventory';
 		Sortable.create($("#inventoryExtensions")[0], config);
 	}
-	
-	setupFileUpload(){
+
+	setupFileUpload() {
 		$("#appFile").fileinput({
 			overwriteInitial: false,
 			uploadUrl: "PreviewApp",
 			uploadAsync: true,
 			maxFileCount: 1,
 			allowedFileExtensions: ['jar'],
-			previewFileExtSettings: { 
+			previewFileExtSettings: {
 				'jar': function(ext) {
 					return ext.match(/(jar)$/i);
 				}
@@ -55,47 +57,46 @@ class AppStore {
 			$("#appFile").fileinput("upload");
 		});
 	}
-	
-	createCard(name, author, url){
+
+	createCard(name, version, author, url) {
 		const li = document.createElement("li");
-		li.className="list-group-item";
+		li.className = "list-group-item";
 		li.innerHTML = `
 				<div class="appCard row">
-					<div class="col-md-1 handle-container">
+					<div class="col-md-1 handle-container" style="min-width: 100px">
 						<div class="handle">
 							<i class="fa-solid fa-grip-lines handle"></i>
+					 		<img class="appLogo-small" src="../app-default.png"/>
 						</div>
 					</div>
-					<div class="col-md-8">
-						<b>${name}</b><br> by : ${author} <br> link:
-						<a href="${url}">${url}</a>
+					<div class="col-md-8 handle-container">
+						<div class="handle">
+							<b>${name}</b> Version: ${version}<br> by : ${author} <br> link:
+							<a href="${url}">${url}</a>
+						</div>
 					</div>
-					<div class="col-md-2 handle-container">
+					<div class="col-md-2 handle-container pull-right" style="width:120px">
 						<div class="handle">
 							<input type="checkbox" data-size="mini" data-toggle="switch"/>
-						</div>
-					</div>
-					<div class="col-md-1 handle-container">
-						<div class="handle">
-						<i class="fa fa-trash"></i>
+							&nbsp;&nbsp;<i class="fa fa-trash"></i>
 						</div>
 					</div>
 				</div>`
 		return li;
 	}
-	addCard(id, name, author, url){
-		$(id).append(this.createCard(name, author, url));
+	addCard(id, name, version, author, url) {
+		$(id).append(this.createCard(name, version, author, url));
 	}
-	
+
 }
 
 const apps = new AppStore();
 apps.setupFileUpload();
 apps.setupSortableLists();
-apps.addCard("#assessmentExtensions", "Procyon lotor Extension", "Rocky", "https://www.google.com");
-apps.addCard("#assessmentExtensions", "Test3", "testUse2", "https://www.google.com");
-apps.addCard("#verificationExtensions", "Test1", "testUser", "https://www.google.com");
-apps.addCard("#vulnerabilityExtensions", "Test3", "testUse2", "https://www.google.com");
-apps.addCard("#vulnerabilityExtensions", "Test1", "testUser", "https://www.google.com");
-apps.addCard("#verificationExtensions", "Test3", "testUse2", "https://www.google.com");
+apps.addCard("#assessmentExtensions", "Procyon lotor Extension",  "1.0","Rocky", "https://www.google.com");
+apps.addCard("#assessmentExtensions",  "Test3",  "1.0","testUse2", "https://www.google.com");
+apps.addCard("#verificationExtensions",  "Test1",  "1.0","testUser", "https://www.google.com");
+apps.addCard("#vulnerabilityExtensions",  "Test3",  "1.0","testUse2", "https://www.google.com");
+apps.addCard("#vulnerabilityExtensions",  "Test1",  "1.0","testUser", "https://www.google.com");
+apps.addCard("#verificationExtensions",  "Test3",  "1.0","testUse2", "https://www.google.com");
 $('input[type="checkbox"]').bootstrapSwitch("size", "mini");

@@ -29,7 +29,8 @@ module.exports = {
 		ice: path.resolve(__dirname, './src/ice_patched.js'),
 		templates: path.resolve(__dirname, './src/templates/templates.js'),
 		assessment_stats: path.resolve(__dirname, './src/assessment/assessment_stats.js'),
-		appstore: path.resolve(__dirname, './src/appstore/appstore.js')
+		appstore: path.resolve(__dirname, './src/appstore/appstore.js'),
+		install_extension: path.resolve(__dirname, './src/appstore/install_extension.js')
 		
 	},
 	output: {

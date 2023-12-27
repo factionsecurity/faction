@@ -68,22 +68,29 @@
   border-radius: 25px;
   height: 150px;
 }
+.appLogo-small{
+  border-radius: 5px;
+  height: 50px;
+  margin-left: 30px;
+}
 .appAuthor{
 font-weight: normal;
 }
 .appDescription{
  padding-top: 50px;
  font-size: large;
- padding-left: 50px;
+ padding-left: 20px;
+}
+.appStoreButton{
 }
 </style>
 <div class="content-wrapper">
 	<!-- Content Header (Page header) -->
 	<section class="content-header">
 		<h1>
-			<i class="fa fa-rocket"></i> App Store
-
+			<i class="fa fa-rocket"></i> Installed Extensions
 		</h1>
+  <button class="btn btn-success pull-right dashboardButton" ><i class="fa fa-upload"></i>&nbsp;&nbsp;Install Extension</button>
 	</section>
 
 	<!-- Main content -->
@@ -91,52 +98,44 @@ font-weight: normal;
 		<bs:row>
 			<bs:mco colsize="6">
 				<bs:mco colsize="12">
-					<bs:box type="primary" title="Installed Assessment Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
+					<bs:box type="primary" title="<i class='fa-solid fa-bug'></i>  Assessment Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
 						<ul id="assessmentExtensions" class="list-group">
 						</ul>
 					</bs:box>
 				</bs:mco>
 				<bs:mco colsize="12">
-					<bs:box type="primary" title="Installed Vulnerability Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
+					<bs:box type="primary" title="<i class='glyphicon glyphicon-ok'></i>  Vulnerability Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
 						<ul id="vulnerabilityExtensions" class="list-group">
 						</ul>
 					</bs:box>
 				</bs:mco>
 				<bs:mco colsize="12">
-					<bs:box type="primary" title="Installed Verification Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
+					<bs:box type="primary" title="<i class='glyphicon glyphicon-ok'></i>  Verification Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
 						<ul id="verificationExtensions" class="list-group">
 						</ul>
 					</bs:box>
 				</bs:mco>
 				<bs:mco colsize="12">
 					<bs:box type="primary"
-						title="Installed Application Inventory Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
+						title="<i class='glyphicon glyphicon-search'></i>  Application Inventory Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
 						<ul id="inventoryExtensions" class="list-group">
 						</ul>
 					</bs:box>
 				</bs:mco>
 				<bs:mco colsize="12">
-					<bs:box type="primary" title="Disabled Extensions">
+					<bs:box type="primary" title="<i class='glyphicon glyphicon-ban-circle'></i>  Disabled Extensions">
 						<ul id="disabledExtensions" class="list-group">
 						</ul>
 					</bs:box>
 				</bs:mco>
-				<!--<bs:mco colsize="12">
-				<bs:box type="primary" title="Install Custom Extensions">
-					<div class="form-group">
-						<label>Upload Extension</label> <input id="appFile" type="file"
-							multiple name="file_data" />
-					</div>
-				</bs:box>
-			</bs:mco>-->
 			</bs:mco>
 			<bs:mco colsize="6">
 				<bs:box type="primary disabled" title="Extension Description">
 					<div class="extensionDescription">
 					<bs:row>
-						<bs:mco colsize="2"><img id="appLogo" src="../app-default.png" class="appLogo"/></bs:mco>
+						<bs:mco colsize="2" style="min-width: 200px"><img id="appLogo" src="../app-default.png" class="appLogo"/></bs:mco>
 						<bs:mco colsize="8">
-							<h1 id="appTitle">Procyon lotor Extension</h1>
+							<h1 id="appTitle">Procyon lotor Extension <small> Version 1.0</small></h1>
 							By: <span id="appAuthor" class="appAuthor"> Rocky</span> <br/>
 							Link: <a href="" id="appLink">www.yoursite.com</a>
 
