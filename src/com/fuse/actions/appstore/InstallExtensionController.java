@@ -32,6 +32,7 @@ import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.AppStore;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
+import com.fuse.utils.FSUtils;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/appstore/InstallExtension.jsp", params = { "contentType",
@@ -71,6 +72,10 @@ public class InstallExtensionController extends FSActionSupport {
 		JarEntry entry;
 		ByteArrayOutputStream logo = new ByteArrayOutputStream();
 		ByteArrayOutputStream description = new ByteArrayOutputStream();
+		Boolean isAssessmentApp = false;
+		Boolean isVerificationApp = false;
+		Boolean isVulnerabilityApp = false;
+		Boolean isInventoryApp = false;
 		while ((entry = jarStream.getNextJarEntry()) != null) {
 			if (!entry.isDirectory() && entry.getName().endsWith("description.md")) {
 				while(jarStream.available() == 1) {
@@ -90,6 +95,18 @@ public class InstallExtensionController extends FSActionSupport {
 					logo.write(data, 0, size);
 				}
 			}
+			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.ApplicationInventory")) {
+				isInventoryApp = true;
+			}
+			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.AssessmentManager")) {
+				isAssessmentApp = true;
+			}
+			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.VulnerabilityManager")) {
+				isVulnerabilityApp = true;
+			}
+			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.VerificationManager")) {
+				isVerificationApp = true;
+			}
 		}
 		fis.close();
 		
@@ -103,6 +120,10 @@ public class InstallExtensionController extends FSActionSupport {
 				+ "\"author\": \"" + author + "\", "
 				+ "\"url\": \"" + url + "\", "
 				+ "\"logo\": \"" + base64Logo+ "\", "
+				+ "\"assessment\": " + isAssessmentApp + ", "
+				+ "\"verification\": " + isVerificationApp + ", "
+				+ "\"vulnerability\": " + isVulnerabilityApp + ", "
+				+ "\"inventory\": " + isInventoryApp + ", "
 				+ "\"description\": \"" + base64Description + "\"}"
 				+ "}";
 		ServletActionContext.getRequest().getSession().setAttribute("Extension_Info", json);
@@ -116,18 +137,32 @@ public class InstallExtensionController extends FSActionSupport {
 			"application/json", "inputName", "stream" }),
 			@Result(name = "input", location = "/WEB-INF/jsp/uploadError.jsp") })
 	public String installApp() throws IOException, ParseException {
-		String infoString = (String) ServletActionContext.getRequest().getSession().getAttribute("Extension_Info");
 		String jarFile = (String) ServletActionContext.getRequest().getSession().getAttribute("Extension");
+		String md5 = FSUtils.md5hash(jarFile);
+		Boolean alreadyInstalled =em.createQuery("from AppStore where hash = :hash")
+			.setParameter("hash", md5)
+			.getResultList()
+			.stream()
+			.findAny()
+			.isPresent();
+		if(alreadyInstalled) {
+			JSONObject success = new JSONObject();
+			success.put("message", "Already Installed");
+			stream = new ByteArrayInputStream(success.toJSONString().getBytes());
+			return "json";
+		}
+		
+		String infoString = (String) ServletActionContext.getRequest().getSession().getAttribute("Extension_Info");
 		JSONParser parser = new JSONParser();
 		JSONObject extensionInfo = (JSONObject) parser.parse(infoString);
 		JSONObject info = (JSONObject) extensionInfo.get("extension_info");
 		
 		AppStore app = new AppStore();
 		app.setApproved(false);
-		app.setAssessmentEnabled(false);
-		app.setVerificationEnabled(false);
-		app.setVulnerabilityEnabled(false);
-		app.setInventoryEnabled(false);
+		app.setAssessmentEnabled( (Boolean)info.get("assessment"));
+		app.setVerificationEnabled((Boolean)info.get("verification"));
+		app.setVulnerabilityEnabled((Boolean)info.get("vulnerability"));
+		app.setInventoryEnabled((Boolean)info.get("Inventory"));
 		app.setAuthor(info.get("author").toString());
 		app.setBase64JarFile(jarFile);
 		app.setBase64Logo(info.get("logo").toString());

@@ -67,11 +67,13 @@
 .appLogo{
   border-radius: 25px;
   height: 150px;
+  background-color: white;
 }
 .appLogo-small{
   border-radius: 5px;
   height: 50px;
   margin-left: 30px;
+  background-color: white;
 }
 .appAuthor{
 font-weight: normal;

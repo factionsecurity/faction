@@ -4,6 +4,8 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 
+import com.fuse.utils.FSUtils;
+
 @Entity
 public class AppStore {
 	
@@ -24,6 +26,7 @@ public class AppStore {
 	private Boolean VulnerabilityEnabled;
 	private Boolean InventoryEnabled;
 	private String base64JarFile;
+	private String hash;
 	public Long getId() {
 		return id;
 	}
@@ -107,6 +110,7 @@ public class AppStore {
 	}
 	public void setBase64JarFile(String base64JarFile) {
 		this.base64JarFile = base64JarFile;
+		this.hash = FSUtils.md5hash(base64JarFile);
 	}
 	public String getVersion() {
 		return version;
@@ -114,8 +118,12 @@ public class AppStore {
 	public void setVersion(String version) {
 		this.version = version;
 	}
-	
-	
+	public String getHash() {
+		return hash;
+	}
+	public void setHash(String hash) {
+		this.hash = hash;
+	}
 	
 
 }
