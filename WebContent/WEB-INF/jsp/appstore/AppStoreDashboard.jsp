@@ -61,7 +61,7 @@
 	
 }
 .disabled{
-	//opacity: 0.2;
+	opacity: 0.0;
     pointer-events: none;
 }
 .appLogo{
@@ -132,31 +132,21 @@ font-weight: normal;
 				</bs:mco>
 			</bs:mco>
 			<bs:mco colsize="6">
-				<bs:box type="primary disabled" title="Extension Description">
+				<bs:box type="primary disabled" title="Extension Description" id="appBox">
 					<div class="extensionDescription">
 					<bs:row>
 						<bs:mco colsize="2" style="min-width: 200px"><img id="appLogo" src="../app-default.png" class="appLogo"/></bs:mco>
 						<bs:mco colsize="8">
-							<h1 id="appTitle">Procyon lotor Extension <small> Version 1.0</small></h1>
-							By: <span id="appAuthor" class="appAuthor"> Rocky</span> <br/>
-							Link: <a href="" id="appLink">www.yoursite.com</a>
+						<h1 id="appTitle">Example Extension <br/><small>Version: 1.0</small></h1>
+							By: <span id="appAuthor" class="appAuthor">Jane Doe</span> <br/>
+							Link: <a href="" id="appURL">www.factionsecurity.com</a>
 
 						</bs:mco>
 					</bs:row>
 					<bs:row>
 						<bs:mco colsize="12">
 						<div id="appDescription" class="appDescription">
-						This is a FACTION extension that will totally change your live for ever. Here are just a few of the amazing things this extension can do for you:
-						<br/>
-						<br/>
-						<ol>
-						<li> Eats Trash</li>
-						<li> Lives in a Garbage Can</li>
-						<li> Has Cool Stripes</li>
-						<li> Looks cuddly but will cut you</li>
-						</ol>
-						<br/>
-						This extension is actually a Raccon. 🦝	 Have fun. 		
+						Extension Information will be displayed here.
 						</div>
 						</bs:mco>
 					</bs:row>

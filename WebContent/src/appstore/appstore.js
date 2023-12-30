@@ -6,8 +6,7 @@ import 'jquery-ui';
 import 'jquery-confirm';
 import 'bootstrap-switch';
 import Sortable from 'sortablejs/modular/sortable.core.esm.js';
-
-$.fn.bootstrapSwitch.defaults.size = 'mini';
+import { marked } from 'marked';
 
 
 class AppStore {
@@ -19,6 +18,7 @@ class AppStore {
 	}
 
 	setupSortableLists() {
+		let _this = this;
 		let config = {
 			animation: 100,
 			group: 'assessment',
@@ -29,7 +29,24 @@ class AppStore {
 			onChoose: function(event) {
 				$(".list-group-item").removeClass("active");
 				$(event.item).addClass("active");
-
+				let id = $(event.item).data("id");
+				fetch(`GetDetails?id=${id}`)
+				.then( response => response.json())
+				.then( json => {
+					$('#appBox').removeClass("disabled");
+					$('#appDescription').html(marked.parse(_this.b64DecodeUnicode(json.description)));
+					$('#appTitle').html(`${json.title} <br\><small>Version: ${json.version}</small>`);
+					$('#appAuthor').html(json.author);
+					$('#appURL').html(json.url);
+					$('#appURL').attr("href", json.url);
+					let logo = json.logo;
+					if(logo==""){
+						logo="../app-default.png";
+					}else{
+						logo=`data:image/png;base64, ${logo}`;
+					}
+					$('#appLogo').attr("src", logo);
+				})
 			}
 		};
 		Sortable.create($("#assessmentExtensions")[0], config);
@@ -40,6 +57,12 @@ class AppStore {
 		config.group = 'inventory';
 		Sortable.create($("#inventoryExtensions")[0], config);
 	}
+	b64DecodeUnicode(str) {
+		str=decodeURIComponent(str);
+		return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
+			return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+		}).join(''));
+	} 
 
 	setupFileUpload() {
 		$("#appFile").fileinput({
@@ -74,6 +97,7 @@ class AppStore {
 		}
 		const li = document.createElement("li");
 		li.className = "list-group-item";
+		li.setAttribute("data-id", id);
 		li.innerHTML = `
 				<div class="appCard row">
 					<div class="col-md-1 handle-container" style="min-width: 100px">
@@ -113,8 +137,9 @@ class AppStore {
 			$('input[type="checkbox"]').bootstrapSwitch("size", "mini");
 			$('input:checked').bootstrapSwitch("state", true, true);
 			$('input[type="checkbox"]').on('switchChange.bootstrapSwitch', function(event, state) {
+				
+//TODO: move card to the right place
 			  console.log(this); // DOM element
-			  console.log(event); // jQuery event
 			  console.log(state); // true | false
 			  const id = $(this).data("id");
 			  if(state){
@@ -122,13 +147,26 @@ class AppStore {
 			  	.then( response => response.json())
 			  	.then( json => console.log(json))
 			  }
+			  else{
+			  	fetch(`DisableApp?id=${id}`)
+			  	.then( response => response.json())
+			  	.then( json => console.log(json))
+			  }
 			});
 		})
 	}
 	updateLists(elId,list){
-		list.forEach( data =>{
-			this.addCard(elId, data.id, data.title, data.version, data.author, data.url, data.logo, data.enabled)	
-		})
+		if(list.length == 0){
+			const li = document.createElement("li");
+			li.className = "list-group-item";
+			li.innerHTML = "No Extensions"
+			$(elId).append(li);
+			
+		}else{
+			list.forEach( data =>{
+				this.addCard(elId, data.id, data.title, data.version, data.author, data.url, data.logo, data.enabled)	
+			});
+		}
 	}
 
 }

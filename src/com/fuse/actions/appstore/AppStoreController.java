@@ -41,6 +41,7 @@ public class AppStoreController extends FSActionSupport{
 	private List<AppStore> inventoryApps;
 	private List<AppStore> disabledApps;
 	private Long id; 
+	private AppStore app;
 	
 	
 	@SuppressWarnings("unchecked")
@@ -62,6 +63,14 @@ public class AppStoreController extends FSActionSupport{
 		}
 		
 		return SUCCESS;
+	}
+	@Action(value = "GetDetails", results = {
+	     @Result(name = "json", location = "/WEB-INF/jsp/appstore/appJSON.jsp", params = { "contentType", "application/json" })
+	})
+	public String getDetails() {
+		app = (AppStore) em.createQuery("from AppStore where id = :id")
+				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
+		return "json";
 	}
 	
 	@Action(value = "DeleteApp")
@@ -123,7 +132,9 @@ public class AppStoreController extends FSActionSupport{
 	public void setId(Long id) {
 		this.id = id;
 	}
-	
+	public AppStore getApp() {
+		return this.app;
+	}
 	
 	
 }
