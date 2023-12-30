@@ -285,7 +285,7 @@ $(function() {
 		queueSave("summary");
 	}
 	editors.summary.onChange = function(contents, core) {
-		setEditorContents(contents, 'summary', false);
+		//setEditorContents(contents, 'summary', false);
 		if (document.getElementById(`summary_header`).innerHTML == "") {
 			queueSave("summary");
 		}
@@ -296,7 +296,7 @@ $(function() {
 		queueSave("risk");
 	}
 	editors.risk.onChange = function(contents, core) {
-		setEditorContents(contents, 'risk', false);
+		//setEditorContents(contents, 'risk', false);
 		if (document.getElementById(`risk_header`).innerHTML == "") {
 			queueSave("risk");
 		}
@@ -306,7 +306,7 @@ $(function() {
 		queueSave("notes");
 	}
 	editors.notes.onChange = function(contents, core) {
-		setEditorContents(contents, 'notes', false);
+		//setEditorContents(contents, 'notes', false);
 		if (document.getElementById(`notes_header`).innerHTML == "") {
 			queueSave("notes");
 		}
