@@ -14,6 +14,8 @@ class AppStore {
 		this.setupFileUpload();
 		this.getApps();
 		this.setupSortableLists();
+		
+		$("#installExtension").on('click',  ( )=> window.location="InstallExtension");
 
 	}
 

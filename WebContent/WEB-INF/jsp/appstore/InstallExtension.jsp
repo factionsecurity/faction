@@ -32,7 +32,8 @@
 					<div id="extensionPage" class="extensionPage" style="display:none">
 						<jsp:include page="ExtensionPage.jsp" />
 						<bs:row>
-							<bs:mco colsize="10"></bs:mco>
+							<bs:mco colsize="8"></bs:mco>
+							<bs:button color="primary" size="2" colsize="2" text="Cancel" id="cancelInstall"></bs:button>
 							<bs:button color="success" size="2" colsize="2" text="Install" id="installExtension"></bs:button>
 						</bs:row>
 					</div>

@@ -40,15 +40,29 @@ class InstallExtension {
 			}
 			
 		});
+		$("#cancelInstall").on('click', ()=>{ 
+			location.href="InstallExtension"
+		});
 		
 		$("#installExtension").on('click', ()=>{
-			fetch("InstallApp");
+			fetch("InstallApp")
+			.then( response => response.json())
+			.then( json => {
+				if(json.message == "success"){
+					location.href = "AppStoreDashBoard"
+				}else{
+					$.alert({
+						title: "Error",
+						content: json.message
+					})
+				}
+			})
 		})
 	}
 	loadPluginPage(info){
 		this.showPage();
 		$("#appLogo").attr('src',`data:image/png;base64, ${info.logo}`);
-		$("#appTitle").html(`${info.title} <small>Version: ${info.version}</small>`) ;
+		$("#appTitle").html(`${info.title} <br/><small>Version: ${info.version}</small>`) ;
 		$('#appAuthor').html(info.author);
 		$('#appURL').attr('href',info.url);
 		$('#appURL').html(info.url);

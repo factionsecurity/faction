@@ -92,7 +92,7 @@ font-weight: normal;
 		<h1>
 			<i class="fa fa-rocket"></i> Installed Extensions
 		</h1>
-  <button class="btn btn-success pull-right dashboardButton" ><i class="fa fa-upload"></i>&nbsp;&nbsp;Install Extension</button>
+  <button class="btn btn-success pull-right dashboardButton" id="installExtension"><i class="fa fa-upload"></i>&nbsp;&nbsp;Install Extension</button>
 	</section>
 
 	<!-- Main content -->

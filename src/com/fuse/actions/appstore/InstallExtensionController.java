@@ -133,8 +133,9 @@ public class InstallExtensionController extends FSActionSupport {
 		stream = new ByteArrayInputStream(json.toString().getBytes());
 		return "json";
 	}
-	@Action(value = "InstallApp", results = { @Result(name = "json", type = "stream", params = { "contentType",
-			"application/json", "inputName", "stream" }),
+	
+	@Action(value = "InstallApp", results = { 
+			@Result(name = "json", type = "stream", params = { "contentType","application/json", "inputName", "stream" }),
 			@Result(name = "input", location = "/WEB-INF/jsp/uploadError.jsp") })
 	public String installApp() throws IOException, ParseException {
 		String jarFile = (String) ServletActionContext.getRequest().getSession().getAttribute("Extension");
@@ -148,6 +149,7 @@ public class InstallExtensionController extends FSActionSupport {
 		if(alreadyInstalled) {
 			JSONObject success = new JSONObject();
 			success.put("message", "Already Installed");
+			System.out.println(success.toJSONString());
 			stream = new ByteArrayInputStream(success.toJSONString().getBytes());
 			return "json";
 		}
