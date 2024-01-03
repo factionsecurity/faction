@@ -21,10 +21,14 @@ public class AppStore {
 	private Boolean approved;
 	private Boolean enabled;
 	private String base64Logo;
-	private Boolean AssessmentEnabled;
-	private Boolean VerificationEnabled;
-	private Boolean VulnerabilityEnabled;
-	private Boolean InventoryEnabled;
+	private Boolean assessmentEnabled;
+	private Integer assessmentOrder;
+	private Boolean verificationEnabled;
+	private Integer verificationOrder;
+	private Boolean vulnerabilityEnabled;
+	private Integer vulnerabilityOrder;
+	private Boolean inventoryEnabled;
+	private Integer inventoryOrder;
 	private String base64JarFile;
 	private String hash;
 	public Long getId() {
@@ -82,28 +86,28 @@ public class AppStore {
 		this.base64Logo = base64Logo;
 	}
 	public Boolean getAssessmentEnabled() {
-		return AssessmentEnabled;
+		return assessmentEnabled;
 	}
 	public void setAssessmentEnabled(Boolean assessmentEnabled) {
-		AssessmentEnabled = assessmentEnabled;
+		this.assessmentEnabled = assessmentEnabled;
 	}
 	public Boolean getVerificationEnabled() {
-		return VerificationEnabled;
+		return verificationEnabled;
 	}
 	public void setVerificationEnabled(Boolean verificationEnabled) {
-		VerificationEnabled = verificationEnabled;
+		this.verificationEnabled = verificationEnabled;
 	}
 	public Boolean getVulnerabilityEnabled() {
-		return VulnerabilityEnabled;
+		return vulnerabilityEnabled;
 	}
 	public void setVulnerabilityEnabled(Boolean vulnerabilityEnabled) {
-		VulnerabilityEnabled = vulnerabilityEnabled;
+		this.vulnerabilityEnabled = vulnerabilityEnabled;
 	}
 	public Boolean getInventoryEnabled() {
-		return InventoryEnabled;
+		return inventoryEnabled;
 	}
 	public void setInventoryEnabled(Boolean inventoryEnabled) {
-		InventoryEnabled = inventoryEnabled;
+		this.inventoryEnabled = inventoryEnabled;
 	}
 	public String getBase64JarFile() {
 		return base64JarFile;
@@ -124,6 +128,31 @@ public class AppStore {
 	public void setHash(String hash) {
 		this.hash = hash;
 	}
+	public Integer getAssessmentOrder() {
+		return assessmentOrder == null? 0 : assessmentOrder;
+	}
+	public void setAssessmentOrder(Integer assessmentOrder) {
+		this.assessmentOrder = assessmentOrder;
+	}
+	public Integer getVerificationOrder() {
+		return verificationOrder == null ? 0 : verificationOrder;
+	}
+	public void setVerificationOrder(Integer verificationOrder) {
+		this.verificationOrder = verificationOrder;
+	}
+	public Integer getVulnerabilityOrder() {
+		return vulnerabilityOrder == null ? 0 : vulnerabilityOrder;
+	}
+	public void setVulnerabilityOrder(Integer vulnerabilityOrder) {
+		this.vulnerabilityOrder = vulnerabilityOrder;
+	}
+	public Integer getInventoryOrder() {
+		return inventoryOrder == null ? 0 : inventoryOrder;
+	}
+	public void setInventoryOrder(Integer inventoryOrder) {
+		this.inventoryOrder = inventoryOrder;
+	}
+	
 	
 
 }

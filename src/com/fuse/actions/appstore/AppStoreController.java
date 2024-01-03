@@ -5,6 +5,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -42,16 +44,20 @@ public class AppStoreController extends FSActionSupport{
 	private List<AppStore> disabledApps;
 	private Long id; 
 	private AppStore app;
+	private String appList;
+	private String appType;
 	
 	
 	@SuppressWarnings("unchecked")
 	@Action(value = "AppStoreDashboard")
 	public String execute() {
+		//TODO: Add AuthZ
 		return SUCCESS;
 	}
 	
 	@Action(value = "EnableApp")
-	public String addApp() {
+	public String enableApp() {
+		//TODO: Add AuthZ
 		AppStore app = (AppStore) em.createQuery("from AppStore where id = :id")
 				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
 		if(app != null) {
@@ -61,53 +67,157 @@ public class AppStoreController extends FSActionSupport{
 			em.persist(app);
 			HibHelper.getInstance().commit();
 		}
-		
-		return SUCCESS;
-	}
-	@Action(value = "GetDetails", results = {
-	     @Result(name = "json", location = "/WEB-INF/jsp/appstore/appJSON.jsp", params = { "contentType", "application/json" })
-	})
-	public String getDetails() {
-		app = (AppStore) em.createQuery("from AppStore where id = :id")
-				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
-		return "json";
-	}
-	
-	@Action(value = "DeleteApp")
-	public String deleteApp() {
-		List<AppStore> apps = em.createQuery("from AppStore where enabled = true order by order").getResultList();
-		
-		return SUCCESS;
+		_result="success";
+		return MESSAGEJSON;
 	}
 	
 	@Action(value = "DisableApp")
 	public String disableApp() {
-		List<AppStoreController> apps = em.createQuery("from AppStore where enabled = true order by order").getResultList();
-		
-		return SUCCESS;
+		//TODO: Add AuthZ
+		AppStore app = (AppStore) em.createQuery("from AppStore where id = :id")
+				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
+		if(app != null) {
+			app.setEnabled(false);
+			HibHelper.getInstance().preJoin();
+			em.joinTransaction();
+			em.persist(app);
+			HibHelper.getInstance().commit();
+			_result="success";
+			return MESSAGEJSON;
+		}else {
+			_result="error";
+			_message="App Not Found";
+			return MESSAGEJSON;
+			
+		}
 	}
+	
+	@Action(value = "GetDetails", results = {
+	     @Result(name = "jsonApp", location = "/WEB-INF/jsp/appstore/appJSON.jsp", params = { "contentType", "application/json" })
+	})
+	public String getDetails() {
+		//TODO: Add AuthZ
+		app = (AppStore) em.createQuery("from AppStore where id = :id")
+				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
+		return "jsonApp";
+	}
+	
+	@Action(value = "DeleteApp")
+	public String deleteApp() {
+		//TODO: Add AuthZ
+		AppStore app = (AppStore) em.createQuery("from AppStore where id = :id")
+				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
+		if(app != null) {
+			HibHelper.getInstance().preJoin();
+			em.joinTransaction();
+			em.remove(app);
+			HibHelper.getInstance().commit();
+			_result="success";
+			return MESSAGEJSON;
+		}else {
+			_result="error";
+			_message="App Not Found";
+			return MESSAGEJSON;
+			
+		}
+	}
+	
+	
+	@Action(value = "ChangeOrder")
+	public String changeOrder() {
+		//TODO: Add AuthZ
+		List<AppStore> apps = em.createQuery("from AppStore").getResultList();
+		List<String> appIdsString = Arrays.asList(appList.split(","));
+		List<Long> appIds = appIdsString
+				.stream()
+				.mapToLong( v -> Long.parseLong(v))
+				.boxed()
+				.collect(Collectors.toList());
+		
+		
+		Integer [] index = {0};
+		for(Long id : appIds) {
+			AppStore app = apps.stream().filter( a -> a.getId().equals(id)).findFirst().orElse(null);
+			switch (appType) {
+				case "assessment":
+					app.setAssessmentOrder(index[0]);
+					break;
+				case "verification":
+					app.setVerificationOrder(index[0]);
+					break;
+				case "vulnerability":
+					app.setVulnerabilityOrder(index[0]);
+					break;
+				case "inventory":
+					app.setInventoryOrder(index[0]);
+					break;
+
+				default:
+					break;
+			}
+			index[0]++;
+		}
+		
+		apps
+		.stream()
+		.filter( a -> !appIds.contains(a.getId()))
+		.forEach( (a) -> {  
+			switch (appType) {
+				case "assessment":
+					a.setAssessmentOrder(index[0]);
+					break;
+				case "verification":
+					a.setVerificationOrder(index[0]);
+					break;
+				case "vulnerability":
+					a.setVulnerabilityOrder(index[0]);
+					break;
+				case "inventory":
+					a.setInventoryOrder(index[0]);
+					break;
+				default:
+					break;
+			}
+			index[0]++;
+		}
+		);
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		apps.forEach(a -> em.persist(a));
+		HibHelper.getInstance().commit();
+		
+		_result="success";
+		return MESSAGEJSON;
+	}
+	
+	
 	@Action(value = "GetApps", results = {
-	     @Result(name = "json", location = "/WEB-INF/jsp/appstore/appsJSON.jsp", params = { "contentType", "application/json" })
+	     @Result(name = "jsonApps", location = "/WEB-INF/jsp/appstore/appsJSON.jsp", params = { "contentType", "application/json" })
 	})
 	public String getApps() {
+		//TODO: Add AuthZ
 		List<AppStore> apps = em.createQuery("from AppStore").getResultList();
 		assessmentApps = apps.stream()
 				.filter( app -> app.getEnabled() && app.getAssessmentEnabled())
+				.sorted((a1,a2)-> Integer.compare(a1.getAssessmentOrder(), a2.getAssessmentOrder()))
 				.collect(Collectors.toList());
 		vulnerabilityApps = apps.stream()
 				.filter( app -> app.getEnabled() && app.getVulnerabilityEnabled())
+				.sorted((a1,a2)-> Integer.compare(a1.getVulnerabilityOrder(), a2.getVulnerabilityOrder()))
 				.collect(Collectors.toList());
 		verificationApps = apps.stream()
 				.filter( app -> app.getEnabled() && app.getVerificationEnabled())
+				.sorted((a1,a2)-> Integer.compare(a1.getVerificationOrder(), a2.getVerificationOrder()))
 				.collect(Collectors.toList());
 		inventoryApps = apps.stream()
 				.filter( app -> app.getEnabled() && app.getInventoryEnabled())
+				.sorted((a1,a2)-> Integer.compare(a1.getInventoryOrder(), a2.getInventoryOrder()))
 				.collect(Collectors.toList());
 		disabledApps = apps.stream()
 				.filter( app -> !app.getEnabled())
 				.collect(Collectors.toList());
 		
-		return "json";
+		return "jsonApps";
 	}
 
 	public List<AppStore> getAssessmentApps() {
@@ -135,6 +245,15 @@ public class AppStoreController extends FSActionSupport{
 	public AppStore getApp() {
 		return this.app;
 	}
+
+	public void setAppList(String appList) {
+		this.appList = appList;
+	}
+
+	public void setAppType(String appType) {
+		this.appType = appType;
+	}
+	
 	
 	
 }

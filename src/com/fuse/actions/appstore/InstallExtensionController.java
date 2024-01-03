@@ -46,6 +46,7 @@ public class InstallExtensionController extends FSActionSupport {
 
 	@Action(value = "InstallExtension")
 	public String execute() {
+		//TODO: Add AuthZ
 		return SUCCESS;
 	}
 
@@ -53,6 +54,7 @@ public class InstallExtensionController extends FSActionSupport {
 			"application/json", "inputName", "stream" }),
 			@Result(name = "input", location = "/WEB-INF/jsp/uploadError.jsp") })
 	public String uploadFile() throws IOException {
+		//TODO: Add AuthZ
 
 		/*
 		 * if(!this.isAcadmin()) { AuditLog.notAuthorized( this,
@@ -134,10 +136,9 @@ public class InstallExtensionController extends FSActionSupport {
 		return "json";
 	}
 	
-	@Action(value = "InstallApp", results = { 
-			@Result(name = "json", type = "stream", params = { "contentType","application/json", "inputName", "stream" }),
-			@Result(name = "input", location = "/WEB-INF/jsp/uploadError.jsp") })
+	@Action(value = "InstallApp")
 	public String installApp() throws IOException, ParseException {
+		//TODO: Add AuthZ
 		String jarFile = (String) ServletActionContext.getRequest().getSession().getAttribute("Extension");
 		String md5 = FSUtils.md5hash(jarFile);
 		Boolean alreadyInstalled =em.createQuery("from AppStore where hash = :hash")
@@ -147,11 +148,9 @@ public class InstallExtensionController extends FSActionSupport {
 			.findAny()
 			.isPresent();
 		if(alreadyInstalled) {
-			JSONObject success = new JSONObject();
-			success.put("message", "Already Installed");
-			System.out.println(success.toJSONString());
-			stream = new ByteArrayInputStream(success.toJSONString().getBytes());
-			return "json";
+			_message="Already Installed";
+			_result="error";
+			return MESSAGEJSON;
 		}
 		
 		String infoString = (String) ServletActionContext.getRequest().getSession().getAttribute("Extension_Info");
@@ -164,7 +163,7 @@ public class InstallExtensionController extends FSActionSupport {
 		app.setAssessmentEnabled( (Boolean)info.get("assessment"));
 		app.setVerificationEnabled((Boolean)info.get("verification"));
 		app.setVulnerabilityEnabled((Boolean)info.get("vulnerability"));
-		app.setInventoryEnabled((Boolean)info.get("Inventory"));
+		app.setInventoryEnabled((Boolean)info.get("inventory"));
 		app.setAuthor(info.get("author").toString());
 		app.setBase64JarFile(jarFile);
 		app.setBase64Logo(info.get("logo").toString());
@@ -177,10 +176,9 @@ public class InstallExtensionController extends FSActionSupport {
 		em.joinTransaction();
 		em.persist(app);
 		HibHelper.getInstance().commit();
-		JSONObject success = new JSONObject();
-		success.put("message", "success");
-		stream = new ByteArrayInputStream(success.toJSONString().getBytes());
-		return "json";
+		
+		_result="success";
+		return MESSAGEJSON;
 		
 	}
 

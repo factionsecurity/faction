@@ -47,6 +47,7 @@ import com.opensymphony.xwork2.interceptor.annotations.Before;
 @Results( value = {
 		@Result(name="login", type="redirectAction", location="../login"),
 		@Result(name="successJson", location="/WEB-INF/jsp/successJson.jsp"),
+		@Result(name="messageJson", location="/WEB-INF/jsp/messageJson.jsp"),
 		@Result(name="errorJson", location="/WEB-INF/jsp/errorJson.jsp"),
 		@Result(name="invalid.token", location="/WEB-INF/jsp/errorJson.jsp"),
 		@Result( name="_json",type = "stream"
@@ -68,6 +69,7 @@ public class FSActionSupport extends ActionSupport {
 	public String LOGIN = "login";
 	public String SUCCESSJSON = "successJson";
 	public String ERRORJSON = "errorJson";
+	public String MESSAGEJSON = "messageJson";
 	public String JSON = "_json";
 	public String RAW = "_raw";
 	protected InputStream _stream;
@@ -80,7 +82,8 @@ public class FSActionSupport extends ActionSupport {
 	protected String _title1 = "Fuse";
 	protected String _title2 = "FACTION";
 	protected String _token ="";
-	public String _message;
+	public String _message="";
+	public String _result="";
 	public boolean userLimitReached=false;
 	public boolean expireDateApproaching=false;
 	public boolean licenseExpired=false;
@@ -275,6 +278,9 @@ public class FSActionSupport extends ActionSupport {
 	public String get_message() {
 		return _message;
 	}
+	public String get_result() {
+		return _result;
+	}
 	
 	public InputStream get_stream() {
 		return _stream;
@@ -298,4 +304,6 @@ public class FSActionSupport extends ActionSupport {
 	public String getVersion() {
 		return this.version; 
 	}
+	
+	
 }
