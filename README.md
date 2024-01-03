@@ -6,7 +6,7 @@ FACTION is your entire assessment workflow in a box. With FACTION you can:
 1. Automate pen testing and security assessment Reports
 1. Peer review and track changes for reports
 1. Create customized DOCX templates for different assessment types and retests
-3. Real-time collaboration with assessors via the web app and [Burp Suite Extensions](https://www.factionsecurity.com/project/faction-burpsuite-extension/)
+3. Real-time collaboration with assessors via the web app and [Burp Suite Extensions](https://github.com/factionsecurity/Faction-Burp)
 4. Customizable vulnerability templates with over 75 prepopulated
 5. Easily manage assessment teams and track progress across your organization
 6. Track vulnerability remediation efforts with custom SLA warnings and alerts  
@@ -19,7 +19,7 @@ Other Features:           
 1. Extendable with Custom Plugins similar to Burp Extender.
 2. Custom Report Variables
 
-__Want to see it in action?__ -> [Faction Video Overview](https://www.factionsecurity.com/2023/03/24/write-your-first-vulnerability-report-in-faction/)
+__Want to see it in action?__ -> [Faction Video Overview](https://www.youtube.com/watch?v=cYi71oofUdU)
 
 ## Quick Setup
 __Requirements__
@@ -43,13 +43,13 @@ On the first boot, it will ask you to create an admin account.
 
 ## Customize reports
 You can find out more information about creating your own custom report templates here:
-[Custom Security Report Templates - Faction Security](https://www.factionsecurity.com/project/custom-security-report-templates/)
+[Custom Security Report Templates - Faction Security](https://docs.factionsecurity.com/Custom%20Security%20Report%20Templates/)
 
 ## Burp Suite Extension
-[Burp Suite Extensions](https://www.factionsecurity.com/project/faction-burpsuite-extension/)
+[Burp Suite Extensions](https://github.com/factionsecurity/Faction-Burp)
 
 ## Manuals and Tutorials
-[Manual](https://www.factionsecurity.com/manual/)
+[Manual](https://docs.factionsecurity.com/)
 
 ## Don't want to host it yourself?
 We can provide hosting for your instance. All instances are single tenants so you don't have to worry about sharing infrastructure with untrusted parties. Navigate to [https://www.factionsecurity.com to learn more](https://www.factionsecurity.com). 

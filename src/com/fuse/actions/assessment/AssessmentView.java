@@ -469,6 +469,15 @@ public class AssessmentView extends FSActionSupport {
 		this.assessment = em.find(Assessment.class, asmtId);
 		if (isNotesLockedbyAnotherUser() || isSummaryLockedbyAnotherUser() || isRiskLockedbyAnotherUser()) {
 			this.clearLockType("", this.user);
+			if(this.assessment.getNotes() == null) {
+				this.assessment.setNotes("");
+			}
+			if(this.assessment.getSummary() == null) {
+				this.assessment.setSummary("");
+			}
+			if(this.assessment.getRiskAnalysis() == null) {
+				this.assessment.setRiskAnalysis("");
+			}
 			this.assessment.setNotes(URLEncoder
 					.encode(Base64.getEncoder().encodeToString(this.assessment.getNotes().getBytes()), "UTF-8"));
 			this.assessment.setSummary(URLEncoder
