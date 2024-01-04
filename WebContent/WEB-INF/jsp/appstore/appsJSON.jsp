@@ -8,7 +8,7 @@
 	"author" : "<s:property value="author"/>", 
 	"url" : "<s:property value="url"/>", 
 	"logo" : "<s:property value="base64Logo"/>", 
-	"enabled" : "<s:property value="enabled"/>", 
+	"enabled" : <s:property value="enabled"/>, 
 	"description" : "<s:property value="description"/>"
 }<s:if test="!#stat.last">,</s:if>
 	</s:iterator>],
@@ -19,7 +19,7 @@
 	"author" : "<s:property value="author"/>", 
 	"url" : "<s:property value="url"/>", 
 	"logo" : "<s:property value="base64Logo"/>", 
-	"enabled" : "<s:property value="enabled"/>", 
+	"enabled" : <s:property value="enabled"/>, 
 	"description" : "<s:property value="description"/>"
 }<s:if test="!#stat.last">,</s:if>
 	</s:iterator>],
@@ -30,7 +30,7 @@
 	"author" : "<s:property value="author"/>", 
 	"url" : "<s:property value="url"/>", 
 	"logo" : "<s:property value="base64Logo"/>", 
-	"enabled" : "<s:property value="enabled"/>", 
+	"enabled" : <s:property value="enabled"/>, 
 	"description" : "<s:property value="description"/>"
 }<s:if test="!#stat.last">,</s:if>
 	</s:iterator>],
@@ -41,7 +41,7 @@
 	"author" : "<s:property value="author"/>", 
 	"url" : "<s:property value="url"/>", 
 	"logo" : "<s:property value="base64Logo"/>", 
-	"enabled" : "<s:property value="enabled"/>", 
+	"enabled" : <s:property value="enabled"/>, 
 	"description" : "<s:property value="description"/>"
 }<s:if test="!#stat.last">,</s:if>
 	</s:iterator>],
@@ -52,7 +52,7 @@
 	"author" : "<s:property value="author"/>", 
 	"url" : "<s:property value="url"/>", 
 	"logo" : "<s:property value="base64Logo"/>", 
-	"enabled" : "<s:property value="enabled"/>", 
+	"enabled" : <s:property value="enabled"/>, 
 	"description" : "<s:property value="description"/>"
 }<s:if test="!#stat.last">,</s:if>
 	</s:iterator>]

@@ -50,7 +50,7 @@ class AppStore {
 					$('#appLogo').attr("src", logo);
 				})
 			},
-			onEnd: function (/**Event*/evt) {
+			onEnd: function (evt) {
 				const itemEl = evt.item;
 				const appType = $(itemEl).parent()[0].id.replace("Extensions", "");
 				
@@ -59,16 +59,16 @@ class AppStore {
 				const appIds = Array.from(children).map( c => c.dataset.id);
 				const appList = `appList=${appIds.join(",")}&appType=${appType}`;
 				fetch("ChangeOrder", {
-					method: "POST", // *GET, POST, PUT, DELETE, etc.
-					mode: "cors", // no-cors, *cors, same-origin
-					cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
-					credentials: "same-origin", // include, *same-origin, omit
+					method: "POST", 
+					mode: "cors", 
+					cache: "no-cache", 
+					credentials: "same-origin", 
 					headers: {
 					  'Content-Type': 'application/x-www-form-urlencoded',
 					},
-					redirect: "follow", // manual, *follow, error
-					referrerPolicy: "no-referrer", // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-					body: appList, // body data type must match "Content-Type" header
+					redirect: "follow", 
+					referrerPolicy: "no-referrer", 
+					body: appList, 
 				
 				}).then( response => response.json())
 				.then( json => console.log(json));
@@ -81,6 +81,9 @@ class AppStore {
 		Sortable.create($("#verificationExtensions")[0], config);
 		config.group = 'inventory';
 		Sortable.create($("#inventoryExtensions")[0], config);
+		config.group = 'disabled';
+		config.onEnd = function(){};
+		Sortable.create($("#disabledExtensions")[0], config);
 	}
 	b64DecodeUnicode(str) {
 		str=decodeURIComponent(str);
@@ -162,20 +165,18 @@ class AppStore {
 			$('input[type="checkbox"]').bootstrapSwitch("size", "mini");
 			$('input:checked').bootstrapSwitch("state", true, true);
 			$('input[type="checkbox"]').on('switchChange.bootstrapSwitch', function(event, state) {
-				
-//TODO: move card to the right place
 			  console.log(this); // DOM element
 			  console.log(state); // true | false
 			  const id = $(this).data("id");
 			  if(state){
 			  	fetch(`EnableApp?id=${id}`)
 			  	.then( response => response.json())
-			  	.then( json => console.log(json))
+			  	.then( json => location.reload())
 			  }
 			  else{
 			  	fetch(`DisableApp?id=${id}`)
 			  	.then( response => response.json())
-			  	.then( json => console.log(json))
+			  	.then( json => location.reload())
 			  }
 			});
 		})

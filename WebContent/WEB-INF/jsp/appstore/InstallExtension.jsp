@@ -25,10 +25,18 @@
 		<bs:row>
 			<bs:mco colsize="6">
 				<bs:box type="primary" title="Install Custom Extensions">
+					<bs:row>
+						<bs:mco colsize="9"></bs:mco>
+						<bs:button color="primary" size="2" colsize="3" text="Back To Store" id="backToAppStore"></bs:button>
+					</bs:row>
+					<bs:row>
+					<bs:mco colsize="12">
 					<div class="form-group" id="appUpload">
 						<label>Upload Extension</label> <input id="appFile" type="file"
 							multiple name="file_data" />
 					</div>
+					</bs:mco>
+					</bs:row>
 					<div id="extensionPage" class="extensionPage" style="display:none">
 						<jsp:include page="ExtensionPage.jsp" />
 						<bs:row>

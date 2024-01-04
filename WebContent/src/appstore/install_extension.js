@@ -43,6 +43,9 @@ class InstallExtension {
 		$("#cancelInstall").on('click', ()=>{ 
 			location.href="InstallExtension"
 		});
+		$("#backToAppStore").on('click', ()=>{ 
+			location.href="AppStoreDashboard"
+		});
 		
 		$("#installExtension").on('click', ()=>{
 			fetch("InstallApp")
