@@ -228,8 +228,8 @@ public class AppStore {
 		fc.position(0);
 		byte[] jarBytes = IOUtils.toByteArray(fis);
 		fis.close();
-		
-		String base64Description =URLEncoder.encode(Base64.getEncoder().encodeToString(description.toByteArray()),"UTF-8");
+		String sanitizedDesc = FSUtils.sanitizeHTML(description.toString());
+		String base64Description =URLEncoder.encode(Base64.getEncoder().encodeToString(sanitizedDesc.getBytes()),"UTF-8");
 		String base64Logo = URLEncoder.encode(Base64.getEncoder().encodeToString(logo.toByteArray()),"UTF-8");
 		
 		this.setJarFile(jarBytes); //adds has and B64 encodes

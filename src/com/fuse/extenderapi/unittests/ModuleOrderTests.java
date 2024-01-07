@@ -29,7 +29,7 @@ import com.fuse.dao.Vulnerability;
 import com.fuse.extenderapi.Extensions;
 
 
-public class TestModuleOrder {
+public class ModuleOrderTests {
 	
 	private EntityManager em;
 	private Assessment assessment;

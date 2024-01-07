@@ -28,10 +28,9 @@ import com.fuse.dao.Verification;
 import com.fuse.dao.VerificationItem;
 import com.fuse.dao.Vulnerability;
 import com.fuse.extenderapi.Extensions;
-import com.fuse.extenderapi.Extensions.EventType;
 
 
-public class TestExtensionAPIModule {
+public class ExtensionAPIModuleTests {
 	
 	private EntityManager em;
 	private Assessment assessment;

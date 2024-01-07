@@ -80,9 +80,6 @@ public class InstallExtensionController extends FSActionSupport {
 				+ "\"description\": \"" + preview.getDescription() + "\"}"
 				+ "}";
 		ServletActionContext.getRequest().getSession().setAttribute("PreviewApp", preview);
-		//byte [] jarBytes = Files.readAllBytes(Paths.get(file_data.toURI()));
-		//String b64Jar = Base64.getEncoder().encodeToString(jarBytes);
-		//ServletActionContext.getRequest().getSession().setAttribute("Extension", b64Jar);
 		stream = new ByteArrayInputStream(json.toString().getBytes());
 		return "json";
 	}
