@@ -64,74 +64,25 @@ public class InstallExtensionController extends FSActionSupport {
 		User user = this.getSessionUser();
 
 		FileInputStream fis = new FileInputStream(file_data);
-		JarInputStream jarStream = new JarInputStream(fis);
-		Manifest manifest = jarStream.getManifest();
-		Attributes attr = manifest.getMainAttributes();
-		String title = attr.getValue("Title");
-		String author = attr.getValue("Author");
-		String version = attr.getValue("Version");
-		String url = attr.getValue("URL");
-		JarEntry entry;
-		ByteArrayOutputStream logo = new ByteArrayOutputStream();
-		ByteArrayOutputStream description = new ByteArrayOutputStream();
-		Boolean isAssessmentApp = false;
-		Boolean isVerificationApp = false;
-		Boolean isVulnerabilityApp = false;
-		Boolean isInventoryApp = false;
-		while ((entry = jarStream.getNextJarEntry()) != null) {
-			if (!entry.isDirectory() && entry.getName().endsWith("description.md")) {
-				while(jarStream.available() == 1) {
-					byte[] data = new byte[512];
-					int size = jarStream.read(data);
-					if(size == -1)
-						break;
-					description.write(data, 0, size);
-				}
-			}
-			if (!entry.isDirectory() && entry.getName().endsWith("logo.png")) {
-				while(jarStream.available() == 1) {
-					byte[] data = new byte[512];
-					int size = jarStream.read(data);
-					if(size == -1)
-						break;
-					logo.write(data, 0, size);
-				}
-			}
-			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.ApplicationInventory")) {
-				isInventoryApp = true;
-			}
-			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.AssessmentManager")) {
-				isAssessmentApp = true;
-			}
-			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.VulnerabilityManager")) {
-				isVulnerabilityApp = true;
-			}
-			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.VerificationManager")) {
-				isVerificationApp = true;
-			}
-		}
-		fis.close();
-		
-		String base64Description =URLEncoder.encode(Base64.getEncoder().encodeToString(description.toByteArray()),"UTF-8");
-		String base64Logo = URLEncoder.encode(Base64.getEncoder().encodeToString(logo.toByteArray()),"UTF-8");
-
+		AppStore preview = new AppStore();
+		preview.parseJar(fis);
 
 		String json = "{";
-		json += " \"extension_info\": { \"title\": \"" + title +"\", "
-				+ "\"version\": \"" +version + "\", "
-				+ "\"author\": \"" + author + "\", "
-				+ "\"url\": \"" + url + "\", "
-				+ "\"logo\": \"" + base64Logo+ "\", "
-				+ "\"assessment\": " + isAssessmentApp + ", "
-				+ "\"verification\": " + isVerificationApp + ", "
-				+ "\"vulnerability\": " + isVulnerabilityApp + ", "
-				+ "\"inventory\": " + isInventoryApp + ", "
-				+ "\"description\": \"" + base64Description + "\"}"
+		json += " \"extension_info\": { \"title\": \"" + preview.getName() +"\", "
+				+ "\"version\": \"" + preview.getVersion() + "\", "
+				+ "\"author\": \"" + preview.getAuthor() + "\", "
+				+ "\"url\": \"" + preview.getUrl() + "\", "
+				+ "\"logo\": \"" + preview.getBase64Logo()+ "\", "
+				+ "\"assessment\": " + preview.getAssessmentEnabled() + ", "
+				+ "\"verification\": " + preview.getVerificationEnabled() + ", "
+				+ "\"vulnerability\": " + preview.getVulnerabilityEnabled() + ", "
+				+ "\"inventory\": " + preview.getInventoryEnabled() + ", "
+				+ "\"description\": \"" + preview.getDescription() + "\"}"
 				+ "}";
-		ServletActionContext.getRequest().getSession().setAttribute("Extension_Info", json);
-		byte [] jarBytes = Files.readAllBytes(Paths.get(file_data.toURI()));
-		String b64Jar = Base64.getEncoder().encodeToString(jarBytes);
-		ServletActionContext.getRequest().getSession().setAttribute("Extension", b64Jar);
+		ServletActionContext.getRequest().getSession().setAttribute("PreviewApp", preview);
+		//byte [] jarBytes = Files.readAllBytes(Paths.get(file_data.toURI()));
+		//String b64Jar = Base64.getEncoder().encodeToString(jarBytes);
+		//ServletActionContext.getRequest().getSession().setAttribute("Extension", b64Jar);
 		stream = new ByteArrayInputStream(json.toString().getBytes());
 		return "json";
 	}
@@ -139,10 +90,9 @@ public class InstallExtensionController extends FSActionSupport {
 	@Action(value = "InstallApp")
 	public String installApp() throws IOException, ParseException {
 		//TODO: Add AuthZ
-		String jarFile = (String) ServletActionContext.getRequest().getSession().getAttribute("Extension");
-		String md5 = FSUtils.md5hash(jarFile);
+		AppStore app = (AppStore) ServletActionContext.getRequest().getSession().getAttribute("PreviewApp");
 		Boolean alreadyInstalled =em.createQuery("from AppStore where hash = :hash")
-			.setParameter("hash", md5)
+			.setParameter("hash", app.getHash())
 			.getResultList()
 			.stream()
 			.findAny()
@@ -152,26 +102,6 @@ public class InstallExtensionController extends FSActionSupport {
 			_result="error";
 			return MESSAGEJSON;
 		}
-		
-		String infoString = (String) ServletActionContext.getRequest().getSession().getAttribute("Extension_Info");
-		JSONParser parser = new JSONParser();
-		JSONObject extensionInfo = (JSONObject) parser.parse(infoString);
-		JSONObject info = (JSONObject) extensionInfo.get("extension_info");
-		
-		AppStore app = new AppStore();
-		app.setApproved(false);
-		app.setAssessmentEnabled( (Boolean)info.get("assessment"));
-		app.setVerificationEnabled((Boolean)info.get("verification"));
-		app.setVulnerabilityEnabled((Boolean)info.get("vulnerability"));
-		app.setInventoryEnabled((Boolean)info.get("inventory"));
-		app.setAuthor(info.get("author").toString());
-		app.setBase64JarFile(jarFile);
-		app.setBase64Logo(info.get("logo").toString());
-		app.setName(info.get("title").toString());
-		app.setDescription(info.get("description").toString());
-		app.setEnabled(false);
-		app.setVersion(info.get("version").toString());
-		
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		em.persist(app);

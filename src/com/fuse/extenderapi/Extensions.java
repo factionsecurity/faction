@@ -1,6 +1,7 @@
 package com.fuse.extenderapi;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -13,6 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,6 +38,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.BeanWrapper;
 import org.springframework.beans.BeanWrapperImpl;
 
+import com.fuse.dao.AppStore;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.HibHelper;
@@ -382,12 +385,24 @@ public class Extensions {
 	}
 
 
-	private URLClassLoader createExtensionClassLoader(String modulePath) {
+	private URLClassLoader createExtensionClassLoader(List<AppStore> apps, String modulePath) {
 		File dir = new File(modulePath);
-		URL[] urls = Arrays.stream(Optional.of(dir.listFiles()).orElse(new File[] {})).sorted().map(File::toURI)
+		
+		/*URL[] urls = Arrays.stream(Optional.of(dir.listFiles()).orElse(new File[] {})).sorted().map(File::toURI)
 				.map(t -> {
 					try {
 						return t.toURL();
+					} catch (MalformedURLException e) {
+						e.printStackTrace();
+						return null;
+					}
+				}).filter(t -> t != null).toArray(URL[]::new);*/
+		URL [] urls = apps.stream()
+				.map(app -> {
+					try {
+						String name = this.extensionPath + "/" + app.getHash() + ".jar";
+						File jarFile = new File(name);
+						return jarFile.toURL();
 					} catch (MalformedURLException e) {
 						e.printStackTrace();
 						return null;
@@ -397,7 +412,9 @@ public class Extensions {
 	}
 
 	public void loadExtensions() throws MalformedURLException {
-		URLClassLoader extensionLoader = createExtensionClassLoader(this.extensionPath);
+		List<AppStore> apps = this.syncFileSystemWithDatabase();
+		
+		URLClassLoader extensionLoader = createExtensionClassLoader(apps, this.extensionPath);
 		ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
 		
 		// Load Assessment Manager Extensions
@@ -450,10 +467,52 @@ public class Extensions {
 					inventoryManagers.add(invMgr);
 				}
 			}
+		} catch (Exception ex) {
+			ex.printStackTrace();
 		} catch(Throwable ex) {
 			ex.printStackTrace();
 		} finally {
 			Thread.currentThread().setContextClassLoader(currentClassLoader);
+		}
+	}
+	
+	public List<AppStore> syncFileSystemWithDatabase() {
+		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+		try {
+			List<AppStore> apps = em.createQuery("from AppStore order by order").getResultList();
+			File dir = new File(this.extensionPath);
+			File [] tmpFiles = dir.listFiles();
+			List<File> files = Arrays.stream(dir.listFiles()).collect(Collectors.toList());
+			List<File> deleteFiles = files
+					.stream()
+					.filter( (f) -> { 
+						String hash = f.getName().replace(".jar", "");
+						return !apps.stream().anyMatch( a -> a.getHash().equals(hash));
+					}).collect(Collectors.toList());
+			List<AppStore> addFiles = apps
+					.stream()
+					.filter( (a) -> { 
+						String hash = a.getHash();
+						return !files.stream().anyMatch( f -> f.getName().startsWith(hash));
+					}).collect(Collectors.toList());
+			
+			for(File file : deleteFiles) {
+				file.delete();
+			}
+			for(AppStore app : addFiles) {
+				byte[] bytes = Base64.getDecoder().decode(app.getBase64JarFile().getBytes());
+				try {
+					FileOutputStream outputStream = new FileOutputStream(this.extensionPath + "/" + app.getHash() + ".jar");
+					outputStream.write(bytes);
+					outputStream.close();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				
+			}
+			return apps;
+		}finally {
+			em.close();
 		}
 	}
 

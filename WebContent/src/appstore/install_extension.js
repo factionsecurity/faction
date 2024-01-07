@@ -51,8 +51,8 @@ class InstallExtension {
 			fetch("InstallApp")
 			.then( response => response.json())
 			.then( json => {
-				if(json.message == "success"){
-					location.href = "AppStoreDashBoard"
+				if(json.result == "success"){
+					location.href = "AppStoreDashboard"
 				}else{
 					$.alert({
 						title: "Error",
