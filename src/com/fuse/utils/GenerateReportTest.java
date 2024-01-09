@@ -29,24 +29,13 @@ public class GenerateReportTest {
 		GenerateReport report = new GenerateReport();
 		
 		String b64report = report.generateDocxReport(28l, em);
+		assertNotNull(b64report);
 		try {
 			byte [] bytereport = Base64.decode(b64report);
+			assertNotNull(bytereport);
 
-			/*ByteArrayInputStream bais = new ByteArrayInputStream(bytereport);
-			byte [] file = DocxUtils.updateTOC(bais);*/
-			FileOutputStream fos2 = new FileOutputStream("C:\\tmp\\junit.docx");
-			fos2.write(bytereport);
-			fos2.close();
-			Desktop.getDesktop().open(new File("C:\\tmp\\junit.docx"));
 		} catch (Base64DecodingException e) {
 			fail(e.getMessage());
-		} catch (FileNotFoundException e) {
-			fail(e.getMessage());
-		} catch (IOException e) {
-			fail(e.getMessage());
-		} catch (Exception e) {
-			fail(e.getMessage());
-		}
 		
 		em.close();
 	}
