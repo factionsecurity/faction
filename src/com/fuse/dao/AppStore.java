@@ -233,10 +233,10 @@ public class AppStore {
 		String base64Logo = URLEncoder.encode(Base64.getEncoder().encodeToString(logo.toByteArray()),"UTF-8");
 		
 		this.setJarFile(jarBytes); //adds has and B64 encodes
-		this.name = title;
-		this.version = version;
-		this.author = author;
-		this.url = url;
+		this.name = FSUtils.sanitizeHTML(title);
+		this.version = FSUtils.sanitizeHTML(version);
+		this.author = FSUtils.sanitizeHTML(author);
+		this.url = FSUtils.sanitizeHTML(url);
 		this.base64Logo = base64Logo;
 		this.assessmentEnabled = isAssessmentApp;
 		this.verificationEnabled = isVerificationApp;
