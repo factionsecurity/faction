@@ -7,17 +7,25 @@ import java.net.URLEncoder;
 import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
 import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import java.util.jar.Manifest;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
 import org.apache.commons.io.IOUtils;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 import com.fuse.utils.FSUtils;
 
@@ -46,6 +54,8 @@ public class AppStore {
 	private Integer inventoryOrder;
 	private String base64JarFile;
 	private String hash;
+	private String configs;
+	
 	public Long getId() {
 		return id;
 	}
@@ -167,6 +177,45 @@ public class AppStore {
 	public void setInventoryOrder(Integer inventoryOrder) {
 		this.inventoryOrder = inventoryOrder;
 	}
+	public void setConfig(String configs) {
+		this.configs=FSUtils.encryptPassword(configs);
+	}
+	public String getConfig(){
+		return FSUtils.decryptPassword(configs);
+	}
+
+	@Transient
+	public HashMap<String,String> getHashMapConfig(){
+		try {
+			if(this.getConfig() != null && !this.getConfig().trim().equals("")) {
+				JSONParser parser = new JSONParser();
+				JSONObject json = (JSONObject) parser.parse(this.getConfig());
+				HashMap<String,String> mappedConfig = new HashMap<>();
+				for(Object key : json.keySet()) {
+					mappedConfig.put(key.toString(), json.get(key).toString());
+				}
+				return mappedConfig;
+			}else {
+				return new HashMap<String,String>();
+			}
+		}catch(Exception ex) {
+			ex.printStackTrace();
+			return new HashMap<String,String>();
+		}
+	}
+	
+	@Transient
+	public void setHashMapConfig( HashMap<String,String> config) {
+		try {
+			JSONObject jsonConfig = new JSONObject();
+			for(String key : config.keySet()) {
+				jsonConfig.put(key, config.get(key).toString());
+			}
+			this.setConfig(jsonConfig.toJSONString());
+		}catch(Exception ex) {
+			ex.printStackTrace();
+		}
+	}
 	
 	@Transient 
 	public void setJarFile(byte [] jarFile) {
@@ -175,7 +224,7 @@ public class AppStore {
 	}
 	
 	@Transient 
-	public void parseJar(FileInputStream fis) throws IOException {
+	public void parseJar(FileInputStream fis) throws IOException, ParseException {
 		
 		JarInputStream jarStream = new JarInputStream(fis);
 		Manifest manifest = jarStream.getManifest();
@@ -187,6 +236,7 @@ public class AppStore {
 		JarEntry entry;
 		ByteArrayOutputStream logo = new ByteArrayOutputStream();
 		ByteArrayOutputStream description = new ByteArrayOutputStream();
+		ByteArrayOutputStream configs = new ByteArrayOutputStream();
 		Boolean isAssessmentApp = false;
 		Boolean isVerificationApp = false;
 		Boolean isVulnerabilityApp = false;
@@ -199,6 +249,15 @@ public class AppStore {
 					if(size == -1)
 						break;
 					description.write(data, 0, size);
+				}
+			}
+			if (!entry.isDirectory() && entry.getName().endsWith("config.json")) {
+				while(jarStream.available() == 1) {
+					byte[] data = new byte[512];
+					int size = jarStream.read(data);
+					if(size == -1)
+						break;
+					configs.write(data, 0, size);
 				}
 			}
 			if (!entry.isDirectory() && entry.getName().endsWith("logo.png")) {
@@ -231,6 +290,17 @@ public class AppStore {
 		String sanitizedDesc = FSUtils.sanitizeHTML(description.toString());
 		String base64Description =URLEncoder.encode(Base64.getEncoder().encodeToString(sanitizedDesc.getBytes()),"UTF-8");
 		String base64Logo = URLEncoder.encode(Base64.getEncoder().encodeToString(logo.toByteArray()),"UTF-8");
+		
+		String configsString = configs.toString();
+		if(configsString != null && !configsString.trim().equals("")) {
+			JSONParser parser = new JSONParser();
+			JSONObject jsonConfigs = (JSONObject) parser.parse(configs.toString());
+			HashMap<String,String> configMap = new HashMap<>();
+			for( Object key : jsonConfigs.keySet()) {
+				configMap.put(key.toString(), jsonConfigs.get(key).toString());
+			}
+			this.setHashMapConfig(configMap);
+		}
 		
 		this.setJarFile(jarBytes); //adds has and B64 encodes
 		this.name = FSUtils.sanitizeHTML(title);

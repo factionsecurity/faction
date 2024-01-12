@@ -8,12 +8,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import javax.persistence.EntityManager;
 
+import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +43,7 @@ public class ExtensionAPIModuleTests {
 	private VerificationItem item;
 	
 	@Before
-	public final void setUp() throws IOException {
+	public final void setUp() throws IOException, ParseException {
 		new File("/tmp/modules").mkdirs();	
 		em = HibHelper.getInstance().getEMF().createEntityManager();
 		user = new User();
@@ -57,6 +59,13 @@ public class ExtensionAPIModuleTests {
 		app = new AppStore();
 		app.parseJar(fis);
 		app.setEnabled(true);
+		
+		HashMap<String,String> configs = new HashMap();
+		configs.put("testKey", "testValue");
+		configs.put("testKey1", "testValue1");
+		configs.put("testKey2", "testValue2");
+		app.setHashMapConfig(configs);
+		
 		
 		assessment = new Assessment();
 		vuln = new Vulnerability();
@@ -97,6 +106,27 @@ public class ExtensionAPIModuleTests {
 		em.persist(vuln);
 		em.persist(assessment);
 		HibHelper.getInstance().commit();
+	}
+	@Test
+	public void testGetConfigs(){
+		HashMap<String,String> configs = app.getHashMapConfig();
+		assertTrue(configs.get("testKey").equals("testValue"));
+		assertTrue(configs.get("testKey1").equals("testValue1"));
+		assertTrue(configs.get("testKey2").equals("testValue2"));
+	}
+	
+	@Test
+	public void testSetConfigs(){
+		HashMap<String,String> configs = app.getHashMapConfig();
+		configs.put("testKey", "updatedValue");
+		configs.put("testKey1", "updatedValue1");
+		configs.put("testKey2", "updatedValue2");
+		app.setHashMapConfig(configs);
+		
+		HashMap<String,String> updatedConfigs = app.getHashMapConfig();
+		assertTrue(updatedConfigs.get("testKey").equals("updatedValue"));
+		assertTrue(updatedConfigs.get("testKey1").equals("updatedValue1"));
+		assertTrue(updatedConfigs.get("testKey2").equals("updatedValue2"));
 	}
 
 	@Test

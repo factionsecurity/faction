@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.persistence.EntityManager;
 
+import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,7 +42,7 @@ public class ModuleOrderTests {
 	private VerificationItem item;
 	
 	@Before
-	public final void setUp() throws IOException {
+	public final void setUp() throws IOException, ParseException {
 		new File("/tmp/modules").mkdirs();	
 		em = HibHelper.getInstance().getEMF().createEntityManager();
 		user = new User();
