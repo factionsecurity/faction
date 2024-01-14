@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -21,6 +22,9 @@ import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 
 import com.fuse.actions.FSActionSupport;
@@ -46,6 +50,7 @@ public class AppStoreController extends FSActionSupport{
 	private AppStore app;
 	private String appList;
 	private String appType;
+	private String configs;
 	
 	
 	@SuppressWarnings("unchecked")
@@ -111,6 +116,35 @@ public class AppStoreController extends FSActionSupport{
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
 			em.remove(app);
+			HibHelper.getInstance().commit();
+			_result="success";
+			return MESSAGEJSON;
+		}else {
+			_result="error";
+			_message="App Not Found";
+			return MESSAGEJSON;
+			
+		}
+	}
+	
+	@Action(value = "UpdateConfigs")
+	public String updateConfigs() throws ParseException {
+		//TODO: Add AuthZ
+		AppStore app = (AppStore) em.createQuery("from AppStore where id = :id")
+				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
+		if(app != null) {
+			JSONParser parse = new JSONParser();
+			JSONObject jsonConfigs = (JSONObject) parse.parse(configs);
+			HashMap<String,String> mappedConfigs = app.getHashMapConfig();
+			for(Object key : jsonConfigs.keySet()) {
+				if(mappedConfigs.containsKey(key)) {
+					mappedConfigs.put(key.toString(), jsonConfigs.get(key).toString());
+					app.setHashMapConfig(mappedConfigs);
+				}
+			}
+			HibHelper.getInstance().preJoin();
+			em.joinTransaction();
+			em.persist(app);
 			HibHelper.getInstance().commit();
 			_result="success";
 			return MESSAGEJSON;
@@ -252,6 +286,10 @@ public class AppStoreController extends FSActionSupport{
 
 	public void setAppType(String appType) {
 		this.appType = appType;
+	}
+
+	public void setConfigs(String configs) {
+		this.configs = configs;
 	}
 	
 	

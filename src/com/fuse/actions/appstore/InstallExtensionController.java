@@ -53,7 +53,7 @@ public class InstallExtensionController extends FSActionSupport {
 	@Action(value = "PreviewApp", results = { @Result(name = "json", type = "stream", params = { "contentType",
 			"application/json", "inputName", "stream" }),
 			@Result(name = "input", location = "/WEB-INF/jsp/uploadError.jsp") })
-	public String uploadFile() throws IOException {
+	public String uploadFile() throws IOException, ParseException {
 		//TODO: Add AuthZ
 
 		/*

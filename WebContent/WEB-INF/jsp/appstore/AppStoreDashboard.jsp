@@ -150,6 +150,20 @@ font-weight: normal;
 						</div>
 						</bs:mco>
 					</bs:row>
+					<bs:row>
+						<bs:mco colsize="12">
+						<div id="appConfigs" class="appConfigs">
+						<bs:row>
+						</bs:row>
+						</div>
+						</bs:mco>
+					</bs:row>
+					<bs:row>
+						<br/>
+						<bs:mco colsize="2">
+  							<button class="btn btn-primary" id="saveConfigs"><i class="fa fa-save"></i>&nbsp;&nbsp;Save</button>
+  						</bs:mco>
+  					</bs:row>
 					</div>
 				
 				</bs:box>

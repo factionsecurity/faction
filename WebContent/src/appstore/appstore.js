@@ -16,6 +16,29 @@ class AppStore {
 		this.setupSortableLists();
 		
 		$("#installExtension").on('click',  ( )=> window.location="InstallExtension");
+		$("#saveConfigs").on('click', function() {
+			const id = $(this).data("id");
+			let updates ={};
+			Array.from($('input[type="text"]')).forEach( el => {
+				const value = el.value;
+				const key = $(el).data("key");
+				updates[key]=value;
+			});
+			const formData = `id=${id}&configs=${encodeURIComponent(JSON.stringify(updates))}`
+			fetch("UpdateConfigs", {
+				method: "POST", 
+				mode: "cors", 
+				cache: "no-cache", 
+				credentials: "same-origin", 
+				headers: {
+				  'Content-Type': 'application/x-www-form-urlencoded',
+				},
+				redirect: "follow", 
+				referrerPolicy: "no-referrer", 
+				body: formData, 
+			}).then( response => response.json())
+			.then( json => console.log(json));
+		});
 
 	}
 
@@ -36,6 +59,7 @@ class AppStore {
 				.then( response => response.json())
 				.then( json => {
 					$('#appBox').removeClass("disabled");
+					$("#appConfigs").html("");
 					$('#appDescription').html(marked.parse(_this.b64DecodeUnicode(json.description)));
 					$('#appTitle').html(`${json.title} <br\><small>Version: ${json.version}</small>`);
 					$('#appAuthor').html(json.author);
@@ -48,6 +72,25 @@ class AppStore {
 						logo=`data:image/png;base64, ${logo}`;
 					}
 					$('#appLogo').attr("src", logo);
+					let hasConfigs = json.configs.length>0;
+					if(hasConfigs){
+						const hr = document.createElement("hr");
+						$("#appConfigs").append(hr);
+						const h1 = document.createElement("h1");
+						h1.innerHTML="Settings"
+						$("#appConfigs").append(h1);
+						$("#saveConfigs").show();
+						$("#saveConfigs").data('id', id);
+						for(config of json.configs){
+							const key = Object.keys(config)[0];
+							const value = config[key];
+							const div = _this.createConfig(key,value);
+							$("#appConfigs").append(div);
+						}
+					}else{
+						$("#saveConfigs").hide();
+					}
+						
 				})
 			},
 			onEnd: function (evt) {
@@ -112,6 +155,17 @@ class AppStore {
 			$("#appFile").fileinput("upload");
 		});
 	}
+	
+	createConfig(key, value){
+		let div = document.createElement("div");
+		div.className="col-md-4";
+		div.innerHTML = `<div class="form-group">
+			<label>${key}:</label>
+			<input type="text" data-key=${key} class="form-control pull-right" id="appName" value="${value}" autocomplete="off">
+		</div>`;
+		return div;
+		
+	}
 
 	createCard(id, name, version, author, url, logo, enabled) {
 		if(logo==""){
@@ -140,10 +194,12 @@ class AppStore {
 							<a href="${url}">${url}</a>
 						</div>
 					</div>
-					<div class="col-md-2 handle-container pull-right" style="width:120px">
+					<div class="col-md-2 handle-container pull-right" style="width:140px">
 						<div class="handle">
 							<input type="checkbox" data-id="${id}" ${checked}/>
-							&nbsp;&nbsp;<i class="fa fa-trash"></i>
+							&nbsp;&nbsp;<span data-id="${id}" class="vulnControl vulnControl-delete">
+								<i class="fa fa-trash"></i>
+							</span>
 						</div>
 					</div>
 				</div>`
@@ -165,8 +221,6 @@ class AppStore {
 			$('input[type="checkbox"]').bootstrapSwitch("size", "mini");
 			$('input:checked').bootstrapSwitch("state", true, true);
 			$('input[type="checkbox"]').on('switchChange.bootstrapSwitch', function(event, state) {
-			  console.log(this); // DOM element
-			  console.log(state); // true | false
 			  const id = $(this).data("id");
 			  if(state){
 			  	fetch(`EnableApp?id=${id}`)
@@ -178,6 +232,22 @@ class AppStore {
 			  	.then( response => response.json())
 			  	.then( json => location.reload())
 			  }
+			});
+			$('.vulnControl-delete').on('click', function(){
+			  	const id = $(this).data("id");
+				$.confirm({
+					title: "Delete App",
+					content: "Are you sure you want to delete?",
+					buttons: {
+						"yes": () => {
+							fetch(`DeleteApp?id=${id}`)
+							.then( response => response.json())
+							.then( json => location.reload());
+							
+						},
+						"cancel" : () => {}
+					}
+				})
 			});
 		})
 	}
