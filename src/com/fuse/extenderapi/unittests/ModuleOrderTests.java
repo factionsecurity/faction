@@ -18,8 +18,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.faction.elements.results.InventoryResult;
 import com.faction.extender.AssessmentManager.Operation;
-import com.faction.extender.InventoryResult;
 import com.fuse.dao.AppStore;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.HibHelper;
@@ -43,7 +43,6 @@ public class ModuleOrderTests {
 	
 	@Before
 	public final void setUp() throws IOException, ParseException {
-		new File("/tmp/modules").mkdirs();	
 		em = HibHelper.getInstance().getEMF().createEntityManager();
 		user = new User();
 		user.setUsername("test.user");
@@ -110,7 +109,7 @@ public class ModuleOrderTests {
 
 	@Test
 	public void testAssessmentManagerExtension() throws InterruptedException, ExecutionException {
-		Extensions ex = new Extensions(Extensions.EventType.ASMT_MANAGER, "/tmp/modules");
+		Extensions ex = new Extensions(Extensions.EventType.ASMT_MANAGER);
 		assertTrue(assessment.getVulns().get(0).getTracking().matches("^VID-[0-9]+"));
 		CompletableFuture<Boolean> future = ex.execute(assessment, Operation.Finalize);
 		while (!future.isDone()) {
@@ -127,7 +126,7 @@ public class ModuleOrderTests {
 	
 		swapOrder();
 		
-		Extensions ex2 = new Extensions(Extensions.EventType.ASMT_MANAGER, "/tmp/modules");
+		Extensions ex2 = new Extensions(Extensions.EventType.ASMT_MANAGER);
 		CompletableFuture<Boolean> future2 = ex2.execute(updatedAssessment, Operation.Finalize);
 		while (!future2.isDone()) {
 			Thread.sleep(200);
@@ -144,7 +143,7 @@ public class ModuleOrderTests {
 	
 	@Test
 	public void testVerificationManagerExtension() throws InterruptedException, ExecutionException {
-		Extensions ex = new Extensions(Extensions.EventType.VER_MANAGER, "/tmp/modules");
+		Extensions ex = new Extensions(Extensions.EventType.VER_MANAGER);
 		CompletableFuture<Boolean> future =ex.execute(verification, com.faction.extender.VerificationManager.Operation.FAIL);
 		while (!future.isDone()) {
 			Thread.sleep(200);
@@ -158,7 +157,7 @@ public class ModuleOrderTests {
 		
 		swapOrder();
 		
-		Extensions ex2 = new Extensions(Extensions.EventType.ASMT_MANAGER, "/tmp/modules");
+		Extensions ex2 = new Extensions(Extensions.EventType.ASMT_MANAGER);
 		CompletableFuture<Boolean> future2 =ex2.execute(verification, com.faction.extender.VerificationManager.Operation.FAIL);
 		while (!future2.isDone()) {
 			Thread.sleep(200);
@@ -175,7 +174,7 @@ public class ModuleOrderTests {
 	
 	@Test
 	public void testVulnerabilityManagerExtension() throws InterruptedException, ExecutionException {
-		Extensions ex = new Extensions(Extensions.EventType.VULN_MANAGER, "/tmp/modules");
+		Extensions ex = new Extensions(Extensions.EventType.VULN_MANAGER);
 		assertTrue(assessment.getVulns().get(0).getTracking().matches("^VID-[0-9]+"));
 		CompletableFuture<Boolean> future =ex.execute(assessment, vuln, com.faction.extender.VulnerabilityManager.Operation.Update);
 		while (!future.isDone()) {
@@ -190,7 +189,7 @@ public class ModuleOrderTests {
 		
 		swapOrder();
 		
-		Extensions ex2 = new Extensions(Extensions.EventType.VULN_MANAGER, "/tmp/modules");
+		Extensions ex2 = new Extensions(Extensions.EventType.VULN_MANAGER);
 		CompletableFuture<Boolean> future2 =ex2.execute(assessment, vuln, com.faction.extender.VulnerabilityManager.Operation.Update);
 		while (!future2.isDone()) {
 			Thread.sleep(200);
@@ -206,7 +205,7 @@ public class ModuleOrderTests {
 	
 	@Test
 	public void testApplicationInventoryExtension() {
-		Extensions ex = new Extensions(Extensions.EventType.INVENTORY, "/tmp/modules");
+		Extensions ex = new Extensions(Extensions.EventType.INVENTORY);
 		List<InventoryResult> results = ex.execute("fakeid", "fakeName");
 		for(InventoryResult result : results) {
 			System.out.println(result.getApplicationId());
@@ -218,7 +217,7 @@ public class ModuleOrderTests {
 		
 		swapOrder();
 		
-		Extensions ex2 = new Extensions(Extensions.EventType.INVENTORY, "/tmp/modules");
+		Extensions ex2 = new Extensions(Extensions.EventType.INVENTORY);
 		List<InventoryResult> results2 = ex2.execute("fakeid", "fakeName");
 		assertTrue(results2.get(0).getApplicationId().equals("1234-Extension2"));
 		assertTrue(results2.get(1).getApplicationId().equals("1235-Extension2"));
@@ -245,11 +244,6 @@ public class ModuleOrderTests {
 		em.remove(app1);
 		em.remove(app2);
 		HibHelper.getInstance().commit();
-		File dir = new File("/tmp/modules");
-		File [] tmpFiles = dir.listFiles();
-		for(File file : tmpFiles) {
-			file.delete();
-		}
 		if(em != null)
 			em.close();
 	}

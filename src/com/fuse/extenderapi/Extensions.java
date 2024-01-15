@@ -1,14 +1,19 @@
 package com.fuse.extenderapi;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,10 +50,11 @@ import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
+import com.faction.elements.results.AssessmentManagerResult;
+import com.faction.elements.results.InventoryResult;
+import com.faction.elements.utils.Log;
 import com.faction.extender.ApplicationInventory;
 import com.faction.extender.AssessmentManager;
-import com.faction.extender.AssessmentManagerResult;
-import com.faction.extender.InventoryResult;
 import com.faction.extender.VerificationManager;
 import com.faction.extender.VulnerabilityManager;
 
@@ -62,7 +68,7 @@ public class Extensions {
 	private List<VulnerabilityManager> vulnerabilityManagers = new ArrayList<>();
 	private List<VerificationManager> verificationManagers = new ArrayList<>();
 	private List<ApplicationInventory> inventoryManagers = new ArrayList<>();
-	private String extensionPath = "/opt/faction/modules";
+	private List<Log> logs = new ArrayList<>();
 	private EventType type;
 	
 	public Extensions(EventType type) {
@@ -72,17 +78,6 @@ public class Extensions {
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 		}
-	}
-	
-	public Extensions(EventType type, String extensionPath) {
-		this.extensionPath = extensionPath;
-		this.type = type;
-		try {
-			this.loadExtensions();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-		
 	}
 	public boolean isExtended() {
 		switch(this.type) {
@@ -228,6 +223,7 @@ public class Extensions {
 							clonedArguments.getAssessment(), 
 							clonedArguments.getVulnerabilities(), 
 							operation);
+					this.logs.addAll(mgr.getLogs());
 					
 					// Persist
 					if(result != null && result.getVulnerabilities() != null) {
@@ -279,6 +275,7 @@ public class Extensions {
 							tmpAssessment, 
 							tmpVuln,
 							operation);
+					this.logs.addAll(mgr.getLogs());
 					//Persist
 					if(updatedVuln != null) {
 						tmpVuln = updatedVuln;
@@ -325,6 +322,7 @@ public class Extensions {
 							clonedVuln, 
 							clonedVerification,
 							operation);
+					this.logs.addAll(mgr.getLogs());
 					// Persist
 					if(updatedVuln != null) {
 						clonedVuln = updatedVuln;
@@ -352,6 +350,8 @@ public class Extensions {
 			for(ApplicationInventory mgr : this.inventoryManagers) {
 				InventoryResult[] results = mgr.search(appId, appName);
 				allResults.addAll(Arrays.asList(results));
+				this.logs.addAll(mgr.getLogs());
+				
 			}
 			
 		}catch(Exception ex) {
@@ -383,138 +383,109 @@ public class Extensions {
 			BeanUtils.copyProperties(source, dest, nulls);
 		}
 	}
-
-
-	private URLClassLoader createExtensionClassLoader(List<AppStore> apps, String modulePath) {
-		File dir = new File(modulePath);
+	
+	private URLClassLoader dynamicExtensionClassLoader(AppStore app) {
 		
-		/*URL[] urls = Arrays.stream(Optional.of(dir.listFiles()).orElse(new File[] {})).sorted().map(File::toURI)
-				.map(t -> {
-					try {
-						return t.toURL();
-					} catch (MalformedURLException e) {
-						e.printStackTrace();
-						return null;
-					}
-				}).filter(t -> t != null).toArray(URL[]::new);*/
-		URL [] urls = apps.stream()
-				.map(app -> {
-					try {
-						String name = this.extensionPath + "/" + app.getHash() + ".jar";
-						File jarFile = new File(name);
-						return jarFile.toURL();
-					} catch (MalformedURLException e) {
-						e.printStackTrace();
-						return null;
-					}
-				}).filter(t -> t != null).toArray(URL[]::new);
-		return new URLClassLoader(urls);
+		try {
+			ExtensionClassLoader loader = new ExtensionClassLoader();
+			loader.loadJarFromAppStore(app);
+			URL url = loader.getURL();
+			return new URLClassLoader(new URL[] {url});
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
+		
 	}
 
 	public void loadExtensions() throws MalformedURLException {
-		List<AppStore> apps = this.syncFileSystemWithDatabase();
 		
-		URLClassLoader extensionLoader = createExtensionClassLoader(apps, this.extensionPath);
-		ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
-		
-		// Load Assessment Manager Extensions
-		try {
-			Thread.currentThread().setContextClassLoader(extensionLoader);
-			for (AssessmentManager asmtMgr : ServiceLoader.load(AssessmentManager.class, extensionLoader)) {
-				if (asmtMgr != null) {
-					assessmentManagers.add(asmtMgr);
+		List<AppStore> apps = this.sortApps();
+		for(AppStore app : apps) {
+			//URLClassLoader extensionLoader = createExtensionClassLoader();
+			URLClassLoader extensionLoader = dynamicExtensionClassLoader(app);
+			ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
+			
+			// Load Assessment Manager Extensions
+			try {
+				Thread.currentThread().setContextClassLoader(extensionLoader);
+				for (AssessmentManager asmtMgr : ServiceLoader.load(AssessmentManager.class, extensionLoader)) {
+					if (asmtMgr != null) {
+						asmtMgr.setConfigs(app.getHashMapConfig());
+						assessmentManagers.add(asmtMgr);
+					}
 				}
+			} catch(Throwable ex) {
+				ex.printStackTrace();
+			}finally {
+				Thread.currentThread().setContextClassLoader(currentClassLoader);
 			}
-		} catch(Throwable ex) {
-			ex.printStackTrace();
-		}finally {
-			Thread.currentThread().setContextClassLoader(currentClassLoader);
-		}
-		
-		// Load Vulnerability Manager Extensions
-		try {
-			Thread.currentThread().setContextClassLoader(extensionLoader);
-			for (VulnerabilityManager vulnMgr : ServiceLoader.load(VulnerabilityManager.class, extensionLoader)) {
-				if (vulnMgr != null) {
-					vulnerabilityManagers.add(vulnMgr);
+			
+			// Load Vulnerability Manager Extensions
+			try {
+				Thread.currentThread().setContextClassLoader(extensionLoader);
+				for (VulnerabilityManager vulnMgr : ServiceLoader.load(VulnerabilityManager.class, extensionLoader)) {
+					if (vulnMgr != null) {
+						vulnMgr.setConfigs(app.getHashMapConfig());
+						vulnerabilityManagers.add(vulnMgr);
+					}
 				}
+			} catch(Throwable ex) {
+				ex.printStackTrace();
+			} finally {
+				Thread.currentThread().setContextClassLoader(currentClassLoader);
 			}
-		} catch(Throwable ex) {
-			ex.printStackTrace();
-		} finally {
-			Thread.currentThread().setContextClassLoader(currentClassLoader);
-		}
-		
-		// Load Verification Manager Extensions
-		try {
-			Thread.currentThread().setContextClassLoader(extensionLoader);
-			for (VerificationManager verMgr : ServiceLoader.load(VerificationManager.class, extensionLoader)) {
-				if (verMgr != null) {
-					verificationManagers.add(verMgr);
+			
+			// Load Verification Manager Extensions
+			try {
+				Thread.currentThread().setContextClassLoader(extensionLoader);
+				for (VerificationManager verMgr : ServiceLoader.load(VerificationManager.class, extensionLoader)) {
+					if (verMgr != null) {
+						verMgr.setConfigs(app.getHashMapConfig());
+						verificationManagers.add(verMgr);
+					}
 				}
+			} catch(Throwable ex) {
+				ex.printStackTrace();
+			} finally {
+				Thread.currentThread().setContextClassLoader(currentClassLoader);
 			}
-		} catch(Throwable ex) {
-			ex.printStackTrace();
-		} finally {
-			Thread.currentThread().setContextClassLoader(currentClassLoader);
-		}
-		
-		// Load Application Inventory Manager Extensions
-		try {
-			Thread.currentThread().setContextClassLoader(extensionLoader);
-			for (ApplicationInventory invMgr : ServiceLoader.load(ApplicationInventory.class, extensionLoader)) {
-				if (invMgr != null) {
-					inventoryManagers.add(invMgr);
+			
+			// Load Application Inventory Manager Extensions
+			try {
+				Thread.currentThread().setContextClassLoader(extensionLoader);
+				for (ApplicationInventory invMgr : ServiceLoader.load(ApplicationInventory.class, extensionLoader)) {
+					if (invMgr != null) {
+						invMgr.setConfigs(app.getHashMapConfig());
+						inventoryManagers.add(invMgr);
+					}
 				}
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			} catch(Throwable ex) {
+				ex.printStackTrace();
+			} finally {
+				Thread.currentThread().setContextClassLoader(currentClassLoader);
 			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
-		} catch(Throwable ex) {
-			ex.printStackTrace();
-		} finally {
-			Thread.currentThread().setContextClassLoader(currentClassLoader);
 		}
 	}
 	
-	public List<AppStore> syncFileSystemWithDatabase() {
+	private List<AppStore> sortApps() {
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		try {
 			List<AppStore> apps = em.createQuery("from AppStore order by order").getResultList();
-			File dir = new File(this.extensionPath);
-			File [] tmpFiles = dir.listFiles();
-			List<File> files = Arrays.stream(dir.listFiles()).collect(Collectors.toList());
-			List<File> deleteFiles = files
-					.stream()
-					.filter( (f) -> { 
-						String hash = f.getName().replace(".jar", "");
-						return !apps.stream().anyMatch( a -> a.getHash().equals(hash));
-					}).collect(Collectors.toList());
-			List<AppStore> addFiles = apps
-					.stream()
-					.filter( (a) -> { 
-						String hash = a.getHash();
-						return !files.stream().anyMatch( f -> f.getName().startsWith(hash));
-					}).collect(Collectors.toList());
-			
-			for(File file : deleteFiles) {
-				file.delete();
-			}
-			for(AppStore app : addFiles) {
-				byte[] bytes = Base64.getDecoder().decode(app.getBase64JarFile().getBytes());
-				try {
-					FileOutputStream outputStream = new FileOutputStream(this.extensionPath + "/" + app.getHash() + ".jar");
-					outputStream.write(bytes);
-					outputStream.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				
-			}
 			return apps;
 		}finally {
 			em.close();
 		}
 	}
+	
+	public List<Log> getLogs() {
+		return this.logs;
+		
+	}
+	
 
 
 }

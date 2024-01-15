@@ -20,8 +20,9 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.faction.elements.results.InventoryResult;
+import com.faction.elements.utils.Log;
 import com.faction.extender.AssessmentManager.Operation;
-import com.faction.extender.InventoryResult;
 import com.fuse.dao.AppStore;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.HibHelper;
@@ -44,7 +45,6 @@ public class ExtensionAPIModuleTests {
 	
 	@Before
 	public final void setUp() throws IOException, ParseException {
-		new File("/tmp/modules").mkdirs();	
 		em = HibHelper.getInstance().getEMF().createEntityManager();
 		user = new User();
 		user.setUsername("test.user");
@@ -131,7 +131,7 @@ public class ExtensionAPIModuleTests {
 
 	@Test
 	public void testAssessmentManagerExtension() throws InterruptedException, ExecutionException {
-		Extensions ex = new Extensions(Extensions.EventType.ASMT_MANAGER, "/tmp/modules");
+		Extensions ex = new Extensions(Extensions.EventType.ASMT_MANAGER);
 		assertTrue(assessment.getVulns().get(0).getTracking().matches("^VID-[0-9]+"));
 		CompletableFuture<Boolean> future = ex.execute(assessment, Operation.Finalize);
 		while (!future.isDone()) {
@@ -147,8 +147,26 @@ public class ExtensionAPIModuleTests {
 	}
 	
 	@Test
+	public void testAssessmentManagerConfigsAndLogs() throws InterruptedException, ExecutionException {
+		Extensions ex = new Extensions(Extensions.EventType.ASMT_MANAGER);
+		assertTrue(assessment.getVulns().get(0).getTracking().matches("^VID-[0-9]+"));
+		CompletableFuture<Boolean> future = ex.execute(assessment, Operation.Finalize);
+		while (!future.isDone()) {
+			Thread.sleep(200);
+		}
+		Boolean result = future.get(); 
+		assertTrue(result);
+		em.close();
+		em = HibHelper.getInstance().getEMF().createEntityManager();
+		List<Log> logs = ex.getLogs();
+		assertTrue(logs.size()>0);
+		assertTrue(logs.get(0).getMessage().equals("testValue"));
+		
+	}
+	
+	@Test
 	public void testVerificationManagerExtension() throws InterruptedException, ExecutionException {
-		Extensions ex = new Extensions(Extensions.EventType.VER_MANAGER, "/tmp/modules");
+		Extensions ex = new Extensions(Extensions.EventType.VER_MANAGER);
 		CompletableFuture<Boolean> future =ex.execute(verification, com.faction.extender.VerificationManager.Operation.FAIL);
 		while (!future.isDone()) {
 			Thread.sleep(200);
@@ -163,7 +181,7 @@ public class ExtensionAPIModuleTests {
 	
 	@Test
 	public void testVulnerabilityManagerExtension() throws InterruptedException, ExecutionException {
-		Extensions ex = new Extensions(Extensions.EventType.VER_MANAGER, "/tmp/modules");
+		Extensions ex = new Extensions(Extensions.EventType.VER_MANAGER);
 		assertTrue(assessment.getVulns().get(0).getTracking().matches("^VID-[0-9]+"));
 		CompletableFuture<Boolean> future =ex.execute(assessment, vuln, com.faction.extender.VulnerabilityManager.Operation.Update);
 		while (!future.isDone()) {
@@ -179,7 +197,7 @@ public class ExtensionAPIModuleTests {
 	
 	@Test
 	public void testApplicationInventoryExtension() {
-		Extensions ex = new Extensions(Extensions.EventType.INVENTORY, "/tmp/modules");
+		Extensions ex = new Extensions(Extensions.EventType.INVENTORY);
 		List<InventoryResult> results = ex.execute("fakeid", "fakeName");
 		InventoryResult result1 = results.stream().filter( i -> i.getApplicationId().equals("1234")).findFirst().orElse(null);
 		assertTrue(result1 != null);
@@ -204,11 +222,6 @@ public class ExtensionAPIModuleTests {
 		em.remove(user);
 		em.remove(app);
 		HibHelper.getInstance().commit();
-		File dir = new File("/tmp/modules");
-		File [] tmpFiles = dir.listFiles();
-		for(File file : tmpFiles) {
-			file.delete();
-		}
 		if(em != null)
 			em.close();
 	}
