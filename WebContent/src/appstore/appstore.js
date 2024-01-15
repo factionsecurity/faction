@@ -161,7 +161,7 @@ class AppStore {
 		div.className="col-md-4";
 		div.innerHTML = `<div class="form-group">
 			<label>${key}:</label>
-			<input type="text" data-key=${key} class="form-control pull-right" id="appName" value="${value}" autocomplete="off">
+			<input type="text" data-key="${key}" class="form-control pull-right" id="appName" value="${value}" autocomplete="off">
 		</div>`;
 		return div;
 		
