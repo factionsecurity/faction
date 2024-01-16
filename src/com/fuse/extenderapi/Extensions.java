@@ -385,12 +385,12 @@ public class Extensions {
 	}
 	
 	private URLClassLoader dynamicExtensionClassLoader(AppStore app) {
-		
+		ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();	
 		try {
 			ExtensionClassLoader loader = new ExtensionClassLoader();
 			loader.loadJarFromAppStore(app);
 			URL url = loader.getURL();
-			return new URLClassLoader(new URL[] {url});
+			return new URLClassLoader(new URL[] {url}, currentClassLoader);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -411,7 +411,7 @@ public class Extensions {
 			try {
 				Thread.currentThread().setContextClassLoader(extensionLoader);
 				for (AssessmentManager asmtMgr : ServiceLoader.load(AssessmentManager.class, extensionLoader)) {
-					if (asmtMgr != null) {
+					if (asmtMgr != null && app.getAssessmentEnabled()) {
 						asmtMgr.setConfigs(app.getHashMapConfig());
 						assessmentManagers.add(asmtMgr);
 					}
@@ -426,7 +426,7 @@ public class Extensions {
 			try {
 				Thread.currentThread().setContextClassLoader(extensionLoader);
 				for (VulnerabilityManager vulnMgr : ServiceLoader.load(VulnerabilityManager.class, extensionLoader)) {
-					if (vulnMgr != null) {
+					if (vulnMgr != null && app.getVulnerabilityEnabled()) {
 						vulnMgr.setConfigs(app.getHashMapConfig());
 						vulnerabilityManagers.add(vulnMgr);
 					}
@@ -441,7 +441,7 @@ public class Extensions {
 			try {
 				Thread.currentThread().setContextClassLoader(extensionLoader);
 				for (VerificationManager verMgr : ServiceLoader.load(VerificationManager.class, extensionLoader)) {
-					if (verMgr != null) {
+					if (verMgr != null && app.getVerificationEnabled()) {
 						verMgr.setConfigs(app.getHashMapConfig());
 						verificationManagers.add(verMgr);
 					}
@@ -456,7 +456,7 @@ public class Extensions {
 			try {
 				Thread.currentThread().setContextClassLoader(extensionLoader);
 				for (ApplicationInventory invMgr : ServiceLoader.load(ApplicationInventory.class, extensionLoader)) {
-					if (invMgr != null) {
+					if (invMgr != null && app.getInventoryEnabled()) {
 						invMgr.setConfigs(app.getHashMapConfig());
 						inventoryManagers.add(invMgr);
 					}

@@ -30,9 +30,11 @@ import java.util.Base64;
 
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.AppStore;
+import com.fuse.dao.AuditLog;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
 import com.fuse.utils.FSUtils;
+import com.opensymphony.xwork2.interceptor.annotations.Before;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/appstore/InstallExtension.jsp", params = { "contentType",
@@ -43,6 +45,17 @@ public class InstallExtensionController extends FSActionSupport {
 	private File file_data;
 	private String file_dataContentType;
 	private String file_dataFileName;
+	
+	@Before(priority=1)
+	public String authorization() {
+		 if(!this.isAcadmin()) { 
+			 AuditLog.notAuthorized( this,
+				 "Invalid Access to App Store", true);
+			 return LOGIN; 
+		 }else {
+			 return null;
+		 }
+	}
 
 	@Action(value = "InstallExtension")
 	public String execute() {
@@ -54,13 +67,7 @@ public class InstallExtensionController extends FSActionSupport {
 			"application/json", "inputName", "stream" }),
 			@Result(name = "input", location = "/WEB-INF/jsp/uploadError.jsp") })
 	public String uploadFile() throws IOException, ParseException {
-		//TODO: Add AuthZ
-
-		/*
-		 * if(!this.isAcadmin()) { AuditLog.notAuthorized( this,
-		 * "User attempted to upload a app with name " + this.file_dataFileName, true);
-		 * return LOGIN; }
-		 */
+		
 		User user = this.getSessionUser();
 
 		FileInputStream fis = new FileInputStream(file_data);
@@ -107,6 +114,10 @@ public class InstallExtensionController extends FSActionSupport {
 		_result="success";
 		return MESSAGEJSON;
 		
+	}
+	
+	public String getAppStore() {
+		return "active";
 	}
 
 	public InputStream getStream() {

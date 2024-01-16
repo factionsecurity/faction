@@ -21,6 +21,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.python.bouncycastle.asn1.isismtt.x509.Restriction;
 
+import com.faction.elements.results.InventoryResult;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.Campaign;
 import com.fuse.dao.CustomField;
@@ -28,7 +29,6 @@ import com.fuse.dao.CustomType;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Integrations;
 import com.fuse.dao.User;
-import com.faction.extender.InventoryResult;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.utils.FSUtils;
 import com.fuse.utils.Integrate;
@@ -69,8 +69,7 @@ public class applicationInventory extends HttpServlet {
 		
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		Extensions appInv = new Extensions(Extensions.EventType.INVENTORY);
-		List<InventoryResult> results = appInv.execute(appid,appname);
-		if(results != null) {
+		List<InventoryResult> results = appInv.execute(appid,appname); if(results != null) {
 			JSONArray array = new JSONArray();
 			for(InventoryResult result : results){
 				JSONObject json = new JSONObject();

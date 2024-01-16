@@ -118,9 +118,9 @@ public class Engagement  extends FSActionSupport{
 		eng_users = new ArrayList<User>();
 		asmt_users = new ArrayList<User>();
 		for(User u : users){
-			if(u.getPermissions().isAssessor())
+			if(u.getPermissions() != null && u.getPermissions().isAssessor())
 				asmt_users.add(u);
-			if(u.getPermissions().isEngagement())
+			if(u.getPermissions() != null && u.getPermissions().isEngagement())
 				eng_users.add(u);
 		}
 		if(action.equals(""))
@@ -152,7 +152,7 @@ public class Engagement  extends FSActionSupport{
 						u.setAssessmentCount(u.getAssessmentCount()+1);
 					}
 				}
-				if(u.getTeam() != null && u.getTeam().getId().longValue() == this.selectedTeam.longValue() && u.getPermissions().isAssessor())
+				if(u.getTeam() != null && u.getTeam().getId().longValue() == this.selectedTeam.longValue() && u.getPermissions() != null && u.getPermissions().isAssessor())
 					assessors.add(u);
 			}
 			

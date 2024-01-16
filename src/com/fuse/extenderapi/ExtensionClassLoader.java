@@ -39,7 +39,7 @@ public class ExtensionClassLoader {
 				map.put("/"+nextEntry.getName(), data);
 			}
 		}
-		classURL=new URL("x-buffer", UUID.randomUUID().toString(), -1, "/", new URLStreamHandler() {
+		classURL=new URL("x-buffer", null, -1, "/", new URLStreamHandler() {
 			protected URLConnection openConnection(URL u) throws IOException {
 				final byte[] data = map.get(u.getFile());
 				if(data==null) throw new FileNotFoundException(u.getFile());

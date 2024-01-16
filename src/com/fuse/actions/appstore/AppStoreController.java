@@ -32,6 +32,7 @@ import com.fuse.dao.AppStore;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
+import com.opensymphony.xwork2.interceptor.annotations.Before;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/appstore/AppStoreDashboard.jsp", params = { "contentType", "text/html" })
@@ -51,6 +52,17 @@ public class AppStoreController extends FSActionSupport{
 	private String appList;
 	private String appType;
 	private String configs;
+	
+	@Before(priority=1)
+	public String authorization() {
+		 if(!this.isAcadmin()) { 
+			 AuditLog.notAuthorized( this,
+				 "Invalid Access to App Store", true);
+			 return LOGIN; 
+		 }else {
+			 return null;
+		 }
+	}
 	
 	
 	@SuppressWarnings("unchecked")
@@ -252,6 +264,9 @@ public class AppStoreController extends FSActionSupport{
 				.collect(Collectors.toList());
 		
 		return "jsonApps";
+	}
+	public String getAppStore() {
+		return "active";
 	}
 
 	public List<AppStore> getAssessmentApps() {

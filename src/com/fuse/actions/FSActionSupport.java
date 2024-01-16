@@ -34,6 +34,7 @@ import org.apache.struts2.interceptor.ServletRequestAware;
 import org.apache.struts2.interceptor.ServletResponseAware;
 import org.apache.struts2.interceptor.SessionAware;
 
+import com.fuse.dao.AuditLog;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
 import com.fuse.utils.CSRF;
@@ -150,6 +151,16 @@ public class FSActionSupport extends ActionSupport {
 	}
 	public boolean isAcadmin(){
 		return getRole("isAdmin");
+	}
+	
+	public String checkAdmin(String errorMessage) {
+		 if(!this.isAcadmin()) { 
+			 AuditLog.notAuthorized( this,
+				 errorMessage, true);
+			 return LOGIN; 
+		 }else {
+			 return "";
+		 }
 	}
 	public User getSessionUser(){
 		return (User)ActionContext.getContext().get("user");

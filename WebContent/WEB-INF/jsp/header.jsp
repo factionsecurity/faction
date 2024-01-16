@@ -212,6 +212,9 @@
                 <s:if test="acmanager || acadmin">
                 <li class="<s:property value="activeChecklist"/>"><a href="Checklists">Checklists</a></li>
                 </s:if>
+                <s:if test="acadmin">
+                <li class="<s:property value="activeAppStore"/>"><a href="AppStoreDashboard">App Store</a></li>
+                </s:if>
               </ul>
             </li>
             </s:if>
