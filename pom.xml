@@ -14,7 +14,7 @@
 	</scm>
 	<properties>
 		<aws.java.sdk.version>2.18.16</aws.java.sdk.version>
-		<project.scm.id>github</project.scm.id>
+		<project.scm.id>faction-web</project.scm.id>
 		<github.global.server>github</github.global.server>
 	</properties>
 	<build>
