@@ -36,6 +36,7 @@ public class GenerateReportTest {
 
 		} catch (Base64DecodingException e) {
 			fail(e.getMessage());
+		}
 		
 		em.close();
 	}
