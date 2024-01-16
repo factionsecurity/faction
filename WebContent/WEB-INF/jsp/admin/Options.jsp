@@ -98,7 +98,7 @@
 						<bs:row>
 							<bs:mco colsize="12">
 								<bs:datatable
-									columns="Name,Variable,Default,Field Type,Applied To,ReadOnly,Edit"
+									columns="Name,Variable,Default,Field Type,Applied To,Read Only,Edit"
 									classname="" id="campaign">
 									<s:iterator value="custom">
 										<tr>
@@ -116,8 +116,8 @@
 											<s:else>
 												<td><input type=checkbox id="ro${id}" /></td>
 											</s:else>
-											<td><span for="${id}" class="vulnControl updCF"><i
-													class="fa fa-save"></i></span> <span for="${id}"
+											<td style="width: 70px"><span for="${id}" class="vulnControl updCF"><i
+													class="fa fa-save"></i></span><span for="${id}"
 												class="vulnControl vulnControl-delete delCF"><i
 													class="fa fa-trash"></i></span></td>
 										</tr>
