@@ -462,7 +462,8 @@ public class AssessmentView extends FSActionSupport {
 			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
 	public String checkLocks() throws UnsupportedEncodingException {
 		if (!(this.isAcengagement() || this.isAcmanager())) {
-			return LOGIN;
+			_message="Session Expired";
+			return "lockError";
 		}
 		this.user = this.getSessionUser();
 		Long asmtId = (Long) this.getSession("asmtid");

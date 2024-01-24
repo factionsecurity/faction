@@ -93,6 +93,7 @@ class EditLocks {
 		this.assessmentId = assessmentId;
 		this.updateVulnsCallback = updateVulnsCallback;
 		this.checkLocks()
+		this.errorMessageShown=false;
 	}
 	setLock(id, attr) {
 		let _this = this;
@@ -127,8 +128,41 @@ class EditLocks {
 		let _this = this;
 		setInterval(function() {
 			$.get(`CheckVulnLocks?id=${_this.assessmentId}`).done((resp) => {
+				if(resp.result && resp.result == "error"){
+					if(!_this.errorMessageShown){
+						_this.errorMessageShown=true
+						$.confirm({
+							title: resp.message,
+							content: 'Do you want to log in?',
+							buttons: {
+								login: ()=>{
+									_this.errorMessageShown=false;
+									window.open("../", '_blank').focus();
+								},
+								cancel: ()=>{_this.errorMessageShown=false;}
+							}
+						});
+						
+					}
+					return;
+				}
 				_this.updateVulnsCallback(resp);
-			});
+			}).catch( () => {
+				if(!_this.errorMessageShown){
+					_this.errorMessageShown=true;
+					$.confirm({
+						title: "Offline",
+						content: 'You appear offline. Would you like to login?',
+						buttons: {
+							login: ()=>{
+								 _this.errorMessageShown=false;
+								 window.open("../", '_blank').focus();
+							},
+							cancel: ()=>{_this.errorMessageShown=false;}
+						}
+					});
+				}
+			})
 		}, 1000)
 
 	}

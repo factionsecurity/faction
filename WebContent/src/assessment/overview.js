@@ -312,9 +312,26 @@ $(function() {
 		}
 	}
 	suneditor.create("engagmentnotes", engagementOptions);
-
+	let errorMessageShown=false;
 	setInterval(() => {
 		$.get("CheckLocks").done((resp) => {
+			if(resp.result && resp.result == "error"){
+				if(!errorMessageShown){
+					errorMessageShown=true
+					$.confirm({
+						title: resp.message,
+						content: 'Do you want to log in?',
+						buttons: {
+							login: ()=>{
+								errorMessageShown=false;
+								window.open("../", '_blank').focus();
+							},
+							cancel: ()=>{errorMessageShown=false;}
+						}
+					});
+				}
+				return;
+			}
 			["notes", "risk", "summary"].forEach(function(type) {
 				if (resp[type] && resp[type].isLock) {
 					editors[type].core.context.element.wysiwygFrame.classList.add("disabled");
@@ -330,7 +347,22 @@ $(function() {
 				}
 			});
 		}
-		)
+		).catch( () =>{
+			if(!errorMessageShown){
+				errorMessageShown=true
+				$.confirm({
+					title: "Offline",
+					content: 'You appear offline. Would you like to login?',
+					buttons: {
+						login: ()=>{
+							errorMessageShown=false;
+							 window.open("../", '_blank').focus();
+						},
+						cancel: ()=>{errorMessageShown=false;}
+					}
+				});
+			}
+		})
 
 	}, 1000);
 
