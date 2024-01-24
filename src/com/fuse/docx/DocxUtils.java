@@ -766,7 +766,7 @@ public class DocxUtils {
 			throws JAXBException, Docx4JException {
 		String xml = XmlUtils.marshaltoString(mlp.getMainDocumentPart().getContents(), false, false);
 		for (String key : map.keySet()) {
-			xml = xml.replaceAll("\\$\\{" + key + "\\}", map.get(key) == null ? "" : map.get(key));
+			xml = xml.replaceAll("\\$\\{" + key + "\\}", map.get(key) == null ? "" : "<![CDATA[" +map.get(key) + "]]>");
 		}
 		mlp.getMainDocumentPart().setContents((org.docx4j.wml.Document) XmlUtils.unmarshalString(xml));
 
