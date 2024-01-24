@@ -135,6 +135,12 @@ font-weight: normal;
 				<bs:box type="primary disabled" title="Extension Description" id="appBox">
 					<div class="extensionDescription">
 					<bs:row>
+						<br/>
+						<bs:mco colsize="2">
+  							<button class="btn btn-primary" id="installUpdate"><i class="fa fa-upload"></i>&nbsp;&nbsp;Install Update</button>
+  						</bs:mco>
+  					</bs:row>
+					<bs:row>
 						<bs:mco colsize="2" style="min-width: 200px"><img id="appLogo" src="../app-default.png" class="appLogo"/></bs:mco>
 						<bs:mco colsize="8">
 						<h1 id="appTitle">Example Extension <br/><small>Version: 1.0</small></h1>

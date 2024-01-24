@@ -112,9 +112,6 @@ public class ModuleOrderTests {
 		Extensions ex = new Extensions(Extensions.EventType.ASMT_MANAGER);
 		assertTrue(assessment.getVulns().get(0).getTracking().matches("^VID-[0-9]+"));
 		CompletableFuture<Boolean> future = ex.execute(assessment, Operation.Finalize);
-		while (!future.isDone()) {
-			Thread.sleep(200);
-		}
 		Boolean result = future.get(); 
 		assertTrue(result);
 		em.close();
@@ -128,9 +125,6 @@ public class ModuleOrderTests {
 		
 		Extensions ex2 = new Extensions(Extensions.EventType.ASMT_MANAGER);
 		CompletableFuture<Boolean> future2 = ex2.execute(updatedAssessment, Operation.Finalize);
-		while (!future2.isDone()) {
-			Thread.sleep(200);
-		}
 		Boolean result2 = future2.get(); 
 		assertTrue(result2);
 		em.close();
@@ -145,9 +139,6 @@ public class ModuleOrderTests {
 	public void testVerificationManagerExtension() throws InterruptedException, ExecutionException {
 		Extensions ex = new Extensions(Extensions.EventType.VER_MANAGER);
 		CompletableFuture<Boolean> future =ex.execute(verification, com.faction.extender.VerificationManager.Operation.FAIL);
-		while (!future.isDone()) {
-			Thread.sleep(200);
-		}
 		Boolean result = future.get(); 
 		assertTrue(result);
 		em.close();
@@ -159,9 +150,6 @@ public class ModuleOrderTests {
 		
 		Extensions ex2 = new Extensions(Extensions.EventType.ASMT_MANAGER);
 		CompletableFuture<Boolean> future2 =ex2.execute(verification, com.faction.extender.VerificationManager.Operation.FAIL);
-		while (!future2.isDone()) {
-			Thread.sleep(200);
-		}
 		Boolean result2 = future2.get(); 
 		assertTrue(result2);
 		em.close();
@@ -177,9 +165,6 @@ public class ModuleOrderTests {
 		Extensions ex = new Extensions(Extensions.EventType.VULN_MANAGER);
 		assertTrue(assessment.getVulns().get(0).getTracking().matches("^VID-[0-9]+"));
 		CompletableFuture<Boolean> future =ex.execute(assessment, vuln, com.faction.extender.VulnerabilityManager.Operation.Update);
-		while (!future.isDone()) {
-			Thread.sleep(200);
-		}
 		Boolean result = future.get(); 
 		assertTrue(result);
 		em.close();
@@ -191,9 +176,6 @@ public class ModuleOrderTests {
 		
 		Extensions ex2 = new Extensions(Extensions.EventType.VULN_MANAGER);
 		CompletableFuture<Boolean> future2 =ex2.execute(assessment, vuln, com.faction.extender.VulnerabilityManager.Operation.Update);
-		while (!future2.isDone()) {
-			Thread.sleep(200);
-		}
 		Boolean result2 = future2.get(); 
 		assertTrue(result2);
 		em.close();
