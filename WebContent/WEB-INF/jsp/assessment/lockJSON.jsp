@@ -1,5 +1,6 @@
 <%@page import="org.apache.struts2.components.Include"%><%@ taglib prefix="s" uri="/struts-tags" %><%@ page language="java" contentType="application/json; charset=UTF-8" pageEncoding="UTF-8"%><%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 {
+ "token": "<s:property value="currentToken"/>",
 <s:if test="isSummaryLockedbyAnotherUser()">
 "summary": { "isLock" : <s:property value="assessment.isSummaryLock()" />,
   "lockBy" : "<s:property value="assessment.getSummaryLockBy().fname"/> <s:property value="assessment.getSummaryLockBy().lname"/>",

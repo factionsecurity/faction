@@ -257,6 +257,10 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 		}
 	}
 	
+	public String getCurrentToken() {
+		return CSRF.getOrCreateToken(ServletActionContext.getRequest().getSession());
+	}
+	
 	public boolean testToken() {
 		if(CSRF.checkToken(ServletActionContext.getRequest().getSession(), this._token))
 			return true;

@@ -332,6 +332,9 @@ $(function() {
 				}
 				return;
 			}
+			if(resp.token){
+				global._token = resp.token;	
+			}
 			["notes", "risk", "summary"].forEach(function(type) {
 				if (resp[type] && resp[type].isLock) {
 					editors[type].core.context.element.wysiwygFrame.classList.add("disabled");
@@ -800,7 +803,7 @@ $(function() {
 				$.ajaxSetup({ cache: false });
 				$.getJSON(`tempSearch?term=${term}&type=${type}`,
 					function(data) {
-						_token = data.token
+						global._token = data.token
 						var tmps = data.templates;
 						var list = [];
 						for (i = 0; i < tmps.length; i++) {

@@ -146,6 +146,12 @@ class EditLocks {
 					}
 					return;
 				}
+				if(resp.token){
+					_this.token = resp.token;
+					_this.caller.token = resp.token;
+					_this.caller.caller.queue._token = resp.token;
+					_this.caller.caller.queue.caller._token = resp.token;
+				}
 				_this.updateVulnsCallback(resp);
 			}).catch( () => {
 				if(!_this.errorMessageShown){

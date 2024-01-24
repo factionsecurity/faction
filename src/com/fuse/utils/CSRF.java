@@ -7,6 +7,16 @@ import javax.servlet.http.HttpSession;
 
 public class CSRF {
 	
+	public static String getOrCreateToken(HttpSession session) {
+		String currentToken = (String)session.getAttribute("csrf");
+		if(currentToken == null || currentToken.equals("")) {
+			return getToken(session);
+		}else {
+			return currentToken;
+		}
+		
+	}
+	
 	public  static String getToken(HttpSession session) {
 		String token = UUID.randomUUID().toString();
 		session.setAttribute("csrf", token);
