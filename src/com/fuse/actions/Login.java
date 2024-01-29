@@ -113,6 +113,7 @@ public class Login extends FSActionSupport {
 				}
 				session.setAttribute("title1", ss.getBoldTitle() == null ? "My" : ss.getBoldTitle());
 				session.setAttribute("title2", ss.getOtherTitle() == null ? "FACTION" : ss.getOtherTitle());
+				session.setAttribute("allowTelemetry", ss.getAllowTelemetry() == null ? false : ss.getAllowTelemetry());
 
 				return redirectIt(user);
 			} else if (result == AuthResult.FAILED_AUTH) {

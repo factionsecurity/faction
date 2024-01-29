@@ -73,6 +73,7 @@ public class SystemSettings {
 	private String ldapSearchDn;
 	private Boolean ldapInsecureSSL=false;
 	private String ldapObjectClass;
+	private Boolean allowTelemetry;
 	
 	public void initSMTPSettings() {
 		if(this.server == null || this.server == "") {
@@ -506,6 +507,15 @@ public class SystemSettings {
 	public Boolean getSelfPeerReview() {
 		return this.selfPeerReview;
 	}
+	
+	public Boolean getAllowTelemetry() {
+		return allowTelemetry;
+	}
+	
+	public void setAllowTelemetry(Boolean allowTelemetry) {
+		this.allowTelemetry = allowTelemetry;
+	}
+	
 	
 	@Transient
 	public OidcConfiguration getOdicConfig() {

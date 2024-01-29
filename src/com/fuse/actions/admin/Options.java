@@ -636,6 +636,40 @@ public class Options extends FSActionSupport {
 		}
 
 	}
+	@Action("updateTelemetry")
+	public String updateTelemetry() {
+		if (!(this.isAcadmin())) {
+			this._message = "This Status Does not Exist";
+			return this.ERRORJSON;
+		}
+		if (!this.testToken(false))
+			return this.ERRORJSON;
+		if (status == null || status.trim().equals("")) {
+			this._message = "Status is Empty";
+			return this.ERRORJSON;
+		}
+		SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
+				.orElse(null);
+		if (ems == null) {
+			this._message = "No System Settings to update";
+			return this.ERRORJSON;
+		}
+
+		if (ems.getStatus().stream().anyMatch(s -> s.toLowerCase().equals(this.status.toLowerCase().trim()))) {
+
+			ems.setAllowTelemetry(this.allowTelemetry);
+			HibHelper.getInstance().preJoin();
+			em.joinTransaction();
+			em.persist(ems);
+			AuditLog.audit(this, "Updated Telemetry", AuditLog.UserAction, null, null, false);
+			HibHelper.getInstance().commit();
+			return this.SUCCESSJSON;
+		} else {
+			this._message = "This Status Does not Exist";
+			return this.ERRORJSON;
+		}
+		
+	}
 
 	public String getActiveOptions() {
 		return "active";
@@ -931,6 +965,10 @@ public class Options extends FSActionSupport {
 	}
 	public String getSelfPeerReview() {
 		return this.selfPeerReview;
+	}
+	
+	public void setAllowTelemetry( Boolean allowTelemetry) {
+		this.allowTelemetry = allowTelemetry;
 	}
 	
 

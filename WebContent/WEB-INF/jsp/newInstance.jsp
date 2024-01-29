@@ -86,6 +86,12 @@
 								<label for="team" >Create a Team Name (Optional)</label><br>
 								<input type="text" class="form-control" id="team" name="team" placeholder="Hacking Team">
 							</div>
+							<div class="form-group">
+								<label for="telemetry" >Allow Anonymous Telemetry
+								<input type="checkbox"  id="allowTelemetry" name="allowTelemetry" checked></label><br>
+								<small>This data helps us make faction better</small>
+
+							</div>
 							
 						</div>
 					</div>

@@ -85,6 +85,7 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	public boolean expireDateApproaching=false;
 	public boolean licenseExpired=false;
 	protected String version="";
+	private Boolean allowTelemetry;
 	
 	
 	private boolean isIndex() {
@@ -118,6 +119,7 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 			_title1 = (String)JSESSION.get("title1");
 			_title2 = (String)JSESSION.get("title2");
 			version = (String)JSESSION.get("version");
+			allowTelemetry = (Boolean)JSESSION.get("allowTelemetry");
 			if(version == null) {
 				try {
 					version = FSUtils.getVersion(ServletActionContext.getServletContext());
@@ -307,5 +309,9 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	}
 	public String getVersion() {
 		return this.version; 
+	}
+	
+	public Boolean getAllowTelemetry() {
+		return this.allowTelemetry;
 	}
 }
