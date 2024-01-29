@@ -1,3 +1,4 @@
+<%@ taglib prefix="s" uri="/struts-tags" %>
 <%@page import="java.time.Year"%>
 
  </section><!-- /.content -->
@@ -9,7 +10,7 @@
         <div class="pull-right hidden-xs">
         </div>
         <!-- Default to the left -->
-        <strong>Copyright &copy; ${Year.now().getValue()} <a href="https://www.factionsecurity.com">FACTION</a>.</strong> All rights reserved. <small>Version ${version}</small>
+        <strong>Copyright &copy; ${Year.now().getValue()} <a href="https://www.factionsecurity.com">FACTION</a>.</strong> All rights reserved. <b class="version" id="versionName">${version}</b> <span class="version" id="newVersion"></</span>
       </footer>
     </div><!-- ./wrapper -->
 
