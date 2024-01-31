@@ -38,8 +38,8 @@ Once the containers are up you can navigate to http://127.0.0.1:8080 to access y
 On the first boot, it will ask you to create an admin account. 
 
 ## Import the Vulnerability Templates
-1. Navigate to Admin -> Default Vulnerabilities
-2. Click import VulnDB. 
+1. Navigate to Templates -> Default Vulnerabilities
+2. Click Update from VulnDB. 
 
 ## Customize reports
 You can find out more information about creating your own custom report templates here:
