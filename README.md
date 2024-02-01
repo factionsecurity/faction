@@ -2,7 +2,7 @@
 
  ![GitHub last commit](https://img.shields.io/github/last-commit/factionsecurity/faction) ![GitHub Release Date - Published_At](https://img.shields.io/github/release-date/factionsecurity/faction)
 
-![Mastodon Follow](https://img.shields.io/mastodon/follow/111520436123477529?domain=https%3A%2F%2Finfosec.exchange) ![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/null0perat0r)
+![Mastodon Follow](https://img.shields.io/mastodon/follow/111520436123477529?domain=https%3A%2F%2Finfosec.exchange) ![X (formerly Twitter) Follow](https://img.shields.io/twitter/follow/null0perar0r)
 
 
 
