@@ -173,9 +173,20 @@
             		<span>Retests</span></a>
             		</li>
             </s:if>
-           <s:if test="prEnabled && (acassessor || acmanager)">
+            <s:if test="(acassessor || acmanager) && tier.equals('consultant')">
+            	<li class="<s:property value="activeVerification"/>">
+            		<a href="upgrade"><i class="label bg-purple">&nbsp;<div class='fa fa-arrow-up'>&nbsp;</div></i><i class="glyphicon glyphicon-ok"></i> 
+            		<span>Retests</span></a>
+            		</li>
+            </s:if>
+           <s:if test="prEnabled && (acassessor || acmanager) && !tier.equals('consultant')">
             	<li class="<s:property value="activePR"/>">
             	<a href="PeerReview"><i class="label bg-purple prCount"></i><i class="glyphicon glyphicon-eye-open"></i>
+            	<span>Peer Review</span></a></li>
+            </s:if>
+           <s:if test="(acassessor || acmanager) && tier.equals('consultant')">
+            	<li class="<s:property value="activePR"/>">
+            	<a href="upgrade"><i class="label bg-purple">&nbsp;<div class='fa fa-arrow-up'>&nbsp;</div></i><i class="glyphicon glyphicon-eye-open"></i>
             	<span>Peer Review</span></a></li>
             </s:if>
             <s:if test="feedEnabled && (acassessor || acmanager)">
@@ -190,6 +201,15 @@
             	 	<ul class="treeview-menu">
             	 	<li class="<s:property value="activeRem"/>"><a href="RemediationQueue"><i class="glyphicon glyphicon-retweet"></i> <span>Queue</span></a></li>
             		<li class="<s:property value="activeRemSearch"/>"><a href="Remediation"><i class="glyphicon glyphicon-search"></i> <span>Search</span></a></li>
+            		</ul>
+            	</li>
+             </s:if>
+            <s:if test="acremediation && tier.equals('consultant')">
+            	 <li class="treeview <s:property value="activeRem"/> <s:property value="activeRemSearch"/>">
+            	 <a href="#"><i class="label bg-purple">&nbsp;<div class='fa fa-arrow-up'>&nbsp;</div></i><i class="glyphicon glyphicon-retweet"></i> <span>Remediation</span> <i class="fa fa-angle-left pull-right"></i></a>
+            	 	<ul class="treeview-menu">
+            	 	<li class="<s:property value="activeRem"/>"><a href="upgrade"><i class="label bg-purple">&nbsp;<div class='fa fa-arrow-up'>&nbsp;</div></i><i class="glyphicon glyphicon-retweet"></i> <span>Queue</span></a></li>
+            		<li class="<s:property value="activeRemSearch"/>"><a href="upgrade"><i class="label bg-purple">&nbsp;<div class='fa fa-arrow-up'>&nbsp;</div></i><i class="glyphicon glyphicon-search"></i> <span>Search</span></a></li>
             		</ul>
             	</li>
              </s:if>
