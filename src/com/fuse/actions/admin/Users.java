@@ -134,11 +134,6 @@ public class Users extends FSActionSupport {
 			this._message = "Some inputs are empty";
 			return this.ERRORJSON;
 		}
-		if (!FSUtils.checkEmailDomain(this.email)) {
-			this._message = "Not allowed to add an email from this domain.";
-			return this.ERRORJSON;
-
-		}
 		if (!this.checkRoleAdded()) {
 			this._message = "Must set at least one Role: Manager, Assessor, Remediation, Engagement, or Admin";
 			return this.ERRORJSON;
@@ -339,11 +334,6 @@ public class Users extends FSActionSupport {
 		if (this.isNullStirng(this.email) || this.isNullStirng(fname) || this.isNullStirng(this.lname)) {
 			this._message = "Some inputs are empty";
 			return this.ERRORJSON;
-		}
-		if (!FSUtils.checkEmailDomain(this.email)) {
-			this._message = "Not allowed to add an email from this domain.";
-			return this.ERRORJSON;
-
 		}
 		if(this.authMethod.equals("Native") && this.credential != null && !this.credential.trim().equals("")) {
 			String passErrorMessage = AccessControl.checkPassword(this.credential, this.credential);

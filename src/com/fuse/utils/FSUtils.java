@@ -477,49 +477,7 @@ public class FSUtils {
 		return ics;
 	}
 
-	public static boolean checkEmailDomain(String email) {
-		List<String> emails = new ArrayList<String>();
-		emails.add(email.trim());
-		return checkEmailDomain(emails);
-	}
 
-	public static boolean checkEmailDomain(List<String> emails) {
-		Properties prop = new Properties();
-		InputStream input = null;
-
-		try {
-			String path = "/opt/faction/";
-			String os = System.getProperty("os.name");
-			if (os.contains("win"))
-				path = "C:" + path;
-
-			input = new FileInputStream(path + "db.config");
-
-			// load a properties file
-			prop.load(input);
-
-			String dString = prop.getProperty("domains", "");
-			input.close();
-			if ( dString==null || dString.equals("")) {
-				return true;
-			} else {
-				List<String> domains = Arrays.asList(dString.split(";"));
-
-				boolean test = true;
-				for (String email : emails) {
-					test = domains.stream().anyMatch(e -> email.trim().endsWith("@" + e.trim()));
-					// if false we found an email that did not match any domains
-					// we should fail the test then.
-					if (!test)
-						return false;
-				}
-				return test;
-			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			return true;
-		}
-	}
 
 	private static String getDescriptionFromVulnDB(String reference) {
 		try {

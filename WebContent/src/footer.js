@@ -133,7 +133,7 @@ import 'jquery-confirm';
 		function checkVersion(){
 			let versionId = $("#versionName")[0].innerHTML
 			versionId = versionId.replace("Version ", "");
-			fetch(`https://api.factionsecurity.com/api/version?version=${versionId}`)
+			fetch(`https://api.factionsecurity.com/api/version?version=${versionId}&ts=${new Date().getTime()}`)
 				.then( resp => resp.json() )
 				.then(json => {
 					if(json.update){
