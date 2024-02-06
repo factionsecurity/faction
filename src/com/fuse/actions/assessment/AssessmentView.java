@@ -435,7 +435,7 @@ public class AssessmentView extends FSActionSupport {
 
 	})
 	public String checkStatus() {
-		if (!(this.isAcengagement() || this.isAcmanager())) {
+		if (!(this.isAcassessor() || this.isAcmanager())) {
 			return LOGIN;
 		}
 		HttpSession session = ServletActionContext.getRequest().getSession();
@@ -461,7 +461,7 @@ public class AssessmentView extends FSActionSupport {
 			@Result(name = "lockError", location = "/WEB-INF/jsp/assessment/lockError.jsp"),
 			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
 	public String checkLocks() throws UnsupportedEncodingException {
-		if (!(this.isAcengagement() || this.isAcmanager())) {
+		if (!(this.isAcassessor() || this.isAcmanager())) {
 			_message="Session Expired";
 			return "lockError";
 		}
@@ -496,7 +496,7 @@ public class AssessmentView extends FSActionSupport {
 			@Result(name = "lockError", location = "/WEB-INF/jsp/assessment/lockError.jsp"),
 			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
 	public String setLock() throws UnsupportedEncodingException {
-		if (!(this.isAcengagement() || this.isAcmanager())) {
+		if (!(this.isAcassessor() || this.isAcmanager())) {
 			return LOGIN;
 		}
 		User user = this.getSessionUser();
@@ -539,7 +539,7 @@ public class AssessmentView extends FSActionSupport {
 			@Result(name = "lockError", location = "/WEB-INF/jsp/assessment/lockError.jsp"),
 			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
 	public String clearLock() {
-		if (!(this.isAcengagement() || this.isAcmanager())) {
+		if (!(this.isAcassessor() || this.isAcmanager())) {
 			return LOGIN;
 		}
 		User user = this.getSessionUser();
