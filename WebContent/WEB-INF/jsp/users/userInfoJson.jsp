@@ -16,6 +16,5 @@
 "accesscontrol" : <s:property value="selectedUser.permissions.accessLevel"/>,
 "rem" : <s:property value="selectedUser.permissions.remediation"/>,
 "inactive" : <s:property value="selectedUser.inActive"/>,
-"ssouser" : <s:property value="selectedUser.permissions.ssouser"/>,
 "apikey" : "<s:property value="apiKey"/>"
 }

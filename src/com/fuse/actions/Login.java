@@ -317,8 +317,13 @@ public class Login extends FSActionSupport {
 			this.message = "Can't Reset an LDAP account. Please contact your administrator.";
 			return "reset";
 		}
+		if (u != null && u.getAuthMethod().equals("OAUTH2.0")) {
+			this.failed = true;
+			this.message = "Can't Reset an OAUTH account. Please contact your administrator.";
+			return "reset";
+		}
 
-		if (u != null && !u.getPermissions().isSsouser()) {
+		if (u != null) {
 			// Check if user is inactive due to number of days inactive
 			if (ems != null && ems.getInactiveDays() != null && ems.getInactiveDays() > 30) {
 				Date ll = u.getLastLogin();

@@ -57,7 +57,6 @@ public class users {
 			@ApiParam(value = "Remediation Role", required = false) @FormParam("isRemediation") Boolean isRemediation,
 			@ApiParam(value = "Engagement/Scheduler Role", required = false) @FormParam("isEngage") Boolean isEngage,
 			@ApiParam(value = "Manager Role", required = false) @FormParam("isManager") Boolean isManager,
-			@ApiParam(value = "SSO User", required = false) @FormParam("isSSO") Boolean isSSO,
 			@Context HttpServletRequest req) {
 
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
@@ -89,24 +88,18 @@ public class users {
 				}
 				newUser.setTeam(t);
 				if (verify != null && verify == true) {
-					if (isSSO != null && isSSO != true) {
-						String pass = UUID.randomUUID().toString();
-						newUser.setPasshash(AccessControl.HashPass("", pass));
-						// Setting username to an empty string prevents logins with GUID.
-						// You must register first and create a password to login.
-						String message = "Hello " + fname + " " + lname + "<br><br>";
-						message += "Click the link below to update your password:<br><br>";
-						String url = req.getRequestURL().toString();
-						url = url.replace(req.getRequestURI(), "");
-						url = url + req.getContextPath() + "/portal/Register?uid=" + pass;
-						message += "<a href='" + url + "'>Click here to Register</a><br>";
-						EmailThread emailThread = new EmailThread(email, "New Account Created", message);
-						TaskQueueExecutor.getInstance().execute(emailThread);
-					} else {
-						if (isSSO) {
-							newUser.setPasshash("Nope-SSO-User");
-						}
-					}
+					String pass = UUID.randomUUID().toString();
+					newUser.setPasshash(AccessControl.HashPass("", pass));
+					// Setting username to an empty string prevents logins with GUID.
+					// You must register first and create a password to login.
+					String message = "Hello " + fname + " " + lname + "<br><br>";
+					message += "Click the link below to update your password:<br><br>";
+					String url = req.getRequestURL().toString();
+					url = url.replace(req.getRequestURI(), "");
+					url = url + req.getContextPath() + "/portal/Register?uid=" + pass;
+					message += "<a href='" + url + "'>Click here to Register</a><br>";
+					EmailThread emailThread = new EmailThread(email, "New Account Created", message);
+					TaskQueueExecutor.getInstance().execute(emailThread);
 
 				}
 				Permissions p = new Permissions();
@@ -120,9 +113,6 @@ public class users {
 					p.setAssessor(true);
 				if (isManager != null && isManager == true)
 					p.setManager(true);
-				if (isSSO != null && isSSO == true) {
-					p.setSsouser(true);
-				}
 
 				newUser.setPermissions(p);
 				HibHelper.getInstance().preJoin();
