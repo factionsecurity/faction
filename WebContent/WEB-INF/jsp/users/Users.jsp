@@ -78,7 +78,7 @@
 												<i class="fa fa-edit"></i>
 											</span> <s:if test="inActive == false">
 												<span class="vulnControl vulnControl-delete deleteUser"
-													onClick="del(${id})">
+													onClick="del(${id}, '<s:property value="fname"/> <s:property value="lname"/>')">
 													<i class="fa fa-trash"></i>
 												</span>
 											</s:if> <s:else>

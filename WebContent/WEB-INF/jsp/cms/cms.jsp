@@ -18,7 +18,7 @@ cursor: pointer;
   <section class="content-header">
     <h1>
       <i class="glyphicon glyphicon-book"></i> Report Designer
-      <small><a href="https://www.factionsecurity.com/project/custom-security-report-templates/" target="_blank">Listing of Report Designer Tags</a></small>
+      <small><a href="https://docs.factionsecurity.com/Custom%20Security%20Report%20Templates/" target="_blank">Listing of Report Designer Tags</a></small>
     </h1>
   </section>
 

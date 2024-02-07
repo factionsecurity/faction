@@ -29,7 +29,6 @@ public class Permissions {
 	private Boolean manager;
 	private Boolean executive;
 	private Boolean remediation;
-	private Boolean ssouser;
 	private Integer accessLevel;
 	
 	@Transient
@@ -80,15 +79,6 @@ public class Permissions {
 	}
 	public void setRemediation(boolean remediation) {
 		this.remediation = remediation;
-	}
-	public boolean isSsouser() {
-		if(ssouser == null)
-			return false;
-		else
-			return ssouser;
-	}
-	public void setSsouser(boolean ssouser) {
-		this.ssouser = ssouser;
 	}
 	public Integer getAccessLevel() {
 		if(accessLevel == null)
