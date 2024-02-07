@@ -32,6 +32,7 @@ __Want to see it in action?__ -> [Faction Video Overview](https://www.youtube.co
 __Requirements__
 - Java JDK11 
 - Maven (for building the project)
+- (Optional for VM). Mongo DB requires a CPU with AVX support. You may run into this issue if using [Oracle Virtual](https://www.mongodb.com/community/forums/t/could-not-start-mongodb-5-0-running-oracle-linux-on-virtualbox/120524/10) Box or [Kubernetes](https://stackoverflow.com/questions/70818543/mongo-db-deployment-not-working-in-kubernetes-because-processor-doesnt-have-avx)
 
 Run the following commands to build the war file and deploy it to the docker container. 
 ```
