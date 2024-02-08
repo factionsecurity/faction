@@ -20,6 +20,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -184,7 +185,8 @@ public class vulnerabilities {
 			if(u != null){
 				
 				try{
-					vulnList = vulnList.replaceAll("\\\\n", "<br/>");
+					vulnList = vulnList.replaceAll("\\\\n", "\n");
+					vulnList = StringEscapeUtils.unescapeHtml4(vulnList);
 					CSVReader csv = new CSVReader(new StringReader(vulnList));
 					String[] line;
 					int index = 0;

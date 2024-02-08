@@ -54,12 +54,16 @@ import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.ReportOptions;
 import com.fuse.dao.Vulnerability;
-import com.vladsch.flexmark.html.HtmlRenderer;
-import com.vladsch.flexmark.parser.Parser;
-import com.vladsch.flexmark.profile.pegdown.Extensions;
-import com.vladsch.flexmark.profile.pegdown.PegdownOptionsAdapter;
-import com.vladsch.flexmark.util.ast.Document;
-import com.vladsch.flexmark.util.data.DataHolder;
+
+import org.commonmark.Extension;
+import org.commonmark.ext.autolink.AutolinkExtension;
+import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.ext.ins.InsExtension;
+import org.commonmark.node.*;
+import org.commonmark.parser.IncludeSourceSpans;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
 
 public class FSUtils {
 	private static String INPUT = "Unvalidated Input";
@@ -627,14 +631,14 @@ public class FSUtils {
 	
 	public static String convertFromMarkDown(String text) {
 		try {
-			DataHolder options = PegdownOptionsAdapter.flexmarkOptions(Extensions.ALL);
-
-			Parser parser = Parser.builder(options).build();
-			HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-			Document document = parser.parse(text);
+			List<Extension> extensions = Arrays.asList(TablesExtension.create());
+			Parser parser = Parser.builder()
+					.extensions(extensions)
+					.includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
+					.build();
+			Node document = parser.parse(text);
+			HtmlRenderer renderer = HtmlRenderer.builder().extensions(extensions).build();
 			String converted = renderer.render(document);
-			converted = converted.replaceAll("<code>", "<pre>").replaceAll("</code>", "</pre>");
-			converted = converted.replaceAll("</p>", "<br/>");
 			converted += "<br/>";
 			return converted;
 		} catch (Exception ex) {
