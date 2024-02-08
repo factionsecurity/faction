@@ -9,6 +9,7 @@ import java.util.Random;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
@@ -23,18 +24,24 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.fuse.dao.APIKeys;
+import com.fuse.dao.Category;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
+import com.fuse.utils.FSUtils;
+import com.opencsv.CSVReader;
 
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiModel;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
+import java.io.StringReader;
 import java.lang.reflect.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -45,7 +52,10 @@ import java.text.SimpleDateFormat;
 public class vulnerabilities {
 	private String SUCCESS = "[{ \"result\" : \"SUCCESS\"}]";
 	private String SUCCESSMSG = "[{ \"result\" : \"SUCCESS\": %s}]";
-	private String ERROR = "[{ \"result\" : \"ERROR\", \"message\",\"%s\"}]";
+	private String ERROR = "[{ \"result\" : \"ERROR\", \"message\": \"%s\"}]";
+	
+	
+	
 	
 	private User getUser(EntityManager em, String apiKey){
 		APIKeys keys = (APIKeys)em.createQuery("from APIKeys where key = :key").setParameter("key", apiKey).getResultList().stream().findFirst().orElse(null);
@@ -144,6 +154,116 @@ public class vulnerabilities {
 			em.close();
 		}
 		return Response.status(200).entity(jarray.toJSONString()).build();
+	}
+	
+	@POST
+	@ApiOperation(
+		    value = "Upload Default Vulnerabilties to Faction in CSV format", 
+		    notes = "Below is an example CSV. Note that some parameters are optional.\n "
+		    		+ "If the ID is empty then a new vulnerability will be created. If the ID is populated then it will overwrite the vulnerability with the same id.\n\n "
+		    		+ "If the categoryId is missing then categoryName is required. If a category with the same name exists then the existing category will be used. "
+		    		+ "If the categoryName does not match an existing category then a new category will be created. \n\n"
+		    		+ "If the categoryId is populated then categoryName field is ignored."
+		    )
+	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
+			@ApiResponse(code = 400, message = "Unknown Error"),
+			@ApiResponse(code = 200, message = "All Default Vulnerabilites Returned")})
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.TEXT_PLAIN)
+	@Path("/default")
+	public Response setDefaultJson(
+			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
+			@ApiParam(value = "CSV of Default Vulnerabilities", required = true) 
+			@DefaultValue("id(optional),vulnName,categoryId(optional*),categoryName(optional*), description, recommendation, severityId, impactId, likelihoodId, active\nid(optional),vulnName,categoryId(optional*), categoryName(optional*), description, recommendation, severityId, impactId, likelihoodId, active") String vulnList
+			){
+		
+		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+		
+		try{
+			User u = this.getUser(em, apiKey);
+			if(u != null){
+				
+				try{
+					vulnList = vulnList.replaceAll("\\\\n", "<br/>");
+					CSVReader csv = new CSVReader(new StringReader(vulnList));
+					String[] line;
+					int index = 0;
+					while ((line = csv.readNext()) != null) {
+						Long id = line[0].trim().equals("") ? null : Long.parseLong(line[0].trim());
+						String name = line[1].trim().equals("")? null : line[1].trim();
+						Long catId = line[2].trim().equals("")? null : Long.parseLong(line[2].trim()); 
+						String catName = line[3].trim().equals("")? null : line[3].trim();
+						String description = line[4].trim();
+						description = FSUtils.convertFromMarkDown(description);
+						description = FSUtils.sanitizeHTML(description);
+						String recommendation = line[5].trim();
+						recommendation = FSUtils.convertFromMarkDown(recommendation);
+						recommendation = FSUtils.sanitizeHTML(recommendation);
+						Integer sevId = line[6].trim().equals("")? null : Integer.parseInt(line[6].trim()); 
+						Integer impactId = line[7].trim().equals("")? null : Integer.parseInt(line[7].trim()); 
+						Integer likelihoodId = line[8].trim().equals("")? null : Integer.parseInt(line[8].trim()); 
+						Boolean active = line[9].trim().equals("")? true: Boolean.parseBoolean(line[9].trim());
+						if(name == null) {
+							return Response.status(400).entity(String.format(this.ERROR,"Name on line " + index + " is invalid")).build();
+						}
+						if(catId == null && catName == null) {
+							return Response.status(400).entity(String.format(this.ERROR,"Must Specifiy a Category Id or Category Name on line " + index)).build();
+						}
+						DefaultVulnerability dv = new DefaultVulnerability();
+						if(id != null) {
+							dv = em.find(DefaultVulnerability.class, id);
+						}
+						dv.setName(name);
+						dv.setDescription(description);
+						dv.setRecommendation(recommendation);
+						dv.setOverall(sevId);
+						dv.setLikelyhood(likelihoodId);
+						dv.setImpact(impactId);
+						dv.setActive(active);
+						if(catId == null) {
+							Category cat = (Category) em.createQuery("from Category where name = :name ")
+									.setParameter("name", catName)
+									.getResultList()
+									.stream()
+									.findFirst()
+									.orElse(null);
+							if(cat == null) {
+								cat = new Category();
+								cat.setName(catName);
+								HibHelper.getInstance().preJoin();
+								em.joinTransaction();
+								em.persist(cat);
+								HibHelper.getInstance().commit();
+							}
+							dv.setCategory(cat);
+						}else {
+							Category cat = em.find(Category.class, catId);
+							if(cat != null) {
+								dv.setCategory(cat);
+							}else {
+								return Response.status(400).entity(String.format(this.ERROR,"Category ID does not exist on line " + index)).build();
+							}
+							
+						}
+						HibHelper.getInstance().preJoin();
+						em.joinTransaction();
+						em.persist(dv);
+						HibHelper.getInstance().commit();
+						index++;
+					}
+					
+				}catch(Exception ex){
+					ex.printStackTrace();
+					return Response.status(400).entity(String.format(this.ERROR,"Unknown Error. Check logs.")).build();
+				}
+				
+			}else{
+				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
+			}
+		}finally{
+			em.close();
+		}
+		return Response.status(200).build();
 	}
 	
 	@GET

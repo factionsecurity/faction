@@ -737,29 +737,12 @@ public class assessments {
 
 	}
 
-	private String convertFromMarkDown(String text) {
-		try {
-			DataHolder options = PegdownOptionsAdapter.flexmarkOptions(Extensions.ALL);
-
-			Parser parser = Parser.builder(options).build();
-			HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-			Document document = parser.parse(text);
-			String converted = renderer.render(document);
-			converted = converted.replaceAll("<code>", "<pre>").replaceAll("</code>", "</pre>");
-			converted = converted.replaceAll("</p>", "<br/>");
-			converted += "<br>";
-			return converted;
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			return text;
-		}
-	}
 
 	private String decodeAndSanitize(String encoded) {
 		String decoded = "";
 		try {
 			decoded = new String(Base64.decodeBase64(encoded));
-			decoded = convertFromMarkDown(decoded);
+			decoded = FSUtils.convertFromMarkDown(decoded);
 			return FSUtils.sanitizeHTML(decoded);
 		} catch (Exception e) {
 			e.printStackTrace();
