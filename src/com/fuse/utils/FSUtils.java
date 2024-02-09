@@ -634,7 +634,6 @@ public class FSUtils {
 			List<Extension> extensions = Arrays.asList(TablesExtension.create());
 			Parser parser = Parser.builder()
 					.extensions(extensions)
-					.includeSourceSpans(IncludeSourceSpans.BLOCKS_AND_INLINES)
 					.build();
 			Node document = parser.parse(text);
 			HtmlRenderer renderer = HtmlRenderer.builder().extensions(extensions).build();

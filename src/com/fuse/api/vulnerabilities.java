@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fuse.dao.APIKeys;
 import com.fuse.dao.Category;
 import com.fuse.dao.DefaultVulnerability;
@@ -33,6 +34,7 @@ import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.utils.FSUtils;
 import com.opencsv.CSVReader;
+import com.opencsv.CSVWriter;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModel;
@@ -43,6 +45,7 @@ import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
 
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.lang.reflect.*;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -55,7 +58,124 @@ public class vulnerabilities {
 	private String SUCCESSMSG = "[{ \"result\" : \"SUCCESS\": %s}]";
 	private String ERROR = "[{ \"result\" : \"ERROR\", \"message\": \"%s\"}]";
 	
-	
+	public static class GenericVulnerability {
+		@JsonProperty("Id")
+		public Long id;
+		@JsonProperty("Name")
+		public String name;
+		@JsonProperty("CategoryId")
+		public Long categoryId;
+		@JsonProperty("CategoryName")
+		public String categoryName;
+		@JsonProperty("Description")
+		public String description;
+		@JsonProperty("Recommendation")
+		public String recommendation;
+		@JsonProperty("SeverityId")
+		public Integer severityId;
+		@JsonProperty("LikelihoodId")
+		public Integer likelihoodId;
+		@JsonProperty("ImpactId")
+		public Integer impactId;
+		@JsonProperty("Active")
+		public Boolean active;
+		
+		public GenericVulnerability() {}
+		
+		public GenericVulnerability(DefaultVulnerability defaultVuln) {
+			this.id = defaultVuln.getId();
+			this.name = defaultVuln.getName();
+			this.categoryId = defaultVuln.getCategory().getId();
+			this.categoryName = defaultVuln.getCategory().getName();
+			this.description = defaultVuln.getDescription();
+			this.recommendation = defaultVuln.getRecommendation();
+			this.severityId = defaultVuln.getOverall();
+			this.likelihoodId = defaultVuln.getLikelyhood();
+			this.impactId = defaultVuln.getImpact();
+			this.active = defaultVuln.getActive();
+			
+		}
+
+		public Long getId() {
+			return id;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public Long getCategoryId() {
+			return categoryId;
+		}
+
+		public void setCategoryId(Long categoryId) {
+			this.categoryId = categoryId;
+		}
+
+		public String getCategoryName() {
+			return categoryName;
+		}
+
+		public void setCategoryName(String categoryName) {
+			this.categoryName = categoryName;
+		}
+
+		public String getDescription() {
+			return description;
+		}
+
+		public void setDescription(String description) {
+			this.description = description;
+		}
+
+		public String getRecommendation() {
+			return recommendation;
+		}
+
+		public void setRecommendation(String recommendation) {
+			this.recommendation = recommendation;
+		}
+
+		public Integer getSeverityId() {
+			return severityId;
+		}
+
+		public void setSeverityId(Integer severityId) {
+			this.severityId = severityId;
+		}
+
+		public Integer getLikelihoodId() {
+			return likelihoodId;
+		}
+
+		public void setLikelihoodId(Integer likelihoodId) {
+			this.likelihoodId = likelihoodId;
+		}
+
+		public Integer getImpactId() {
+			return impactId;
+		}
+
+		public void setImpactId(Integer impactId) {
+			this.impactId = impactId;
+		}
+
+		public Boolean getActive() {
+			return active;
+		}
+
+		public void setActive(Boolean active) {
+			this.active = active;
+		}
+	}
 	
 	
 	private User getUser(EntityManager em, String apiKey){
@@ -81,7 +201,8 @@ public class vulnerabilities {
 							 dmethod.getReturnType().equals(Integer.class) ||
 							 dmethod.getReturnType().equals(Long.class) ||
 							 dmethod.getReturnType().equals(String.class) ||
-							 dmethod.getReturnType().equals(Date.class)
+							 dmethod.getReturnType().equals(Date.class) ||
+							 dmethod.getReturnType().equals(Boolean.class)
 							 )){
 				 try {
 					 Object o = dmethod.invoke(obj,  null);
@@ -112,7 +233,7 @@ public class vulnerabilities {
 	
 	@GET
 	@ApiOperation(
-		    value = "Gets All Default Vulnerabilities Stored in the System.", 
+		    value = "Gets All Default Vulnerabilities Stored in the System in a JSON format.", 
 		    notes = "",
 		    response = Vulnerability.class,
 		    responseContainer = "List"
@@ -129,15 +250,16 @@ public class vulnerabilities {
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		
 		JSONArray jarray = new JSONArray();
+		List<Vulnerability> vulns = new ArrayList<>();
 		try{
 			User u = this.getUser(em, apiKey);
 			if(u != null){
 				
 				try{
-					List<DefaultVulnerability> vulns = (List<DefaultVulnerability>)em.createQuery("from DefaultVulnerability").getResultList();
-					for(DefaultVulnerability v : vulns){
-						v.updateRiskLevels(em);
-						jarray.add(this.dao2JSON(v, DefaultVulnerability.class));	
+					List<DefaultVulnerability> defaults = (List<DefaultVulnerability>)em.createQuery("from DefaultVulnerability").getResultList();
+					for(DefaultVulnerability v : defaults){
+						GenericVulnerability vuln = new GenericVulnerability(v);
+						jarray.add(this.dao2JSON(vuln, GenericVulnerability.class));
 					}
 				}catch(Exception ex){
 					
@@ -157,6 +279,62 @@ public class vulnerabilities {
 		return Response.status(200).entity(jarray.toJSONString()).build();
 	}
 	
+	@GET
+	@ApiOperation(
+		    value = "Gets All Default Vulnerabilities Stored in the System in a CSV format.", 
+		    notes = ""
+		    )
+	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
+			@ApiResponse(code = 400, message = "Unknown Error"),
+			@ApiResponse(code = 200, message = "All Default Vulnerabilites Returned")})
+	@Produces("text/csv")
+	@Path("/csv/default")
+	public Response getalldefaulcsv(
+			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey
+			){
+		
+		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+		try{
+			StringWriter stringWriter = new StringWriter();
+			CSVWriter csvWriter = new CSVWriter(stringWriter);
+			User u = this.getUser(em, apiKey);
+			if(u != null){
+				
+				try{
+					List<DefaultVulnerability> defaults = (List<DefaultVulnerability>)em.createQuery("from DefaultVulnerability").getResultList();
+					for(DefaultVulnerability v : defaults){
+						String [] line = { 
+								""+v.getId(), 
+								v.getName(), 
+								""+v.getCategory().getId(), 
+								v.getCategory().getName(),
+								v.getDescription(),
+								v.getRecommendation(),
+								""+v.getOverall(),
+								""+v.getImpact(),
+								""+v.getLikelyhood(),
+								""+v.getActive()
+							};
+						csvWriter.writeNext(line);
+					}
+					return Response.status(200).entity(stringWriter.toString()).build();
+				}catch(Exception ex){
+					
+					ex.printStackTrace();
+					return Response.status(400).entity(String.format(this.ERROR,"Unknown Error. Check logs.")).build();
+					
+				}
+				
+				
+				
+			}else{
+				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
+			}
+		}finally{
+			em.close();
+		}
+	}
+	
 	@POST
 	@ApiOperation(
 		    value = "Upload Default Vulnerabilties to Faction in CSV format", 
@@ -171,8 +349,8 @@ public class vulnerabilities {
 			@ApiResponse(code = 200, message = "All Default Vulnerabilites Returned")})
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.TEXT_PLAIN)
-	@Path("/default")
-	public Response setDefaultJson(
+	@Path("/csv/default")
+	public Response uploadDefaultCSVVulns(
 			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
 			@ApiParam(value = "CSV of Default Vulnerabilities", required = true) 
 			@DefaultValue("id(optional),vulnName,categoryId(optional*),categoryName(optional*), description, recommendation, severityId, impactId, likelihoodId, active\nid(optional),vulnName,categoryId(optional*), categoryName(optional*), description, recommendation, severityId, impactId, likelihoodId, active") String vulnList
@@ -252,6 +430,101 @@ public class vulnerabilities {
 						em.persist(dv);
 						HibHelper.getInstance().commit();
 						index++;
+					}
+					
+				}catch(Exception ex){
+					ex.printStackTrace();
+					return Response.status(400).entity(String.format(this.ERROR,"Unknown Error. Check logs.")).build();
+				}
+				
+			}else{
+				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
+			}
+		}finally{
+			em.close();
+		}
+		return Response.status(200).build();
+	}
+	@POST
+	@ApiOperation(
+		    value = "Upload Default Vulnerabilties to Faction in JSON format", 
+		    notes = "Below is an example JSON. Note that some parameters are optional.\n "
+		    		+ "If the ID is empty then a new vulnerability will be created. If the ID is populated then it will overwrite the vulnerability with the same id.\n\n "
+		    		+ "If the categoryId is missing then categoryName is required. If a category with the same name exists then the existing category will be used. "
+		    		+ "If the categoryName does not match an existing category then a new category will be created. \n\n"
+		    		+ "If the categoryId is populated then categoryName field is ignored."
+		    )
+	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
+			@ApiResponse(code = 400, message = "Unknown Error"),
+			@ApiResponse(code = 200, message = "All Default Vulnerabilites Returned")})
+	@Produces(MediaType.APPLICATION_JSON)
+	@Consumes(MediaType.APPLICATION_JSON)
+	@Path("/default")
+	public Response uploadDefaultJSONVulns(
+			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
+			@ApiParam(value = "JSON List of Default Vulnerabilities", required = true) 
+			 List<GenericVulnerability> vulnList
+			){
+		
+		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+		
+		try{
+			User u = this.getUser(em, apiKey);
+			if(u != null){
+				
+				try{
+					for(GenericVulnerability gv : vulnList) {
+						if(gv.getName() == null || gv.getName().trim().equals("")) {
+							return Response.status(400).entity(String.format(this.ERROR,"Name is invalid")).build();
+						}
+						if(gv.getCategoryId() == null && (gv.getCategoryName() == null || gv.getCategoryName().trim().equals("")) ) {
+							return Response.status(400).entity(String.format(this.ERROR,"Must Specifiy a Category Id or Category Name")).build();
+						}
+						DefaultVulnerability dv = new DefaultVulnerability();
+						if(gv.getId() != null) {
+							dv = em.find(DefaultVulnerability.class, gv.getId());
+						}
+						dv.setName(gv.getName());
+						String description = FSUtils.convertFromMarkDown(dv.getDescription());
+						description = FSUtils.sanitizeHTML(description);
+						dv.setDescription(description);
+						String recommendation = FSUtils.convertFromMarkDown(dv.getRecommendation());
+						recommendation = FSUtils.sanitizeHTML(recommendation);
+						dv.setRecommendation(recommendation);
+						dv.setOverall(gv.getSeverityId());
+						dv.setLikelyhood(gv.getLikelihoodId());
+						dv.setImpact(gv.getImpactId());
+						dv.setActive(gv.getActive());
+						if(gv.getCategoryId() == null) {
+							Category cat = (Category) em.createQuery("from Category where name = :name ")
+									.setParameter("name", gv.getCategoryName())
+									.getResultList()
+									.stream()
+									.findFirst()
+									.orElse(null);
+							if(cat == null) {
+								cat = new Category();
+								cat.setName(gv.getCategoryName());
+								HibHelper.getInstance().preJoin();
+								em.joinTransaction();
+								em.persist(cat);
+								HibHelper.getInstance().commit();
+							}
+							dv.setCategory(cat);
+						}else {
+							Category cat = em.find(Category.class, gv.getCategoryId());
+							if(cat != null) {
+								dv.setCategory(cat);
+							}else {
+								return Response.status(400).entity(String.format(this.ERROR,"Category ID does not exist")).build();
+							}
+							
+						}
+						HibHelper.getInstance().preJoin();
+						em.joinTransaction();
+						em.persist(dv);
+						HibHelper.getInstance().commit();
+						
 					}
 					
 				}catch(Exception ex){
@@ -576,5 +849,6 @@ public class vulnerabilities {
 		}
 		return Response.status(200).entity(jarray.toJSONString()).build();
 	}
+	
 	
 }
