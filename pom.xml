@@ -138,8 +138,11 @@
 			<artifactId>jackson-module-jaxb-annotations</artifactId>
 			<version>2.16.1</version>
 		</dependency>
-
-
+		<dependency>
+			<groupId>jakarta.activation</groupId>
+			<artifactId>jakarta.activation-api</artifactId>
+			<version>2.1.2</version>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.struts</groupId>
 			<artifactId>struts2-core</artifactId>
