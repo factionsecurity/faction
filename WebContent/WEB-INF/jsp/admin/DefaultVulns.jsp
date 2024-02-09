@@ -60,18 +60,27 @@
 			<bs:mco colsize="6">
 				<bs:row>
 					<jsp:include page="AddVuln.jsp" />
+					<!-- End row -->
 				</bs:row>
 				<bs:row>
-					<bs:mco colsize="12">
-						<button class="btn btn-danger" id="importDB">Update from
-							VulnDB</button>&nbsp;&nbsp;<a
-							href="https://github.com/factionsecurity/data/tree/master/db">
-							View VulnDB on GitHub</a>
+					<bs:mco colsize="3">
+						<button class="btn btn-danger" id="importDB">Import from Faction</button>
 
+					</bs:mco>
+					<bs:mco colsize="3">
+						<a href="https://github.com/factionsecurity/data/tree/master/db">
+							View VulnDB on GitHub</a>
+					</bs:mco>
+					<bs:mco colsize="3">
+						<a class="btn btn-success"
+							href="https://docs.factionsecurity.com/Importing%20Your%20Vulnerability%20Templates%20Via%20the%20API/">
+							Import Your Own Via API</a>
 					</bs:mco>
 				</bs:row>
 				<bs:row>
-				&nbsp;
+				</bs:row>
+				<bs:row>
+				<br/>
 				</bs:row>
 				<bs:row>
 					<bs:mco colsize="12">
