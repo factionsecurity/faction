@@ -497,10 +497,8 @@ public class FSUtils {
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			InputStream responseStream = connection.getInputStream();
 			String contents = IOUtils.toString(responseStream, StandardCharsets.UTF_8);
-			// TODO: Might need to delete this comment. Testing that the new vuln
-			// descriptions
-			// update correctly
-			return contents; // contents.replace("\n\n", "<br/><br/>").replace("\n", " ");
+			contents = convertFromMarkDown(contents);
+			return contents; 
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			return "";
@@ -519,7 +517,8 @@ public class FSUtils {
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			InputStream responseStream = connection.getInputStream();
 			String contents = IOUtils.toString(responseStream, StandardCharsets.UTF_8);
-			return contents; // contents.replace("\n\n", "<br/><br/>").replace("\n", " ");
+			contents = convertFromMarkDown(contents);
+			return contents; 
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			return "";
