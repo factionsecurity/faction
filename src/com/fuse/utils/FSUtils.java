@@ -231,7 +231,7 @@ public class FSUtils {
 					jsonStr += sc.nextLine();
 				}
 				// convert new line chars to HTML
-				jsonStr = jsonStr.replaceAll("(\\\\n)", "<br>");
+				jsonStr = jsonStr.replaceAll("(\\\\n)", "<br/>");
 
 				// parse the json files.
 				JSONObject json = (JSONObject) new JSONParser().parse(jsonStr);
@@ -498,6 +498,8 @@ public class FSUtils {
 			InputStream responseStream = connection.getInputStream();
 			String contents = IOUtils.toString(responseStream, StandardCharsets.UTF_8);
 			contents = convertFromMarkDown(contents);
+			/// This line is because new lines show up string concatinated in the editor. 
+			contents = contents.replaceAll("\n", " ");
 			return contents; 
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
