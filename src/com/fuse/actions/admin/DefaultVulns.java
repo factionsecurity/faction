@@ -593,7 +593,7 @@ public class DefaultVulns  extends FSActionSupport{
 				+ "] }", Category.class).getResultList();
 		return "catsearch";
 	}
-		
+	
 	
 	public String getActiveVulns() {
 		return "active";

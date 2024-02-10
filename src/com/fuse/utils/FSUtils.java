@@ -55,6 +55,16 @@ import com.fuse.dao.HibHelper;
 import com.fuse.dao.ReportOptions;
 import com.fuse.dao.Vulnerability;
 
+import org.commonmark.Extension;
+import org.commonmark.ext.autolink.AutolinkExtension;
+import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.ext.ins.InsExtension;
+import org.commonmark.node.*;
+import org.commonmark.parser.IncludeSourceSpans;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
+
 public class FSUtils {
 	private static String INPUT = "Unvalidated Input";
 	private static String SERVER = "Server Misconfiguration";
@@ -221,7 +231,7 @@ public class FSUtils {
 					jsonStr += sc.nextLine();
 				}
 				// convert new line chars to HTML
-				jsonStr = jsonStr.replaceAll("(\\\\n)", "<br>");
+				jsonStr = jsonStr.replaceAll("(\\\\n)", "<br/>");
 
 				// parse the json files.
 				JSONObject json = (JSONObject) new JSONParser().parse(jsonStr);
@@ -487,10 +497,10 @@ public class FSUtils {
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			InputStream responseStream = connection.getInputStream();
 			String contents = IOUtils.toString(responseStream, StandardCharsets.UTF_8);
-			// TODO: Might need to delete this comment. Testing that the new vuln
-			// descriptions
-			// update correctly
-			return contents; // contents.replace("\n\n", "<br/><br/>").replace("\n", " ");
+			contents = convertFromMarkDown(contents);
+			/// This line is because new lines show up string concatinated in the editor. 
+			contents = contents.replaceAll("\n", " ");
+			return contents; 
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			return "";
@@ -509,7 +519,8 @@ public class FSUtils {
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
 			InputStream responseStream = connection.getInputStream();
 			String contents = IOUtils.toString(responseStream, StandardCharsets.UTF_8);
-			return contents; // contents.replace("\n\n", "<br/><br/>").replace("\n", " ");
+			contents = convertFromMarkDown(contents);
+			return contents; 
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
 			return "";
@@ -617,6 +628,23 @@ public class FSUtils {
 			HibHelper.getInstance().commit();
 			}
 		return RPO;
+	}
+	
+	public static String convertFromMarkDown(String text) {
+		try {
+			List<Extension> extensions = Arrays.asList(TablesExtension.create());
+			Parser parser = Parser.builder()
+					.extensions(extensions)
+					.build();
+			Node document = parser.parse(text);
+			HtmlRenderer renderer = HtmlRenderer.builder().extensions(extensions).build();
+			String converted = renderer.render(document);
+			converted += "<br/>";
+			return converted;
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return text;
+		}
 	}
 
 }
