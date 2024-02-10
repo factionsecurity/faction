@@ -308,14 +308,14 @@ public class AssessmentView extends FSActionSupport {
 		List<RiskLevel> levels = em
 				.createQuery("from RiskLevel where risk IS NOT Null and risk != '' order by riskId")
 				.getResultList();
-		HashMap<Long,String> levelMap = new HashMap<>();
+		HashMap<Integer,String> levelMap = new HashMap<>();
 		levels.forEach( (level) -> {
-			levelMap.put(level.getId(), level.getRisk());
+			levelMap.put(level.getRiskId(), level.getRisk());
 			vulnMap.put(level.getRisk(), 0);
 		});
 		
 		vulns.stream().forEach( (vuln) -> {
-			String severity = levelMap.get(vuln.getOverall()+1);
+			String severity = levelMap.get(vuln.getOverall().intValue());
 			Integer count = vulnMap.get(severity);
 			vulnMap.put(severity, ++count);
 		});
