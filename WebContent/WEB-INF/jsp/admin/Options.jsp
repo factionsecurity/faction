@@ -207,17 +207,11 @@
 					<bs:box type="info" title="Email Settings">
 						<bs:row>
 							<bs:inputgroup name="Email Server:" colsize="12" id="emailServer"
-								placeholder="Email Server Address">
-								<s:property value="EMS.server" />
-							</bs:inputgroup>
+								placeholder="Email Server Address"><s:property value="EMS.server" /></bs:inputgroup>
 							<bs:inputgroup name="Email Port:" colsize="12" id="emailPort"
-								placeholder="Email Server Port">
-								<s:property value="EMS.port" />
-							</bs:inputgroup>
+								placeholder="Email Server Port"><s:property value="EMS.port" /></bs:inputgroup>
 							<bs:inputgroup name="Email Protocol:" colsize="12"
-								id="emailProto" placeholder="smtp,pop,imap">
-								<s:property value="EMS.type" />
-							</bs:inputgroup>
+								id="emailProto" placeholder="smtp,pop,imap"><s:property value="EMS.type" /></bs:inputgroup>
 							<div class="col-md-12">
 								<div class="checkbox">
 									<label> <input type="checkbox" id="isAuth"
@@ -231,19 +225,13 @@
 							</div>
 							<bs:inputgroup
 								name="Account Username (Sender Account if UnAuthenticated):"
-								colsize="12" id="emailName" placeholder="Username">
-								<s:property value="EMS.uname" />
-							</bs:inputgroup>
+								colsize="12" id="emailName" placeholder="Username"><s:property value="EMS.uname" /></bs:inputgroup>
 							<bs:inputgroup name="Email from Address:" colsize="12"
-								id="fromAddress" placeholder="From Address">
-								<s:property value="EMS.fromaddress" />
-							</bs:inputgroup>
+								id="fromAddress" placeholder="From Address"><s:property value="EMS.fromaddress" /></bs:inputgroup>
 							<bs:inputgroup name="Account Password:" colsize="12"
 								id="emailPass" placeholder="Password" password="true">*****</bs:inputgroup>
 							<bs:inputgroup name="Email Subject Prefix: " colsize="12"
-								id="emailPrefix" placeholder="Faction : ">
-								<s:property value="EMS.prefix" />
-							</bs:inputgroup>
+								id="emailPrefix" placeholder="Faction : "><s:property value="EMS.prefix" /></bs:inputgroup>
 							<bs:mco colsize="12">
 								<div class="form-group">
 									<label>Email Signature:</label>
