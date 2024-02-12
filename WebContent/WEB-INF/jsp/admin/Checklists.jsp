@@ -72,9 +72,14 @@
 		<bs:mco colsize="6">
 			<h3>Required For: </h3>
 			<s:iterator value="types">
-			<bs:mco colsize="6">
-				<input class="types" type="checkbox" id="t${id }" tid="${id }"/><s:property value="type"/>
-			</bs:mco>
+				<bs:mco colsize="6">
+					<s:if test="id in lists.get(0).types" >
+						<input class="types" type="checkbox" id="t${id }" tid="${id }" checked/><s:property value="type"/>
+					</s:if>
+					<s:else>
+						<input class="types" type="checkbox" id="t${id }" tid="${id }"/><s:property value="type"/>
+					</s:else>
+				</bs:mco>
 			</s:iterator>
 		</bs:mco>
 			<bs:mco colsize="6">
