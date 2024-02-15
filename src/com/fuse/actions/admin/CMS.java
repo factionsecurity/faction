@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
+import org.apache.commons.codec.binary.Base64;
 
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.AssessmentType;
@@ -122,12 +123,10 @@ public class CMS extends FSActionSupport {
 				selectedTemplate = (ReportTemplates) em.createQuery("from ReportTemplates where id = :id")
 						.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
 				// Lets delete our old file to make room for the new one.
-				if (selectedTemplate.getFilename() != null && !selectedTemplate.getFilename().equals("")) {
+				if (selectedTemplate.getFilename() != null && !selectedTemplate.getFilename().equals("") && !selectedTemplate.getSaveInDB()) {
+					//TODO: These will not be required in future versions;
 					ReportTemplate report = (new ReportTemplateFactory()).getReportTemplate();
 					report.deleteTemplate(selectedTemplate.getFilename());
-					// File deleteme = new File(selectedTemplate.getFilename());
-					// deleteme.delete();
-
 				}
 				// remove the DAO
 				HibHelper.getInstance().preJoin();
@@ -141,37 +140,27 @@ public class CMS extends FSActionSupport {
 			if (id != null) {
 				selectedTemplate = (ReportTemplates) em.createQuery("from ReportTemplates where id = :id")
 						.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
-
 				File test = this.getFile_data();
 				if (file_data != null) {
 					// Lets delete our old file to make room for the new one.
-					if (selectedTemplate.getFilename() != null && !selectedTemplate.getFilename().equals("")) {
-
+					if (selectedTemplate.getFilename() != null && !selectedTemplate.getFilename().equals("") && !selectedTemplate.getSaveInDB()) {
+						//TODO: These will not be required in future versions;
 						ReportTemplate report = (new ReportTemplateFactory()).getReportTemplate();
 						report.deleteTemplate(selectedTemplate.getFilename());
-						// File deleteme = new File(selectedTemplate.getFilename());
-						// deleteme.delete();
 
 					}
 					UUID guid = UUID.randomUUID();
 
-					ReportTemplate report = (new ReportTemplateFactory()).getReportTemplate();
 					String filename = guid.toString() + ".docx";
 					FileInputStream fis = new FileInputStream(file_data);
 					byte[] docx = new byte[(int) file_data.length()];
 					fis.read(docx, 0, (int) file_data.length());
-					report.uploadTemplate(filename, docx);
+					
+					String b64Docx = Base64.encodeBase64String(docx);
 
-					/*
-					 * String path = "/opt/fusesoft/templates/";
-					 * if(System.getProperty("os.name").contains("Windows")) path = "C:\\tmp\\";
-					 * String filename = path + guid.toString() + ".docx"; FileOutputStream fos =
-					 * new FileOutputStream(new File(filename)); FileInputStream fis = new
-					 * FileInputStream(file_data); byte [] docx = new byte[(int)file_data.length()];
-					 * fis.read(docx, 0, (int)file_data.length()); fos.write(docx); fos.close();
-					 * fis.close();
-					 */
 					selectedTemplate.setFilename(filename);
+					selectedTemplate.setBase64EncodedTemplate(b64Docx);
+					selectedTemplate.setSaveInDB(true);
 				} else {
 					Teams team = (Teams) em.find(Teams.class, this.teamid);
 					AssessmentType type = (AssessmentType) em.find(AssessmentType.class, this.typeid);
@@ -212,6 +201,33 @@ public class CMS extends FSActionSupport {
 
 		return SUCCESS;
 	}
+	@Action(value = "checkReportValues", results = {
+			@Result( name="ok", type = "httpheader", params = { "status", "202"} ),
+			@Result( name="none",type = "httpheader", params = { "status", "404"} ),
+		}
+	)
+	public String testReportValues() {
+		if (!(this.isAcadmin()|| this.isAcengagement() || this.isAcassessor()))
+			return LOGIN;
+		try {
+			Teams team = em.find(Teams.class, teamid);
+			AssessmentType type = em.find(AssessmentType.class, typeid);
+			List<ReportTemplate> templates = em.createQuery("from ReportTemplates where team = :team and type = :type")
+					.setParameter("team", team)
+					.setParameter("type", type)
+					.getResultList();
+			if(templates != null && templates.size() == 0) {
+				return "none";
+			}else {
+				return "ok";
+			}
+		}catch(Exception ex) {
+			ex.printStackTrace();
+			return "none";
+		}
+	}
+	
+	
 
 	public File getFile_data() {
 		return file_data;
