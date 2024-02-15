@@ -271,18 +271,14 @@ public class Login extends FSActionSupport {
 					AssessmentType newType = new AssessmentType();
 					newType.setType("Security Assessment");
 					em.persist(newType);
-
-					if (reportTemplates == null || reportTemplates.isEmpty()) {
-						ReportTemplate report = (new ReportTemplateFactory()).getReportTemplate();
-						String defaultFileName = report.setup();
-						ReportTemplates reportTemplate = new ReportTemplates();
-						reportTemplate.setTeam(theTeam);
-						reportTemplate.setFilename(defaultFileName);
-						reportTemplate.setRetest(false);
-						reportTemplate.setType(newType);
-						reportTemplate.setName("Sample Template");
-						em.persist(reportTemplate);
-
+					
+					try {
+						if (reportTemplates == null || reportTemplates.isEmpty()) {
+							ReportTemplates reportTemplate = new ReportTemplates();
+							reportTemplate.initDefaultTemplate(theTeam, newType);
+						}
+					}catch(Exception ex) {
+						ex.printStackTrace();
 					}
 				}
 				AuditLog.audit(adminUsername, this, "Admin Account Created", AuditLog.Login, false);
