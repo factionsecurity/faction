@@ -23,44 +23,57 @@ $(function(){
             retest="true";
         let team=$("#asmtTeam").val();
         let type=$("#asmtType").val();
-        let qs = "test=test&team="+team + "&type="+type+"&retest=" + retest;
-        let win = window.open('../service/Report.pdf?'+ qs, '_blank');
+        fetch(`checkReportValues?teamid=${team}&typeid=${type}`).then(resp => {
+			if(resp.status == 202){
+        		let qs = "test=test&team="+team + "&type="+type+"&retest=" + retest;
+        		let win = window.open('../service/Report.pdf?'+ qs, '_blank');
+			}else{
+				$.alert(
+						{
+							title: "Error",
+							type:"red",
+							content: "There isn't a report with this combination of assessment type and team.",
+							columnClass: 'small'
+						}
+					);
+				}
+		})
         });
     $("#addTemplate").click(function(){
         
         $.confirm({
-            title:"Update Template",
+            title:"Add New Template",
             content: 'url:cms?action=templateUpload',
             contentLoaded: function(){
                setTimeout(() => {
                }, 1000); 
             },
             buttons: {
-            formSubmit: {
-                text: "Save",
-                action: function(){
-                    let data="action=templateCreate";
-                    data+="&name=" + $("#name").val();
-                    data+="&teamid="+$("#team").val();
-                    data+="&typeid="+$("#type").val();
-                    data+="&retest="+$("#retest").is(':checked');
-                    $.post("cms",data).done(function(resp){
-                        if(resp.result == "success"){
-                            console.log("saved");
-                            document.location = document.location;
-                        }else{
-                            $.alert({
-                                title: "Error!",
-                                content: resp.message
-                            })
-                        }
-                    }).error(function(){
-                        console.log("error");
-                    });
-                }
-                
-            },
-            cancel:function(){ this.close();}
+				formSubmit: {
+					text: "Save",
+					action: function(){
+						let data="action=templateCreate";
+						data+="&name=" + $("#name").val();
+						data+="&teamid="+$("#team").val();
+						data+="&typeid="+$("#type").val();
+						data+="&retest="+$("#retest").is(':checked');
+						$.post("cms",data).done(function(resp){
+							if(resp.result == "success"){
+								console.log("saved");
+								document.location = document.location;
+							}else{
+								$.alert({
+									title: "Error!",
+									content: resp.message
+								})
+							}
+						}).error(function(){
+							console.log("error");
+						});
+					}
+					
+				},
+				cancel:function(){ this.close();}
             }
             
         });
@@ -92,10 +105,9 @@ $(function(){
             title:"Update Template",
             content: 'url:cms?action=templateUpload&id='+id,
             contentLoaded:function(){
-                console.log("loaded");
                 setTimeout(function(){
                 $("#imgForm").show();
-                $("#team, #retest, #type").attr('disabled','disabled');
+                //$("#team, #retest, #type").attr('disabled','disabled');
                 }, 1000);
             },
             buttons:{
