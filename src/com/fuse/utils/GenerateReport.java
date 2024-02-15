@@ -131,18 +131,19 @@ public class GenerateReport {
 			for (Vulnerability v : a.getVulns()) {
 				v.updateRiskLevels(em);
 			}
-			//TODO: Not sure why this is added... debugging?
-			/*for (Vulnerability v : a.getVulns()) {
-				System.out.println(v.getOverallStr());
-			}*/
 
 			String mongoQuery = "{\"type_id\" : " + a.getType().getId() + ", \"team_id\" : "
 					+ a.getAssessor().get(0).getTeam().getId() + ", \"retest\" : true }";
 			ReportTemplates base = (ReportTemplates) em.createNativeQuery(mongoQuery, ReportTemplates.class)
 					.getSingleResult();
-
-			ReportTemplate report = (new ReportTemplateFactory()).getReportTemplate();
-			InputStream is = report.getTemplate(base.getFilename());
+		
+			InputStream is = null;
+			if(base.getSaveInDB()) {
+				ReportTemplate report = (new ReportTemplateFactory()).getReportTemplate();
+				is = report.getTemplate(base.getFilename());
+			}else {
+				is = base.getTemplate();
+			}
 
 			WordprocessingMLPackage mlp = WordprocessingMLPackage.load(is);
 
@@ -187,9 +188,14 @@ public class GenerateReport {
 
 			ReportTemplates base = (ReportTemplates) em.createNativeQuery(mongoQuery, ReportTemplates.class)
 					.getSingleResult();
-
-			ReportTemplate report = (new ReportTemplateFactory()).getReportTemplate();
-			InputStream is = report.getTemplate(base.getFilename());
+			
+			InputStream is = null;
+			if(!base.getSaveInDB()) {
+				ReportTemplate report = (new ReportTemplateFactory()).getReportTemplate();
+				is = report.getTemplate(base.getFilename());
+			}else {
+				is = base.getTemplate();
+			}
 
 			// WordprocessingMLPackage mlp = WordprocessingMLPackage.load(new
 			// File(base.getFilename()));
@@ -302,11 +308,20 @@ public class GenerateReport {
 					+ a.getAssessor().get(0).getTeam().getId() + ", \"retest\" : " + retest + "}";
 
 			ReportTemplates base = (ReportTemplates) em.createNativeQuery(mongoQuery, ReportTemplates.class)
-					.getSingleResult();
+					.getResultList()
+					.stream()
+					.findFirst()
+					.orElse(null);
 
-			ReportTemplate report = (new ReportTemplateFactory()).getReportTemplate();
-			InputStream is = report.getTemplate(base.getFilename());
 
+			InputStream is = null;
+			if(!base.getSaveInDB()) {
+				ReportTemplate report = (new ReportTemplateFactory()).getReportTemplate();
+				is = report.getTemplate(base.getFilename());
+			}else {
+				is = base.getTemplate();
+			}
+			
 			WordprocessingMLPackage mlp = WordprocessingMLPackage.load(is);
 
 			DocxUtils genDoc = new DocxUtils();
