@@ -138,7 +138,7 @@ public class Options extends FSActionSupport {
 			if (!this.testToken(false))
 				return this.ERRORJSON;
 
-			String mongo = "db.Assessment.count({ type_id: " + this.getId() + "})";
+			String mongo = "db.Assessment.count({ \"type_id\": " + this.getId() + "})";
 			Long count = (Long) em.createNativeQuery(mongo).getSingleResult();
 			if (count > 0l) {
 				this.message = "Can't Delete since the value has been assigned to an assessment";
