@@ -1,11 +1,24 @@
 package com.fuse.dao;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.util.concurrent.CompletableFuture;
+
 import javax.persistence.Entity;
+import javax.persistence.EntityManager;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.TableGenerator;
+import javax.persistence.Transient;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 
 @Entity
 public class ReportTemplates {
@@ -24,11 +37,13 @@ public class ReportTemplates {
 	private String name;
 	private String variable;
 	private String filename;
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private Teams team;
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.LAZY)
 	private AssessmentType type;
 	private boolean retest = false;
+	private String base64EncodedTemplate;
+	private Boolean saveInDB=false; //This is to support existing customers
 	public Long getId() {
 		return id;
 	}
@@ -71,6 +86,61 @@ public class ReportTemplates {
 	public void setVariable(String variable) {
 		this.variable = variable;
 	}
+	public String getBase64EncodedTemplate() {
+		return base64EncodedTemplate;
+	}
+	public void setBase64EncodedTemplate(String base64EncodedTemplate) {
+		this.base64EncodedTemplate = base64EncodedTemplate;
+	}
+	public Boolean getSaveInDB() {
+		return saveInDB != null && saveInDB;
+	}
+	public void setSaveInDB(Boolean saveInDB) {
+		this.saveInDB = saveInDB;
+	}
+	
+	@Transient
+	public InputStream getTemplate() {
+		String b64Template = this.getBase64EncodedTemplate();
+		byte [] docx = Base64.decodeBase64(b64Template);
+		return new ByteArrayInputStream(docx);
+	}
+	
+	@Transient
+	public void initDefaultTemplate(Teams team, AssessmentType type) {
+			CompletableFuture.supplyAsync( () -> {
+				try {
+					String defaultReportName = "default-report-template.docx";
+					URL defaultTemplateURL = new URL(
+							"https://github.com/factionsecurity/report_templates/raw/main/" + defaultReportName);
+					URLConnection con = defaultTemplateURL.openConnection();
+					con.setUseCaches(false);
+					InputStream is = con.getInputStream();
+					byte[] docxBytes = IOUtils.toByteArray(is);
+					String docxB64 = Base64.encodeBase64String(docxBytes);
+					this.setFilename(defaultReportName);
+					this.saveInDB = true;
+					this.base64EncodedTemplate = docxB64;
+					this.team = team;
+					this.type = type;
+					this.name = "Sample Template";
+					this.retest = false;
+					EntityManager em = HibHelper.getInstance().getEM();
+					HibHelper.getInstance().preJoin();
+					em.joinTransaction();
+					em.persist(this);
+					HibHelper.getInstance().commit();
+					
+				} catch (MalformedURLException e) {
+					e.printStackTrace();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+				return true;
+			});
+		
+	}
+	
 	
 	
 	

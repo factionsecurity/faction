@@ -264,12 +264,18 @@ public class AssessmentQueries {
 			.setParameter("id",id).getResultList();
 	}
 	public static boolean checkForReportTemplates(EntityManager em, Assessment assessment){
-		List<ReportTemplates> pages = em.createQuery("from ReportTemplates").getResultList();
+		List<ReportTemplates> templates = em.createQuery("from ReportTemplates").getResultList();
 		boolean found=false;
-		for(ReportTemplates plate : pages){
-			if(plate.getType().getId() == assessment.getType().getId() &&
-					plate.getTeam().getId() == assessment.getAssessor().get(0).getTeam().getId())
-				found = true;
+		for(ReportTemplates template : templates){
+			//TODO: fix lazy loading issue
+			try {
+				if(template.getType().getId() == assessment.getType().getId() &&
+						template.getTeam().getId() == assessment.getAssessor().get(0).getTeam().getId()) {
+					found = true;
+				}
+			}catch(Exception ex) {
+				ex.printStackTrace();
+			}
 		}
 		return found;
 	}
