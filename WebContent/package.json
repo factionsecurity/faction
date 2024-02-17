@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "@popperjs/core": "^2.11.6",
+    "@turingpointde/cvss.js": "^1.5.0",
     "adminlte": "^2.4.1",
     "bootstrap": "^3.4.1",
     "chart.js": "^4.4.1",

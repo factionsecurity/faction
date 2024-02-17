@@ -73,6 +73,7 @@ public class SystemSettings {
 	private String ldapSearchDn;
 	private Boolean ldapInsecureSSL=false;
 	private String ldapObjectClass;
+	private Boolean cvss31=false;
 	
 	public void initSMTPSettings() {
 		if(this.server == null || this.server == "") {
@@ -506,7 +507,15 @@ public class SystemSettings {
 	public Boolean getSelfPeerReview() {
 		return this.selfPeerReview;
 	}
-	
+
+	public Boolean getCvss31() {
+		return cvss31;
+	}
+
+	public void setCvss31(Boolean cvss31) {
+		this.cvss31 = cvss31;
+	}
+
 	@Transient
 	public OidcConfiguration getOdicConfig() {
 		OidcConfiguration config = new OidcConfiguration();

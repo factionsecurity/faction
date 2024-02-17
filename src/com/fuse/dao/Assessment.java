@@ -83,6 +83,8 @@ public class Assessment {
 	@ManyToOne
 	private User risk_locked_by;
 	private Date risk_lock_time;
+	private Boolean cvss31=false;
+	
 
 	public Long getId() {
 		return id;
@@ -405,6 +407,14 @@ public class Assessment {
 
 	public void setRiskLockAt(Date notes_lock_time) {
 		this.risk_lock_time = notes_lock_time;
+	}
+	
+	public Boolean isCvss31() {
+		return cvss31;
+	}
+	
+	public void setCvss31(Boolean cvss31) {
+		this.cvss31 = cvss31;
 	}
 
 	@Transient

@@ -18,6 +18,7 @@ import 'jquery-confirm';
 import 'select2';
 import '../scripts/jquery.autocomplete.min';
 import { marked } from 'marked';
+import CVSS from "@turingpointde/cvss.js";
 
 class SaveQueue {
 	constructor(caller, assessmentId, saveCallback, updateVulnsCallback) {
@@ -501,6 +502,70 @@ class VulnerablilityView {
 
 	setUpVulnAutoComplete() {
 		let _this = this;
+		$("#cvssString").on("change", ()=>{
+			let cvssString = $("#cvssString").val();
+			let vector = CVSS(cvssString);
+			let score = vector.getScore();
+			let severity = vector.getRating();	
+			$("#score").html(score);
+			$("#severity").html(severity);
+			["Critical", "High","Medium", "Low", "None"].forEach((a, b) => {
+				$("#score").removeClass(a);
+				$("#severity").removeClass(a);
+			});
+			$("#score").addClass(severity);
+			$("#severity").addClass(severity);
+			
+		})
+		$("#cvssModal").on("click", () => {
+			$.confirm({
+				title: "CVSS3.1",
+            	content: 'url:CVSS',
+            	columnClass: 'col-md-12',
+            	onContentReady: () => {
+					$('.vector').on("click", function(event){
+						 let el = this;
+						 $(el).parent().children().each( (_index, e) => {
+							 $(e).removeClass("activeVector");
+						 });
+						  $(el).addClass("activeVector");
+						  setTimeout( () => {
+							  let av = $("input[name='attackVector']:checked").val() 
+							  let ac = $("input[name='attackComplexity']:checked").val() 
+							  let pr = $("input[name='privileges']:checked").val() 
+							  let ui = $("input[name='userInteraction']:checked").val() 
+							  let s = $("input[name='scope']:checked").val() 
+							  let c = $("input[name='confidentiality']:checked").val() 
+							  let i = $("input[name='integrity']:checked").val() 
+							  let a = $("input[name='availability']:checked").val() 
+							  let CVSSString = `CVSS:3.1/AV:${av}/AC:${ac}/PR:${pr}/UI:${ui}/S:${s}/C:${c}/I:${i}/A:${a}`; 
+							  $("#modalCVSSString").val(CVSSString);
+							  console.log(CVSSString)
+							  let vector = CVSS(CVSSString);
+							  ["Critical", "High","Medium", "Low", "None"].forEach((a, b) => {
+									$("#modalScore").removeClass(a);
+									$("#modalSeverity").removeClass(a);
+							  });
+							  let severity =vector.getRating();
+							  let score = vector.getScore();
+							  $("#modalScore").addClass(severity);
+							  $("#modalScore").html(score);
+							  $("#modalSeverity").addClass(severity);
+							  $("#modalSeverity").html(severity);
+							  }, 200);
+						   
+						});
+				},
+            	buttons: {
+					save: () => {
+						  $("#cvssString").val($("#modelCVSSString").val());
+						
+					},
+					cancel: () => {}
+				}
+			})
+			
+		});
 		$("#title").autoComplete({
 			minChars: 3,
 			source: function(term, response) {

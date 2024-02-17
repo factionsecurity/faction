@@ -28,6 +28,80 @@
 	<!-- /.col -->
 </div>
 <style>
+.btn:active.focus, .btn:active:focus, .btn:focus {
+    outline: none !important;
+}
+.focus{
+	outline: none !important;
+}
+.active{
+	outline: none !important;
+}
+
+.activeVector {
+	background-color: purple !important;
+	color: white !important;
+	font-weight: bold;
+}
+
+label.btn {
+	background-color: lightgray;
+	color: #030D1C;
+}
+
+label.btn:hover {
+	font-weight: bold;
+}
+.scoreBody{
+	background-color: lightGray;
+	border-radius: 9px;
+	text-align: center;
+	padding-bottom: 5px;
+	margin-bottom:40px;
+	width: 150px;
+}
+.scoreBody h3{
+	font-size: xxx-large;
+	color: lightgray;
+	border-top-right-radius: 9px;
+	border-top-left-radius: 9px;
+	margin-top: 0px;
+}
+.scoreBody span{
+	font-size: large;
+	font-weight: bold;
+}
+
+h3.None {
+	background-color: #00a65a;
+}
+span.None {
+	color: #00a65a;
+}
+h3.Low {
+	background-color: #39cccc;
+}
+span.Low {
+	color: #39cccc;
+}
+h3.Medium {
+	background-color: #00c0ef;
+}
+span.Medium {
+	color: #00c0ef;
+}
+h3.High {
+	background-color: #f39c12;
+}
+span.High {
+	color: #f39c12;
+}
+h3.Critical {
+	background-color: #dd4b39;
+}
+span.Critical {
+	color: #dd4b39;
+}
 .circle {
 	border-radius: 50%;
 	width: 25px;
@@ -85,88 +159,138 @@ td:first-child {
 			<form>
 				<div class="box-body">
 					<div class="form-horizontal">
-						<div class="form-group">
-							<input type="hidden" id="dvulnerability" /> <label for="title"
-								class="col-sm-2 control-label">Title: <span
-								id="title_header"></span></label>
-							<div class="col-sm-4">
-								<input type="text" class="form-control" id="title"
-									placeholder="Vulnerbility Name">
-							</div>
-							<label for="title" class="col-sm-2 control-label">Overall
-								Severity: <span id="overall_header"></span>
-							</label>
-							<div class="col-sm-2">
-								<select class="select2 form-control" id="overall"
-									style="width: 100%">
-									<s:iterator value="levels" status="stat">
-										<s:if
-											test="risk != null && risk != 'Unassigned' && risk != ''">
-											<option value="${stat.index}">${risk}</option>
-										</s:if>
-									</s:iterator>
-								</select>
-							</div>
-						</div>
-						<div class="form-group">
-							<label for="category" class="col-sm-2 control-label">Category:
-								<span id="dcategory_header"></span>
-							</label>
-							<div class="col-sm-4">
-								<select class="select2 form-control" id="dcategory"
-									style="width: 100%">
-									<s:iterator value="categories">
-										<option value="${id}">${name}</option>
-									</s:iterator>
-								</select>
-							</div>
-							<label for="title" class="col-sm-2 control-label">Impact:
-								<span id="impact_header"></span>
-							</label>
-							<div class="col-sm-2">
-								<select class="select2 form-control" id="impact"
-									style="width: 100%">
-									<s:iterator value="levels" status="stat">
-										<s:if
-											test="risk != null && risk != 'Unassigned' && risk != ''">
-											<option value="${stat.index}">${risk}</option>
-										</s:if>
-									</s:iterator>
-								</select>
-							</div>
-						</div>
-						<div class="form-group">
-							<div class="col-sm-6"></div>
-							<label for="title" class="col-sm-2 control-label">Likelihood:
-								<span id="likelyhood_header"></span>
-							</label>
-							<div class="col-sm-2">
-								<select class="select2 form-control" id="likelyhood"
-									style="width: 100%">
-									<s:iterator value="levels" status="stat">
-										<s:if
-											test="risk != null && risk != 'Unassigned' && risk != ''">
-											<option value="${stat.index}">${risk}</option>
-										</s:if>
-									</s:iterator>
-								</select>
-							</div>
-						</div>
+						<bs:mco colsize="6">
+							<bs:row>
+								<div class="form-group">
+									<input type="hidden" id="dvulnerability" /> <label for="title"
+										class="col-sm-2 control-label">Title: <span
+										id="title_header"></span></label>
+									<div class="col-sm-8">
+										<input type="text" class="form-control" id="title"
+											placeholder="Vulnerbility Name">
+									</div>
+								</div>
+							</bs:row>
+							<bs:row>
+								<div class="form-group">
+									<label for="category" class="col-sm-2 control-label">Category:
+										<span id="dcategory_header"></span>
+									</label>
+									<div class="col-sm-8">
+										<select class="select2 form-control" id="dcategory"
+											style="width: 100%">
+											<s:iterator value="categories">
+												<option value="${id}">${name}</option>
+											</s:iterator>
+										</select>
+									</div>
+								</div>
+
+							</bs:row>
+							<bs:row>
+							<s:if test="true">
+								<div class="form-group">
+									<label for="title"
+										class="col-sm-2 control-label">CVSS String: <span
+										id="title_header"></span></label>
+									<div class="col-sm-8">
+										<input type="text" class="form-control" id="cvssString"
+											placeholder="CVSS3.1/...">
+									</div>
+								</div>
+							</s:if>
+							</bs:row>
+						</bs:mco>
+						<bs:mco colsize="6">
+							<s:if test="false">
+								<bs:row>
+									<div class="form-group">
+										<label for="title" class="col-sm-4 control-label">Overall
+											Severity: <span id="overall_header"></span>
+										</label>
+										<div class="col-sm-4">
+											<select class="select2 form-control" id="overall"
+												style="width: 100%">
+												<s:iterator value="levels" status="stat">
+													<s:if
+														test="risk != null && risk != 'Unassigned' && risk != ''">
+														<option value="${stat.index}">${risk}</option>
+													</s:if>
+												</s:iterator>
+											</select>
+										</div>
+									</div>
+								</bs:row>
+								<bs:row>
+									<div class="form-group">
+										<label for="title" class="col-sm-4 control-label">Impact:
+											<span id="impact_header"></span>
+										</label>
+										<div class="col-sm-4">
+											<select class="select2 form-control" id="impact"
+												style="width: 100%">
+												<s:iterator value="levels" status="stat">
+													<s:if
+														test="risk != null && risk != 'Unassigned' && risk != ''">
+														<option value="${stat.index}">${risk}</option>
+													</s:if>
+												</s:iterator>
+											</select>
+										</div>
+									</div>
+								</bs:row>
+								<bs:row>
+									<div class="form-group">
+										<label for="title" class="col-sm-4 control-label">Likelihood:
+											<span id="likelyhood_header"></span>
+										</label>
+										<div class="col-sm-4">
+											<select class="select2 form-control" id="likelyhood"
+												style="width: 100%">
+												<s:iterator value="levels" status="stat">
+													<s:if
+														test="risk != null && risk != 'Unassigned' && risk != ''">
+														<option value="${stat.index}">${risk}</option>
+													</s:if>
+												</s:iterator>
+											</select>
+										</div>
+									</div>
+								</bs:row>
+							</s:if>
+							<s:else>
+								<bs:row>
+									<bs:mco colsize="12">
+										<div class="scoreBody pull-right">
+											<h3 class="scoreNumber None" id="score">0.0</h3>
+											<span class="severity None" id="severity">None</span>
+										</div>
+									</bs:mco>
+								</bs:row>
+								<bs:row>
+								<span id="cvssModal" class="btn btn-primary col-sm-5 pull-right">CVSS Calc</span>
+								</bs:row>
+							</s:else>
+						</bs:mco>
 						<br>
 					</div>
 					<div class="row">
-							<div class="col-sm-12">
-							<s:if test="customFields != null && customFields.size() >0"><hr></s:if>
-							</div>
+						<div class="col-sm-12">
+							<s:if test="customFields != null && customFields.size() >0">
+								<hr>
+							</s:if>
+						</div>
 						<s:iterator value="customFields">
 							<div class="form-group">
 								<div class="col-md-6">
 									<label class="col-sm-2 control-label"
-										title="Variable: &#x24;{cf${variable}}">${key}<span id="type${id}_header"></span></label>
-									<div class="col-md-4" style="height:50px">
+										title="Variable: &#x24;{cf${variable}}">${key}<span
+										id="type${id}_header"></span></label>
+									<div class="col-md-4" style="height: 50px">
 										<s:if test="fieldType == 0">
-											<input type="text" class="form-control pull-right" id="type${id}"
-												value='${defaultValue}' data-default='${defaultValue}'
+											<input type="text" class="form-control pull-right"
+												id="type${id}" value='${defaultValue}'
+												data-default='${defaultValue}'
 												<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized || readOnly">disabled</s:if> />
 										</s:if>
 										<s:if test="fieldType == 1">
