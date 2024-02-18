@@ -94,7 +94,7 @@ class EditLocks {
 		this.assessmentId = assessmentId;
 		this.updateVulnsCallback = updateVulnsCallback;
 		this.checkLocks()
-		this.errorMessageShown=false;
+		this.errorMessageShown = false;
 	}
 	setLock(id, attr) {
 		let _this = this;
@@ -129,43 +129,43 @@ class EditLocks {
 		let _this = this;
 		setInterval(function() {
 			$.get(`CheckVulnLocks?id=${_this.assessmentId}`).done((resp) => {
-				if(resp.result && resp.result == "error"){
-					if(!_this.errorMessageShown){
-						_this.errorMessageShown=true
+				if (resp.result && resp.result == "error") {
+					if (!_this.errorMessageShown) {
+						_this.errorMessageShown = true
 						$.confirm({
 							title: resp.message,
 							content: 'Do you want to log in?',
 							buttons: {
-								login: ()=>{
-									_this.errorMessageShown=false;
+								login: () => {
+									_this.errorMessageShown = false;
 									window.open("../", '_blank').focus();
 								},
-								cancel: ()=>{_this.errorMessageShown=false;}
+								cancel: () => { _this.errorMessageShown = false; }
 							}
 						});
-						
+
 					}
 					return;
 				}
-				if(resp.token){
+				if (resp.token) {
 					_this.token = resp.token;
 					_this.caller.token = resp.token;
 					_this.caller.caller.queue._token = resp.token;
 					_this.caller.caller.queue.caller._token = resp.token;
 				}
 				_this.updateVulnsCallback(resp);
-			}).catch( () => {
-				if(!_this.errorMessageShown){
-					_this.errorMessageShown=true;
+			}).catch(() => {
+				if (!_this.errorMessageShown) {
+					_this.errorMessageShown = true;
 					$.confirm({
 						title: "Offline",
 						content: 'You appear offline. Would you like to login?',
 						buttons: {
-							login: ()=>{
-								 _this.errorMessageShown=false;
-								 window.open("../", '_blank').focus();
+							login: () => {
+								_this.errorMessageShown = false;
+								window.open("../", '_blank').focus();
 							},
-							cancel: ()=>{_this.errorMessageShown=false;}
+							cancel: () => { _this.errorMessageShown = false; }
 						}
 					});
 				}
@@ -209,13 +209,13 @@ class VulnerablilityView {
 			},
 			action: function() {
 				let selected = this.getSelectedElements();
-				const md = selected.reduce( (acc,item) => acc + item.innerText +"\n", "") ;
+				const md = selected.reduce((acc, item) => acc + item.innerText + "\n", "");
 				const html = marked.parse(md);
 				const div = document.createElement("div");
 				div.innerHTML = html;
 				const parent = selected[0].parentNode;
 				parent.insertBefore(div, selected[0]);
-				for(let i=0; i<selected.length; i++){
+				for (let i = 0; i < selected.length; i++) {
 					selected[i].remove();
 				}
 				this.history.push(true)
@@ -255,12 +255,12 @@ class VulnerablilityView {
 
 			],
 			columnDefs: [
-    			{ orderable: false, targets: '_all' }
+				{ orderable: false, targets: '_all' }
 			]
 		});
 		$(window).on('resize', () => {
-	   		this.vulnTable.columns.adjust();
-		} );
+			this.vulnTable.columns.adjust();
+		});
 		this.setUpEventHandlers()
 		this.updateColors();
 		this.editors.description = suneditor.create("description", this.editorOptions);
@@ -345,7 +345,7 @@ class VulnerablilityView {
 	}
 	updateSeverityCount(box, sevId) {
 		let count = Array.from($("#vulntable td")).filter(td => $(td).attr('data-sort') == sevId).length;
-		window.postMessage({"type": "updateVuln", "sevId": sevId, "count": count})
+		window.postMessage({ "type": "updateVuln", "sevId": sevId, "count": count })
 	}
 	reasign() {
 		let _this = this;
@@ -477,7 +477,7 @@ class VulnerablilityView {
 			if (serverVulns.indexOf(vuln) == -1) {
 				let row = Array.from($("#vulntable tbody tr")).filter((el) => $(el).data('vulnid') == vuln);
 				this.vulnTable.row($(row[0])).remove().draw();
-				window.postMessage({"type": "updateStats"})	
+				window.postMessage({ "type": "updateStats" })
 				if (this.vulnId == vuln) {
 					this.vulnId = -1;
 					this.deleteVulnForm();
@@ -499,72 +499,109 @@ class VulnerablilityView {
 		});
 
 	}
+	
+	convertCVSSSeverity(severity){
+		switch(severity){
+			case "Critical": return 5;
+			case "High": return 4;
+			case "Medium": return 3;
+			case "Low": return 2;
+			case "None": return 1;
+			default: return 1;
+		}
+	}
 
 	setUpVulnAutoComplete() {
 		let _this = this;
-		$("#cvssString").on("change", ()=>{
+		$("#cvssString").on("change input", () => {
 			let cvssString = $("#cvssString").val();
 			let vector = CVSS(cvssString);
 			let score = vector.getScore();
-			let severity = vector.getRating();	
+			let severity = vector.getRating();
 			$("#score").html(score);
 			$("#severity").html(severity);
-			["Critical", "High","Medium", "Low", "None"].forEach((a, b) => {
+			["Critical", "High", "Medium", "Low", "None"].forEach((a, b) => {
 				$("#score").removeClass(a);
 				$("#severity").removeClass(a);
 			});
 			$("#score").addClass(severity);
 			$("#severity").addClass(severity);
-			
+			$("#cvssScore").val(score)
+			_this.queue.push(_this.vulnId, "cvssScore", score);
+			_this.queue.push(_this.vulnId, "cvssString", cvssString);
+			_this.queue.push(_this.vulnId, "overall", this.convertCVSSSeverity(severity));
+
 		})
 		$("#cvssModal").on("click", () => {
 			$.confirm({
 				title: "CVSS3.1",
-            	content: 'url:CVSS',
-            	columnClass: 'col-md-12',
-            	onContentReady: () => {
-					$('.vector').on("click", function(event){
-						 let el = this;
-						 $(el).parent().children().each( (_index, e) => {
-							 $(e).removeClass("activeVector");
-						 });
-						  $(el).addClass("activeVector");
-						  setTimeout( () => {
-							  let av = $("input[name='attackVector']:checked").val() 
-							  let ac = $("input[name='attackComplexity']:checked").val() 
-							  let pr = $("input[name='privileges']:checked").val() 
-							  let ui = $("input[name='userInteraction']:checked").val() 
-							  let s = $("input[name='scope']:checked").val() 
-							  let c = $("input[name='confidentiality']:checked").val() 
-							  let i = $("input[name='integrity']:checked").val() 
-							  let a = $("input[name='availability']:checked").val() 
-							  let CVSSString = `CVSS:3.1/AV:${av}/AC:${ac}/PR:${pr}/UI:${ui}/S:${s}/C:${c}/I:${i}/A:${a}`; 
-							  $("#modalCVSSString").val(CVSSString);
-							  console.log(CVSSString)
-							  let vector = CVSS(CVSSString);
-							  ["Critical", "High","Medium", "Low", "None"].forEach((a, b) => {
-									$("#modalScore").removeClass(a);
-									$("#modalSeverity").removeClass(a);
-							  });
-							  let severity =vector.getRating();
-							  let score = vector.getScore();
-							  $("#modalScore").addClass(severity);
-							  $("#modalScore").html(score);
-							  $("#modalSeverity").addClass(severity);
-							  $("#modalSeverity").html(severity);
-							  }, 200);
-						   
+				content: 'url:CVSS',
+				columnClass: 'col-md-12',
+				onContentReady: () => {
+					let vectorString = $("#cvssString").val();
+					if(vectorString.trim() != ""){
+						let vector = new CVSS(vectorString);
+						let severity = vector.getRating();
+						let score = vector.getScore();
+						$("#modalScore").addClass(severity);
+						$("#modalScore").html(score);
+						$("#modalSeverity").addClass(severity);
+						$("#modalSeverity").html(severity);
+						let vObj = vector.getVectorObject();
+						setTimeout( () => {
+							$(`#av_${vObj['AV'].toLowerCase()}`).click()
+							$(`#ac_${vObj['AC'].toLowerCase()}`).click()
+							$(`#pr_${vObj['PR'].toLowerCase()}`).click()
+							$(`#ui_${vObj['UI'].toLowerCase()}`).click()
+							$(`#s_${vObj['S'].toLowerCase()}`).click()
+							$(`#c_${vObj['C'].toLowerCase()}`).click()
+							$(`#i_${vObj['I'].toLowerCase()}`).click()
+							$(`#a_${vObj['A'].toLowerCase()}`).click()
+						},100);
+					}
+
+					$('.vector').on("click", function(event) {
+						let el = this;
+						$(el).parent().children().each((_index, e) => {
+							$(e).removeClass("activeVector");
 						});
+						$(el).addClass("activeVector");
+						setTimeout(() => {
+							let av = $("input[name='attackVector']:checked").val()
+							let ac = $("input[name='attackComplexity']:checked").val()
+							let pr = $("input[name='privileges']:checked").val()
+							let ui = $("input[name='userInteraction']:checked").val()
+							let s = $("input[name='scope']:checked").val()
+							let c = $("input[name='confidentiality']:checked").val()
+							let i = $("input[name='integrity']:checked").val()
+							let a = $("input[name='availability']:checked").val()
+							let CVSSString = `CVSS:3.1/AV:${av}/AC:${ac}/PR:${pr}/UI:${ui}/S:${s}/C:${c}/I:${i}/A:${a}`;
+							$("#modalCVSSString").val(CVSSString);
+							let vector = CVSS(CVSSString);
+							["Critical", "High", "Medium", "Low", "None"].forEach((a, b) => {
+								$("#modalScore").removeClass(a);
+								$("#modalSeverity").removeClass(a);
+							});
+							let severity = vector.getRating();
+							let score = vector.getScore();
+							$("#modalScore").addClass(severity);
+							$("#modalScore").html(score);
+							$("#modalSeverity").addClass(severity);
+							$("#modalSeverity").html(severity);
+						}, 200);
+
+					});
 				},
-            	buttons: {
+				buttons: {
 					save: () => {
-						  $("#cvssString").val($("#modelCVSSString").val());
-						
+						let cvssString = $("#modalCVSSString").val();
+						$("#cvssString").val(cvssString).trigger("change")
+
 					},
-					cancel: () => {}
+					cancel: () => { }
 				}
 			})
-			
+
 		});
 		$("#title").autoComplete({
 			minChars: 3,
@@ -622,15 +659,15 @@ class VulnerablilityView {
 										_this.vulnTable.row($(".selected")).invalidate()
 										_this.vulnTable.order([1, 'desc']).draw();
 										_this.updateColors()
-										postMessage({"type": "updateStats"})
+										postMessage({ "type": "updateStats" })
 
 										$(data.cf).each(function(a, b) {
 											let el = $("#type" + b.typeid);
-											if(el.type == 'checkbox' && b.value == 'true'){
-												$(el).prop('checked', true)		
+											if (el.type == 'checkbox' && b.value == 'true') {
+												$(el).prop('checked', true)
 											}
-											else if(el.type == 'checkbox' && b.value == 'false'){
-												$(el).prop('checked', false)		
+											else if (el.type == 'checkbox' && b.value == 'false') {
+												$(el).prop('checked', false)
 											}
 											else {
 												$(el).val(b.value).trigger('change');
@@ -660,11 +697,11 @@ class VulnerablilityView {
 							_this.updateColors()
 							$(data.cf).each(function(a, b) {
 								let el = $("#type" + b.typeid);
-								if(el.type == 'checkbox' && b.value == 'true'){
-									$(el).prop('checked', true)		
+								if (el.type == 'checkbox' && b.value == 'true') {
+									$(el).prop('checked', true)
 								}
-								else if(el.type == 'checkbox' && b.value == 'false'){
-									$(el).prop('checked', false)		
+								else if (el.type == 'checkbox' && b.value == 'false') {
+									$(el).prop('checked', false)
 								}
 								else {
 									$(el).val(b.value).trigger('change');
@@ -778,7 +815,7 @@ class VulnerablilityView {
 						_this._token = resp.token;
 						_this.deleteVulnForm();
 						_this.alertMessage(resp, "Vulnerabilties Deleted Successfully");
-						window.postMessage({"type": "updateStats"})	
+						window.postMessage({ "type": "updateStats" })
 					});
 
 				},
@@ -829,7 +866,7 @@ class VulnerablilityView {
 		$('[id^="type"]').each((_index, el) => {
 			let value = $(el).data('default');
 			$(el).val(value);
-			}
+		}
 		);
 
 	}
@@ -906,14 +943,14 @@ class VulnerablilityView {
 		$("#dcategory").on('input', function(event) {
 			const catName = $(this).select2('data')[0].text
 			$(".selected").find(".category")[0].innerHTML = catName
-			window.postMessage( {"type": "updateStats"});
+			window.postMessage({ "type": "updateStats" });
 			_this.queue.push(_this.vulnId, "dcategory", $(this).val());
 		});
 		$('[id^="type"]').each((_index, el) => $(el).on('input', function(event) {
 			let val = "";
-			if(this.type == 'checkbox'){
+			if (this.type == 'checkbox') {
 				val = $(this).is(":checked");
-			}else{
+			} else {
 				val = $(this).val();
 			}
 			_this.queue.push(_this.vulnId, this.id, `${val}`);
@@ -950,17 +987,17 @@ class VulnerablilityView {
 			_this.setIntVal(data.catid, 'dcategory');
 			$(data.cf).each(function(a, b) {
 				let el = $("#type" + b.typeid);
-				if(el[0].type == 'checkbox' && b.value == 'true'){
+				if (el[0].type == 'checkbox' && b.value == 'true') {
 					$(el).prop('checked', true);
-					
+
 				}
-				else if(el[0].type == 'checkbox' && b.value == 'false'){
+				else if (el[0].type == 'checkbox' && b.value == 'false') {
 					$(el).prop('checked', false);
 				}
-				else{
+				else {
 					$(el).val(b.value).trigger('change');
 				}
-				
+
 			});
 			_this.enableAutoSave()
 		});
@@ -981,7 +1018,7 @@ class VulnerablilityView {
 					data += "&_token=" + _this._token;
 					$.post('AddVulnerability', data).done(function(resp) {
 						const isError = getData(resp);
-						window.postMessage({"type": "updateStats"})	
+						window.postMessage({ "type": "updateStats" })
 						if (isError != "error") {
 							_this.vulnTable.row(row).remove().draw();
 							_this.deleteVulnForm();

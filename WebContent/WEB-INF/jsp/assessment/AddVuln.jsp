@@ -29,12 +29,14 @@
 </div>
 <style>
 .btn:active.focus, .btn:active:focus, .btn:focus {
-    outline: none !important;
-}
-.focus{
 	outline: none !important;
 }
-.active{
+
+.focus {
+	outline: none !important;
+}
+
+.active {
 	outline: none !important;
 }
 
@@ -52,22 +54,25 @@ label.btn {
 label.btn:hover {
 	font-weight: bold;
 }
-.scoreBody{
+
+.scoreBody {
 	background-color: lightGray;
 	border-radius: 9px;
 	text-align: center;
 	padding-bottom: 5px;
-	margin-bottom:40px;
+	margin-bottom: 40px;
 	width: 150px;
 }
-.scoreBody h3{
+
+.scoreBody h3 {
 	font-size: xxx-large;
 	color: lightgray;
 	border-top-right-radius: 9px;
 	border-top-left-radius: 9px;
 	margin-top: 0px;
 }
-.scoreBody span{
+
+.scoreBody span {
 	font-size: large;
 	font-weight: bold;
 }
@@ -75,33 +80,43 @@ label.btn:hover {
 h3.None {
 	background-color: #00a65a;
 }
+
 span.None {
 	color: #00a65a;
 }
+
 h3.Low {
 	background-color: #39cccc;
 }
+
 span.Low {
 	color: #39cccc;
 }
+
 h3.Medium {
 	background-color: #00c0ef;
 }
+
 span.Medium {
 	color: #00c0ef;
 }
+
 h3.High {
 	background-color: #f39c12;
 }
+
 span.High {
 	color: #f39c12;
 }
+
 h3.Critical {
 	background-color: #dd4b39;
 }
+
 span.Critical {
 	color: #dd4b39;
 }
+
 .circle {
 	border-radius: 50%;
 	width: 25px;
@@ -165,7 +180,7 @@ td:first-child {
 									<input type="hidden" id="dvulnerability" /> <label for="title"
 										class="col-sm-2 control-label">Title: <span
 										id="title_header"></span></label>
-									<div class="col-sm-8">
+									<div class="col-sm-10">
 										<input type="text" class="form-control" id="title"
 											placeholder="Vulnerbility Name">
 									</div>
@@ -176,7 +191,7 @@ td:first-child {
 									<label for="category" class="col-sm-2 control-label">Category:
 										<span id="dcategory_header"></span>
 									</label>
-									<div class="col-sm-8">
+									<div class="col-sm-10">
 										<select class="select2 form-control" id="dcategory"
 											style="width: 100%">
 											<s:iterator value="categories">
@@ -187,19 +202,25 @@ td:first-child {
 								</div>
 
 							</bs:row>
-							<bs:row>
 							<s:if test="true">
-								<div class="form-group">
-									<label for="title"
-										class="col-sm-2 control-label">CVSS String: <span
-										id="title_header"></span></label>
-									<div class="col-sm-8">
-										<input type="text" class="form-control" id="cvssString"
-											placeholder="CVSS3.1/...">
-									</div>
-								</div>
+								<bs:row>
+										<div class="form-group">
+											<label for="title" class="col-sm-2 control-label">CVSS
+												String: <span id="title_header"></span>
+											</label>
+											<div class="col-sm-10">
+												<input type="text" class="form-control" id="cvssString"
+													placeholder="CVSS3.1/..." />
+												<input type="hidden" id="cvssScore"/>
+												<input type="hidden" id="overall"/>
+											</div>
+										</div>
+								</bs:row>
+								<bs:row>
+									<span id="cvssModal" class="btn btn-primary col-sm-5 pull-right">CVSS
+										Calc</span>
+								</bs:row>
 							</s:if>
-							</bs:row>
 						</bs:mco>
 						<bs:mco colsize="6">
 							<s:if test="false">
@@ -266,9 +287,6 @@ td:first-child {
 											<span class="severity None" id="severity">None</span>
 										</div>
 									</bs:mco>
-								</bs:row>
-								<bs:row>
-								<span id="cvssModal" class="btn btn-primary col-sm-5 pull-right">CVSS Calc</span>
 								</bs:row>
 							</s:else>
 						</bs:mco>

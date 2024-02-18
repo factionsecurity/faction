@@ -33,7 +33,7 @@
 							type="radio" name="scope" id="s_u" autocomplete="off" value="U" checked>
 							Unchanged (U)
 						</label> <label class="btn btn-secondary vector"> <input type="radio"
-							name="scope" id="s_o" autocomplete="off" value="C"> Changed (C)
+							name="scope" id="s_c" autocomplete="off" value="C"> Changed (C)
 						</label>
 					</div>
 				</bs:box>
