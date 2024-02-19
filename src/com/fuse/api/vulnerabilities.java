@@ -79,6 +79,10 @@ public class vulnerabilities {
 		public Integer impactId;
 		@JsonProperty("Active")
 		public Boolean active;
+		@JsonProperty("CvssScore")
+		public String cvssScore;
+		@JsonProperty("CvssString")
+		public String cvssString;
 		
 		public GenericVulnerability() {}
 		
@@ -174,6 +178,21 @@ public class vulnerabilities {
 
 		public void setActive(Boolean active) {
 			this.active = active;
+		}
+		
+		public String getCvssScore() {
+			return cvssScore;
+		}
+
+		public void setCvssScore(String cvssScore) {
+			this.cvssScore = cvssScore;
+		}
+		public String getCvssString() {
+			return cvssString;
+		}
+
+		public void setCvssString(String cvssString) {
+			this.cvssString = cvssString;
 		}
 	}
 	
@@ -313,7 +332,9 @@ public class vulnerabilities {
 								""+v.getOverall(),
 								""+v.getImpact(),
 								""+v.getLikelyhood(),
-								""+v.getActive()
+								""+v.getActive(),
+								v.getCvssScore(),
+								v.getCvssString()
 							};
 						csvWriter.writeNext(line);
 					}
@@ -353,7 +374,7 @@ public class vulnerabilities {
 	public Response uploadDefaultCSVVulns(
 			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
 			@ApiParam(value = "CSV of Default Vulnerabilities", required = true) 
-			@DefaultValue("id(optional),vulnName,categoryId(optional*),categoryName(optional*), description, recommendation, severityId, impactId, likelihoodId, active\nid(optional),vulnName,categoryId(optional*), categoryName(optional*), description, recommendation, severityId, impactId, likelihoodId, active") String vulnList
+			@DefaultValue("id(optional),vulnName,categoryId(optional*),categoryName(optional*), description, recommendation, severityId, impactId, likelihoodId, active\nid(optional),vulnName,categoryId(optional*), categoryName(optional*), description, recommendation, severityId, impactId, likelihoodId, active, cvssScore, cvssString") String vulnList
 			){
 		
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
@@ -383,6 +404,8 @@ public class vulnerabilities {
 						Integer impactId = line[7].trim().equals("")? null : Integer.parseInt(line[7].trim()); 
 						Integer likelihoodId = line[8].trim().equals("")? null : Integer.parseInt(line[8].trim()); 
 						Boolean active = line[9].trim().equals("")? true: Boolean.parseBoolean(line[9].trim());
+						String cvssScore = line[10].trim().equals("")? null : line[10].trim();
+						String cvssString = line[11].trim().equals("")? null : line[11].trim();
 						if(name == null) {
 							return Response.status(400).entity(String.format(this.ERROR,"Name on line " + index + " is invalid")).build();
 						}
@@ -400,6 +423,8 @@ public class vulnerabilities {
 						dv.setLikelyhood(likelihoodId);
 						dv.setImpact(impactId);
 						dv.setActive(active);
+						dv.setCvssScore(cvssScore);
+						dv.setCvssString(cvssString);
 						if(catId == null) {
 							Category cat = (Category) em.createQuery("from Category where name = :name ")
 									.setParameter("name", catName)
@@ -495,6 +520,8 @@ public class vulnerabilities {
 						dv.setLikelyhood(gv.getLikelihoodId());
 						dv.setImpact(gv.getImpactId());
 						dv.setActive(gv.getActive());
+						dv.setCvssScore(gv.getCvssScore());
+						dv.setCvssString(gv.getCvssString());
 						if(gv.getCategoryId() == null) {
 							Category cat = (Category) em.createQuery("from Category where name = :name ")
 									.setParameter("name", gv.getCategoryName())
