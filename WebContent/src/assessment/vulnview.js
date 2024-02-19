@@ -267,6 +267,7 @@ class VulnerablilityView {
 		this.editors.recommendation = suneditor.create("recommendation", this.editorOptions);
 		this.editors.details = suneditor.create("details", this.editorOptions);
 		this.setUpVulnAutoComplete()
+		this.setUpCVSSModal()
 
 
 	}
@@ -311,6 +312,8 @@ class VulnerablilityView {
 			_this.reasign();
 		});
 		this.setUpAddVulnBtn();
+		this.setUpCVSSScoreEvents();
+		
 
 	}
 
@@ -510,28 +513,58 @@ class VulnerablilityView {
 			default: return 1;
 		}
 	}
-
-	setUpVulnAutoComplete() {
+	
+	createCVSSObject(cvssString){
+		try{
+			let vector = CVSS(cvssString);
+			if(!vector.isValid){
+				return CVSS("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N")
+			}else{
+				return vector;
+			}
+		}catch(e){
+			return CVSS("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N")
+		}
+		
+	}
+	
+	updateCVSSScore(vector){
+		let score = vector.getScore();
+		let severity = vector.getRating();
+		$("#score").html(score);
+		$("#severity").html(severity);
+		["Critical", "High", "Medium", "Low", "None"].forEach((a, b) => {
+			$("#score").removeClass(a);
+			$("#severity").removeClass(a);
+		});
+		$("#score").addClass(severity);
+		$("#severity").addClass(severity);
+		$("#cvssScore").val(score)
+	}
+	
+	setUpCVSSScoreEvents(){
 		let _this = this;
 		$("#cvssString").on("change input", () => {
 			let cvssString = $("#cvssString").val();
-			let vector = CVSS(cvssString);
+			let vector = this.createCVSSObject(cvssString);
 			let score = vector.getScore();
 			let severity = vector.getRating();
-			$("#score").html(score);
-			$("#severity").html(severity);
-			["Critical", "High", "Medium", "Low", "None"].forEach((a, b) => {
-				$("#score").removeClass(a);
-				$("#severity").removeClass(a);
-			});
-			$("#score").addClass(severity);
-			$("#severity").addClass(severity);
-			$("#cvssScore").val(score)
+			let overall = this.convertCVSSSeverity(severity)
+			$("#overall").val(overall);
+			_this.updateCVSSScore(vector);
+			$(".selected").find(".severity")[0].innerHTML = severity == "None"? "Recommended" : severity;
+			$(".selected").children()[0].className = `sev${severity== "None"? "Recommended" : severity}`
+			$($(".selected").children()[1]).attr('data-sort', overall)
+			_this.vulnTable.row($(".selected")).invalidate()
+			_this.vulnTable.order([1, 'desc']).draw();
+			_this.updateColors()
 			_this.queue.push(_this.vulnId, "cvssScore", score);
 			_this.queue.push(_this.vulnId, "cvssString", cvssString);
-			_this.queue.push(_this.vulnId, "overall", this.convertCVSSSeverity(severity));
+			_this.queue.push(_this.vulnId, "overall", overall); 
 
 		})
+	}
+	setUpCVSSModal(){
 		$("#cvssModal").on("click", () => {
 			$.confirm({
 				title: "CVSS3.1",
@@ -540,7 +573,7 @@ class VulnerablilityView {
 				onContentReady: () => {
 					let vectorString = $("#cvssString").val();
 					if(vectorString.trim() != ""){
-						let vector = new CVSS(vectorString);
+						let vector = this.createCVSSObject(vectorString);
 						let severity = vector.getRating();
 						let score = vector.getScore();
 						$("#modalScore").addClass(severity);
@@ -603,6 +636,11 @@ class VulnerablilityView {
 			})
 
 		});
+		
+	}
+
+	setUpVulnAutoComplete() {
+		let _this = this;
 		$("#title").autoComplete({
 			minChars: 3,
 			source: function(term, response) {
@@ -730,6 +768,8 @@ class VulnerablilityView {
 			data += "&category="
 			data += "&defaultTitle="
 			data += "&feedMsg="
+			data += "&cvssScore="
+			data += "&cvssString="
 			let fields = [];
 			for (let id of customFields) {
 				let value = $(`#type${id}`).data('default');
@@ -851,10 +891,12 @@ class VulnerablilityView {
 	deleteVulnForm() {
 		this.disableAutoSave()
 		$("#vulnForm").addClass("disabled")
-		this.editors.description.setContents("");
+		this.editors.description.setContents("")
 		this.editors.recommendation.setContents("");
 		$('[id*="header"]').each((_a, h) => h.innerHTML = "");
 		$("#title").val("");
+		$("#cvssString").val("")
+		this.updateCVSSScore(this.createCVSSObject(""))
 		$("#impact").attr("intVal", "-1");
 		$("#impact").val("").trigger("change");
 		$("#likelyhood").val("").trigger("change");
@@ -885,6 +927,8 @@ class VulnerablilityView {
 		$("#impact").unbind('input');
 		$("#likelyhood").unbind('input');
 		$("#dcategory").unbind('input');
+		$("#cvssString").unbind('input');
+		$("#cvssString").unbind('change');
 		$('[id^="type"]').each((_index, el) => $(el).unbind('input'));
 	}
 
@@ -955,6 +999,7 @@ class VulnerablilityView {
 			}
 			_this.queue.push(_this.vulnId, this.id, `${val}`);
 		}));
+		this.setUpCVSSScoreEvents();
 
 	}
 	setEditorContents(type, data) {
@@ -978,6 +1023,9 @@ class VulnerablilityView {
 		$.get('AddVulnerability?vulnid=' + id + '&action=get').done(function(data) {
 
 			$("#title").val($("<div/>").html(data.name).text());
+			$("#cvssString").val($("<div/>").html(data.cvssString).text())
+			let vector = _this.createCVSSObject(data.cvssString);
+			_this.updateCVSSScore(vector);
 			_this.setEditorContents("description", data.description);
 			_this.setEditorContents("recommendation", data.recommendation);
 			_this.setEditorContents("details", data.details);

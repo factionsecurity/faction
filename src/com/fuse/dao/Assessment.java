@@ -410,7 +410,7 @@ public class Assessment {
 	}
 	
 	public Boolean isCvss31() {
-		return cvss31;
+		return cvss31 !=null && cvss31;
 	}
 	
 	public void setCvss31(Boolean cvss31) {

@@ -161,6 +161,13 @@ td:first-child {
 	padding-bottom: 4px;
 	margin-left: 30px;
 }
+
+.cvsstrue {
+	display: block;
+}
+.cvssfalse {
+	display: none;
+}
 </style>
 
 <div class="row">
@@ -202,11 +209,11 @@ td:first-child {
 								</div>
 
 							</bs:row>
-							<s:if test="true">
+							<div class="cvss<s:property value="assessment.cvss31"/>">
 								<bs:row>
 										<div class="form-group">
 											<label for="title" class="col-sm-2 control-label">CVSS
-												String: <span id="title_header"></span>
+												String: <span id="cvssString_header"></span>
 											</label>
 											<div class="col-sm-10">
 												<input type="text" class="form-control" id="cvssString"
@@ -218,12 +225,12 @@ td:first-child {
 								</bs:row>
 								<bs:row>
 									<span id="cvssModal" class="btn btn-primary col-sm-5 pull-right">CVSS
-										Calc</span>
+										Editor</span>
 								</bs:row>
-							</s:if>
+							</div>
 						</bs:mco>
 						<bs:mco colsize="6">
-							<s:if test="false">
+							<div class="cvss<s:property value="!assessment.cvss31"/>">
 								<bs:row>
 									<div class="form-group">
 										<label for="title" class="col-sm-4 control-label">Overall
@@ -278,17 +285,17 @@ td:first-child {
 										</div>
 									</div>
 								</bs:row>
-							</s:if>
-							<s:else>
+							</div>
+							<div class="cvss<s:property value="assessment.cvss31"/>">
 								<bs:row>
 									<bs:mco colsize="12">
 										<div class="scoreBody pull-right">
-											<h3 class="scoreNumber None" id="score">0.0</h3>
-											<span class="severity None" id="severity">None</span>
+											<h3 class="scoreBox None" id="score">0.0</h3>
+											<span class="severityBox None" id="severity">None</span>
 										</div>
 									</bs:mco>
 								</bs:row>
-							</s:else>
+							</div>
 						</bs:mco>
 						<br>
 					</div>
