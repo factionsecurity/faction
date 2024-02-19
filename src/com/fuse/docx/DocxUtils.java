@@ -4,6 +4,8 @@ import java.io.StringWriter;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -40,7 +42,6 @@ import org.docx4j.wml.Tr;
 
 import com.fuse.dao.Assessment;
 import com.fuse.dao.CustomField;
-import com.fuse.dao.ExploitStep;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.utils.FSUtils;
@@ -57,73 +58,6 @@ public class DocxUtils {
 			"asmtAssessor_Lines", "asmtAssessor_Comma", "asmtAssessor_Bullets", "remediation", "asmtTeam", "asmtType",
 			"today", "asmtStart", "asmtEnd", "asmtAccessKey" };
 
-	private void checkTableSteps(final WordprocessingMLPackage mlp, List<ExploitStep> steps, String customCSS)
-			throws Docx4JException, JAXBException {
-		List<Object> tables = getAllElementFromObject(mlp.getMainDocumentPart(), Tbl.class);
-		List<Object> paragraphs = getAllElementFromObject(tables, P.class);
-		List<Object> cells = new LinkedList<Object>();
-
-		for (Object t : tables) {
-			Tbl table = (Tbl) t;
-			List<Object> rows = table.getContent();
-			for (Object c : rows) {
-				if (c.getClass().getName().contains("Tr"))
-					cells.addAll(((Tr) c).getContent());
-			}
-		}
-		for (Object c : cells) {
-			Object jax = XmlUtils.unwrap(c);
-			if (jax.getClass().getName().equals("org.docx4j.wml.Tc")) {
-				Tc cell = (Tc) jax;
-				int start = -1;
-				int index = 0;
-				int end = -1;
-				for (Object obj : cell.getContent()) {
-					String xml = XmlUtils.marshaltoString(obj, false, false);
-
-					if (xml.contains("${exBegin}")) {
-						start = index;
-					}
-					if (xml.contains("${exEnd}")) {
-						end = index;
-					}
-					index++;
-				}
-
-				if (start >= 0 && end > 0) {
-					List<String> xml = new LinkedList<String>();
-					for (int i = start; i <= end; i++) {
-						xml.add(XmlUtils.marshaltoString(cell.getContent().get(i)));
-					}
-					for (int i = end; i >= start; i--) {
-						cell.getContent().remove(i);
-					}
-					index = start;
-					int stepNum = 1;
-					if(steps.size() == 0) {
-						P para  = new P();
-						cell.getContent().add(index++, para);
-					}else {
-						steps = steps.stream().sorted( (s1,s2)-> Long.compare(s1.getStepNum(), s2.getStepNum())).collect(Collectors.toList());
-						for (ExploitStep step : steps) {
-							for (String nxml : xml) {
-								nxml = nxml.replace("${exploit}", "${exploit." + step.getId() + "." + (stepNum) + "}");
-								nxml = nxml.replace("${exploitStepNum}", "" + step.getStepNum());
-								nxml = nxml.replaceAll("\\$\\{exBegin\\}", "");
-								nxml = nxml.replaceAll("\\$\\{exEnd\\}", "");
-								cell.getContent().add(index++, XmlUtils.unmarshalString(nxml));
-
-							}
-							stepNum++;
-						}
-					}
-					// Forces it to run once per change.
-					return;
-				}
-			}
-		}
-
-	}
 	
 	private boolean cellContains(Tc cell, String variable) {
 		for (Object obj : cell.getContent()) {
@@ -226,17 +160,6 @@ public class DocxUtils {
 			int count = 1;
 			for (Vulnerability v : a.getVulns()) {
 				// Change Colors if need be
-				if(v.getSteps() != null) {
-					for (ExploitStep ex : v.getSteps()) {
-						String desc = ex.getDescription();
-						desc = desc.replaceAll("#FAC701", "#" + colorMap.get(v.getOverallStr()));
-						desc = desc.replaceAll("#FAC702", "#" + colorMap.get(v.getLikelyhoodStr()));
-						desc = desc.replaceAll("#FAC703", "#" + colorMap.get(v.getImpactStr()));
-						// desc = desc.replaceAll("#0A0A0A", "#" +colorMap.get(v.getOverallStr()));
-						ex.setDescription(desc);
-
-					}
-				}
 				for (String xml : xmls) {
 					String nxml = xml.replaceAll("\\$\\{vulnName\\}", v.getName());
 					nxml = nxml.replaceAll("\\$\\{severity\\}", v.getOverallStr());
@@ -410,45 +333,30 @@ public class DocxUtils {
 			throws Exception {
 
 		VariablePrepare.prepare(mlp);
-
-		LinkedList<Vulnerability> vulns = new LinkedList();
-		if (a.getVulns() != null && a.getVulns().size() > 0) {
-			for (Vulnerability v : a.getVulns()) {
-				if (vulns.size() == 0)
-					vulns.add(v);
-				else {
-					for (int i = 0; i < vulns.size(); i++) {
-						if (v.getOverall() >= vulns.get(i).getOverall()) {
-							vulns.add(i, v);
-							break;
-						} else if (i == vulns.size() - 1) {
-							vulns.add(v);
-							break;
-						}
-					}
-
+		
+		//Sort vulns based on severity
+		if(a.isCvss31()) {
+			Collections.sort( a.getVulns(), new Comparator<Vulnerability>() {
+				@Override
+				public int compare(Vulnerability v1, Vulnerability v2) {
+					String rawScore1 = v1.getCvssScore();
+					rawScore1 = rawScore1 == null || rawScore1.trim().equals("")? "0.0" : rawScore1;
+					String rawScore2 = v2.getCvssScore();
+					rawScore2 = rawScore2 == null || rawScore2.trim().equals("")? "0.0" : rawScore2;
+					Double score1 = Double.parseDouble(rawScore1);
+					Double score2 = Double.parseDouble(rawScore2);
+					return score2.compareTo(score1);
 				}
-			}
+			});
+		}else {
+			Collections.sort( a.getVulns(), (Vulnerability v1, Vulnerability v2) -> v2.getOverall().compareTo(v1.getOverall()));
 		}
-		a.setVulns(vulns);
 
 		// Convert all tables and match and replace values
 		checkTables(mlp, a, "vulnTable", customCSS);
 
 		// look for findings areass {fiBegin/fiEnd}
 		setFindings(mlp, a.getVulns(), customCSS);
-		// Update all exploit steps.
-		for (Vulnerability v : a.getVulns()) {
-			HashMap<String, List<Object>> map2 = new HashMap();
-			if(v.getSteps() != null) {
-				for (ExploitStep s : v.getSteps()) {
-					map2.put("${exploit." + s.getId() + "." + s.getStepNum() + "}",
-							wrapHTML(mlp, s.getDescription(), customCSS, "exploit"));
-				}
-			}
-			replaceHTML(mlp.getMainDocumentPart(), map2, false);
-
-		}
 		HashMap<String, List<Object>> map = new HashMap();
 
 		map.put("${summary1}",
@@ -755,13 +663,6 @@ public class DocxUtils {
 		replacementText(mlp, map);
 		replaceHTML(mlp.getMainDocumentPart(), map2);
 
-	}
-
-	// Replacement for Exploit Steps
-	private void replacement(final WordprocessingMLPackage mlp, ExploitStep s, String customCSS) throws Exception {
-		Map<String, List<Object>> map = new HashMap();
-		map.put("${exploit}", wrapHTML(mlp, s.getDescription(), customCSS, "exploit"));
-		replaceHTML(mlp.getMainDocumentPart(), map);
 	}
 
 	// Replace simple text
