@@ -91,25 +91,6 @@ public class ParseXML {
 						vuln.setRecommendation(vuln.getRecommendation() + "<br/>" + value);
 					}
 					break;
-
-				case ExploitStep:
-
-					if (vuln.getSteps() == null)
-						vuln.setSteps(new ArrayList());
-					if (vuln.getSteps().size() == 0) {
-						ExploitStep ex = new ExploitStep();
-						vuln.getSteps().add(ex);
-					}
-
-					if (vuln.getSteps().get(0).getDescription() == null) {
-						vuln.getSteps().get(0).setDescription(value);
-						vuln.getSteps().get(0).setStepNum(1l);
-						vuln.getSteps().get(0).setUpdated(new Date());
-					} else {
-						vuln.getSteps().get(0)
-								.setDescription(vuln.getSteps().get(0).getDescription() + "<br/>" + value);
-					}
-					break;
 				case Severity:
 					vuln.setOverall(severities.get(value));
 					vuln.setLikelyhood(severities.get(value));
@@ -125,14 +106,14 @@ public class ParseXML {
 	}
 
 	public List<Vulnerability> parseXML(File data, ReportMap map, Long asmtId, List<CustomType> customTypes,
-			boolean removeDups, boolean appendSteps) {
+			boolean removeDups) {
 		return this.parseXML(data, asmtId, map.getListname(), map.getMapping(), map.getMapRating(), map.getVulnMap(),
-				map.getDefaultVuln(), map.getCustomFields(), customTypes, removeDups, appendSteps);
+				map.getDefaultVuln(), map.getCustomFields(), customTypes, removeDups);
 	}
 
 	public List<Vulnerability> parseXML(File data, Long asmtId, String startNodes, List<MapItem> map,
 			Map<String, Long> severities, List<VulnMap> vulnMap, DefaultVulnerability genericVuln,
-			Map<String, String> custFieldMap, List<CustomType> customTypes, boolean removeDups, boolean appendSteps) {
+			Map<String, String> custFieldMap, List<CustomType> customTypes, boolean removeDups) {
 
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder;
@@ -210,13 +191,7 @@ public class ParseXML {
 						.orElse(null);
 				if (tmpVuln == null) {
 					tmpVulns.add(v);
-				} else if (appendSteps) {
-					if (tmpVuln.getSteps() == null && tmpVuln.getSteps() != null) {
-						tmpVuln.setSteps(v.getSteps());
-					} else if (tmpVuln.getSteps() != null) {
-						tmpVuln.getSteps().addAll(v.getSteps());
-					}
-				}
+				} 
 			}
 			return tmpVulns;
 

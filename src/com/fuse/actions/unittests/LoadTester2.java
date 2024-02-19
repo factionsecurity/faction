@@ -82,7 +82,6 @@ public class LoadTester2 {
 				v.setName(uuid);
 				v.setDescription(uuid);
 				v.setRecommendation(uuid);
-				v.setSteps(new ArrayList<ExploitStep>());
 				v.setAssessmentId(a.getId());
 				v.setAssessorId(u.getId());
 				v.setOpened(oldDate.getTime());
@@ -97,7 +96,6 @@ public class LoadTester2 {
 				ex.setUpdated(oldDate.getTime());
 				ex.setCreator(u);
 				em.persist(ex);
-				v.getSteps().add(ex);
 				em.persist(v);
 				a.getVulns().add(v);
 				em.persist(a);

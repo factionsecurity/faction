@@ -96,7 +96,7 @@ public class ReportUpload extends FSActionSupport{
 		List<CustomType> cts = em.createQuery("from CustomType").getResultList();
 		List<Vulnerability>vulns = parse.parseXML(file_data, 1l,
 				map.getListname(), map.getMapping(), map.getMapRating(), map.getVulnMap(), 
-				map.getDefaultVuln(), map.getCustomFields(), cts, false,false);
+				map.getDefaultVuln(), map.getCustomFields(), cts, false);
 		
 		JSONArray jarray = new JSONArray();
 		for(Vulnerability v : vulns){
@@ -249,7 +249,7 @@ public class ReportUpload extends FSActionSupport{
 		
 		List<Vulnerability> vulns = parse.parseXML(file_data, -1l, map.getListname(), map.getMapping(), 
 				map.getMapRating(), map.getVulnMap(), map.getDefaultVuln(), 
-				map.getCustomFields(), types,false,false);
+				map.getCustomFields(), types,false);
 		
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
