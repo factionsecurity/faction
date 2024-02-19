@@ -335,7 +335,7 @@ public class DocxUtils {
 		VariablePrepare.prepare(mlp);
 		
 		//Sort vulns based on severity
-		if(a.isCvss31()) {
+		if(a.getType().isCvss31() || a.getType().isCvss40()) {
 			Collections.sort( a.getVulns(), new Comparator<Vulnerability>() {
 				@Override
 				public int compare(Vulnerability v1, Vulnerability v2) {

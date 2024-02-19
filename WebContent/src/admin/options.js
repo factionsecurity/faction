@@ -84,25 +84,80 @@ import '../scripts/jquery.autocomplete.min';
              "autoWidth": false}
 		);
 		$("#addType").click(function(){
-			let name = $("#typeName").val();
-			let data="action=addType";
-			data+="&name=" + name;
-			data+="&_token=" + _token;
-			$.post("Options",data).done(function(resp){
-				alertRedirect(resp);
-			});
+			$.confirm({
+				escapeKey: true,
+    			backgroundDismiss: false,
+				title: 'Add an Assessment Type',
+				content: `
+				<div class="col-md-12">
+					<div class="row">
+						<div class="form-group">
+							<label title="The name of the assessment type">Type Name</label><input type="text" placeholder="Assessment Type Name" class="form-control pull-right" id="typeName" value="">
+						</div>
+					</div>
+					<div class="row">
+						<br>
+						<div class="form-group">
+						<label title="The Risk Ranking System to be used for this assessment type">Risk Ranking System <i class="fa-solid fa-question"></i></label>
+						<select id="riskType" style="width:100%">
+							  <option value="0">Native (default)</option>
+							  <option value="1">CVSS 3.1</option>
+							  <option value="2">CVSS 4.0</option>
+						  </select>
+						</div>
+					</div>
+				</div>
+				`,
+				onContentReady: function () {
+					console.log("content loaded")
+					$("#riskType").select2();
+				},
+				buttons: {
+					cancel: () => {},
+					save: () => {
+						let name = $("#typeName").val();
+						let data="action=addType";
+						data+="&name=" + name;
+						data+="&riskType=" + $("#riskType").val();
+						data+="&_token=" + _token;
+						$.post("Options",data).done(function(resp){
+							alertRedirect(resp);
+						});
+					}
+				}
+    		});
+			
+			
+			
+			
 		});
 		
 		
 		
 		$("#addCampaign").click(function(){
-			let name = $("#campaignName").val();
-			let data="action=addCampaign";
-			data+="&name=" + name;
-			data+="&_token=" + _token;
-			$.post("Options",data).done(function(resp){
-				alertRedirect(resp);
-			});
+				$.confirm({
+					title: "Add New Campaign",
+					content: 
+						`<div class="col-md-12">
+							<div class="row">
+								<div class="form-group">
+									<label title="Enter a Campaign Name">Campaign Name</label><input type="text" placeholder="Campaign Name" class="form-control pull-right" id="campaignName" value="">
+								</div>
+							</div>
+						</div>`,
+					buttons: {
+						"Add" : function(){
+							let name = $("#campaignName").val();
+							let data="action=addCampaign";
+							data+="&name=" + name;
+							data+="&_token=" + _token;
+							$.post("Options",data).done(function(resp){
+								alertRedirect(resp);
+							});
+						},
+						cancel:function(){return;}
+					}
+				});
 		});
 		
 		$("#testEmail").click(function(){
@@ -185,15 +240,47 @@ import '../scripts/jquery.autocomplete.min';
    	
    	
 	global.editType = function editType(el, typeId){
-		var typeName = $($($($(el).parent()).parent()).find("td")[0]).text();
+		let typeName = $($($($(el).parent()).parent()).find("td")[0]).text();
+		let riskName = $($($($(el).parent()).parent()).find("td")[1]).text();
+		let isNative=true;
+		let isCvss31=false;
+		let isCvss40=false;
+		switch(riskName){
+			case "CVSS 3.1": isNative=isCvss40=false; isCvss31=true;break;
+			case "CVSS 4.0": isNative=isCvss31=false; isCvss40=true;break;
+			default: isCvss31=isCvss40=false; isNative=true;
+		}
+		
 		$.confirm({
 			title: "Editing Assessment Type",
-			content: "<input id='editTypeName' style='width:100%' value='" + typeName+ "'></input>",
+			content: 
+				`<div class="col-md-12">
+					<div class="row">
+						<div class="form-group">
+							<label title="The name of the assessment type">Type Name</label><input type="text" placeholder="Assessment Type Name" class="form-control pull-right" id="typeName" value="${typeName}">
+						</div>
+					</div>
+					<div class="row">
+						<br>
+						<div class="form-group">
+						<label title="The Risk Ranking System to be used for this assessment type">Risk Ranking System <i class="fa-solid fa-question"></i></label>
+						<select id="riskType" style="width:100%">
+							  <option value="0" ${isNative?'selected':''}>Native (default)</option>
+							  <option value="1" ${isCvss31?'selected':''}>CVSS 3.1</option>
+							  <option value="2" ${isCvss40?'selected':''}>CVSS 4.0</option>
+						  </select>
+						</div>
+					</div>
+				</div>`,
+			onContentReady: function () {
+				$("#riskType").select2();
+			},
 			buttons: {
 				"Yes Update" : function(){
 					
 					let data="id=" + typeId;
-					data+="&name=" + $("#editTypeName").val();
+					data+="&name=" + $("#typeName").val();
+					data+="&riskType=" + $("#riskType").val();
 					data+="&_token=" + _token;
 					$.post("editType",data).done(function(resp){
 						alertRedirect(resp);
@@ -230,10 +317,18 @@ import '../scripts/jquery.autocomplete.min';
 		
 		$.confirm({
 			title: "Editing Campaign Type",
-			content: "<input id='editCampName' style='width:100%' value='" + campName + "'></input>",
+			content: 
+				`<div class="col-md-12">
+					<div class="row">
+						<div class="form-group">
+							<label title="Enter a Campaign Name">Campaign Name</label>
+							<input type="text" placeholder="Campaign Name" 
+								class="form-control pull-right" id="editCampName" value="${campName}">
+						</div>
+					</div>
+				</div>`,
 			buttons: {
 				"Yes Update" : function(){
-					
 					let data="id=" + typeId;
 					data+="&name=" + $("#editCampName").val();
 					data+="&_token=" + _token;

@@ -27,18 +27,17 @@
 			<bs:mco colsize="6">
 				<bs:box type="success" title="Assessment Type">
 					<bs:row>
-						<bs:inputgroup name="" colsize="9" id="typeName"
-							placeholder="Enter Assessment Type Name"></bs:inputgroup>
 						<bs:button color="success" size="md" colsize="3"
 							text="<i class='fa fa-plus'></i> Add" id="addType"></bs:button>
 					</bs:row>
 					<br>
 					<bs:row>
 						<bs:mco colsize="12">
-							<bs:datatable columns="Name,Options" classname="" id="type">
+							<bs:datatable columns="Name,Risk Rating System,&nbsp;" classname="" id="type">
 								<s:iterator value="types">
 									<tr>
 										<td><s:property value="type" /></td>
+										<td><s:property value="ratingSystemName" /></td>
 										<td width="100px"><span onclick="editType(this,${id })"
 											class="vulnControl"> <i class="fa fa-edit"></i>
 										</span> <span onclick="delType(this,${id })"
@@ -55,8 +54,6 @@
 			<bs:mco colsize="6">
 				<bs:box type="warning" title="Campaign">
 					<bs:row>
-						<bs:inputgroup name="" colsize="9" id="campaignName"
-							placeholder="Enter Campaign Name"></bs:inputgroup>
 						<bs:button color="success" size="md" colsize="3"
 							text="<i class='fa fa-plus'></i> Add" id="addCampaign">
 						</bs:button>

@@ -95,14 +95,14 @@
 	            <option value="<s:property value="id"/>"><s:property value="name"/></option>
 	        </s:iterator>
 		 </bs:select>
-		  <bs:select name="Select Status: <b></b>" colsize="4" id="statName"  readOnly="${currentAssessment.isFinalized() }">
+		  <bs:select name="Risk Rating: <b></b>" colsize="4" id="statName"  readOnly="${currentAssessment.isFinalized() }">
 		  	<option value=""></option>
-		 	<s:iterator value="status" var="stat" >
-		 		<s:if test="#stat == defaultStatus">
-		 			<option value="<s:property value="stat"/>" selected><s:property value="stat"/></option>
+		 	<s:iterator value="ratings" var="rating" >
+		 		<s:if test="#rating == defaultRating">
+		 			<option value="<s:property value="rating"/>" selected><s:property value="rating"/></option>
 		 		</s:if>
 		 		<s:else>
-		 			<option value="<s:property value="stat"/>"><s:property value="stat"/></option>
+		 			<option value="<s:property value="rating"/>"><s:property value="rating"/></option>
 		 		</s:else>
 	            
 	        </s:iterator>

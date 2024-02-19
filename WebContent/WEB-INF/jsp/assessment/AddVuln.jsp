@@ -209,7 +209,7 @@ td:first-child {
 								</div>
 
 							</bs:row>
-							<div class="cvss<s:property value="assessment.cvss31"/>">
+							<div class="cvss<s:property value="assessment.type.cvss31"/>">
 								<bs:row>
 										<div class="form-group">
 											<label for="title" class="col-sm-2 control-label">CVSS
@@ -230,7 +230,7 @@ td:first-child {
 							</div>
 						</bs:mco>
 						<bs:mco colsize="6">
-							<div class="cvss<s:property value="!assessment.cvss31"/>">
+							<div class="cvss<s:property value="!assessment.type.cvss31"/>">
 								<bs:row>
 									<div class="form-group">
 										<label for="title" class="col-sm-4 control-label">Overall
@@ -286,7 +286,7 @@ td:first-child {
 									</div>
 								</bs:row>
 							</div>
-							<div class="cvss<s:property value="assessment.cvss31"/>">
+							<div class="cvss<s:property value="assessment.type.cvss31"/>">
 								<bs:row>
 									<bs:mco colsize="12">
 										<div class="scoreBody pull-right">

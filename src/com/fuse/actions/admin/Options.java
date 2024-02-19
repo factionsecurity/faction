@@ -69,6 +69,7 @@ public class Options extends FSActionSupport {
 	private String selfPeerReview;
 	private String riskName;
 	private Long riskId;
+	private Integer riskType;
 
 	@Action(value = "Options")
 	public String execute() {
@@ -130,6 +131,12 @@ public class Options extends FSActionSupport {
 			em.joinTransaction();
 			AssessmentType type = new AssessmentType();
 			type.setType(this.name.trim());
+			
+			switch(this.riskType) {
+				case 1: type.setRatingSystem("CVSS 3.1"); break;
+				case 2: type.setRatingSystem("CVSS 4.0"); break;
+				default: type.setRatingSystem("Native");
+			}
 			em.persist(type);
 			AuditLog.audit(this, "Assessment Type " + this.name + " added", AuditLog.UserAction, false);
 			HibHelper.getInstance().commit();
@@ -520,6 +527,11 @@ public class Options extends FSActionSupport {
 		}
 
 		t.setType(this.getName().trim());
+		switch(this.riskType) {
+			case 1: t.setRatingSystem("CVSS 3.1"); break;
+			case 2: t.setRatingSystem("CVSS 4.0"); break;
+			default: t.setRatingSystem("Native");
+		}
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		em.persist(t);
@@ -931,6 +943,10 @@ public class Options extends FSActionSupport {
 	}
 	public String getSelfPeerReview() {
 		return this.selfPeerReview;
+	}
+	
+	public void setRiskType(Integer riskType) {
+		this.riskType = riskType;
 	}
 	
 
