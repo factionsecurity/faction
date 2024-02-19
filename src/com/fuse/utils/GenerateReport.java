@@ -131,10 +131,6 @@ public class GenerateReport {
 			for (Vulnerability v : a.getVulns()) {
 				v.updateRiskLevels(em);
 			}
-			//TODO: Not sure why this is added... debugging?
-			/*for (Vulnerability v : a.getVulns()) {
-				System.out.println(v.getOverallStr());
-			}*/
 
 			String mongoQuery = "{\"type_id\" : " + a.getType().getId() + ", \"team_id\" : "
 					+ a.getAssessor().get(0).getTeam().getId() + ", \"retest\" : true }";
@@ -191,8 +187,6 @@ public class GenerateReport {
 			ReportTemplate report = (new ReportTemplateFactory()).getReportTemplate();
 			InputStream is = report.getTemplate(base.getFilename());
 
-			// WordprocessingMLPackage mlp = WordprocessingMLPackage.load(new
-			// File(base.getFilename()));
 			WordprocessingMLPackage mlp = WordprocessingMLPackage.load(is);
 
 			DocxUtils gendoc = new DocxUtils();
@@ -201,7 +195,6 @@ public class GenerateReport {
 			gendoc.tocGenerator(mlp);
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			mlp.save(baos);
-			// byte[] report = DocxUtils.updateTOC(baos.toByteArray());
 			byte[] finalReport = baos.toByteArray();
 
 			String docx = Base64.encodeBase64String(finalReport);
@@ -316,7 +309,6 @@ public class GenerateReport {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			mlp.save(baos);
 
-			// byte[] report = DocxUtils.updateTOC(baos.toByteArray());
 			byte[] finalReport = (baos.toByteArray());
 			return finalReport;
 

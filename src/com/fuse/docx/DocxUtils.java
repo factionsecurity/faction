@@ -241,7 +241,8 @@ public class DocxUtils {
 					String nxml = xml.replaceAll("\\$\\{vulnName\\}", v.getName());
 					nxml = nxml.replaceAll("\\$\\{severity\\}", v.getOverallStr());
 					nxml = nxml.replaceAll("\\$\\{impact\\}", v.getImpactStr());
-					nxml = nxml.replaceAll("\\$\\{cvss\\}", v.getCvssScore());
+					nxml = nxml.replaceAll("\\$\\{cvssScore\\}", v.getCvssScore());
+					nxml = nxml.replaceAll("\\$\\{cvssString\\}", v.getCvssString());
 					nxml = nxml.replaceAll("\\$\\{tracking\\}", v.getTracking());
 					try {
 						nxml = nxml.replaceAll("\\$\\{vid\\}", "" + v.getId());
@@ -365,7 +366,8 @@ public class DocxUtils {
 					String nxml = xml.replaceAll("\\$\\{vulnname\\}", "No Issues disclosed.");
 					nxml = nxml.replaceAll("\\$\\{severity\\}", "");
 					nxml = nxml.replaceAll("\\$\\{impact\\}", "");
-					nxml = nxml.replaceAll("\\$\\{cvss\\}", "");
+					nxml = nxml.replaceAll("\\$\\{cvssScore\\}", "");
+					nxml = nxml.replaceAll("\\$\\{cvssString\\}", "");
 					nxml = nxml.replaceAll("\\$\\{tracking\\}", "");
 					try {
 						nxml = nxml.replaceAll("\\$\\{vid\\}", "");
@@ -719,12 +721,13 @@ public class DocxUtils {
 		map.put("severity", v.getOverallStr());
 		map.put("likelihood", v.getLikelyhoodStr());
 		map.put("impact", v.getImpactStr());
+		map.put("cvssString", v.getCvssString());
+		map.put("cvssScore", v.getCvssScore());
 		try {
 			map.put("vid", "" + v.getId());
 		} catch (Exception ex) {
 		}
 		map.put("tracking", "" + v.getTracking());
-		map.put("cvss", "" + v.getCvssScore());
 
 		HashMap<String, List<Object>> map2 = new HashMap();
 
@@ -861,31 +864,22 @@ public class DocxUtils {
 
 				String xml = XmlUtils.marshaltoString(obj, false, false);
 				String nxml = xml.replaceAll("\\$\\{vulnname\\}", v.getName());
-				// nxml = nxml.replaceAll("\\$\\{vulnerability.NAME\\}", v.getName());
 				nxml = nxml.replaceAll("\\$\\{severity\\}", v.getOverallStr());
-				// nxml = nxml.replaceAll("\\$\\{vulnerability.SEVERITY\\}", v.getOverallStr());
 				nxml = nxml.replaceAll("\\$\\{impact\\}", v.getImpactStr());
-				// nxml = nxml.replaceAll("\\$\\{vulnerability.IMPACT\\}", v.getImpactStr());
-				nxml = nxml.replaceAll("\\$\\{cvss\\}", v.getCvssScore());
-				// nxml = nxml.replaceAll("\\$\\{vulnerability.CVSS\\}", v.getCvssScore());
+				nxml = nxml.replaceAll("\\$\\{cvssString\\}", v.getCvssScore());
+				nxml = nxml.replaceAll("\\$\\{cvssScore\\}", v.getCvssScore());
 				nxml = nxml.replaceAll("\\$\\{tracking\\}", v.getTracking());
-				// nxml = nxml.replaceAll("\\$\\{vulnerability.TRACKING\\}", v.getTracking());
 				try {
 					nxml = nxml.replaceAll("\\$\\{vid\\}", "" + v.getId());
-					// nxml = nxml.replaceAll("\\$\\{vulnerability.ID\\}", ""+v.getId());
 				} catch (Exception ex) {
 				}
 				nxml = nxml.replaceAll("\\$\\{likelihood\\}", v.getLikelyhoodStr());
-				// nxml = nxml.replaceAll("\\$\\{vulnerability.LIKELIHOOD\\}",
-				// v.getLikelyhoodStr());
 				nxml = nxml.replaceAll("\\$\\{category\\}",
 						v.getCategory() == null ? "UnCategorized" : v.getCategory().getName());
 				if (v.getClosed() == null) {
 					nxml = nxml.replaceAll("\\$\\{status\\}", "Open");
-					// nxml = nxml.replaceAll("\\$\\{vulnerability.STATUS\\}", "Open");
 				} else {
 					nxml = nxml.replaceAll("\\$\\{status\\}", "Closed");
-					// nxml = nxml.replaceAll("\\$\\{vulnerability.STATUS\\}", "Closed");
 				}
 				// remove color loops
 				nxml = nxml.replaceAll("\\$\\{color.*\\}", "");
