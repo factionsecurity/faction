@@ -95,19 +95,6 @@
 	            <option value="<s:property value="id"/>"><s:property value="name"/></option>
 	        </s:iterator>
 		 </bs:select>
-		  <bs:select name="Risk Rating: <b></b>" colsize="4" id="statName"  readOnly="${currentAssessment.isFinalized() }">
-		  	<option value=""></option>
-		 	<s:iterator value="ratings" var="rating" >
-		 		<s:if test="#rating == defaultRating">
-		 			<option value="<s:property value="rating"/>" selected><s:property value="rating"/></option>
-		 		</s:if>
-		 		<s:else>
-		 			<option value="<s:property value="rating"/>"><s:property value="rating"/></option>
-		 		</s:else>
-	            
-	        </s:iterator>
-		 </bs:select>
-
 		
 		 
 		 
