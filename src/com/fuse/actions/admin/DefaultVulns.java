@@ -803,4 +803,16 @@ public class DefaultVulns  extends FSActionSupport{
 		return FSUtils.getEnv("FACTION_TIER");
 	}
 	
+	public String getLevelString(Integer level) {
+		switch(level) {
+		case 0: return "Informational"; 
+		case 1: return "Recommended"; 
+		case 2: return "Low"; 
+		case 3: return "Medium"; 
+		case 4: return "High"; 
+		case 5: return "Critical"; 
+		default: return "Custom";
+		}
+	}
+	
 }
