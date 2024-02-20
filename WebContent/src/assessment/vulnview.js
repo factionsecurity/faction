@@ -554,7 +554,7 @@ class VulnerablilityView {
 			_this.updateCVSSScore(vector);
 			$(".selected").find(".severity")[0].innerHTML = severity == "None"? "Recommended" : severity;
 			$(".selected").children()[0].className = `sev${severity== "None"? "Recommended" : severity}`
-			$($(".selected").children()[1]).attr('data-sort', overall)
+			$($(".selected").children()[1]).attr('data-sort', score)
 			_this.vulnTable.row($(".selected")).invalidate()
 			_this.vulnTable.order([1, 'desc']).draw();
 			_this.updateColors()

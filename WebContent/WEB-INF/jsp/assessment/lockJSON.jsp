@@ -45,7 +45,7 @@
 	  "title" : "<s:property value="name" />",
 	  "category" : "<s:property value="getCategory().getName()"/>",
 	  "severityName" : "<s:property value="overallStr"/>",
-	  "severity" : <s:property value="overall"/>
+	  "severity" : <s:if test="assessment.type.cvss31 || assessment.type.cvss40">"<s:property value="cvssScore"/>" </s:if><s:else><s:property value="overall"/></s:else>
 	}<s:if test="!#stats.last">,</s:if>
 	</s:iterator>
 ]

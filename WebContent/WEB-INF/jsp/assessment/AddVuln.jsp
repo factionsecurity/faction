@@ -451,7 +451,13 @@ td:first-child {
 							<tr data-vulnid="${id}">
 								<td class="sev${overallStr}"><input type="checkbox"
 									id="ckl<s:property value="id"/>" /></td>
-								<td data-sort="${overall}"><span class="vulnName"><s:property
+								<s:if test="assessment.type.cvss31 || assessment.type.cvss40">
+								<td data-sort="${cvssScore}">
+								</s:if>
+								<s:else>
+								<td data-sort="${overall}">
+								</s:else>
+								<span class="vulnName"><s:property
 											value="name" /></span><br> <span class="category"> <s:property
 											value="category.name" /></span><BR> <span class="severity"><s:property
 											value="overallStr" /></span></td>
