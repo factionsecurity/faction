@@ -75,6 +75,7 @@ public class TrackChanges extends FSActionSupport {
 		assessment.setId(pr.getAssessment().getId());
 		assessment.setAppId(pr.getAssessment().getAppId());
 		assessment.setName(pr.getAssessment().getName());
+		assessment.setType(pr.getAssessment().getType());
 		return assessment;
 	}
 
@@ -217,6 +218,12 @@ public class TrackChanges extends FSActionSupport {
 		for (Vulnerability v : assessment.getVulns()) {
 			if (v.getDescription().matches(trackChangesTest)) {
 				errors.add("Vulnerability " + v.getName() + " Description contains UnAccepted Edits");
+			}
+			if (v.getRecommendation().matches(trackChangesTest)) {
+				errors.add("Vulnerability " + v.getName() + " Recommendation contains UnAccepted Edits");
+			}
+			if (v.getDetails().matches(trackChangesTest)) {
+				errors.add("Vulnerability " + v.getName() + " Details contains UnAccepted Edits");
 			}
 		}
 		JSONObject result = new JSONObject();
@@ -449,6 +456,7 @@ public class TrackChanges extends FSActionSupport {
 		asmt.setId(pr.getAssessment().getId());
 		asmt.setAppId(pr.getAssessment().getAppId());
 		asmt.setName(pr.getAssessment().getName());
+		asmt.setType(pr.getAssessment().getType());
 		this.showComplete = false;
 		this.showSave = false;
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
