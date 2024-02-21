@@ -39,7 +39,7 @@ import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
 
 @Namespace("/portal")
-@Result(name = "success", location = "/WEB-INF/jsp/peerreviews/PeerReviewIce.jsp")
+@Result(name = "success", location = "/WEB-INF/jsp/peerreviews/TrackChanges.jsp")
 public class TrackChanges extends FSActionSupport {
 
 	private Assessment asmt;
@@ -83,6 +83,8 @@ public class TrackChanges extends FSActionSupport {
 		Assessment asmt;
 		try {
 			asmt = review.exportAssessment(em);
+			//TODO: Need to fix this so it happens in the export command
+			asmt.setType(pr.getAssessment().getType());
 			if (this.summary != null)
 				review.setSummary1(this.summary);
 			if (this.risk != null)
