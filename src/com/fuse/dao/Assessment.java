@@ -1,6 +1,8 @@
 package com.fuse.dao;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -137,6 +139,22 @@ public class Assessment {
 	}
 
 	public List<Vulnerability> getVulns() {
+		if(this.getType().isCvss31() || this.getType().isCvss40()) {
+			Collections.sort( this.vulns, new Comparator<Vulnerability>() {
+				@Override
+				public int compare(Vulnerability v1, Vulnerability v2) {
+					String rawScore1 = v1.getCvssScore();
+					rawScore1 = rawScore1 == null || rawScore1.trim().equals("")? "0.0" : rawScore1;
+					String rawScore2 = v2.getCvssScore();
+					rawScore2 = rawScore2 == null || rawScore2.trim().equals("")? "0.0" : rawScore2;
+					Double score1 = Double.parseDouble(rawScore1);
+					Double score2 = Double.parseDouble(rawScore2);
+					return score2.compareTo(score1);
+				}
+			});
+		}else {
+			Collections.sort( this.getVulns(), (Vulnerability v1, Vulnerability v2) -> v2.getOverall().compareTo(v1.getOverall()));
+		}
 		return this.vulns;
 	}
 
