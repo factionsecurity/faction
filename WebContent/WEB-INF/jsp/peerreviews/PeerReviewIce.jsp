@@ -124,6 +124,7 @@ color:white;
 			  </bs:row>
 		</div>
 		<div class="tab-pane" id="tab_2">
+		<h3>FUCK<s:property value="asmt.getVulns().size()"/> </h3>
 			  <s:iterator value="asmt.vulns" status="stat" var="v">
 			  	${v.updateRiskLevels()}
 			   <bs:row>

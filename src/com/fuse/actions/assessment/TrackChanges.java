@@ -186,6 +186,7 @@ public class TrackChanges extends FSActionSupport {
 		Assessment assessment = pr.getAssessment();
 		Comment comment = pr.getComments().get(pr.getComments().size() - 1);
 		Assessment updatedAssessment = comment.exportAssessment(em);
+		updatedAssessment.setType(assessment.getType());
 		comment.setAcceptedEdits(true);
 
 		// Save Everything...
@@ -402,6 +403,7 @@ public class TrackChanges extends FSActionSupport {
 		asmt.setId(pr.getAssessment().getId());
 		asmt.setAppId(pr.getAssessment().getAppId());
 		asmt.setName(pr.getAssessment().getName());
+		asmt.setType(pr.getAssessment().getType());
 
 		files = (List<Files>) em.createQuery("from Files where type = :type and entityId = :id")
 				.setParameter("type", Files.ASSESSMENT).setParameter("id", pr.getAssessment().getId()).getResultList();
