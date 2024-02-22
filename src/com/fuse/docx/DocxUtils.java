@@ -296,8 +296,12 @@ public class DocxUtils {
 							String rec = v.getDefaultVuln().getRecommendation();
 							if (v.getCustomFields() != null) {
 								for (CustomField cf : v.getCustomFields()) {
-									rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-											cf.getValue());
+									try {
+										rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
+												cf.getValue());
+									}catch(Exception ex) {
+										ex.printStackTrace();
+									}
 								}
 							}
 							map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec", widths.get("rec")));
@@ -305,8 +309,12 @@ public class DocxUtils {
 							String rec = v.getRecommendation();
 							if (v.getCustomFields() != null) {
 								for (CustomField cf : v.getCustomFields()) {
-									rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-											cf.getValue());
+									try {
+										rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
+												cf.getValue());
+									}catch(Exception ex) {
+										ex.printStackTrace();
+									}
 								}
 							}
 							map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec", widths.get("rec")));
@@ -319,8 +327,12 @@ public class DocxUtils {
 							String desc = v.getDefaultVuln().getDescription();
 							if (v.getCustomFields() != null) {
 								for (CustomField cf : v.getCustomFields()) {
-									desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-											cf.getValue());
+									try {
+										desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
+												cf.getValue());
+									}catch(Exception ex) {
+										ex.printStackTrace();
+									}
 								}
 							}
 							map2.put("${desc}", wrapHTML(mlp, desc, customCSS, "desc", widths.get("desc")));
@@ -328,8 +340,12 @@ public class DocxUtils {
 							String desc = v.getDescription();
 							if (v.getCustomFields() != null) {
 								for (CustomField cf : v.getCustomFields()) {
-									desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-											cf.getValue());
+									try {
+										desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
+												cf.getValue());
+									}catch(Exception ex) {
+										ex.printStackTrace();
+									}
 								}
 							}
 							map2.put("${desc}", wrapHTML(mlp, desc, customCSS, "desc", widths.get("desc")));
@@ -342,8 +358,12 @@ public class DocxUtils {
 							String details = v.getDetails();
 							if (v.getCustomFields() != null) {
 								for (CustomField cf : v.getCustomFields()) {
-									details = details.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-											cf.getValue());
+									try {
+										details = details.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
+												cf.getValue());
+									}catch(Exception ex) {
+										ex.printStackTrace();
+									}
 								}
 							}
 							map2.put("${details}", wrapHTML(mlp, details, customCSS, "details", widths.get("details")));
