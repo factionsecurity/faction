@@ -4,7 +4,7 @@ require('../scripts/fileupload/css/fileinput.css');
 require('../loading/css/jquery-loading.css');
 //require('bootstrap/dist/css/bootstrap.css');
 import suneditor from 'suneditor';
-import {font, fontColor, hiliteColor, link, fontSize, align, image, imageGallery, list, formatBlock, table, blockquote } from 'suneditor/src/plugins';
+import plugins from 'suneditor/src/plugins';
 import CodeMirror from 'codemirror';
 import 'codemirror/mode/htmlmixed/htmlmixed';
 import 'codemirror/lib/codemirror.css';
@@ -19,18 +19,59 @@ import 'jquery-confirm';
 import 'select2';
 import '../scripts/jquery.autocomplete.min';
 import { marked } from 'marked';
+import CVSS from "@turingpointde/cvss.js";
 
+let fromMarkdown = {
+	name: 'fromMarkdown',
+	display: 'command',
+	title: 'Convert Markdown',
+	buttonClass: '',
+	innerHTML: '<i class="fa-brands fa-markdown" style="color:lightgray"></i>',
+	add: function(core, targetElement) {
+		core.context.fromMarkdown = {
+			targetButton: targetElement,
+			preElement: null
+		}
+	},
+	active: function(element) {
+		if (element) {
+			this.util.addClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
+			this.context.fromMarkdown.preElement = element;
+			return true;
+		} else {
+			this.util.removeClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
+			this.context.fromMarkdown.preElement = null;
+		}
+		return false;
+	},
+	action: function() {
+		let selected = this.getSelectedElements();
+		const md = selected.reduce((acc, item) => acc + item.innerText + "\n", "");
+		const html = marked.parse(md);
+		const div = document.createElement("div");
+		div.innerHTML = html;
+		const parent = selected[0].parentNode;
+		parent.insertBefore(div, selected[0]);
+		for (let i = 0; i < selected.length; i++) {
+			selected[i].remove();
+		}
+		this.history.push(true)
+		}
+};
+
+plugins['fromMarkdown'] = fromMarkdown;
 let editorOptions = {
     codeMirror: CodeMirror,
-    plugins: [font, fontColor, hiliteColor, link, fontSize, image, align, imageGallery, list, formatBlock, table, blockquote],
+    plugins: plugins,
     buttonList : [
 		['undo', 'redo','fontSize', 'formatBlock','textStyle'],
 		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
 		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks','codeView'],
+		['link', 'image', 'fullScreen', 'showBlocks','fromMarkdown'],
     ],
     defaultStyle: 'font-family: arial; font-size: 18px',
-    height: 500
+    minHeight: 500,
+    height: "auto"
 };
 global.editors = {
     description: suneditor.create("description", editorOptions),
@@ -47,11 +88,17 @@ global.editors = {
 		  	setIntVal( data.impact, "impact");
 		  	setIntVal( data.likelyhood, "likelyhood");
 		  	setIntVal( data.overall, "overall");
+		  	$("#cvss31Score").val(data.cvss31Score);
+		  	$("#cvss40Score").val(data.cvss40Score);
+		  	$("#cvss31String").val(data.cvss31String);
+		  	$("#cvss40String").val(data.cvss40String);
 		  	$(data.cf).each(function(a,b){
 		  		$("#type"+ b.typeid).val(b.value);
 		  	});
 		  	$("#catNameSelect").val(data.category).trigger('change');
-		  	$("#vulnModal").modal('show');
+            $("#vulnModal").modal({	show: true,
+            						keyboard: false,
+            						backdrop: 'static'});
 		  	$("#saveVuln").unbind();
 		  	$("#saveVuln").click(function(){
 			    let desc = global.editors.description.getContents();
@@ -62,6 +109,10 @@ global.editors = {
 			  	postData+="&impact=" + $("#impact").val()
 			  	postData+="&likelyhood=" + $("#likelyhood").val()
 			  	postData+="&overall=" + $("#overall").val()
+			  	postData+="&cvss31Score=" + $("#cvss31Score").val()
+			  	postData+="&cvss40Score=" + $("#cvss40Score").val()
+			  	postData+="&cvss31String=" + $("#cvss31String").val()
+			  	postData+="&cvss40String=" + $("#cvss40String").val()
 			  	postData+="&category=" + $("#catNameSelect").select2("val");
 			  	postData+="&vulnId="+ id;
                 let fields = [];
@@ -217,7 +268,9 @@ global.deleteVuln = function deleteVuln(id){
 				});
             });
         $("#addVuln").click(function(){
-			$("#vulnModal").modal('show');
+            $("#vulnModal").modal({	show: true,
+            						keyboard: false,
+            						backdrop: 'static'});
         });
         $("#saveVuln").click(function(){
 			console.log("saving Vuln")
@@ -230,8 +283,10 @@ global.deleteVuln = function deleteVuln(id){
 		  	data+="&likelyhood=" + $("#likelyhood").val()
 		  	data+="&overall=" + $("#overall").select2("val")
 		  	data+="&category=" + $("#catNameSelect").select2("val");
-			console.log(data)
-			console.log($("#likelyhood"))
+		  	data+="&cvss31String=" + $("#cvss31String").val();
+		  	data+="&cvss40String=" + $("#cvss40String").val();
+		  	data+="&cvss31Score=" + $("#cvss31Score").val();
+		  	data+="&cvss40Score=" + $("#cvss40Score").val();
             let fields = [];
             for(let vulnId of vulnTypes){
                 fields.push(`{"id" : ${vulnId}, "text" : "' + $("#type${vulnId}").val() + '"}`);
