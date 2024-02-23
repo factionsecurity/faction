@@ -563,6 +563,14 @@ class VulnerablilityView {
 			let vector = this.createCVSSObject(cvssString);
 			let score = vector.getScore();
 			let severity = vector.getRating();
+			if(vector.getTemporalScore() >0 && vector.getEnvironmentalScore() == 0){
+				score = vector.getTemporalScore();
+				severity = vector.getTemporalRating();
+			}
+			else if(vector.getEnvironmentalScore() > 0 ){
+				score = vector.getEnvironmentalScore() 
+				severity = vector.getEnvironmentalRating();
+			}
 			let overall = this.convertCVSSSeverity(severity)
 			$("#overall").val(overall);
 			_this.updateCVSSScore(vector);
@@ -792,7 +800,7 @@ class VulnerablilityView {
 					});
 				},
 				buttons: {
-					save: () => {
+					save: () =>{
 						let cvssString = $("#modalCVSSString").val();
 						$("#cvssString").val(cvssString).trigger("change")
 
