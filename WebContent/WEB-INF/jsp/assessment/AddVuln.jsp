@@ -209,28 +209,24 @@ td:first-child {
 								</div>
 
 							</bs:row>
-							<div class="cvss<s:property value="assessment.type.cvss31"/>">
+							<div class="cvss<s:property value="assessment.type.cvss31 || assessment.type.cvss40"/>">
 								<bs:row>
 										<div class="form-group">
-											<label for="title" class="col-sm-2 control-label">CVSS
-												String: <span id="cvssString_header"></span>
+											<label for="title" class="col-sm-2 control-label">CVSS: <span id="cvssString_header"></span>
 											</label>
-											<div class="col-sm-10">
+											<div class="col-sm-9">
 												<input type="text" class="form-control" id="cvssString"
-													placeholder="CVSS3.1/..." />
+													<s:if test="assessment.type.cvss31">placeholder="CVSS:3.1/..."</s:if><s:else>placeholder="CVSS:4.0/..."</s:else> />
 												<input type="hidden" id="cvssScore"/>
 												<input type="hidden" id="overall"/>
 											</div>
+											<span id="cvssModal" class="btn btn-primary col-sm-1"><i class="fa-solid fa-calculator"></i></span>
 										</div>
-								</bs:row>
-								<bs:row>
-									<span id="cvssModal" class="btn btn-primary col-sm-5 pull-right">CVSS
-										Editor</span>
 								</bs:row>
 							</div>
 						</bs:mco>
 						<bs:mco colsize="6">
-							<div class="cvss<s:property value="!assessment.type.cvss31"/>">
+							<div class="cvss<s:property value="!(assessment.type.cvss31||assessment.type.cvss40)"/>">
 								<bs:row>
 									<div class="form-group">
 										<label for="title" class="col-sm-4 control-label">Overall
@@ -286,7 +282,7 @@ td:first-child {
 									</div>
 								</bs:row>
 							</div>
-							<div class="cvss<s:property value="assessment.type.cvss31"/>">
+							<div class="cvss<s:property value="(assessment.type.cvss31 || assessment.type.cvss40)"/>">
 								<bs:row>
 									<bs:mco colsize="12">
 										<div class="scoreBody pull-right">
