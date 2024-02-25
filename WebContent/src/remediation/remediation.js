@@ -28,7 +28,7 @@ let editorOptions = {
 		['undo', 'redo', 'font', 'fontSize', 'formatBlock', 'textStyle'],
 		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
 		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks', 'codeView'],
+		['link', 'image', 'fullScreen', 'showBlocks'],
 
 	],
 	defaultStyle: 'font-family: arial; font-size: 18px',
@@ -44,7 +44,6 @@ let editors = {
 let calendar = null;
 global.genCal = function genCal() {
 	let cal = new FullCalendar.Calendar(document.getElementById("calendar"), {
-		//$('#calendar').FullCalendar({
 		header: {
 			left: 'prev,next today',
 			center: 'title',
@@ -59,7 +58,6 @@ global.genCal = function genCal() {
 		droppable: true, // this allows things to be dropped onto the calendar !!!
 		eventDrop: function(_event, delta) { // this function is called when something is dropped
 			console.log("dropped");
-			//console.log(delta.day);
 			thedelta = delta;
 			let range = $("#reservation").val();
 			let start = new Date(range.split(" to ")[0]);
@@ -89,7 +87,7 @@ $(function() {
 	if (vulnName != "") {
 		setTimeout(function() {
 			$($("#vulntable").DataTable().rows().data()).each(function(a, b) {
-				if (searchId != -1 && b[13].vid == searchId) {
+				if (searchId != -1 && b[11].vid == searchId) {
 					$($("#vulntable").find("tbody").find("tr")[a]).trigger("click");
 
 				}
@@ -126,7 +124,7 @@ $(function() {
 		let range = $("#reservation").val();
 		let start = range.split(" to ")[0];
 		let end = range.split(" to ")[1];
-		let vid = $('#vulntable').DataTable().rows('.selected').data()[0][13].vid;
+		let vid = $('#vulntable').DataTable().rows('.selected').data()[0][11].vid;
 		if (vid == -1 || typeof vid == 'undefined') {
 			$.alert({ title: "Error", content: "You Must Select a Vulnerablity" });
 			return;
@@ -152,14 +150,14 @@ $(function() {
 			return;
 		}
 		let vids = "";
-		let checkAID = $('#vulntable').DataTable().rows('.selected').data()[0][13].aid;
+		let checkAID = $('#vulntable').DataTable().rows('.selected').data()[0][11].aid;
 		console.log("AID:" + checkAID);
 		let canContinue = true;
 		$.each($('#vulntable').DataTable().rows('.selected').data(), function(index, obj) {
 			console.log(obj);
-			vids += "&vulnids[" + index + "]=" + obj[13].vid;
+			vids += "&vulnids[" + index + "]=" + obj[11].vid;
 			console.log(checkAID);
-			if (obj[13].aid != checkAID) {
+			if (obj[11].aid != checkAID) {
 				$.alert({ title: "Error", content: "All Verifications must have the same application id." });
 				canContinue = false;
 				return;
@@ -240,8 +238,8 @@ $(function() {
 		//TODO:get assessments first and put on calendar
 
 
-		let appid = $('#vulntable').DataTable().rows('.selected').data()[0][1];
-		let appname = $('#vulntable').DataTable().rows('.selected').data()[0][2];
+		let appid = $('#vulntable').DataTable().rows('.selected').data()[0][11].appId;
+		let appname = $('#vulntable').DataTable().rows('.selected').data()[0][11].name;
 		let originalEventObject = $(this).data('eventObject');
 		let copiedEventObject = $.extend({}, originalEventObject);
 		copiedEventObject.allDay = true;
@@ -392,12 +390,21 @@ $(function() {
 				"url": qs,
 				"type": "POST"
 			},
-			columnDefs: [{
-				targets: [1, 2],
-				render: function(data, type, row) {
-					return data.substr(0, 30) + "...";
+			columnDefs: [
+				{
+					targets: [1, 2],
+					render: function(data, type, row) {
+						return data.substr(0, 30) + "...";
+					}
+				},
+				{
+					targets: [6],
+					render: function(data, type, row) {
+						return updateColor(data);
+					}
+					
 				}
-			}]
+			]
 
 		}
 		);
@@ -410,7 +417,7 @@ $(function() {
 	$('#vulntable tbody').on('click', 'tr', function(event) {
 
 		let data = $('#vulntable').DataTable().row(this).data();
-		let isver = data[13].isVer
+		let isver = data[11].isVer
 		if (isver) {
 			if (!$(this).hasClass('selected')) {
 				$.alert({
@@ -422,9 +429,9 @@ $(function() {
 		}
 		if ($('#vulntable').DataTable().rows('.selected').data().length > 0) {
 
-			let prevAID = $('#vulntable').DataTable().rows('.selected').data()[0][13].aid;
+			let prevAID = $('#vulntable').DataTable().rows('.selected').data()[0][11].aid;
 
-			let curAID = data[13].aid;
+			let curAID = data[11].aid;
 			if (prevAID != curAID) {
 				$.alert({ title: "Error", content: "You cannot select a vulnerability from a different application assessment." });
 				return;
@@ -471,15 +478,15 @@ $(function() {
 			calendar = genCal();
 			//$("#appid1").val(data[0]);
 			//$("#appname1").val(data[1]);
-			$("#distlist").val(data[9].dist);
-			vid = data[13].vid;
-			aid = data[13].aid;
-			vName = data[6];
-			appId = data[1];
+			$("#distlist").val(data[11].dist);
+			vid = data[11].vid;
+			aid = data[11].aid;
+			vName = data[11].name;
+			appId = data[11].appId;
 
 			//$("#files").fileinput('destroy');
 			//getFiles();	
-			editors["notes"].setContents($("<div />").html(data[13].notes).text());
+			editors["notes"].setContents($("<div />").html(data[11].notes).text());
 		}
 		return false;
 	});
@@ -505,7 +512,6 @@ $(function() {
 
 	});
 
-	//$("#historyTable").DataTable();
 	$("#chSev").click(function() {
 		let sevMap = getSelectedSeverity();
 		$("#sevModal").modal('show');
@@ -518,11 +524,9 @@ $(function() {
 	});
 	$("#closeDev").click(function() {
 		$("#nprodModal").modal('show');
-		//CKEDITOR.replace("nprodNotes");
 	});
 	$("#closeProd").click(function() {
 		$("#prodModal").modal('show');
-		//CKEDITOR.replace("nprodNotes");
 	});
 	$("#noteSave").click(function() {
 		let newNote = editors["remNotes"].getContents();
@@ -633,8 +637,8 @@ function updateSelectedStartDate(newStartDate) {
 	oldStartDate = oldStartDate.split("<")[0]
 	let rows = $('#vulntable').DataTable().rows('.selected').data();
 	for (let i = 0; i < rows.length; i++) {
-		if (rows[i][13].vid == $("#vuln_note_select").val()) {
-			rows[i][9] = rows[i][9].replace(oldStartDate,`${newStartDate} `);
+		if (rows[i][11].vid == $("#vuln_note_select").val()) {
+			rows[i][7] = rows[i][7].replace(oldStartDate,`${newStartDate} `);
 			$('#vulntable').DataTable().rows().invalidate();
 			break;
 		}
@@ -644,8 +648,8 @@ function updateSelectedStartDate(newStartDate) {
 function getSelectedStartDate() {
 	let rows = $('#vulntable').DataTable().rows('.selected').data();
 	for (let i = 0; i < rows.length; i++) {
-		if (rows[i][13].vid == $("#vuln_note_select").val()) {
-			return rows[i][9];
+		if (rows[i][11].vid == $("#vuln_note_select").val()) {
+			return rows[i][7];
 		}
 	}
 }
@@ -653,24 +657,24 @@ function getSelectedStartDate() {
 function getSelectedVulnName() {
 	let rows = $('#vulntable').DataTable().rows('.selected').data();
 	for (let i = 0; i < rows.length; i++) {
-		if (rows[i][13].vid == $("#vuln_note_select").val()) {
-			return rows[i][6];
+		if (rows[i][11].vid == $("#vuln_note_select").val()) {
+			return rows[i][11].name;//changed
 		}
 	}
 }
 function getSelectedSeverity() {
 	let rows = $('#vulntable').DataTable().rows('.selected').data();
 	for (let i = 0; i < rows.length; i++) {
-		if (rows[i][13].vid == $("#vuln_note_select").val()) {
-			return rows[i][13].severity;
+		if (rows[i][11].vid == $("#vuln_note_select").val()) {
+			return rows[i][11].severity;
 		}
 	}
 }
 function updateSelectedSeverity(overall, likelyhood, impact) {
 	let rows = $('#vulntable').DataTable().rows('.selected').data();
 	for (let i = 0; i < rows.length; i++) {
-		if (rows[i][13].vid == $("#vuln_note_select").val()) {
-			let severity = rows[i][13].severity;
+		if (rows[i][11].vid == $("#vuln_note_select").val()) {
+			let severity = rows[i][11].severity;
 			severity.overall = overall;
 			severity.likelyhood = likelyhood;
 			severity.impact = impact;
@@ -682,8 +686,8 @@ function updateSelectedSeverity(overall, likelyhood, impact) {
 function getSelectedAppName() {
 	let rows = $('#vulntable').DataTable().rows('.selected').data();
 	for (let i = 0; i < rows.length; i++) {
-		if (rows[i][13].vid == $("#vuln_note_select").val()) {
-			return rows[i][1] + " - " + rows[i][2];
+		if (rows[i][11].vid == $("#vuln_note_select").val()) {
+			return rows[i][11].appId + " - " + rows[i][11].name;
 		}
 	}
 }
@@ -693,14 +697,14 @@ function updateSelects() {
 		$("#vuln_note_select").html("");
 		$("#vuln_history_select").html("");
 		$.each(rows, function(index, obj) {
-			let opt = "<option value='" + obj[13].vid + "'>" + obj[7] + "</option>";
+			let opt = "<option value='" + obj[11].vid + "'>" + obj[11].name + "</option>";
 			$("#vuln_note_select").append(opt);
 			$("#vuln_history_select").append(opt);
 		});
-		$("#vuln_note_select").val(rows[0][13].vid).trigger('change.select2');
-		$("#vuln_history_select").val(rows[0][13].vid).trigger('change.select2');
-		refreshNotes(rows[0][13].vid);
-		getFiles(rows[0][13].vid)
+		$("#vuln_note_select").val(rows[0][11].vid).trigger('change.select2');
+		$("#vuln_history_select").val(rows[0][11].vid).trigger('change.select2');
+		refreshNotes(rows[0][11].vid);
+		getFiles(rows[0][11].vid)
 	}
 
 

@@ -95,6 +95,14 @@ function getFiles() {
 	});
 
 }
+function downloadFile(id) {
+	$("#dl-" + id).click(function() {
+		console.log("clicked");
+		let id = $(this).attr("id").replace("dl-", "");
+		document.getElementById('dlFrame').src = "../service/fileUpload?id=" + id;
+
+	});
+}
 
 $(function() {
 	editors['notes'].readOnly(true);
