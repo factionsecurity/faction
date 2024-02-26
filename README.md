@@ -38,7 +38,6 @@ Run the following commands to build the war file and deploy it to the docker con
 ```
 git clone git@github.com:factionsecurity/faction.git
 cd faction
-mvn clean compile war:war
 docker-compose up --build
 ```
 

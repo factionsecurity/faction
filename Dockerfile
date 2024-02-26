@@ -12,6 +12,8 @@ RUN rm -rf /usr/local/tomcat/webapps/docs
 RUN rm -rf /usr/local/tomcat/webapps/examples
 RUN rm -rf /usr/local/tomcat/webapps/ROOT
 
-COPY ./target/faction.war /usr/local/tomcat/webapps/ROOT.war
+RUN wget https://github.com/factionsecurity/faction/releases/latest/download/faction.war -O /usr/local/tomcat/webapps/ROOT.war
+
+#COPY ./target/faction.war /usr/local/tomcat/webapps/ROOT.war
 EXPOSE 8080/tcp
 CMD ["/usr/local/tomcat/bin/catalina.sh", "run"]
