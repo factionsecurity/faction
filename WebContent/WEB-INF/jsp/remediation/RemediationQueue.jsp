@@ -42,7 +42,7 @@ tr:hover {
 			<bs:row>
 				<bs:mco colsize="12">
 					<bs:datatable id="queue"
-						columns="Due Date,Opened,App Id,App Name,Description,Severity,Assessor,Type,Info,Schedule"
+						columns="Due Date,Opened,App Id,App Name,Description,Severity,Assessor,Type,Info,Edit"
 						classname="primary">
 						<s:iterator value="items">
 							<tr id="row<s:property value="vulid"/>">
@@ -56,8 +56,10 @@ tr:hover {
 										value="assessor.lname" /></td>
 								<td><s:property value="type" escapeHtml="false" /></td>
 								<td><s:property value="info" escapeHtml="false" /></td>
-								<td><button class="btn btn-primary"
-										onClick="goTo('${vulnid}')">Open</button> <!--<td><bs:button color="primary" size="md" colsize="12" text="Open" id="open"></bs:button><input type='hidden' id="o<s:property value="vulnid"/>"/></td>-->
+								<td><span class="vulnControl" onClick="goTo('${vulnid}')">
+									<i class="fa fa-edit"></i>
+									</span> 
+								</td>
 							</tr>
 						</s:iterator>
 

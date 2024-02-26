@@ -27,21 +27,18 @@
 					<bs:row>
 						<bs:mco colsize="12">
 							<bs:datatable
-								columns="App Id, App Name, Vuln Name, Overall, Impact, Likelyhood, Start, End, Report"
+								columns="App Name, Overall, Impact, Likelyhood, Start, End, Report"
 								classname="primary" id="">
 								<tr>
-									<td><s:property value="verification.assessment.appId" /></td>
-									<td><s:property value="verification.assessment.name" /></td>
-									<td><s:property
-											value="verification.verificationItems[0].vulnerability.name" /></td>
+									<td><s:property value="verification.assessment.appId" /> - <s:property value="verification.assessment.name" /></td>
 									<td><s:property
 											value="verification.verificationItems[0].vulnerability.overallStr" /></td>
 									<td><s:property
 											value="verification.verificationItems[0].vulnerability.impactStr" /></td>
 									<td><s:property
 											value="verification.verificationItems[0].vulnerability.likelyhoodStr" /></td>
-									<td><s:date name="verification.start" format="dd-MM-yyyy" /></td>
-									<td><s:date name="verification.end" format="dd-MM-yyyy" /></td>
+									<td><s:date name="verification.start" format="MM/dd/yyyy" /></td>
+									<td><s:date name="verification.end" format="MM/dd/yyyy" /></td>
 									<td><bs:button color="info" size="md" colsize="12"
 											text="<span class='fa fa-file'></span> Full Report" id="open"></bs:button></td>
 								</tr>
@@ -152,6 +149,14 @@
 					radioClass : 'iradio_flat-green'
 				});
 			});
+		let colors = ["#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"];
+		 <%int count = 9;%>
+			<s:iterator value="levels" begin="9" end="0" step="-1" status="stat">
+				<s:if test="risk != null && risk != 'Unassigned' && risk != ''">
+				$("td:contains('${risk}')").css("color", colors[<%=count--%>]).css("font-weight", "bold");
+
+			</s:if>
+		</s:iterator>
 		</script>
 
 		</body>

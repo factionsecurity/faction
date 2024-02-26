@@ -361,11 +361,11 @@ public class RemediationQueue extends FSActionSupport{
 		public void setType(String type) {
 			this.type = "<b style=\"color:black\">" + type + "</b>";
 			if(type.equals("Verification"))
-				this.type = this.type.replace("black", "green");
+				this.type = this.type.replace("black", "#00a65a");
 			else if(type.equals("Past Due Vulnerability"))
-				this.type = this.type.replace("black", "red");
+				this.type = this.type.replace("black", "#dd4b39");
 			else if(type.equals("Due Date Aproaching"))
-				this.type = this.type.replace("black", "blue");
+				this.type = this.type.replace("black", "#00c0ef");
 			
 			
 		}

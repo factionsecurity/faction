@@ -46,17 +46,15 @@
                     <thead class="theader">
                       <tr>
                       	<th></th>
-                        <th>App Id</th>
                       	<th>App Name</th>
-                      	<th>Campaign</th>
                       	<th>Assessor</th>
                       	<th>Tracking</th>
                       	<th>Status</th>
-                        <th>Vuln Name</th>
+                        <th>Name</th>
                         <th>Severity</th>
-                        <th>Vuln Opened</th>
-                        <th>Vuln Closed in Dev</th>
-                        <th>Vuln Closed in Prod</th>
+                        <th>Opened</th>
+                        <th>Closed in Dev</th>
+                        <th>Closed in Prod</th>
                       </tr>
                     </thead>
                     <tbody>
