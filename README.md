@@ -76,3 +76,9 @@ __Peer Review and Track Changes__
 ![image](https://github.com/factionsecurity/faction/assets/2343831/fa72a72b-2c95-4c2c-bad1-5b34aab7fd13)
 
 
+__Remediation Queue__
+![image](https://github.com/factionsecurity/faction/assets/2343831/31a576a7-8cee-4b41-9a72-52eccec8d3d8)
+
+
+
+
