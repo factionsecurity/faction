@@ -76,9 +76,16 @@ __Peer Review and Track Changes__
 ![image](https://github.com/factionsecurity/faction/assets/2343831/fa72a72b-2c95-4c2c-bad1-5b34aab7fd13)
 
 
-__Remediation Queue__
+__Remediation/Retest Queue__
 ![image](https://github.com/factionsecurity/faction/assets/2343831/31a576a7-8cee-4b41-9a72-52eccec8d3d8)
 
+__Schedule Retests__
+![image](https://github.com/factionsecurity/faction/assets/2343831/421a9150-96a8-4ce8-ba06-061562012c16)
 
+__Assessor Retest Interface__
+![image](https://github.com/factionsecurity/faction/assets/2343831/11421c1f-63db-44e2-a692-a3918ddbf2ac)
+
+__Vulnerability Status Tracking__
+![image](https://github.com/factionsecurity/faction/assets/2343831/a1973dba-663c-4617-bd78-ffb08eb27973)
 
 
