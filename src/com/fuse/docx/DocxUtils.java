@@ -405,7 +405,6 @@ public class DocxUtils {
 
 					Tr newrow = (Tr) XmlUtils.unmarshalString(nxml);
 					// update colors
-					// TODO bring this back
 					for (String match : colorMap.keySet())
 						changeColorOfCell(newrow, match, colorMap.get(match));
 					for (String match : cellMap.keySet())
