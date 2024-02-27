@@ -253,7 +253,7 @@ public class AppStoreController extends FSActionSupport{
 		
 		return "jsonApps";
 	}
-	public String getAppStore() {
+	public String getActiveAppStore() {
 		return "active";
 	}
 

@@ -181,7 +181,7 @@ public class InstallExtensionController extends FSActionSupport {
 		
 	}
 	
-	public String getAppStore() {
+	public String getActiveAppStore() {
 		return "active";
 	}
 

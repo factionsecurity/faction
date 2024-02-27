@@ -100,32 +100,32 @@ font-weight: normal;
 		<bs:row>
 			<bs:mco colsize="6">
 				<bs:mco colsize="12">
-					<bs:box type="primary" title="<i class='fa-solid fa-bug'></i>  Assessment Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
+					<bs:box type="primary" title="<i class='glyphicon glyphicon-th-list'></i>&nbsp;&nbsp;&nbsp;Assessment Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
 						<ul id="assessmentExtensions" class="list-group">
 						</ul>
 					</bs:box>
 				</bs:mco>
 				<bs:mco colsize="12">
-					<bs:box type="primary" title="<i class='glyphicon glyphicon-ok'></i>  Vulnerability Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
+					<bs:box type="primary" title="<i class='fa fa-bug'></i>&nbsp;&nbsp;&nbsp;Vulnerability Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
 						<ul id="vulnerabilityExtensions" class="list-group">
 						</ul>
 					</bs:box>
 				</bs:mco>
 				<bs:mco colsize="12">
-					<bs:box type="primary" title="<i class='glyphicon glyphicon-ok'></i>  Verification Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
+					<bs:box type="primary" title="<i class='glyphicon glyphicon-ok'></i>&nbsp;&nbsp;&nbsp;Verification Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
 						<ul id="verificationExtensions" class="list-group">
 						</ul>
 					</bs:box>
 				</bs:mco>
 				<bs:mco colsize="12">
 					<bs:box type="primary"
-						title="<i class='glyphicon glyphicon-search'></i>  Application Inventory Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
+						title="<i class='glyphicon glyphicon-search'></i>&nbsp;&nbsp;&nbsp;Application Inventory Extensions <small>Drag to change order of operations. Executes from top to bottom.</small>">
 						<ul id="inventoryExtensions" class="list-group">
 						</ul>
 					</bs:box>
 				</bs:mco>
 				<bs:mco colsize="12">
-					<bs:box type="primary" title="<i class='glyphicon glyphicon-ban-circle'></i>  Disabled Extensions">
+					<bs:box type="primary" title="<i class='glyphicon glyphicon-ban-circle'></i>&nbsp;&nbsp;&nbsp;Disabled Extensions">
 						<ul id="disabledExtensions" class="list-group">
 						</ul>
 					</bs:box>
