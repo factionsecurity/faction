@@ -4,6 +4,7 @@
 	"uuid": "<s:property value="app.uuid"/>",
 	"description" : "<s:property value="app.description"/>",
 	"title" : "<s:property value="app.name"/>", 
+	"hash" : "<s:property value="app.hash"/>", 
 	"version" : "<s:property value="app.version"/>", 
 	"author" : "<s:property value="app.author"/>", 
 	"url" : "<s:property value="app.url"/>", 

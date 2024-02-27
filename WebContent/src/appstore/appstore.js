@@ -69,6 +69,7 @@ class AppStore {
 					$('#appTitle').html(`${json.title} <br\><small>Version: ${json.version}</small>`);
 					$('#appAuthor').html(json.author);
 					$('#appURL').html(json.url);
+					$('#appHash').html(json.hash);
 					$('#appURL').attr("href", json.url);
 					$('#installUpdate').attr("data-uuid", json.uuid);
 					let logo = json.logo;

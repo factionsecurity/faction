@@ -365,6 +365,7 @@ public class AppStore {
 				+ "\"author\": \"" + this.getAuthor() + "\", "
 				+ "\"url\": \"" + this.getUrl() + "\", "
 				+ "\"logo\": \"" + this.getBase64Logo()+ "\", "
+				+ "\"hash\": \"" + this.getHash()+ "\", "
 				+ "\"assessment\": " + this.getAssessmentEnabled() + ", "
 				+ "\"verification\": " + this.getVerificationEnabled() + ", "
 				+ "\"vulnerability\": " + this.getVulnerabilityEnabled() + ", "

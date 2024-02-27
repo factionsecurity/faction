@@ -16,6 +16,7 @@
 .appLogo{
   border-radius: 25px;
   height: 150px;
+  margin-top:20px;
 }
 .appLogo-small{
   border-radius: 5px;
@@ -42,6 +43,8 @@ font-weight: normal;
 			By: <span id="appAuthor" class="appAuthor"></span>
 			<br />
 			Link: <a href="" id="appURL"></a>
+			<br />
+			Hash: <span id="appHash"></span>
 		</bs:mco>
 	</bs:row>
 	<bs:row>

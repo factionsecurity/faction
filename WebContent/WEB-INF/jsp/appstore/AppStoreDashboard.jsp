@@ -68,6 +68,7 @@
   border-radius: 25px;
   height: 150px;
   background-color: white;
+  margin-top:25px;
 }
 .appLogo-small{
   border-radius: 5px;
@@ -146,8 +147,8 @@ font-weight: normal;
 						<bs:mco colsize="8">
 						<h1 id="appTitle">Example Extension <br/><small>Version: 1.0</small></h1>
 							By: <span id="appAuthor" class="appAuthor">Jane Doe</span> <br/>
-							Link: <a href="" id="appURL">www.factionsecurity.com</a>
-
+							Link: <a href="" id="appURL">www.factionsecurity.com</a><br/>
+							Hash: <span id="appHash" ></span> <br/>
 						</bs:mco>
 					</bs:row>
 					<bs:row>

@@ -88,6 +88,7 @@ class InstallExtension {
 		$('#appAuthor').html(info.author);
 		$('#appURL').attr('href',info.url);
 		$('#appURL').html(info.url);
+		$('#appHash').html(info.hash);
 		$('#appDescription').html(marked.parse(this.b64DecodeUnicode(info.description)));
 		
 	}
