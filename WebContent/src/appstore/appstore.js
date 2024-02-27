@@ -26,7 +26,9 @@ class AppStore {
 			Array.from($('input[type="text"], input[type="password"]')).forEach( el => {
 				const value = el.value;
 				const key = $(el).data("key");
-				updates[key]=value;
+				if(value.trim() != ""){
+					updates[key]=value;
+				}
 			});
 			const formData = `id=${id}&configs=${encodeURIComponent(JSON.stringify(updates))}`
 			fetch("UpdateConfigs", {
@@ -173,7 +175,7 @@ class AppStore {
 		}
 		div.innerHTML = `<div class="form-group">
 			<label>${key}:</label>
-			<input type="${inputType}" data-key="${key}" class="form-control pull-right" value="${value}" autocomplete="off" placeholder="${placeholder}">
+			<input type="${inputType}" data-key="${key}" class="form-control pull-right" value="${value}" autocomplete="new-password" placeholder="${placeholder}">
 		</div>`;
 		return div;
 		
