@@ -20,6 +20,7 @@ import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
+import org.hibernate.Session;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.JSONParser;
@@ -27,6 +28,7 @@ import org.json.simple.parser.ParseException;
 import org.python.bouncycastle.util.Arrays;
 
 import java.util.Base64;
+import java.util.List;
 
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.AppStore;
@@ -46,6 +48,7 @@ public class InstallExtensionController extends FSActionSupport {
 	private String file_dataContentType;
 	private String file_dataFileName;
 	private String uuid;
+	private AppStore app;
 	
 	@Before(priority=1)
 	public String authorization() {
@@ -63,9 +66,18 @@ public class InstallExtensionController extends FSActionSupport {
 		return SUCCESS;
 	}
 	
-	@Action(value = "UpdateExtension")
+	@Action(value = "UpdateExtension", results = {
+			@Result(name = "update", location = "/WEB-INF/jsp/appstore/UpdateExtension.jsp") })
 	public String updateExtension() {
-		return SUCCESS;
+		
+		app = (AppStore) em.createQuery("from AppStore where uuid = :uuid")
+				.setParameter("uuid", uuid)
+				.getResultList()
+				.stream()
+				.findFirst()
+				.orElse(null);
+		
+		return "update";
 	}
 	
 	@Action(value = "PreviewUpdate", results = { @Result(name = "json", type = "stream", params = { "contentType",
@@ -128,6 +140,46 @@ public class InstallExtensionController extends FSActionSupport {
 		return MESSAGEJSON;
 		
 	}
+	@Action(value = "UpdateApp")
+	public String updateApp() throws IOException, ParseException {
+		AppStore app = (AppStore) ServletActionContext.getRequest().getSession().getAttribute("PreviewApp");
+		List<AppStore> apps =em.createQuery("from AppStore where hash = :hash or uuid = :uuid")
+			.setParameter("hash", app.getHash())
+			.setParameter("uuid", app.getUuid())
+			.getResultList();
+		
+		Boolean alreadyInstalled = apps.stream()
+				.filter( a -> a.getHash().equals(app.getHash()))
+				.findAny()
+				.isPresent();
+			
+			
+		if(alreadyInstalled) {
+			_message="Same as Installed Extension";
+			_result="error";
+			return MESSAGEJSON;
+		}
+		
+		Boolean isInstalled = apps.stream()
+				.filter( a -> a.getUuid().equals(app.getUuid()))
+				.findAny()
+				.isPresent();
+		
+		if(!isInstalled) {
+			_message="Can't find and existing installation";
+			_result="error";
+			return MESSAGEJSON;
+		}
+		
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		em.merge(app);
+		HibHelper.getInstance().commit();
+		
+		_result="success";
+		return MESSAGEJSON;
+		
+	}
 	
 	public String getAppStore() {
 		return "active";
@@ -168,5 +220,8 @@ public class InstallExtensionController extends FSActionSupport {
 	public void setUuid(String uuid) {
 		this.uuid = uuid;
 	}
-
+	
+	public AppStore getApp() {
+		return this.app;
+	}
 }

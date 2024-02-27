@@ -68,13 +68,11 @@ public class AppStoreController extends FSActionSupport{
 	@SuppressWarnings("unchecked")
 	@Action(value = "AppStoreDashboard")
 	public String execute() {
-		//TODO: Add AuthZ
 		return SUCCESS;
 	}
 	
 	@Action(value = "EnableApp")
 	public String enableApp() {
-		//TODO: Add AuthZ
 		AppStore app = (AppStore) em.createQuery("from AppStore where id = :id")
 				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
 		if(app != null) {
@@ -90,7 +88,6 @@ public class AppStoreController extends FSActionSupport{
 	
 	@Action(value = "DisableApp")
 	public String disableApp() {
-		//TODO: Add AuthZ
 		AppStore app = (AppStore) em.createQuery("from AppStore where id = :id")
 				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
 		if(app != null) {
@@ -113,7 +110,6 @@ public class AppStoreController extends FSActionSupport{
 	     @Result(name = "jsonApp", location = "/WEB-INF/jsp/appstore/appJSON.jsp", params = { "contentType", "application/json" })
 	})
 	public String getDetails() {
-		//TODO: Add AuthZ
 		app = (AppStore) em.createQuery("from AppStore where id = :id")
 				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
 		return "jsonApp";
@@ -121,7 +117,6 @@ public class AppStoreController extends FSActionSupport{
 	
 	@Action(value = "DeleteApp")
 	public String deleteApp() {
-		//TODO: Add AuthZ
 		AppStore app = (AppStore) em.createQuery("from AppStore where id = :id")
 				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
 		if(app != null) {
@@ -141,7 +136,6 @@ public class AppStoreController extends FSActionSupport{
 	
 	@Action(value = "UpdateConfigs")
 	public String updateConfigs() throws ParseException {
-		//TODO: Add AuthZ
 		AppStore app = (AppStore) em.createQuery("from AppStore where id = :id")
 				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
 		if(app != null) {
@@ -167,7 +161,6 @@ public class AppStoreController extends FSActionSupport{
 	
 	@Action(value = "ChangeOrder")
 	public String changeOrder() {
-		//TODO: Add AuthZ
 		List<AppStore> apps = em.createQuery("from AppStore").getResultList();
 		List<String> appIdsString = Arrays.asList(appList.split(","));
 		List<Long> appIds = appIdsString
@@ -237,7 +230,6 @@ public class AppStoreController extends FSActionSupport{
 	     @Result(name = "jsonApps", location = "/WEB-INF/jsp/appstore/appsJSON.jsp", params = { "contentType", "application/json" })
 	})
 	public String getApps() {
-		//TODO: Add AuthZ
 		List<AppStore> apps = em.createQuery("from AppStore").getResultList();
 		assessmentApps = apps.stream()
 				.filter( app -> app.getEnabled() && app.getAssessmentEnabled())

@@ -11,14 +11,13 @@ import { marked } from 'marked';
 
 class AppStore {
 	constructor() {
-		this.setupFileUpload();
 		this.getApps();
 		this.setupSortableLists();
 		
 		$("#installExtension").on('click',  ( )=> window.location="InstallExtension");
 		$("#installUpdate").on('click', function(){
 			const uuid=$(this).data("uuid")
-			window.location=`InstallExtension?id=${uuid}`
+			window.location=`UpdateExtension?uuid=${uuid}`
 		});
 		$("#saveConfigs").on('click', function() {
 			const id = $(this).data("id");
@@ -143,26 +142,6 @@ class AppStore {
 		}).join(''));
 	} 
 
-	setupFileUpload() {
-		$("#appFile").fileinput({
-			overwriteInitial: false,
-			uploadUrl: "PreviewApp",
-			uploadAsync: true,
-			maxFileCount: 1,
-			allowedFileExtensions: ['jar'],
-			previewFileExtSettings: {
-				'jar': function(ext) {
-					return ext.match(/(jar)$/i);
-				}
-			},
-			preferIconicPreview: true,
-			previewFileIconSettings: {
-				'jar': '<i class="fa fa-file-archive-o text-primary"></i>',
-			},
-		}).on("filebatchselected", function(event, files) {
-			$("#appFile").fileinput("upload");
-		});
-	}
 	
 	createConfig(key, value, type){
 		let div = document.createElement("div");
@@ -202,13 +181,13 @@ class AppStore {
 					 		<img class="appLogo-small" src="${logo}"/>
 						</div>
 					</div>
-					<div class="col-md-8 handle-container">
+					<div class="col-md-7 handle-container">
 						<div class="handle">
 							<b>${name}</b> Version: ${version}<br> by: ${author} <br> link:
 							<a href="${url}">${url}</a>
 						</div>
 					</div>
-					<div class="col-md-2 handle-container pull-right" style="width:140px">
+					<div class="col-md-3 handle-container pull-right" style="width:140px">
 						<div class="handle">
 							<input type="checkbox" data-id="${id}" ${checked}/>
 							&nbsp;&nbsp;<span data-id="${id}" class="vulnControl vulnControl-delete">

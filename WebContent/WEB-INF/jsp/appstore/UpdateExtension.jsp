@@ -17,8 +17,10 @@
 <div class="content-wrapper">
 	<section class="content-header">
 		<h1>
-			<i class="fa fa-upload"></i> Update Extension: <s:property value="name"/>
+			<i class="fa fa-upload"></i> Update Extension: <s:property value="app.name"/> <s:property value="app.version"/>
+
 		</h1>
+		<input type="hidden" id="uuid" value="<s:property value="app.uuid"/>"/>
 	</section>
 
 	<section class="content">
@@ -32,7 +34,7 @@
 					<bs:row>
 					<bs:mco colsize="12">
 					<div class="form-group" id="appUpload">
-						<label>Upload Extension</label> <input id="appFile" type="file"
+						<label>Upload Updated Extension</label> <input id="appFile" type="file"
 							multiple name="file_data" />
 					</div>
 					</bs:mco>
@@ -42,7 +44,7 @@
 						<bs:row>
 							<bs:mco colsize="8"></bs:mco>
 							<bs:button color="primary" size="2" colsize="2" text="Cancel" id="cancelInstall"></bs:button>
-							<bs:button color="success" size="2" colsize="2" text="Install" id="installExtension"></bs:button>
+							<bs:button color="success" size="2" colsize="2" text="Install" id="updateExtension"></bs:button>
 						</bs:row>
 					</div>
 				</bs:box>

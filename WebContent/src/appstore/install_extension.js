@@ -9,15 +9,19 @@ import { marked } from 'marked';
 
 class InstallExtension {
 	constructor() {
-		this.setupFileUpload();
-
+		if(location.href.indexOf("UpdateExtension") != -1){
+			const uuid = $("#uuid").val();
+			this.setupFileUpload(`PreviewUpdate?uuid=${uuid}`);
+		}else{
+			this.setupFileUpload("PreviewApp");
+		}
 	}
 
-	setupFileUpload() {
+	setupFileUpload(loc) {
 		let _this = this;
 		let fileUpload = $("#appFile").fileinput({
 			overwriteInitial: false,
-			uploadUrl: "PreviewApp",
+			uploadUrl: loc,
 			uploadAsync: true,
 			maxFileCount: 1,
 			allowedFileExtensions: ['jar'],
@@ -49,6 +53,21 @@ class InstallExtension {
 		
 		$("#installExtension").on('click', ()=>{
 			fetch("InstallApp")
+			.then( response => response.json())
+			.then( json => {
+				if(json.result == "success"){
+					location.href = "AppStoreDashboard"
+				}else{
+					$.alert({
+						title: "Error",
+						content: json.message
+					})
+				}
+			})
+		})
+		
+		$("#updateExtension").on('click', ()=>{
+			fetch("UpdateApp")
 			.then( response => response.json())
 			.then( json => {
 				if(json.result == "success"){
