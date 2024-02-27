@@ -15,6 +15,7 @@ import java.util.concurrent.ExecutionException;
 
 import javax.persistence.EntityManager;
 
+import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 import org.junit.After;
 import org.junit.Before;
@@ -60,11 +61,18 @@ public class ExtensionAPIModuleTests {
 		app.parseJar(fis);
 		app.setEnabled(true);
 		
-		HashMap<String,String> configs = new HashMap();
-		configs.put("testKey", "testValue");
-		configs.put("testKey1", "testValue1");
-		configs.put("testKey2", "testValue2");
-		app.setHashMapConfig(configs);
+		JSONObject configs = new JSONObject();
+		JSONObject basic = new JSONObject();
+		basic.put("type", "text");
+		basic.put("value", "testValue");
+		configs.put("testKey", basic.clone());
+		
+		basic.put("value", "testValue1");
+		configs.put("testKey1", basic.clone());
+		
+		basic.put("value", "testValue2");
+		configs.put("testKey2", basic.clone());
+		app.setJSONConfig(configs);
 		
 		
 		assessment = new Assessment();
@@ -117,11 +125,9 @@ public class ExtensionAPIModuleTests {
 	
 	@Test
 	public void testSetConfigs(){
-		HashMap<String,String> configs = app.getHashMapConfig();
-		configs.put("testKey", "updatedValue");
-		configs.put("testKey1", "updatedValue1");
-		configs.put("testKey2", "updatedValue2");
-		app.setHashMapConfig(configs);
+		app.updateJSONConfig("testKey", "updatedValue");
+		app.updateJSONConfig("testKey1", "updatedValue1");
+		app.updateJSONConfig("testKey2", "updatedValue2");
 		
 		HashMap<String,String> updatedConfigs = app.getHashMapConfig();
 		assertTrue(updatedConfigs.get("testKey").equals("updatedValue"));

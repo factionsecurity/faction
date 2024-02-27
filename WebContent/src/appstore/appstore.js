@@ -16,10 +16,14 @@ class AppStore {
 		this.setupSortableLists();
 		
 		$("#installExtension").on('click',  ( )=> window.location="InstallExtension");
+		$("#installUpdate").on('click', function(){
+			const uuid=$(this).data("uuid")
+			window.location=`InstallExtension?id=${uuid}`
+		});
 		$("#saveConfigs").on('click', function() {
 			const id = $(this).data("id");
 			let updates ={};
-			Array.from($('input[type="text"]')).forEach( el => {
+			Array.from($('input[type="text"], input[type="password"]')).forEach( el => {
 				const value = el.value;
 				const key = $(el).data("key");
 				updates[key]=value;
@@ -65,6 +69,7 @@ class AppStore {
 					$('#appAuthor').html(json.author);
 					$('#appURL').html(json.url);
 					$('#appURL').attr("href", json.url);
+					$('#installUpdate').attr("data-uuid", json.uuid);
 					let logo = json.logo;
 					if(logo==""){
 						logo="../app-default.png";
@@ -83,8 +88,9 @@ class AppStore {
 						$("#saveConfigs").data('id', id);
 						for(config of json.configs){
 							const key = Object.keys(config)[0];
-							const value = config[key];
-							const div = _this.createConfig(key,value);
+							const value = config[key]['value'];
+							const type = config[key]['type'];
+							const div = _this.createConfig(key,value, type);
 							$("#appConfigs").append(div);
 						}
 					}else{
@@ -156,12 +162,18 @@ class AppStore {
 		});
 	}
 	
-	createConfig(key, value){
+	createConfig(key, value, type){
 		let div = document.createElement("div");
 		div.className="col-md-4";
+		let inputType ='text';
+		let placeholder=""
+		if(type == "password"){
+			inputType = "password"
+			placeholder = "***************************"
+		}
 		div.innerHTML = `<div class="form-group">
 			<label>${key}:</label>
-			<input type="text" data-key="${key}" class="form-control pull-right" id="appName" value="${value}" autocomplete="off">
+			<input type="${inputType}" data-key="${key}" class="form-control pull-right" value="${value}" autocomplete="off" placeholder="${placeholder}">
 		</div>`;
 		return div;
 		

@@ -45,6 +45,7 @@ public class InstallExtensionController extends FSActionSupport {
 	private File file_data;
 	private String file_dataContentType;
 	private String file_dataFileName;
+	private String uuid;
 	
 	@Before(priority=1)
 	public String authorization() {
@@ -59,33 +60,46 @@ public class InstallExtensionController extends FSActionSupport {
 
 	@Action(value = "InstallExtension")
 	public String execute() {
-		//TODO: Add AuthZ
 		return SUCCESS;
 	}
+	
+	@Action(value = "UpdateExtension")
+	public String updateExtension() {
+		return SUCCESS;
+	}
+	
+	@Action(value = "PreviewUpdate", results = { @Result(name = "json", type = "stream", params = { "contentType",
+			"application/json", "inputName", "stream" }),
+			@Result(name = "input", location = "/WEB-INF/jsp/uploadError.jsp") })
+	public String uploadUpdate() throws IOException, ParseException {
+		
+		AppStore app = (AppStore) em.createQuery("from AppStore where uuid = :uuid")
+				.setParameter("uuid", uuid)
+				.getResultList()
+				.stream()
+				.findFirst()
+				.orElse(null);
+		
+		FileInputStream fis = new FileInputStream(file_data);
+		app.updateApp(fis);
+		String json = app.getMeta();
+		ServletActionContext.getRequest().getSession().setAttribute("PreviewApp", app);
+		stream = new ByteArrayInputStream(json.toString().getBytes());
+		return "json";
+	}
+	
+	
 
 	@Action(value = "PreviewApp", results = { @Result(name = "json", type = "stream", params = { "contentType",
 			"application/json", "inputName", "stream" }),
 			@Result(name = "input", location = "/WEB-INF/jsp/uploadError.jsp") })
 	public String uploadFile() throws IOException, ParseException {
 		
-		User user = this.getSessionUser();
-
 		FileInputStream fis = new FileInputStream(file_data);
 		AppStore preview = new AppStore();
 		preview.parseJar(fis);
 
-		String json = "{";
-		json += " \"extension_info\": { \"title\": \"" + preview.getName() +"\", "
-				+ "\"version\": \"" + preview.getVersion() + "\", "
-				+ "\"author\": \"" + preview.getAuthor() + "\", "
-				+ "\"url\": \"" + preview.getUrl() + "\", "
-				+ "\"logo\": \"" + preview.getBase64Logo()+ "\", "
-				+ "\"assessment\": " + preview.getAssessmentEnabled() + ", "
-				+ "\"verification\": " + preview.getVerificationEnabled() + ", "
-				+ "\"vulnerability\": " + preview.getVulnerabilityEnabled() + ", "
-				+ "\"inventory\": " + preview.getInventoryEnabled() + ", "
-				+ "\"description\": \"" + preview.getDescription() + "\"}"
-				+ "}";
+		String json = preview.getMeta();
 		ServletActionContext.getRequest().getSession().setAttribute("PreviewApp", preview);
 		stream = new ByteArrayInputStream(json.toString().getBytes());
 		return "json";
@@ -93,7 +107,6 @@ public class InstallExtensionController extends FSActionSupport {
 	
 	@Action(value = "InstallApp")
 	public String installApp() throws IOException, ParseException {
-		//TODO: Add AuthZ
 		AppStore app = (AppStore) ServletActionContext.getRequest().getSession().getAttribute("PreviewApp");
 		Boolean alreadyInstalled =em.createQuery("from AppStore where hash = :hash")
 			.setParameter("hash", app.getHash())
@@ -150,6 +163,10 @@ public class InstallExtensionController extends FSActionSupport {
 
 	public void setFile_dataFileName(String file_dataFileName) {
 		this.file_dataFileName = file_dataFileName;
+	}
+	
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
 	}
 
 }

@@ -9,6 +9,7 @@ import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -35,6 +36,7 @@ public class AppStore {
 	@Id
 	@GeneratedValue
 	private Long id;
+	private String uuid;
 	private Integer order;
 	private String name;
 	private String author;
@@ -73,6 +75,12 @@ public class AppStore {
 	}
 	public void setName(String name) {
 		this.name = name;
+	}
+	public String getUuid() {
+		return uuid;
+	}
+	public void setUuid(String uuid) {
+		this.uuid = uuid;
 	}
 	public String getAuthor() {
 		return author;
@@ -183,35 +191,59 @@ public class AppStore {
 	public String getConfig(){
 		return FSUtils.decryptPassword(configs);
 	}
-
 	@Transient
 	public HashMap<String,String> getHashMapConfig(){
 		try {
 			if(this.getConfig() != null && !this.getConfig().trim().equals("")) {
 				JSONParser parser = new JSONParser();
 				JSONObject json = (JSONObject) parser.parse(this.getConfig());
-				HashMap<String,String> mappedConfig = new HashMap<>();
+				HashMap<String,String> hashMapConfig = new HashMap<>();
 				for(Object key : json.keySet()) {
-					mappedConfig.put(key.toString(), json.get(key).toString());
+					hashMapConfig.put(key.toString(), ((JSONObject)json.get(key)).get("value").toString());
 				}
-				return mappedConfig;
+				return hashMapConfig;
 			}else {
-				return new HashMap<String,String>();
+				return new HashMap<>();
 			}
 		}catch(Exception ex) {
 			ex.printStackTrace();
-			return new HashMap<String,String>();
+			return new HashMap<>();
+		}
+	}
+
+	@Transient
+	public JSONObject getJSONConfig(){
+		try {
+			if(this.getConfig() != null && !this.getConfig().trim().equals("")) {
+				JSONParser parser = new JSONParser();
+				JSONObject json = (JSONObject) parser.parse(this.getConfig());
+				return json;
+			}else {
+				return new JSONObject();
+			}
+		}catch(Exception ex) {
+			ex.printStackTrace();
+			return new JSONObject();
 		}
 	}
 	
 	@Transient
-	public void setHashMapConfig( HashMap<String,String> config) {
+	public void setJSONConfig( JSONObject config) {
 		try {
-			JSONObject jsonConfig = new JSONObject();
-			for(String key : config.keySet()) {
-				jsonConfig.put(key, config.get(key).toString());
+			this.setConfig(config.toJSONString());
+		}catch(Exception ex) {
+			ex.printStackTrace();
+		}
+	}
+	
+	@Transient
+	public void updateJSONConfig( String key, String value) {
+		try {
+			JSONObject config = this.getJSONConfig();
+			if(config.containsKey(key)) {
+				((JSONObject) config.get(key)).put("value", value);
+				this.setJSONConfig(config);
 			}
-			this.setConfig(jsonConfig.toJSONString());
 		}catch(Exception ex) {
 			ex.printStackTrace();
 		}
@@ -295,11 +327,7 @@ public class AppStore {
 		if(configsString != null && !configsString.trim().equals("")) {
 			JSONParser parser = new JSONParser();
 			JSONObject jsonConfigs = (JSONObject) parser.parse(configs.toString());
-			HashMap<String,String> configMap = new HashMap<>();
-			for( Object key : jsonConfigs.keySet()) {
-				configMap.put(key.toString(), jsonConfigs.get(key).toString());
-			}
-			this.setHashMapConfig(configMap);
+			this.setJSONConfig(jsonConfigs);
 		}
 		
 		this.setJarFile(jarBytes); //adds has and B64 encodes
@@ -314,8 +342,38 @@ public class AppStore {
 		this.inventoryEnabled = isInventoryApp;
 		this.description = base64Description;
 		this.enabled = false;
+		this.uuid = UUID.randomUUID().toString();
 		
 	}
+	
+	@Transient 
+	public void updateApp(FileInputStream fis) throws IOException, ParseException {
+		String originalUUID = this.uuid;
+		JSONObject originalConfigs = this.getJSONConfig();
+		this.parseJar(fis);
+		this.uuid=originalUUID;
+		for(Object key : originalConfigs.keySet()) {
+			this.updateJSONConfig(key.toString(), ((JSONObject) originalConfigs.get(key)).get("value").toString());
+		}
+	}
+	
+	@Transient
+	public String getMeta() {
+		String json = "{";
+		json += " \"extension_info\": { \"title\": \"" + this.getName() +"\", "
+				+ "\"version\": \"" + this.getVersion() + "\", "
+				+ "\"author\": \"" + this.getAuthor() + "\", "
+				+ "\"url\": \"" + this.getUrl() + "\", "
+				+ "\"logo\": \"" + this.getBase64Logo()+ "\", "
+				+ "\"assessment\": " + this.getAssessmentEnabled() + ", "
+				+ "\"verification\": " + this.getVerificationEnabled() + ", "
+				+ "\"vulnerability\": " + this.getVulnerabilityEnabled() + ", "
+				+ "\"inventory\": " + this.getInventoryEnabled() + ", "
+				+ "\"description\": \"" + this.getDescription() + "\"}"
+				+ "}";
+		return json;
+	}
+	
 	
 
 }

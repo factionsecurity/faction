@@ -135,7 +135,8 @@ font-weight: normal;
 				<bs:box type="primary disabled" title="Extension Description" id="appBox">
 					<div class="extensionDescription">
 					<bs:row>
-						<br/>
+						<bs:mco colsize="10">
+						</bs:mco>
 						<bs:mco colsize="2">
   							<button class="btn btn-primary" id="installUpdate"><i class="fa fa-upload"></i>&nbsp;&nbsp;Install Update</button>
   						</bs:mco>

@@ -147,12 +147,8 @@ public class AppStoreController extends FSActionSupport{
 		if(app != null) {
 			JSONParser parse = new JSONParser();
 			JSONObject jsonConfigs = (JSONObject) parse.parse(configs);
-			HashMap<String,String> mappedConfigs = app.getHashMapConfig();
 			for(Object key : jsonConfigs.keySet()) {
-				if(mappedConfigs.containsKey(key)) {
-					mappedConfigs.put(key.toString(), jsonConfigs.get(key).toString());
-					app.setHashMapConfig(mappedConfigs);
-				}
+				app.updateJSONConfig(key.toString(), jsonConfigs.get(key).toString());
 			}
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
