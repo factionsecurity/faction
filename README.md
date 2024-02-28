@@ -46,7 +46,7 @@ On the first boot, it will ask you to create an admin account.
 
 ## Import the Vulnerability Templates
 1. Navigate to Templates -> Default Vulnerabilities
-2. Click Update from VulnDB. 
+2. Click Update from Faction. 
 
 ## Customize reports
 You can find out more information about creating your own custom report templates here:
