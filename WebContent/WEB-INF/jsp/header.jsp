@@ -249,35 +249,6 @@
         </section>
         <!-- /.sidebar -->
       </aside>
-
-       <s:if test="userLimitReached" >
-      	<div class="licenseNotification alert alert-danger alert-dismissible">
-        	<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-        	<h4><i class="icon fa fa-ban"></i> Alert!</h4>
-        User Limit Reached. Contact your administator to obtain a new license that supports your current User Level.
-      	</div>
-      </s:if>
-      <s:if test="expireDateApproaching">
-      <div class="licenseNotification alert alert-warning alert-dismissible">
-        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-        <h4><i class="icon fa fa-ban"></i> Warning!</h4>
-        You license is close to expiring. Contact your administator to update your license. 
-      </div>
-      </s:if>
-       <s:if test="licenseExpired">
-      <div class="licenseNotification alert alert-danger alert-dismissible">
-        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-        <h4><i class="icon fa fa-ban"></i> Alert!</h4>
-        You license is currently Expired. Contact your administator to update your license.
-      </div>
-      </s:if>
-      <s:if test="noLicense">
-      <div class="licenseNotification alert alert-danger alert-dismissible">
-        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-        <h4><i class="icon fa fa-ban"></i> Alert!</h4>
-        A license is currently not installed. <a href="License">Click here to install your license.</a>
-      </div>
-      </s:if>
       
 
      
