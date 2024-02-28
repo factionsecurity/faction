@@ -31,7 +31,6 @@ import com.fuse.actions.scheduling.Engagement;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.DefaultVulnerability;
-import com.fuse.dao.ExploitStep;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.SystemSettings;

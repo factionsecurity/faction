@@ -260,41 +260,36 @@ public class uploadAssessment extends HttpServlet {
 				
 		//Check the API Extensions for data		
 		Extensions appInv = new Extensions(Extensions.EventType.ASMT_MANAGER);
-		if ( appInv.checkIfExtended()) {
-			
-			InventoryResult[] results = (InventoryResult[]) appInv
-					.execute(new Class[]{String.class,  String.class}, appid, "");
-			
-			if(results != null && results.length == 1){
-				
-				InventoryResult ir = results[0];
-				asmt.setDistributionList(ir.getDistrobutionList());
-				asmt.setName(ir.getApplicationName());
-				if(ir.getCustomFields()!= null){
-					for(String  key : ir.getCustomFields().keySet()){
-						CustomType ct = (CustomType)em.createQuery("from CustomType where variable = :value")
-								.setParameter("value", key).getResultList().stream().findFirst().orElse(null);
-						if(ct != null){
-							boolean found=false;
-							if(asmt.getCustomFields() == null)
-								asmt.setCustomFields(new ArrayList<CustomField>());
-							
-							for(CustomField c : asmt.getCustomFields()){
-								if(c.getType().getVariable().equals(key)){
-									c.setValue(ir.getCustomFields().get(key));
-									break;
-								}
-							}
-							if(!found){
-								CustomField cf = new CustomField();
-								cf.setType(ct);
-								cf.setValue(ir.getCustomFields().get(key));
-								
-								asmt.getCustomFields().add(cf);
+		List<InventoryResult> results = appInv.execute(appid, "");
+		
+		if(results != null && results.size() == 1){
+			InventoryResult ir = results.get(0);
+			asmt.setDistributionList(ir.getDistrobutionList());
+			asmt.setName(ir.getApplicationName());
+			if(ir.getCustomFields()!= null){
+				for(String  key : ir.getCustomFields().keySet()){
+					CustomType ct = (CustomType)em.createQuery("from CustomType where variable = :value")
+							.setParameter("value", key).getResultList().stream().findFirst().orElse(null);
+					if(ct != null){
+						boolean found=false;
+						if(asmt.getCustomFields() == null)
+							asmt.setCustomFields(new ArrayList<CustomField>());
+						
+						for(CustomField c : asmt.getCustomFields()){
+							if(c.getType().getVariable().equals(key)){
+								c.setValue(ir.getCustomFields().get(key));
+								break;
 							}
 						}
-					}		
-				}
+						if(!found){
+							CustomField cf = new CustomField();
+							cf.setType(ct);
+							cf.setValue(ir.getCustomFields().get(key));
+							
+							asmt.getCustomFields().add(cf);
+						}
+					}
+				}		
 			}
 		}
 		return asmt;

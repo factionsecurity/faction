@@ -676,17 +676,7 @@ public class AssessmentView extends FSActionSupport {
 			notifiers.add(n);
 			// em.persist(n);
 		}
-		Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-		if (amgr.checkIfExtended()) {
-			try {
-				amgr.execute(em, assessment, AssessmentManager.Operation.Finalize);
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
-		}
-		// AuditLog.audit(this, "Assessment Finalized", AuditLog.UserAction,
-		// AuditLog.CompAssessment, assessment.getId(), false);
-		// HibHelper.getInstance().commit();
+		
 		AssessmentQueries.saveAll(this, assessment, em, "Assessment Finalized", assessment.getVulns(), assessment,
 				notifiers);
 
@@ -697,6 +687,11 @@ public class AssessmentView extends FSActionSupport {
 		EmailThread emailThread = new EmailThread(assessment,
 				"Assessment Completed for " + assessment.getName() + " [ " + assessment.getAppId() + " ]", email);
 		TaskQueueExecutor.getInstance().execute(emailThread);
+		
+		// Run all Extensions
+		Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+		amgr.execute(assessment, AssessmentManager.Operation.Finalize);
+		
 		return this.SUCCESSJSON;
 	}
 

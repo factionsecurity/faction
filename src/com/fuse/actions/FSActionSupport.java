@@ -34,6 +34,7 @@ import org.apache.struts2.interceptor.ServletRequestAware;
 import org.apache.struts2.interceptor.ServletResponseAware;
 import org.apache.struts2.interceptor.SessionAware;
 
+import com.fuse.dao.AuditLog;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
 import com.fuse.utils.CSRF;
@@ -47,6 +48,7 @@ import com.opensymphony.xwork2.interceptor.annotations.Before;
 @Results( value = {
 		@Result(name="login", type="redirectAction", location="../login"),
 		@Result(name="successJson", location="/WEB-INF/jsp/successJson.jsp"),
+		@Result(name="messageJson", location="/WEB-INF/jsp/messageJson.jsp"),
 		@Result(name="errorJson", location="/WEB-INF/jsp/errorJson.jsp"),
 		@Result(name="invalid.token", location="/WEB-INF/jsp/errorJson.jsp"),
 		@Result( name="_json",type = "stream"
@@ -58,16 +60,17 @@ import com.opensymphony.xwork2.interceptor.annotations.Before;
 						"contentType", "application/octet-stream", 
 				        "inputName", "_stream"})
 })
-public class FSActionSupport extends ActionSupport implements SessionAware, ServletRequestAware, ServletResponseAware{
+public class FSActionSupport extends ActionSupport { 
 	
 
 	protected SessionMap<String,Object> JSESSION;  
 	protected Map<String,String> COOKIES;
-	public HttpServletRequest request;
-	public HttpServletResponse response;
+	public HttpServletRequest request = ServletActionContext.getRequest();
+	public HttpServletResponse response = ServletActionContext.getResponse();
 	public String LOGIN = "login";
 	public String SUCCESSJSON = "successJson";
 	public String ERRORJSON = "errorJson";
+	public String MESSAGEJSON = "messageJson";
 	public String JSON = "_json";
 	public String RAW = "_raw";
 	protected InputStream _stream;
@@ -80,19 +83,14 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	protected String _title1 = "Fuse";
 	protected String _title2 = "FACTION";
 	protected String _token ="";
-	public String _message;
+	public String _message="";
+	public String _result="";
 	public boolean userLimitReached=false;
 	public boolean expireDateApproaching=false;
 	public boolean licenseExpired=false;
 	protected String version="";
 	
 	
-	private boolean isIndex() {
-		String resultPath = request.getRequestURI().toString().replace(request.getContextPath(), "");
-		if(resultPath.equals("/"))
-			return true;
-		else return false;
-	}
 	
 	@Before
 	public String openConnection(){
@@ -106,7 +104,7 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 		return null;
 	}
 	
-	@Override
+	/*@Override
 	public void setSession(Map<String, Object> arg0) {
 		JSESSION = (SessionMap)arg0;
 		
@@ -132,7 +130,7 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 			
 		}
 		
-	}
+	}*/
 
 	private boolean getRole(String role){
 		return (boolean) (ActionContext.getContext().get(role) == null ? false :ActionContext.getContext().get(role)) ;
@@ -153,6 +151,16 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	}
 	public boolean isAcadmin(){
 		return getRole("isAdmin");
+	}
+	
+	public String checkAdmin(String errorMessage) {
+		 if(!this.isAcadmin()) { 
+			 AuditLog.notAuthorized( this,
+				 errorMessage, true);
+			 return LOGIN; 
+		 }else {
+			 return "";
+		 }
 	}
 	public User getSessionUser(){
 		return (User)ActionContext.getContext().get("user");
@@ -182,7 +190,7 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 		return MENUOPTION;
 	}
 
-	@Override
+	/*@Override
 	public void setServletRequest(HttpServletRequest arg0) {
 		this.request=arg0;
 		Cookie [] cookies = request.getCookies();
@@ -198,7 +206,7 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	@Override
 	public void setServletResponse(HttpServletResponse arg0) {
 		this.response = arg0;
-	}
+	}*/
 	
 	public String jsonOutput(String json) {
 		try {
@@ -285,6 +293,9 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	public String get_message() {
 		return _message;
 	}
+	public String get_result() {
+		return _result;
+	}
 	
 	public InputStream get_stream() {
 		return _stream;
@@ -308,4 +319,6 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	public String getVersion() {
 		return this.version; 
 	}
+	
+	
 }

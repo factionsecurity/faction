@@ -199,6 +199,10 @@
 			<name>type</name>
 			<required>true</required>
 		</attribute>
+		<attribute>
+			<name>id</name>
+			<required>false</required>
+		</attribute>
 	</tag>
 	<tag>
 		<name>feed</name>

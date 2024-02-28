@@ -61,8 +61,6 @@ public class ReportGenThread implements Runnable{
 	public void run() {
 		
 		System.out.println("Generating Report");
-		//TransactionManager tm = com.arjuna.ats.jta.TransactionManager.transactionManager();
-		//EntityManagerFactory emf = Persistence.createEntityManagerFactory( "Faction" );
 		EntityManager em = HibHelper.getInstance().getEM();
 		Long id = this.asmt.getId();
 		try{

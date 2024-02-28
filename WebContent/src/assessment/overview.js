@@ -644,10 +644,8 @@ $(function() {
 
 
 	});
-
-
 	$(".saveTemplate").on('click', async (event) => {
-		let type = $(event.currentTarget).attr("for")
+		let type = $(event.currentTarget).attr("for");
 		let selected = $(`#${type}Templates option:selected`);
 		let selectedText = Array.from(selected).map((t) => t.innerHTML)
 		let contentMessage = "";
@@ -664,15 +662,15 @@ $(function() {
 				data += "&_token=" + global._token;
 				$.post("tempSave", data).done(function(resp) {
 					_token = resp.token;
-					const template = resp.templates[0]
+					const template = resp.templates[0];
 					if (!Array.from($(`#${type}Templates option`))
 						.some((t) => $(t).val() == template.tmpId)) {
 						let option = document.createElement("option");
-						$(option).attr("global", "false")
-						$(option).addClass("userTemplate")
-						$(option).val(template.tmpId)
-						$(option).html(template.title)
-						$(`#${type}Templates`).append(option).trigger("change")
+						$(option).attr("global", "false");
+						$(option).addClass("userTemplate");
+						$(option).val(template.tmpId);
+						$(option).html(template.title);
+						$(`#${type}Templates`).append(option).trigger("change");
 					}
 					alertMessage(resp, "Template Updated.");
 				});

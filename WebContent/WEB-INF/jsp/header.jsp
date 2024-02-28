@@ -220,7 +220,7 @@
             	<li class="<s:property value="activeMetrics"/>"><a href="Metrics"><i class="glyphicon glyphicon-signal"></i> <span>Metrics</span></a></li>
             </s:if>
             <s:if test="acmanager || acadmin || acengagement">
-            <li class="treeview <s:property value="activeChecklist"/><s:property value="activeUsers"/><s:property value="activeOptions"/>">
+            <li class="treeview <s:property value="activeAppStore"/><s:property value="activeChecklist"/><s:property value="activeUsers"/><s:property value="activeOptions"/>">
               <a href="#"><i class="glyphicon glyphicon-cog"></i> <span>Admin</span> <i class="fa fa-angle-left pull-right"></i></a>
               <ul class="treeview-menu">
               	<s:if test="acadmin == true ">
@@ -231,6 +231,9 @@
                 </s:if>
                 <s:if test="acmanager || acadmin">
                 <li class="<s:property value="activeChecklist"/>"><a href="Checklists">Checklists</a></li>
+                </s:if>
+                <s:if test="acadmin">
+                <li class="<s:property value="activeAppStore"/>"><a href="AppStoreDashboard">App Store</a></li>
                 </s:if>
               </ul>
             </li>

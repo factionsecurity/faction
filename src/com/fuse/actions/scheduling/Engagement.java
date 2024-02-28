@@ -118,9 +118,9 @@ public class Engagement  extends FSActionSupport{
 		eng_users = new ArrayList<User>();
 		asmt_users = new ArrayList<User>();
 		for(User u : users){
-			if(u.getPermissions().isAssessor())
+			if(u.getPermissions() != null && u.getPermissions().isAssessor())
 				asmt_users.add(u);
-			if(u.getPermissions().isEngagement())
+			if(u.getPermissions() != null && u.getPermissions().isEngagement())
 				eng_users.add(u);
 		}
 		if(action.equals(""))
@@ -152,7 +152,7 @@ public class Engagement  extends FSActionSupport{
 						u.setAssessmentCount(u.getAssessmentCount()+1);
 					}
 				}
-				if(u.getTeam() != null && u.getTeam().getId().longValue() == this.selectedTeam.longValue() && u.getPermissions().isAssessor())
+				if(u.getTeam() != null && u.getTeam().getId().longValue() == this.selectedTeam.longValue() && u.getPermissions() != null && u.getPermissions().isAssessor())
 					assessors.add(u);
 			}
 			
@@ -268,15 +268,6 @@ public class Engagement  extends FSActionSupport{
 				ex.printStackTrace();
 			}
 			
-			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-			if(amgr.checkIfExtended()){
-				try{
-					amgr.execute(em, am, AssessmentManager.Operation.Create);
-				}catch(Exception ex){
-					ex.printStackTrace();
-				}
-			}
-			
 			
 			em.persist(am);
 			AuditLog.audit(this, "Assessment Created" , AuditLog.UserAction,
@@ -305,6 +296,10 @@ public class Engagement  extends FSActionSupport{
 			
 			EmailThread emailThread = new EmailThread(am, "New Assessment Assigned to You", email);
 			TaskQueueExecutor.getInstance().execute(emailThread);
+			
+			// Run All extensions
+			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+			amgr.execute(am, AssessmentManager.Operation.Create);
 			
 			return this.SUCCESSJSON;
 			
@@ -420,20 +415,15 @@ public class Engagement  extends FSActionSupport{
 			
 			
 			
-			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-			if(amgr.checkIfExtended()){
-				try{
-					amgr.execute(em, a, AssessmentManager.Operation.Delete);
-				}catch(Exception ex){
-					ex.printStackTrace();
-				}
-			}
 			
 			AuditLog.audit(this, "Assessment " + a.getAppId() + " " + a.getName() 
 			+ " Deleted" , AuditLog.UserAction, AuditLog.CompAssessment, a.getId(), false);
 
 			em.createNativeQuery("db.Assessment.remove({ '_id': " + a.getId() + " })").executeUpdate();
 			HibHelper.getInstance().commit();
+			
+			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+			amgr.execute(a, AssessmentManager.Operation.Delete);
 			
 			return SUCCESSJSON;
 				
