@@ -364,7 +364,7 @@ function confirmAndPostIt(messages, index, size) {
 					if (index == size - 1 || size == 0) {
 
 						let data = "appid=" + $("#appId").val();
-						data += "&appName=" + $("#appName").val();
+						data += "&appName=" + encodeURIComponent($("#appName").val());
 						data += "&remId=" + $("#remName").val();
 						data += "&engId=" + $("#engName").val();
 						data += "&type=" + $("#assType").val();
@@ -532,7 +532,7 @@ $(function() {
 
 
 			let data = "appid=" + $("#appId").val();
-			data += "&appname=" + $("#appName").val();
+			data += "&appname=" + EencodeURIComponent($("#appName").val());
 			$.post("../service/applicationInventory", data).done(function(resp) {
 				let invList = [];
 				invData = resp;

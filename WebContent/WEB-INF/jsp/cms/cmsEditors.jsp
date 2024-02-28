@@ -14,7 +14,7 @@
 						<a href="https://github.com/factionsecurity/report_templates/raw/main/default-report-template.docx">Example Template docx</a>
 					</li>
 					<li>
-						<a href="https://www.factionsecurity.com/project/custom-security-report-templates/">Report Variables and Scripting</a>
+						<a href="https://docs.factionsecurity.com/Custom%20Security%20Report%20Templates/">Report Variables and Scripting</a>
 					</li>
 				</ul>
 				</bs:box>

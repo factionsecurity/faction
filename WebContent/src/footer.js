@@ -129,7 +129,21 @@ import 'jquery-confirm';
     	
     }
     $(function(){
-    	
+		
+		function checkVersion(){
+			let versionId = $("#versionName")[0].innerHTML
+			versionId = versionId.replace("Version ", "");
+			fetch(`https://api.factionsecurity.com/api/version?version=${versionId}&ts=${new Date().getTime()}`)
+				.then( resp => resp.json() )
+				.then(json => {
+					if(json.update){
+						$("#newVersion").html(" : New Version Available. <a href='https://github.com/factionsecurity/faction/releases'>Click Here to Download</a>");
+						$(".version").css("color", "red");
+					}
+				
+				});
+		}
+		checkVersion();
 
 	    updateNotificaitons();
 		$("#Profile").click( ()=>{
@@ -211,3 +225,5 @@ import 'jquery-confirm';
     	        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
     	    }).join(''));
     	};
+    	
+    	

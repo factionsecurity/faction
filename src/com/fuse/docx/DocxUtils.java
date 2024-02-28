@@ -296,8 +296,12 @@ public class DocxUtils {
 							String rec = v.getDefaultVuln().getRecommendation();
 							if (v.getCustomFields() != null) {
 								for (CustomField cf : v.getCustomFields()) {
-									rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-											cf.getValue());
+									try {
+										rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
+												cf.getValue());
+									}catch(Exception ex) {
+										ex.printStackTrace();
+									}
 								}
 							}
 							map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec", widths.get("rec")));
@@ -305,8 +309,12 @@ public class DocxUtils {
 							String rec = v.getRecommendation();
 							if (v.getCustomFields() != null) {
 								for (CustomField cf : v.getCustomFields()) {
-									rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-											cf.getValue());
+									try {
+										rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
+												cf.getValue());
+									}catch(Exception ex) {
+										ex.printStackTrace();
+									}
 								}
 							}
 							map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec", widths.get("rec")));
@@ -319,8 +327,12 @@ public class DocxUtils {
 							String desc = v.getDefaultVuln().getDescription();
 							if (v.getCustomFields() != null) {
 								for (CustomField cf : v.getCustomFields()) {
-									desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-											cf.getValue());
+									try {
+										desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
+												cf.getValue());
+									}catch(Exception ex) {
+										ex.printStackTrace();
+									}
 								}
 							}
 							map2.put("${desc}", wrapHTML(mlp, desc, customCSS, "desc", widths.get("desc")));
@@ -328,8 +340,12 @@ public class DocxUtils {
 							String desc = v.getDescription();
 							if (v.getCustomFields() != null) {
 								for (CustomField cf : v.getCustomFields()) {
-									desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-											cf.getValue());
+									try {
+										desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
+												cf.getValue());
+									}catch(Exception ex) {
+										ex.printStackTrace();
+									}
 								}
 							}
 							map2.put("${desc}", wrapHTML(mlp, desc, customCSS, "desc", widths.get("desc")));
@@ -342,8 +358,12 @@ public class DocxUtils {
 							String details = v.getDetails();
 							if (v.getCustomFields() != null) {
 								for (CustomField cf : v.getCustomFields()) {
-									details = details.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-											cf.getValue());
+									try {
+										details = details.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
+												cf.getValue());
+									}catch(Exception ex) {
+										ex.printStackTrace();
+									}
 								}
 							}
 							map2.put("${details}", wrapHTML(mlp, details, customCSS, "details", widths.get("details")));
@@ -362,7 +382,7 @@ public class DocxUtils {
 			// If no issues are discovered then we just blank out the table.
 			if (a.getVulns() == null || a.getVulns().size() == 0) {
 				for (String xml : xmls) {
-					String nxml = xml.replaceAll("\\$\\{vulnname\\}", "No Issues disclosed.");
+					String nxml = xml.replaceAll("\\$\\{vulnName\\}", "No Issues disclosed.");
 					nxml = nxml.replaceAll("\\$\\{severity\\}", "");
 					nxml = nxml.replaceAll("\\$\\{impact\\}", "");
 					nxml = nxml.replaceAll("\\$\\{cvss\\}", "");
@@ -385,7 +405,6 @@ public class DocxUtils {
 
 					Tr newrow = (Tr) XmlUtils.unmarshalString(nxml);
 					// update colors
-					// TODO bring this back
 					for (String match : colorMap.keySet())
 						changeColorOfCell(newrow, match, colorMap.get(match));
 					for (String match : cellMap.keySet())
@@ -766,7 +785,7 @@ public class DocxUtils {
 			throws JAXBException, Docx4JException {
 		String xml = XmlUtils.marshaltoString(mlp.getMainDocumentPart().getContents(), false, false);
 		for (String key : map.keySet()) {
-			xml = xml.replaceAll("\\$\\{" + key + "\\}", map.get(key) == null ? "" : map.get(key));
+			xml = xml.replaceAll("\\$\\{" + key + "\\}", map.get(key) == null ? "" : "<![CDATA[" +map.get(key) + "]]>");
 		}
 		mlp.getMainDocumentPart().setContents((org.docx4j.wml.Document) XmlUtils.unmarshalString(xml));
 
@@ -831,6 +850,7 @@ public class DocxUtils {
 			return;
 
 		HashMap<String, String> colorMap = new HashMap();
+		HashMap<String, String> cellMap = new HashMap();
 
 		// Get relevent parts of the document and put them into a
 		// temporary array.
@@ -849,6 +869,17 @@ public class DocxUtils {
 
 				}
 			}
+			colors = getMatchingText(paragraphs, "${fill");
+			if (colors != null) {
+				colors = colors.replace("${fill", "").replace("}", "").trim();
+				String[] pairs = colors.split(",");
+
+				for (String pair : pairs) {
+					pair = pair.trim();
+					cellMap.put(pair.split("=")[0], pair.split("=")[1].toUpperCase());
+
+				}
+			}
 		}
 		// Remove the elements from the doc. These will be replaced with
 		// out temp array when its updated later on
@@ -860,49 +891,46 @@ public class DocxUtils {
 			for (Object obj : findingTemplate) {
 
 				String xml = XmlUtils.marshaltoString(obj, false, false);
-				String nxml = xml.replaceAll("\\$\\{vulnname\\}", v.getName());
-				// nxml = nxml.replaceAll("\\$\\{vulnerability.NAME\\}", v.getName());
+				String nxml = xml.replaceAll("\\$\\{vulnName\\}", v.getName());
 				nxml = nxml.replaceAll("\\$\\{severity\\}", v.getOverallStr());
-				// nxml = nxml.replaceAll("\\$\\{vulnerability.SEVERITY\\}", v.getOverallStr());
 				nxml = nxml.replaceAll("\\$\\{impact\\}", v.getImpactStr());
-				// nxml = nxml.replaceAll("\\$\\{vulnerability.IMPACT\\}", v.getImpactStr());
 				nxml = nxml.replaceAll("\\$\\{cvss\\}", v.getCvssScore());
-				// nxml = nxml.replaceAll("\\$\\{vulnerability.CVSS\\}", v.getCvssScore());
 				nxml = nxml.replaceAll("\\$\\{tracking\\}", v.getTracking());
-				// nxml = nxml.replaceAll("\\$\\{vulnerability.TRACKING\\}", v.getTracking());
 				try {
 					nxml = nxml.replaceAll("\\$\\{vid\\}", "" + v.getId());
-					// nxml = nxml.replaceAll("\\$\\{vulnerability.ID\\}", ""+v.getId());
 				} catch (Exception ex) {
 				}
 				nxml = nxml.replaceAll("\\$\\{likelihood\\}", v.getLikelyhoodStr());
-				// nxml = nxml.replaceAll("\\$\\{vulnerability.LIKELIHOOD\\}",
-				// v.getLikelyhoodStr());
 				nxml = nxml.replaceAll("\\$\\{category\\}",
 						v.getCategory() == null ? "UnCategorized" : v.getCategory().getName());
 				if (v.getClosed() == null) {
 					nxml = nxml.replaceAll("\\$\\{status\\}", "Open");
-					// nxml = nxml.replaceAll("\\$\\{vulnerability.STATUS\\}", "Open");
 				} else {
 					nxml = nxml.replaceAll("\\$\\{status\\}", "Closed");
-					// nxml = nxml.replaceAll("\\$\\{vulnerability.STATUS\\}", "Closed");
 				}
 				// remove color loops
-				nxml = nxml.replaceAll("\\$\\{color.*\\}", "");
+				if(nxml.contains("${color") || nxml.contains("${fill"))
+					nxml="";
+				//nxml = nxml.replaceAll("\\$\\{color.*\\}", "");
+				//nxml = nxml.replaceAll("\\$\\{fill.*\\}", "");
 
 				if (v.getCustomFields() != null) {
 					for (CustomField cf : v.getCustomFields()) {
 						nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
-
+				//Foreground colors
 				nxml = nxml.replaceAll("w:val=\"FAC701\"", "w:val=\"" + colorMap.get(v.getOverallStr()) + "\"");
 				nxml = nxml.replaceAll("w:val=\"FAC702\"", "w:val=\"" + colorMap.get(v.getLikelyhoodStr()) + "\"");
 				nxml = nxml.replaceAll("w:val=\"FAC703\"", "w:val=\"" + colorMap.get(v.getImpactStr()) + "\"");
-
-				Object paragraph = XmlUtils.unmarshalString(nxml);
-
-				mlp.getMainDocumentPart().getContent().add(begin++, paragraph);
+				// Fill Cells
+				nxml = nxml.replaceAll("w:fill=\"FAC701\"", "w:fill=\"" + cellMap.get(v.getOverallStr()) + "\"");
+				nxml = nxml.replaceAll("w:fill=\"FAC702\"", "w:fill=\"" + cellMap.get(v.getLikelyhoodStr()) + "\"");
+				nxml = nxml.replaceAll("w:fill=\"FAC703\"", "w:fill=\"" + cellMap.get(v.getImpactStr()) + "\"");
+				if(nxml != "") {
+					Object paragraph = XmlUtils.unmarshalString(nxml);
+					mlp.getMainDocumentPart().getContent().add(begin++, paragraph);
+				}
 
 			}
 		}

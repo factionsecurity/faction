@@ -1,5 +1,6 @@
 package com.fuse.actions.assessment;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -12,6 +13,7 @@ import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Notification;
+import com.fuse.dao.RiskLevel;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
 import com.fuse.dao.Verification;
@@ -35,6 +37,7 @@ public class VerificationQueue extends FSActionSupport {
 	private Long vid = -1l;
 	private String notes;
 	private Long pass = -1l;
+	private List<RiskLevel>levels = new ArrayList();
 
 	@Action(value = "Verifications", results = {
 			@Result(name = "verification", location = "/WEB-INF/jsp/retests/Verification.jsp") })
@@ -47,6 +50,7 @@ public class VerificationQueue extends FSActionSupport {
 		verifications = (List<Verification>) em
 				.createQuery("from Verification v where v.assessor = :id and v.workflowStatus = :wf1 ")
 				.setParameter("id", user).setParameter("wf1", Verification.InAssessorQueue).getResultList();
+		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 
 		if (action.startsWith("submit")) {
 
@@ -275,4 +279,7 @@ public class VerificationQueue extends FSActionSupport {
 		this.pass = pass;
 	}
 
+	public List<RiskLevel> getLevels() {
+		return levels;
+	}
 }

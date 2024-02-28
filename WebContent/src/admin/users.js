@@ -50,19 +50,31 @@ global.editTeam = function editTeam(el, id) {
 	});
 
 }
-global.del = function del(id) {
+global.del = function del(id, name) {
 	selectedUser = id;
 	let ddata = "userId=" + selectedUser;
 	ddata += "&_token=" + _token;
-	$.post("DeleteUser", ddata).done(function(resp) {
-		alertRedirect(resp);
+	$.confirm({
+		title: "Confirm Delete",
+		content: `Are you Sure you want to delete <b>${name}</b>?`,
+		buttons: {
+			delete: ()=> {
+				$.post("DeleteUser", ddata).done(function(resp) {
+					alertRedirect(resp);
 
-	});
+				});
+				
+			},
+			cancel: ()=>{}
+		}
+		
+	})
 
 }
 global.edit = function edit(id) {
 	selectedUser = id;
-	$('#userModal').modal('show');
+	$('#userModal').modal({ backdrop: 'static',
+	  keyboard: false});
 	let pdata = "userId=" + selectedUser;
 	pdata += "&_token=" + _token;
 	$.post("GetUser", pdata, function(data) {
@@ -325,7 +337,8 @@ $(function() {
 		$("#assck").attr("checked", true);
 		$("#assck").parent().addClass("checked");
 		$("#uname").removeAttr("disabled");
-		$('#userModal').modal('show');
+		$('#userModal').modal({ backdrop: 'static',
+		  keyboard: false});
 		$('input:radio[name=accesslevel]')[2].checked = true;
 		$($('input:radio[name=accesslevel]')[2]).parent().addClass("checked");
 		$('#saveUser').off("click");
@@ -408,8 +421,6 @@ function permissionString() {
 	data += "&exec=" + $("#execk").is(':checked');
 	data += "&assessor=" + $("#assck").is(':checked');
 	data += "&api=" + $("#apick").is(':checked');
-	data += "&ssouser=" + $("#ssouser").is(':checked');
-	console.log(data);
 	return data;
 
 }

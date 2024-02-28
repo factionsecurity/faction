@@ -262,6 +262,17 @@ let vulnName = "${vulnName }";
 		
 	});
 </s:if>
+function updateColor( severity){
+let colors = ["#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"];
+ <%int count = 9;%>
+	<s:iterator value="levels" begin="9" end="0" step="-1" status="stat">
+		<s:if test="risk != null && risk != 'Unassigned' && risk != ''">
+			if("${risk}" == severity){
+				return "<b style='color: " + colors[<%=count--%>] +"'>" + severity + "</b>";
+			}
+	</s:if>
+</s:iterator>
+}
 </script>
 
 

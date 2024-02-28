@@ -89,7 +89,7 @@
 										href="https://github.com/factionsecurity/report_templates/raw/main/default-report-template.docx">Example
 											Template docx</a></li>
 									<li><a
-										href="https://www.factionsecurity.com/project/custom-security-report-templates/">Report
+										href="https://docs.factionsecurity.com/Custom%20Security%20Report%20Templates/">Report
 											Variables and Scripting</a></li>
 								</ul>
 							</bs:box>
@@ -103,13 +103,18 @@
 						classname="primary" id="templates">
 						<s:iterator value="templates">
 							<tr>
-								<td>${name }</td>
-								<td>${team.teamName }</td>
-								<td>${type.type }</td>
+								<td><s:property value="name"/></td>
+								<td><s:property value="team.teamName"/></td>
+								<td><s:property value="type.type"/></td>
 								<td>${retest}</td>
-								<td><button id="tmpEdit${id}" class="btn btn-primary">Edit</button>
-									&nbsp;
-									<button id="tmpDel${id}" class="btn btn-danger">Delete</button></td>
+								<td>
+											<span class="vulnControl editUser" id="tmpEdit${id}">
+												<i class="fa fa-edit"></i>
+											</span> 
+											<span class="vulnControl vulnControl-delete deleteUser" id="tmpDel${id}">
+												<i class="fa fa-trash"></i>
+											</span>
+											</td>
 							</tr>
 						</s:iterator>
 					</bs:datatable>

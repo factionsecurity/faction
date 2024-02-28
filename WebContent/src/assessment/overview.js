@@ -312,9 +312,29 @@ $(function() {
 		}
 	}
 	suneditor.create("engagmentnotes", engagementOptions);
-
+	let errorMessageShown=false;
 	setInterval(() => {
 		$.get("CheckLocks").done((resp) => {
+			if(resp.result && resp.result == "error"){
+				if(!errorMessageShown){
+					errorMessageShown=true
+					$.confirm({
+						title: resp.message,
+						content: 'Do you want to log in?',
+						buttons: {
+							login: ()=>{
+								errorMessageShown=false;
+								window.open("../", '_blank').focus();
+							},
+							cancel: ()=>{errorMessageShown=false;}
+						}
+					});
+				}
+				return;
+			}
+			if(resp.token){
+				global._token = resp.token;	
+			}
 			["notes", "risk", "summary"].forEach(function(type) {
 				if (resp[type] && resp[type].isLock) {
 					editors[type].core.context.element.wysiwygFrame.classList.add("disabled");
@@ -330,7 +350,22 @@ $(function() {
 				}
 			});
 		}
-		)
+		).catch( () =>{
+			if(!errorMessageShown){
+				errorMessageShown=true
+				$.confirm({
+					title: "Offline",
+					content: 'You appear offline. Would you like to login?',
+					buttons: {
+						login: ()=>{
+							errorMessageShown=false;
+							 window.open("../", '_blank').focus();
+						},
+						cancel: ()=>{errorMessageShown=false;}
+					}
+				});
+			}
+		})
 
 	}, 1000);
 
@@ -766,7 +801,7 @@ $(function() {
 				$.ajaxSetup({ cache: false });
 				$.getJSON(`tempSearch?term=${term}&type=${type}`,
 					function(data) {
-						_token = data.token
+						global._token = data.token
 						var tmps = data.templates;
 						var list = [];
 						for (i = 0; i < tmps.length; i++) {

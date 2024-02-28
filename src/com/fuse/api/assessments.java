@@ -19,7 +19,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.codec.binary.Base64;
-import org.jetbrains.annotations.NotNull;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -38,15 +37,8 @@ import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.utils.FSUtils;
 
-import com.vladsch.flexmark.profile.pegdown.Extensions;
-import com.vladsch.flexmark.profile.pegdown.PegdownOptionsAdapter;
-import com.vladsch.flexmark.util.ast.Document;
-import com.vladsch.flexmark.util.data.DataHolder;
 
 import ch.qos.logback.core.pattern.parser.Node;
-
-import com.vladsch.flexmark.html.HtmlRenderer;
-import com.vladsch.flexmark.parser.Parser;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -737,29 +729,12 @@ public class assessments {
 
 	}
 
-	private String convertFromMarkDown(String text) {
-		try {
-			DataHolder options = PegdownOptionsAdapter.flexmarkOptions(Extensions.ALL);
-
-			Parser parser = Parser.builder(options).build();
-			HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-			Document document = parser.parse(text);
-			String converted = renderer.render(document);
-			converted = converted.replaceAll("<code>", "<pre>").replaceAll("</code>", "</pre>");
-			converted = converted.replaceAll("</p>", "<br/>");
-			converted += "<br>";
-			return converted;
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			return text;
-		}
-	}
 
 	private String decodeAndSanitize(String encoded) {
 		String decoded = "";
 		try {
 			decoded = new String(Base64.decodeBase64(encoded));
-			decoded = convertFromMarkDown(decoded);
+			decoded = FSUtils.convertFromMarkDown(decoded);
 			return FSUtils.sanitizeHTML(decoded);
 		} catch (Exception e) {
 			e.printStackTrace();

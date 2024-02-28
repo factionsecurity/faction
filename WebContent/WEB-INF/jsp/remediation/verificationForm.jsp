@@ -7,8 +7,6 @@
 <bs:row>
 <bs:mco colsize="6">
 	<bs:row>
-		 <!--<bs:inputgroup name="App ID:" id="appid1" colsize="4"><s:property value="appId"/></bs:inputgroup>
-		 <bs:inputgroup name="App Name:" id="appname1" colsize="4" ><s:property value="appName"/></bs:inputgroup>-->
 		 <bs:select name="Remediation Contact:" colsize="4" id="remUser">
 		 	<s:iterator value="remusers">
                       <option value="<s:property value="id"/>"><s:property value="fname"/> <s:property value="lname"/></option>
@@ -46,17 +44,16 @@
        <bs:button size="lg" color="primary" colsize="12" text="<i class='glyphicon glyphicon-plus'></i> Save Verification" id="addVerification"></bs:button>
      </bs:row>
 </bs:mco> <!--  End of Top col -->
-
-<bs:mco colsize="6">
+<bs:mco colsize="2">
+	<label>Upload Files:</label>
+	<input id="files" type="file" multiple name="file_data"/>
+</bs:mco>
+<bs:mco colsize="4">
 	<div class="box box-primary">
         <div class="box-body">
           <!-- THE CALENDAR -->
           <div id="calendar"></div>
         </div><!-- /.box-body -->
      </div><!-- /. box -->
-</bs:mco>
-<bs:mco colsize="6">
-	<label>Upload Files:</label>
-	<input id="files" type="file" multiple name="file_data"/>
 </bs:mco>
 </bs:row>

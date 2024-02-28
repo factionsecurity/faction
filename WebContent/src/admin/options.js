@@ -349,10 +349,12 @@ import '../scripts/jquery.autocomplete.min';
     	$(".updCF").click(function(){
     		let cfid = $(this).attr("for");
     		let variable = $("#var" + cfid).val();
+    		let defaultVal = $("#default" + cfid).val();
     		let text = $("#key"+cfid).val();
     		let data = "cfid=" + cfid;
     		data+="&cfname=" + text;
     		data+="&cfvar=" + variable;
+    		data+="&cfdefault=" + defaultVal;
     		data+="&readonly="+$("#ro"+cfid).is(":checked");
     		data+="&_token=" + _token;
     		$.post("UpdateCF",data).done(function(resp){

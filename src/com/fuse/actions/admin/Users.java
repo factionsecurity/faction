@@ -54,8 +54,6 @@ public class Users extends FSActionSupport {
 	private boolean api;
 	private String action = "";
 	private String apiKey = "";
-	private boolean ssoenabled = false;
-	private boolean ssouser;
 	private Integer uioli = 0;
 	private Integer accesscontrol = 2;
 	private String platformTier = "";
@@ -84,7 +82,6 @@ public class Users extends FSActionSupport {
 		SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
 				.orElse(null);
 		if (ems != null) {
-			this.ssoenabled = ems.getSsoEnabled();
 			this.uioli = ems.getInactiveDays();
 			this.ldapURL = ems.getLdapURL() != null ? ems.getLdapURL() : "";
 			this.ldapBaseDn = ems.getLdapBaseDn();
@@ -134,11 +131,6 @@ public class Users extends FSActionSupport {
 			this._message = "Some inputs are empty";
 			return this.ERRORJSON;
 		}
-		if (!FSUtils.checkEmailDomain(this.email)) {
-			this._message = "Not allowed to add an email from this domain.";
-			return this.ERRORJSON;
-
-		}
 		if (!this.checkRoleAdded()) {
 			this._message = "Must set at least one Role: Manager, Assessor, Remediation, Engagement, or Admin";
 			return this.ERRORJSON;
@@ -181,16 +173,7 @@ public class Users extends FSActionSupport {
 			this.authMethod = this.authMethod.trim();
 			u.setAuthMethod(this.authMethod);
 			String message = "Hello " + this.fname + " " + this.lname + "<br><br>";
-			if (this.ssouser) {
-				this.selectedUser.setPasshash((UUID.randomUUID()).toString());
-
-				message += "Your account has been created. Please access the link below and click the SSO Signin button:<br><br>";
-				String url = request.getRequestURL().toString();
-				url = url.replace(request.getRequestURI(), "");
-				url = url + request.getContextPath();
-				message += "<a href='" + url + "'>Click here to Login</a><br>";
-
-			} else if (this.authMethod.equals("LDAP") || this.authMethod.equals("OAUTH2.0") ) {
+			if (this.authMethod.equals("LDAP") || this.authMethod.equals("OAUTH2.0") ) {
 				User emailExists = (User) em.createQuery("from User where email = :email")
 						.setParameter("email", this.email.trim()).getResultList().stream().findFirst().orElse(null);
 				if(emailExists != null) {
@@ -242,12 +225,10 @@ public class Users extends FSActionSupport {
 			if (getTier() != "consultant") {
 				p.setRemediation(false);
 				p.setExecutive(false);
-				p.setSsouser(false);
 
 			} else {
 				p.setRemediation(rem);
 				p.setExecutive(exec);
-				p.setSsouser(false);
 			}
 
 			HibHelper.getInstance().preJoin();
@@ -340,11 +321,6 @@ public class Users extends FSActionSupport {
 			this._message = "Some inputs are empty";
 			return this.ERRORJSON;
 		}
-		if (!FSUtils.checkEmailDomain(this.email)) {
-			this._message = "Not allowed to add an email from this domain.";
-			return this.ERRORJSON;
-
-		}
 		if(this.authMethod.equals("Native") && this.credential != null && !this.credential.trim().equals("")) {
 			String passErrorMessage = AccessControl.checkPassword(this.credential, this.credential);
 			if(!passErrorMessage.equals("")) {
@@ -353,9 +329,19 @@ public class Users extends FSActionSupport {
 			}else {
 				this.selectedUser.setPasshash(AccessControl.HashPass(this.selectedUser.getUsername(), this.credential));
 			}
+			this.selectedUser.setEmail(this.email.trim());
+		}else if(this.authMethod.equals("LDAP")) {
+			SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+					.findFirst().orElse(new SystemSettings());
+			LDAPValidator validator = new LDAPValidator(settings.getLdapURL(), settings.getLdapBaseDn(),
+					settings.getLdapBindDn(), settings.getLdapSecurity(), settings.getLdapInsecureSSL());
+			String password = FSUtils.decryptPassword(settings.getLdapPassword());
+			User ldapInfo = validator.getUserInfo(this.selectedUser.getUsername(), password, settings.getLdapObjectClass());
+			this.selectedUser.setLdapUserDn(ldapInfo.getLdapUserDn());
+			this.selectedUser.setEmail(ldapInfo.getEmail());
+		}else {
+			this.selectedUser.setEmail(this.email.trim());
 		}
-
-		this.selectedUser.setEmail(this.email.trim());
 		this.selectedUser.setFname(this.fname.trim());
 		this.selectedUser.setLname(this.lname.trim());
 		this.selectedUser.setAuthMethod(this.authMethod.trim());
@@ -373,7 +359,6 @@ public class Users extends FSActionSupport {
 		this.selectedUser.getPermissions().setExecutive(exec);
 		this.selectedUser.getPermissions().setAssessor(assessor);
 		this.selectedUser.getPermissions().setManager(mgr);
-		this.selectedUser.getPermissions().setSsouser(ssouser);
 		this.selectedUser.setInActive(inactive);
 		this.selectedUser.getPermissions().setAccessLevel(this.accesscontrol);
 
@@ -593,10 +578,12 @@ public class Users extends FSActionSupport {
 				.orElse(null);
 		if (ems != null) {
 			Date ll = unlocked.getLastLogin();
-			java.util.Calendar backdate = java.util.Calendar.getInstance();
-			backdate.add(java.util.Calendar.DATE, -ems.getInactiveDays());
-			if (ll.getTime() < backdate.getTimeInMillis()) {
-				unlocked.setLastLogin(new Date());
+			if(ll != null && ems.getInactiveDays() != null && !ems.getInactiveDays().equals(-1)) {
+				java.util.Calendar backdate = java.util.Calendar.getInstance();
+				backdate.add(java.util.Calendar.DATE, -ems.getInactiveDays());
+				if (ll.getTime() < backdate.getTimeInMillis()) {
+					unlocked.setLastLogin(new Date());
+				}
 			}
 		}
 
@@ -937,13 +924,6 @@ public class Users extends FSActionSupport {
 		return apiKey;
 	}
 
-	public boolean isSsoenabled() {
-		return ssoenabled;
-	}
-
-	public void setSsouser(boolean ssouser) {
-		this.ssouser = ssouser;
-	}
 
 	public Integer getUioli() {
 		return uioli;

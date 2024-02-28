@@ -158,11 +158,6 @@ public class Profile extends FSActionSupport{
 					this._message="Invalid Email format";
 					return this.ERRORJSON;
 				}
-				if(!FSUtils.checkEmailDomain(this.email)) {
-					this._message="Not allowed to add an email from this domain.";
-					return this.ERRORJSON;
-					
-				}
 				if(this.fname == null || this.fname.trim().equals("")) {
 					this._message="First name is missing.";
 					return this.ERRORJSON;

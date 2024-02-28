@@ -308,14 +308,14 @@ public class AssessmentView extends FSActionSupport {
 		List<RiskLevel> levels = em
 				.createQuery("from RiskLevel where risk IS NOT Null and risk != '' order by riskId")
 				.getResultList();
-		HashMap<Long,String> levelMap = new HashMap<>();
+		HashMap<Integer,String> levelMap = new HashMap<>();
 		levels.forEach( (level) -> {
-			levelMap.put(level.getId(), level.getRisk());
+			levelMap.put(level.getRiskId(), level.getRisk());
 			vulnMap.put(level.getRisk(), 0);
 		});
 		
 		vulns.stream().forEach( (vuln) -> {
-			String severity = levelMap.get(vuln.getOverall()+1);
+			String severity = levelMap.get(vuln.getOverall().intValue());
 			Integer count = vulnMap.get(severity);
 			vulnMap.put(severity, ++count);
 		});
@@ -435,7 +435,7 @@ public class AssessmentView extends FSActionSupport {
 
 	})
 	public String checkStatus() {
-		if (!(this.isAcengagement() || this.isAcmanager())) {
+		if (!(this.isAcassessor() || this.isAcmanager())) {
 			return LOGIN;
 		}
 		HttpSession session = ServletActionContext.getRequest().getSession();
@@ -461,8 +461,9 @@ public class AssessmentView extends FSActionSupport {
 			@Result(name = "lockError", location = "/WEB-INF/jsp/assessment/lockError.jsp"),
 			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
 	public String checkLocks() throws UnsupportedEncodingException {
-		if (!(this.isAcengagement() || this.isAcmanager())) {
-			return LOGIN;
+		if (!(this.isAcassessor() || this.isAcmanager())) {
+			_message="Session Expired";
+			return "lockError";
 		}
 		this.user = this.getSessionUser();
 		Long asmtId = (Long) this.getSession("asmtid");
@@ -495,7 +496,7 @@ public class AssessmentView extends FSActionSupport {
 			@Result(name = "lockError", location = "/WEB-INF/jsp/assessment/lockError.jsp"),
 			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
 	public String setLock() throws UnsupportedEncodingException {
-		if (!(this.isAcengagement() || this.isAcmanager())) {
+		if (!(this.isAcassessor() || this.isAcmanager())) {
 			return LOGIN;
 		}
 		User user = this.getSessionUser();
@@ -538,7 +539,7 @@ public class AssessmentView extends FSActionSupport {
 			@Result(name = "lockError", location = "/WEB-INF/jsp/assessment/lockError.jsp"),
 			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
 	public String clearLock() {
-		if (!(this.isAcengagement() || this.isAcmanager())) {
+		if (!(this.isAcassessor() || this.isAcmanager())) {
 			return LOGIN;
 		}
 		User user = this.getSessionUser();
