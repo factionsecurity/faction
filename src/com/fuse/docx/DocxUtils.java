@@ -11,6 +11,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.persistence.EntityManager;
+
 import org.docx4j.TextUtils;
 import org.docx4j.TraversalUtil;
 import org.docx4j.XmlUtils;
@@ -43,6 +45,7 @@ import com.fuse.dao.CustomField;
 import com.fuse.dao.ExploitStep;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
+import com.fuse.extenderapi.Extensions;
 import com.fuse.utils.FSUtils;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
@@ -56,74 +59,18 @@ public class DocxUtils {
 	private String[] keywords = { "asmtName", "asmtId", "asmtAppid", "asmtAssessor", "asmtAssessor_Email",
 			"asmtAssessor_Lines", "asmtAssessor_Comma", "asmtAssessor_Bullets", "remediation", "asmtTeam", "asmtType",
 			"today", "asmtStart", "asmtEnd", "asmtAccessKey" };
-
-	private void checkTableSteps(final WordprocessingMLPackage mlp, List<ExploitStep> steps, String customCSS)
-			throws Docx4JException, JAXBException {
-		List<Object> tables = getAllElementFromObject(mlp.getMainDocumentPart(), Tbl.class);
-		List<Object> paragraphs = getAllElementFromObject(tables, P.class);
-		List<Object> cells = new LinkedList<Object>();
-
-		for (Object t : tables) {
-			Tbl table = (Tbl) t;
-			List<Object> rows = table.getContent();
-			for (Object c : rows) {
-				if (c.getClass().getName().contains("Tr"))
-					cells.addAll(((Tr) c).getContent());
-			}
-		}
-		for (Object c : cells) {
-			Object jax = XmlUtils.unwrap(c);
-			if (jax.getClass().getName().equals("org.docx4j.wml.Tc")) {
-				Tc cell = (Tc) jax;
-				int start = -1;
-				int index = 0;
-				int end = -1;
-				for (Object obj : cell.getContent()) {
-					String xml = XmlUtils.marshaltoString(obj, false, false);
-
-					if (xml.contains("${exBegin}")) {
-						start = index;
-					}
-					if (xml.contains("${exEnd}")) {
-						end = index;
-					}
-					index++;
-				}
-
-				if (start >= 0 && end > 0) {
-					List<String> xml = new LinkedList<String>();
-					for (int i = start; i <= end; i++) {
-						xml.add(XmlUtils.marshaltoString(cell.getContent().get(i)));
-					}
-					for (int i = end; i >= start; i--) {
-						cell.getContent().remove(i);
-					}
-					index = start;
-					int stepNum = 1;
-					if(steps.size() == 0) {
-						P para  = new P();
-						cell.getContent().add(index++, para);
-					}else {
-						steps = steps.stream().sorted( (s1,s2)-> Long.compare(s1.getStepNum(), s2.getStepNum())).collect(Collectors.toList());
-						for (ExploitStep step : steps) {
-							for (String nxml : xml) {
-								nxml = nxml.replace("${exploit}", "${exploit." + step.getId() + "." + (stepNum) + "}");
-								nxml = nxml.replace("${exploitStepNum}", "" + step.getStepNum());
-								nxml = nxml.replaceAll("\\$\\{exBegin\\}", "");
-								nxml = nxml.replaceAll("\\$\\{exEnd\\}", "");
-								cell.getContent().add(index++, XmlUtils.unmarshalString(nxml));
-
-							}
-							stepNum++;
-						}
-					}
-					// Forces it to run once per change.
-					return;
-				}
-			}
-		}
-
+	private Extensions reportExtension;
+	private Assessment assessment;
+	private List<Vulnerability> vulns;
+	private final WordprocessingMLPackage mlp;
+	
+	public DocxUtils(WordprocessingMLPackage mlp, Assessment assessment) {
+		this.mlp = mlp;
+		this.reportExtension = new Extensions(Extensions.EventType.REPORT_MANAGER);
+		this.assessment = assessment;
+		this.vulns = assessment.getVulns();
 	}
+
 	
 	private boolean cellContains(Tc cell, String variable) {
 		for (Object obj : cell.getContent()) {
@@ -149,7 +96,7 @@ public class DocxUtils {
 		
 	}
 
-	private void checkTables(final WordprocessingMLPackage mlp, Assessment a, String variable, String customCSS)
+	private void checkTables(String variable, String customCSS)
 			throws JAXBException, Docx4JException {
 
 		List<Object> tables = getAllElementFromObject(mlp.getMainDocumentPart(), Tbl.class);
@@ -224,7 +171,7 @@ public class DocxUtils {
 			// now we have a row.. we need to iterate through all issues
 			// and replace variables
 			int count = 1;
-			for (Vulnerability v : a.getVulns()) {
+			for (Vulnerability v : this.vulns) {
 				// Change Colors if need be
 				if(v.getSteps() != null) {
 					for (ExploitStep ex : v.getSteps()) {
@@ -232,7 +179,6 @@ public class DocxUtils {
 						desc = desc.replaceAll("#FAC701", "#" + colorMap.get(v.getOverallStr()));
 						desc = desc.replaceAll("#FAC702", "#" + colorMap.get(v.getLikelyhoodStr()));
 						desc = desc.replaceAll("#FAC703", "#" + colorMap.get(v.getImpactStr()));
-						// desc = desc.replaceAll("#0A0A0A", "#" +colorMap.get(v.getOverallStr()));
 						ex.setDescription(desc);
 
 					}
@@ -304,7 +250,7 @@ public class DocxUtils {
 									}
 								}
 							}
-							map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec", widths.get("rec")));
+							map2.put("${rec}", wrapHTML(rec, customCSS, "rec", widths.get("rec")));
 						} else if (v.getRecommendation() != null) {
 							String rec = v.getRecommendation();
 							if (v.getCustomFields() != null) {
@@ -317,9 +263,9 @@ public class DocxUtils {
 									}
 								}
 							}
-							map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec", widths.get("rec")));
+							map2.put("${rec}", wrapHTML(rec, customCSS, "rec", widths.get("rec")));
 						} else {
-							map2.put("${rec}", wrapHTML(mlp, "", customCSS, "rec"));
+							map2.put("${rec}", wrapHTML("", customCSS, "rec"));
 						}
 					}
 					if (xml.contains("${desc}")) {
@@ -335,7 +281,7 @@ public class DocxUtils {
 									}
 								}
 							}
-							map2.put("${desc}", wrapHTML(mlp, desc, customCSS, "desc", widths.get("desc")));
+							map2.put("${desc}", wrapHTML(desc, customCSS, "desc", widths.get("desc")));
 						} else if (v.getDescription() != null) {
 							String desc = v.getDescription();
 							if (v.getCustomFields() != null) {
@@ -348,9 +294,9 @@ public class DocxUtils {
 									}
 								}
 							}
-							map2.put("${desc}", wrapHTML(mlp, desc, customCSS, "desc", widths.get("desc")));
+							map2.put("${desc}", wrapHTML(desc, customCSS, "desc", widths.get("desc")));
 						} else {
-							map2.put("${desc}", wrapHTML(mlp, "", customCSS, "desc"));
+							map2.put("${desc}", wrapHTML("", customCSS, "desc"));
 						}
 					}
 					if (xml.contains("${details}")) {
@@ -366,9 +312,9 @@ public class DocxUtils {
 									}
 								}
 							}
-							map2.put("${details}", wrapHTML(mlp, details, customCSS, "details", widths.get("details")));
+							map2.put("${details}", wrapHTML(details, customCSS, "details", widths.get("details")));
 						} else {
-							map2.put("${details}", wrapHTML(mlp, "", customCSS, "details"));
+							map2.put("${details}", wrapHTML("", customCSS, "details"));
 						}
 					}
 
@@ -380,7 +326,7 @@ public class DocxUtils {
 
 			}
 			// If no issues are discovered then we just blank out the table.
-			if (a.getVulns() == null || a.getVulns().size() == 0) {
+			if (this.vulns == null || this.vulns.size() == 0) {
 				for (String xml : xmls) {
 					String nxml = xml.replaceAll("\\$\\{vulnName\\}", "No Issues disclosed.");
 					nxml = nxml.replaceAll("\\$\\{severity\\}", "");
@@ -423,71 +369,39 @@ public class DocxUtils {
 		}
 	}
 
-	public WordprocessingMLPackage generateDocx(final WordprocessingMLPackage mlp, Assessment a, String customCSS)
+	public WordprocessingMLPackage generateDocx(String customCSS)
 			throws Exception {
 
 		VariablePrepare.prepare(mlp);
 
-		LinkedList<Vulnerability> vulns = new LinkedList();
-		if (a.getVulns() != null && a.getVulns().size() > 0) {
-			for (Vulnerability v : a.getVulns()) {
-				if (vulns.size() == 0)
-					vulns.add(v);
-				else {
-					for (int i = 0; i < vulns.size(); i++) {
-						if (v.getOverall() >= vulns.get(i).getOverall()) {
-							vulns.add(i, v);
-							break;
-						} else if (i == vulns.size() - 1) {
-							vulns.add(v);
-							break;
-						}
-					}
-
-				}
-			}
-		}
-		a.setVulns(vulns);
 
 		// Convert all tables and match and replace values
-		checkTables(mlp, a, "vulnTable", customCSS);
+		checkTables("vulnTable", customCSS);
 
 		// look for findings areass {fiBegin/fiEnd}
-		setFindings(mlp, a.getVulns(), customCSS);
-		// Update all exploit steps.
-		for (Vulnerability v : a.getVulns()) {
-			HashMap<String, List<Object>> map2 = new HashMap();
-			if(v.getSteps() != null) {
-				for (ExploitStep s : v.getSteps()) {
-					map2.put("${exploit." + s.getId() + "." + s.getStepNum() + "}",
-							wrapHTML(mlp, s.getDescription(), customCSS, "exploit"));
-				}
-			}
-			replaceHTML(mlp.getMainDocumentPart(), map2, false);
-
-		}
+		setFindings(customCSS);
 		HashMap<String, List<Object>> map = new HashMap();
 
 		map.put("${summary1}",
-				this.wrapHTML(mlp, a, a.getSummary() == null ? "" : a.getSummary(), customCSS, "summary1"));
+				this.wrapHTML(this.assessment.getSummary() == null ? "" : this.assessment.getSummary(), customCSS, "summary1"));
 		map.put("${summary2}",
-				this.wrapHTML(mlp, a, a.getRiskAnalysis() == null ? "" : a.getRiskAnalysis(), customCSS, "summary2"));
+				this.wrapHTML(this.assessment.getRiskAnalysis() == null ? "" : this.assessment.getRiskAnalysis(), customCSS, "summary2"));
 		replaceHTML(mlp.getMainDocumentPart(), map, false);
-		replacement(mlp, a, customCSS);
+		replaceAssessment(customCSS);
+		updateDocWithExtensions();
 
 		return mlp;
 
 	}
 	
 
-	private List<Object> wrapHTML(final WordprocessingMLPackage mlp, Assessment a, String content, String customCSS,
+	private List<Object> wrapHTML(String content, String customCSS,
 			String className) throws Docx4JException {
 		XHTMLImporterImpl xhtml = new XHTMLImporterImpl(mlp);
 		RFonts rfonts = Context.getWmlObjectFactory().createRFonts();
 		rfonts.setAscii(this.FONT);
 
-		content = replacement(content, a);
-		System.out.println(content);
+		content = replacement(content);
 		return xhtml.convert(
 				"<!DOCTYPE html><html><head>"
 						+ "<style>html{padding:0;margin:0;margin-right:0px;}\r\nbody{padding:0;margin:0;font-family:"
@@ -495,11 +409,8 @@ public class DocxUtils {
 						+ content + "</div></body></html>",
 				null);
 	}
-	private List<Object> wrapHTML(WordprocessingMLPackage mlp, String value, String customCSS, String className) throws Docx4JException{
-		return wrapHTML(mlp, value, customCSS, className, BigInteger.valueOf(-1));
-	}
 
-	private List<Object> wrapHTML(WordprocessingMLPackage mlp, String value, String customCSS, String className, BigInteger maxWidth)
+	private List<Object> wrapHTML(String value, String customCSS, String className, BigInteger maxWidth)
 			throws Docx4JException {
 		XHTMLImporterImpl xhtml = new XHTMLImporterImpl(mlp);
 		RFonts rfonts = Context.getWmlObjectFactory().createRFonts();
@@ -549,18 +460,18 @@ public class DocxUtils {
 	}
 
 	// Replacement for assessment data
-	private void replacement(final WordprocessingMLPackage mlp, Assessment a, String customCSS) throws Exception {
+	private void replaceAssessment(String customCSS) throws Exception {
 
 		SimpleDateFormat formatter;
 
 		formatter = new SimpleDateFormat("MM/dd/yyyy");
 
-		int[] results = getVulnCount(a);
+		int[] results = getVulnCount();
 		String assessors_nl = "";
 		String assessors_comma = "";
 		String assessors_bullets = "<ul>";
 		boolean isfirst = true;
-		for (User hacker : a.getAssessor()) {
+		for (User hacker : this.assessment.getAssessor()) {
 			assessors_nl += hacker.getFname() + " " + hacker.getLname() + "<br/>";
 			assessors_comma += (isfirst ? "" : ", ") + hacker.getFname() + " " + hacker.getLname();
 			assessors_bullets += "<li class='bullets'>" + hacker.getFname() + " " + hacker.getLname() + "</li>";
@@ -568,65 +479,62 @@ public class DocxUtils {
 		}
 		assessors_bullets += "</ul>";
 		HashMap<String, String> map = new HashMap();
-		map.put(getKey("asmtname"), a.getName());
-		map.put(getKey("asmtid"), "" + a.getId());
-		map.put(getKey("asmtappid"), "" + a.getAppId());
+		map.put(getKey("asmtname"), this.assessment.getName());
+		map.put(getKey("asmtid"), "" + this.assessment.getId());
+		map.put(getKey("asmtappid"), "" + this.assessment.getAppId());
 		map.put(getKey("asmtassessor"),
-				"" + a.getAssessor().get(0).getFname() + " " + a.getAssessor().get(0).getLname());
-		map.put(getKey("asmtassessor_email"), "" + a.getAssessor().get(0).getEmail());
+				"" + this.assessment.getAssessor().get(0).getFname() + " " + this.assessment.getAssessor().get(0).getLname());
+		map.put(getKey("asmtassessor_email"), "" + this.assessment.getAssessor().get(0).getEmail());
 
 		map.put(getKey("asmtassessors_comma"), assessors_comma);
 
-		map.put(getKey("remediation"), "" + a.getRemediation().getFname() + " " + a.getRemediation().getLname());
+		map.put(getKey("remediation"), "" + this.assessment.getRemediation().getFname() + " " + this.assessment.getRemediation().getLname());
 
 		map.put(getKey("asmtteam"),
-				a.getAssessor() == null ? ""
-						: a.getAssessor().get(0).getTeam() == null ? ""
-								: a.getAssessor().get(0).getTeam().getTeamName().trim());
-		map.put(getKey("asmttype"), a.getType().getType());
+				this.assessment.getAssessor() == null ? ""
+						: this.assessment.getAssessor().get(0).getTeam() == null ? ""
+								: this.assessment.getAssessor().get(0).getTeam().getTeamName().trim());
+		map.put(getKey("asmttype"), this.assessment.getType().getType());
 		map.put(getKey("today"), formatter.format(new Date()));
-		map.put(getKey("asmtstart"), formatter.format(a.getStart()));
-		map.put(getKey("asmtend"), formatter.format(a.getEnd()));
-		map.put(getKey("asmtaccesskey"), a.getGuid());
+		map.put(getKey("asmtstart"), formatter.format(this.assessment.getStart()));
+		map.put(getKey("asmtend"), formatter.format(this.assessment.getEnd()));
+		map.put(getKey("asmtaccesskey"), this.assessment.getGuid());
 
 		// replavce all cusotm varables
-		if (a.getCustomFields() != null) {
-			for (CustomField cf : a.getCustomFields()) {
+		if (this.assessment.getCustomFields() != null) {
+			for (CustomField cf : this.assessment.getCustomFields()) {
 				map.put("cf" + cf.getType().getVariable(), cf.getValue());
 			}
 		}
 
-		map.putAll(getVulnMap(a));
+		map.putAll(getVulnMap());
 
-		replacementText(mlp, map);
+		replacementText(map);
 
 		// replace with HTML content
 		Map<String, List<Object>> map2 = new HashMap();
-		map2.put("${asmtAssessors_Lines}", wrapHTML(mlp, assessors_nl, customCSS, ""));
-		map2.put("${asmtAssessors_Bullets}", wrapHTML(mlp, assessors_bullets, customCSS, ""));
-		map2.put("${asmtAssessors_Comma}", wrapHTML(mlp, assessors_comma, customCSS, ""));
+		map2.put("${asmtAssessors_Lines}", wrapHTML(assessors_nl, customCSS, ""));
+		map2.put("${asmtAssessors_Bullets}", wrapHTML(assessors_bullets, customCSS, ""));
+		map2.put("${asmtAssessors_Comma}", wrapHTML(assessors_comma, customCSS, ""));
 		replaceHTML(mlp.getMainDocumentPart(), map2);
 
 	}
 
-	private String loopReplace(String content, Assessment a) {
-		content = innerLoop(content, a, 5);
-		content = innerLoop(content, a, 4);
-		content = innerLoop(content, a, 3);
-		content = innerLoop(content, a, 2);
-		content = innerLoop(content, a, 1);
-		content = innerLoop(content, a, 0);
+	private String loopReplace(String content) {
+		for(int i=9; i>=0; i--) {
+			content = innerLoop(content, i);
+		}
 		return content;
 
 	}
 
-	private String innerLoop(String content, Assessment a, int rank) {
+	private String innerLoop(String content, int rank ) {
 		Vulnerability tmp = new Vulnerability();
 		String Var = tmp.vulnStr(new Long(rank)).toUpperCase();
 		if (content.contains("{[asmt" + Var + "]}")) {
 			String html = "<ol>\r\n";
 			boolean isSomething = false;
-			for (Vulnerability v : a.getVulns()) {
+			for (Vulnerability v : this.vulns) {
 				if (v.getOverall() == rank) {
 					isSomething = true;
 					html += "<li>" + v.getName() + "</li>";
@@ -641,14 +549,14 @@ public class DocxUtils {
 		return content;
 	}
 
-	private int[] getVulnCount(Assessment a) {
+	private int[] getVulnCount() {
 		// C,H,M,L,I,R
 		int[] results = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		// 9,8,7,6,5,4,3,2,1,0
-		if (a.getVulns() == null)
+		if (this.vulns == null)
 			return results;
 		else {
-			for (Vulnerability v : a.getVulns()) {
+			for (Vulnerability v : this.vulns) {
 				if (v.getOverall() == null || v.getOverall() == -1l)
 					continue;
 
@@ -659,14 +567,14 @@ public class DocxUtils {
 
 	}
 
-	private String getVulnCount(String content, Assessment a) {
+	private String getVulnCount(String content ) {
 		// C,H,M,L,I,R
 		int[] results = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		// 9,8,7,6,5,4,3,2,1,0
 		int totals = 0;
-		if (a.getVulns() != null) {
-			for (Vulnerability v : a.getVulns()) {
-				if (v.getOverall() == null || v.getOverall() == -1l)
+		if (this.vulns != null) {
+			for (Vulnerability v : this.vulns) {
+				if (v.getOverall() == null || v.getOverall().intValue() == -1)
 					continue;
 				results[v.getOverall().intValue()]++;
 				totals++;
@@ -679,15 +587,15 @@ public class DocxUtils {
 		return content;
 	}
 
-	private Map<String, String> getVulnMap(Assessment a) {
+	private Map<String, String> getVulnMap() {
 		Map<String, String> maps = new HashMap();
 		// C,H,M,L,I,R
 		int[] results = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		// 9,8,7,6,5,4,3,2,1,0
 		int totals = 0;
-		if (a.getVulns() != null) {
-			for (Vulnerability v : a.getVulns()) {
-				if (v.getOverall() == null || v.getOverall() == -1l)
+		if (this.vulns!= null) {
+			for (Vulnerability v : this.vulns) {
+				if (v.getOverall() == null || v.getOverall().intValue() == -1)
 					continue;
 				results[v.getOverall().intValue()]++;
 				totals++;
@@ -701,21 +609,21 @@ public class DocxUtils {
 		return maps;
 	}
 
-	private Map<String, List<Object>> getVulnMap(WordprocessingMLPackage mlp, Assessment a, String customCSS)
+	private Map<String, List<Object>> getVulnMap(String customCSS)
 			throws Docx4JException {
 		Map<String, List<Object>> maps = new HashMap();
 		// C,H,M,L,I,R
 		int[] results = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 		// 9,8,7,6,5,4,3,2,1,0
-		if (a.getVulns() != null) {
-			for (Vulnerability v : a.getVulns()) {
-				if (v.getOverall() == null || v.getOverall() == -1l)
+		if (this.vulns != null) {
+			for (Vulnerability v : vulns) {
+				if (v.getOverall() == null || v.getOverall().intValue() == -1)
 					continue;
 				results[v.getOverall().intValue()]++;
 			}
 		}
 		for (int i = 0; i < 10; i++) {
-			maps.put("${riskCount" + i + "}", wrapHTML(mlp, "" + results[i], customCSS, ""));
+			maps.put("${riskCount" + i + "}", wrapHTML( "" + results[i], customCSS, ""));
 
 		}
 		return maps;
@@ -731,7 +639,7 @@ public class DocxUtils {
 	}
 
 	// Replacement for vulns
-	private void replacement(final WordprocessingMLPackage mlp, Vulnerability v, String customCSS)
+	private void replacement(Vulnerability v, String customCSS)
 			throws Docx4JException, JAXBException {
 		HashMap<String, String> map = new HashMap();
 		map.put("vulName", v.getName());
@@ -748,40 +656,34 @@ public class DocxUtils {
 		HashMap<String, List<Object>> map2 = new HashMap();
 
 		if (v.getDescription() == null && v.getDefaultVuln() != null) {
-			map2.put("${desc}", wrapHTML(mlp, v.getDefaultVuln().getDescription(), customCSS, "desc"));
+			map2.put("${desc}", wrapHTML( v.getDefaultVuln().getDescription(), customCSS, "desc"));
 		} else if (v.getDescription() != null) {
-			map2.put("${desc}", wrapHTML(mlp, v.getDescription(), customCSS, "desc"));
+			map2.put("${desc}", wrapHTML( v.getDescription(), customCSS, "desc"));
 		} else {
-			map2.put("${desc}", wrapHTML(mlp, "", customCSS, "desc"));
+			map2.put("${desc}", wrapHTML( "", customCSS, "desc"));
 		}
 		if (v.getRecommendation() == null && v.getDefaultVuln() != null) {
-			map2.put("${rec}", wrapHTML(mlp, v.getDefaultVuln().getRecommendation(), customCSS, "rec"));
+			map2.put("${rec}", wrapHTML( v.getDefaultVuln().getRecommendation(), customCSS, "rec"));
 		} else if (v.getRecommendation() != null) {
-			map2.put("${rec}", wrapHTML(mlp, v.getRecommendation(), customCSS, "rec"));
+			map2.put("${rec}", wrapHTML( v.getRecommendation(), customCSS, "rec"));
 		} else {
-			map2.put("${rec}", wrapHTML(mlp, "", customCSS, "rec"));
+			map2.put("${rec}", wrapHTML( "", customCSS, "rec"));
 		}
 		
 		if (v.getDetails() != null) {
-			map2.put("${details}", wrapHTML(mlp, v.getDetails(), customCSS, "details"));
+			map2.put("${details}", wrapHTML( v.getDetails(), customCSS, "details"));
 		} else {
-			map2.put("${details}", wrapHTML(mlp, "", customCSS, "details"));
+			map2.put("${details}", wrapHTML( "", customCSS, "details"));
 		}
 
-		replacementText(mlp, map);
+		replacementText( map);
 		replaceHTML(mlp.getMainDocumentPart(), map2);
 
 	}
 
-	// Replacement for Exploit Steps
-	private void replacement(final WordprocessingMLPackage mlp, ExploitStep s, String customCSS) throws Exception {
-		Map<String, List<Object>> map = new HashMap();
-		map.put("${exploit}", wrapHTML(mlp, s.getDescription(), customCSS, "exploit"));
-		replaceHTML(mlp.getMainDocumentPart(), map);
-	}
 
 	// Replace simple text
-	private void replacementText(final WordprocessingMLPackage mlp, Map<String, String> map)
+	private void replacementText(Map<String, String> map)
 			throws JAXBException, Docx4JException {
 		String xml = XmlUtils.marshaltoString(mlp.getMainDocumentPart().getContents(), false, false);
 		for (String key : map.keySet()) {
@@ -792,7 +694,7 @@ public class DocxUtils {
 	}
 
 	// replace text/html content
-	private String replacement(String content, Assessment a) {
+	private String replacement(String content) {
 		SimpleDateFormat formatter;
 
 		formatter = new SimpleDateFormat("MM/dd/yyyy");
@@ -801,7 +703,7 @@ public class DocxUtils {
 		String assessors_comma = "";
 		String assessors_bullets = "<ul>";
 		boolean isfirst = true;
-		for (User hacker : a.getAssessor()) {
+		for (User hacker : this.assessment.getAssessor()) {
 			assessors_nl += hacker.getFname() + " " + hacker.getLname() + "<br/>";
 			assessors_comma += (isfirst ? "" : ", ") + hacker.getFname() + " " + hacker.getLname();
 			assessors_bullets += "<li class='bullets'>" + hacker.getFname() + " " + hacker.getLname() + "</li>";
@@ -809,30 +711,37 @@ public class DocxUtils {
 		}
 		assessors_bullets += "</ul>";
 
-		content = content.replaceAll("\\$\\{asmtName\\}", a.getName() == null ? "" : a.getName());
-		content = content.replaceAll("\\$\\{asmtId\\}", a.getId() == null ? "" : "" + a.getId());
-		content = content.replaceAll("\\$\\{asmtAppId\\}", "" + a.getAppId());
-		content = content.replaceAll("\\$\\{asmtAssessor\\}", a.getAssessor() == null ? ""
-				: (a.getAssessor().get(0).getFname() + " " + a.getAssessor().get(0).getLname()));
+		content = content.replaceAll("\\$\\{asmtName\\}", this.assessment.getName() == null ? "" : this.assessment.getName());
+		content = content.replaceAll("\\$\\{asmtId\\}", this.assessment.getId() == null ? "" : "" + this.assessment.getId());
+		content = content.replaceAll("\\$\\{asmtAppId\\}", "" + this.assessment.getAppId());
+		content = content.replaceAll("\\$\\{asmtAssessor\\}", this.assessment.getAssessor() == null ? ""
+				: (this.assessment.getAssessor().get(0).getFname() + " " + this.assessment.getAssessor().get(0).getLname()));
 		content = content.replaceAll("\\$\\{asmtAssessor_Email\\}",
-				a.getAssessor() == null ? "" : (a.getAssessor().get(0).getEmail()));
-		content = content.replaceAll("\\$\\{asmtAssessors_Lines\\}", a.getAssessor() == null ? "" : assessors_nl);
-		content = content.replaceAll("\\$\\{asmtAssessors_Comma\\}", a.getAssessor() == null ? "" : assessors_comma);
+				this.assessment.getAssessor() == null ? "" : (this.assessment.getAssessor().get(0).getEmail()));
+		content = content.replaceAll("\\$\\{asmtAssessors_Lines\\}", this.assessment.getAssessor() == null ? "" : assessors_nl);
+		content = content.replaceAll("\\$\\{asmtAssessors_Comma\\}", this.assessment.getAssessor() == null ? "" : assessors_comma);
 		content = content.replaceAll("\\$\\{asmtAssessors_Bullets\\}",
-				a.getAssessor() == null ? "" : assessors_bullets);
-		content = content.replaceAll("\\$\\{remediation\\}", a.getRemediation() == null ? ""
-				: (a.getRemediation().getFname() + " " + a.getRemediation().getLname()));
-		content = getVulnCount(content, a);
+				this.assessment.getAssessor() == null ? "" : assessors_bullets);
+		content = content.replaceAll("\\$\\{remediation\\}", this.assessment.getRemediation() == null ? ""
+				: (this.assessment.getRemediation().getFname() + " " + this.assessment.getRemediation().getLname()));
+		content = getVulnCount(content);
 
 		content = content.replaceAll("\\$\\{asmteam\\}",
-				a.getAssessor() == null ? ""
-						: a.getAssessor().get(0).getTeam() == null ? ""
-								: a.getAssessor().get(0).getTeam().getTeamName().trim());
-		content = content.replaceAll("\\$\\{asmtType\\}", a.getType() == null ? "" : a.getType().getType().trim());
+				this.assessment.getAssessor() == null ? ""
+						: this.assessment.getAssessor().get(0).getTeam() == null ? ""
+								: this.assessment.getAssessor().get(0).getTeam().getTeamName().trim());
+		content = content.replaceAll("\\$\\{asmtType\\}", this.assessment.getType() == null ? "" : this.assessment.getType().getType().trim());
 		content = content.replaceAll("\\$\\{today\\}", formatter.format(new Date()));
-		content = content.replaceAll("\\$\\{asmtStandND\\}", formatter.format(a.getEnd()));
-		content = content.replaceAll("\\$\\{asmtAccessKey\\}", a.getGuid());
-		content = loopReplace(content, a);
+		content = content.replaceAll("\\$\\{asmtStandND\\}", formatter.format(this.assessment.getEnd()));
+		content = content.replaceAll("\\$\\{asmtAccessKey\\}", this.assessment.getGuid());
+		
+		//Run extensions
+		if(this.reportExtension.isExtended()) {
+			content = this.reportExtension.updateReport(this.assessment, content);
+		}
+		
+		
+		content = loopReplace(content);
 
 		// Fix any html weirdness
 		content = FSUtils.jtidy(content);
@@ -840,7 +749,7 @@ public class DocxUtils {
 
 	}
 
-	private void setFindings(final WordprocessingMLPackage mlp, List<Vulnerability> vulns, String customCSS)
+	private void setFindings(String customCSS)
 			throws JAXBException, Docx4JException {
 		int begin = getIndex(mlp.getMainDocumentPart(), "${fiBegin}");
 		int end = getIndex(mlp.getMainDocumentPart(), "${fiEnd}");
@@ -887,7 +796,7 @@ public class DocxUtils {
 			mlp.getMainDocumentPart().getContent().remove(i);
 		}
 
-		for (Vulnerability v : vulns) {
+		for (Vulnerability v : this.vulns) {
 			for (Object obj : findingTemplate) {
 
 				String xml = XmlUtils.marshaltoString(obj, false, false);
@@ -911,8 +820,6 @@ public class DocxUtils {
 				// remove color loops
 				if(nxml.contains("${color") || nxml.contains("${fill"))
 					nxml="";
-				//nxml = nxml.replaceAll("\\$\\{color.*\\}", "");
-				//nxml = nxml.replaceAll("\\$\\{fill.*\\}", "");
 
 				if (v.getCustomFields() != null) {
 					for (CustomField cf : v.getCustomFields()) {
@@ -947,7 +854,7 @@ public class DocxUtils {
 						desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
-				map2.put("${desc}", wrapHTML(mlp, desc, customCSS, "desc"));
+				map2.put("${desc}", wrapHTML(desc, customCSS, "desc"));
 			} else if (v.getDescription() != null) {
 				String desc = v.getDescription();
 				if (v.getCustomFields() != null) {
@@ -955,9 +862,9 @@ public class DocxUtils {
 						desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
-				map2.put("${desc}", wrapHTML(mlp, desc, customCSS, "desc"));
+				map2.put("${desc}", wrapHTML(desc, customCSS, "desc"));
 			} else {
-				map2.put("${desc}", wrapHTML(mlp, "", customCSS, "desc"));
+				map2.put("${desc}", wrapHTML("", customCSS, "desc"));
 			}
 			if (v.getRecommendation() == null && v.getDefaultVuln() != null) {
 				String rec = v.getDefaultVuln().getRecommendation();
@@ -966,7 +873,7 @@ public class DocxUtils {
 						rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
-				map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec"));
+				map2.put("${rec}", wrapHTML(rec, customCSS, "rec"));
 			} else if (v.getRecommendation() != null) {
 				String rec = v.getRecommendation();
 				if (v.getCustomFields() != null) {
@@ -974,9 +881,9 @@ public class DocxUtils {
 						rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
-				map2.put("${rec}", wrapHTML(mlp, rec, customCSS, "rec"));
+				map2.put("${rec}", wrapHTML(rec, customCSS, "rec"));
 			} else {
-				map2.put("${rec}", wrapHTML(mlp, "", customCSS, "rec"));
+				map2.put("${rec}", wrapHTML("", customCSS, "rec"));
 			}
 			if (v.getDetails() != null) {
 				String details = v.getDetails();
@@ -985,9 +892,9 @@ public class DocxUtils {
 						details = details.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
-				map2.put("${details}", wrapHTML(mlp, details, customCSS, "details"));
+				map2.put("${details}", wrapHTML(details, customCSS, "details"));
 			} else {
-				map2.put("${details}", wrapHTML(mlp, "", customCSS, "details"));
+				map2.put("${details}", wrapHTML("", customCSS, "details"));
 			}
 			replaceHTML(mlp.getMainDocumentPart(), map2, true);
 
@@ -998,7 +905,7 @@ public class DocxUtils {
 				}
 			}
 
-			replacementText(mlp, map1);
+			replacementText(map1);
 		}
 
 	}
@@ -1137,11 +1044,8 @@ public class DocxUtils {
 	private void replaceHTML(final Object mainPart, final Map<String, List<Object>> replacements) {
 		replaceHTML(mainPart, replacements, true);
 	}
-
-	private void replaceHTML(final Object mainPart, final Map<String, List<Object>> replacements, boolean once) {
-		Preconditions.checkNotNull(mainPart, "the supplied main doc part may not be null!");
-		Preconditions.checkNotNull(replacements, "replacements may not be null!");
-
+	
+	private List<P> getParagraphs(final Object mainPart){
 		// look for all P elements in the specified object
 		final List<P> paragraphs = Lists.newArrayList();
 		new TraversalUtil(mainPart, new TraversalUtil.CallbackImpl() {
@@ -1154,32 +1058,31 @@ public class DocxUtils {
 				return null;
 			}
 		});
+		return paragraphs;
+		
+	}
+
+	private void replaceHTML(final Object mainPart, final Map<String, List<Object>> replacements, boolean once) {
+		Preconditions.checkNotNull(mainPart, "the supplied main doc part may not be null!");
+		Preconditions.checkNotNull(replacements, "replacements may not be null!");
+		
+		List<P> paragraphs = this.getParagraphs(mainPart);
+
 
 		// run through all found paragraphs to located identifiers
 		for (final P paragraph : paragraphs) {
-			// check if this is one of our identifiers
+			// convert paragraph to raw text
 			final StringWriter paragraphText = new StringWriter();
 			try {
 				TextUtils.extractText(paragraph, paragraphText);
 			} catch (Exception ex) {
 
 			}
-
-			final String identifier = paragraphText.toString();
+			final String identifier = paragraphText.toString().trim();
+			// if raw text is our variable then replace the paragraph
+			// with formated text
 			if (identifier != null && replacements.containsKey(identifier)) {
-				final List<Object> listToModify;
-
-				if (paragraph.getParent() instanceof Tc) {
-					// paragraph located in table-cell
-					final Tc parent = (Tc) paragraph.getParent();
-					listToModify = parent.getContent();
-				} else if (paragraph.getParent() instanceof Hdr) {
-					final Hdr parent = (Hdr) paragraph.getParent();
-					listToModify = parent.getContent();
-				} else {
-					// paragraph located in main document part
-					listToModify = ((MainDocumentPart) mainPart).getContent();
-				}
+				final List<Object> listToModify = this.getUpdatableElements(paragraph);
 
 				if (listToModify != null) {
 					final int index = listToModify.indexOf(paragraph);
@@ -1194,9 +1097,66 @@ public class DocxUtils {
 						replacements.remove(identifier);
 
 				}
-
 			}
+				
+		
 		}
+	}
+	
+	private List<Object> getUpdatableElements(P paragraph){
+		if (paragraph.getParent() instanceof Tc) {
+			// paragraph located in table-cell
+			final Tc parent = (Tc) paragraph.getParent();
+			return parent.getContent();
+		} else if (paragraph.getParent() instanceof Hdr) {
+			// located in a header element
+			final Hdr parent = (Hdr) paragraph.getParent();
+			return parent.getContent();
+		} else {
+			// paragraph located in main document part
+			return ((MainDocumentPart) mlp.getMainDocumentPart()).getContent();
+		}
+		
+	}
+	private void updateDocWithExtensions() {
+		
+		MainDocumentPart mainPart = mlp.getMainDocumentPart();
+		// look for all P elements in the specified object
+		List<P> paragraphs = this.getParagraphs(mainPart);
+
+		// run through all found paragraphs to located identifiers
+		for (final P paragraph : paragraphs) {
+			// convert paragraph to raw text
+			final StringWriter paragraphText = new StringWriter();
+			try {
+				TextUtils.extractText(paragraph, paragraphText);
+			} catch (Exception ex) {
+				ex.printStackTrace();
+			}
+			final String identifier = paragraphText.toString().trim();
+			final List<Object> listToModify = this.getUpdatableElements(paragraph);
+
+			if (listToModify != null) {
+				final int index = listToModify.indexOf(paragraph);
+				Preconditions.checkState(index > -1, "could not located the paragraph in the specified list!");
+
+				if(this.reportExtension.isExtended()) {
+					String html = this.reportExtension.updateReport(this.assessment, identifier);
+					if(html != null && !html.equals(identifier)) {
+						listToModify.remove(index);
+						try {
+							listToModify.addAll(index,this.wrapHTML(html, "", ""));
+						}catch(Exception ex) {
+							ex.printStackTrace();
+						}
+					}
+
+				}
+				
+			}
+				
+		}
+		
 	}
 
 	public void tocGenerator(WordprocessingMLPackage mlp) {
@@ -1234,17 +1194,7 @@ public class DocxUtils {
 		Preconditions.checkNotNull(mainPart, "the supplied main doc part may not be null!");
 
 		// look for all P elements in the specified object
-		final List<P> paragraphs = Lists.newArrayList();
-		new TraversalUtil(mainPart, new TraversalUtil.CallbackImpl() {
-			@Override
-			public List<Object> apply(Object o) {
-				if (o instanceof P) {
-					paragraphs.add((P) o);
-				}
-
-				return null;
-			}
-		});
+		final List<P> paragraphs = this.getParagraphs(mainPart);
 
 		// run through all found paragraphs to located identifiers
 		for (final P paragraph : paragraphs) {

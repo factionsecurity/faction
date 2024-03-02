@@ -215,6 +215,12 @@ public class TrackChanges extends FSActionSupport {
 			if (v.getDescription().matches(trackChangesTest)) {
 				errors.add("Vulnerability " + v.getName() + " Description contains UnAccepted Edits");
 			}
+			if (v.getRecommendation().matches(trackChangesTest)) {
+				errors.add("Vulnerability " + v.getName() + " Recommendation contains UnAccepted Edits");
+			}
+			if (v.getDetails().matches(trackChangesTest)) {
+				errors.add("Vulnerability " + v.getName() + " Details contains UnAccepted Edits");
+			}
 		}
 		JSONObject result = new JSONObject();
 		if (errors.size() > 0) {

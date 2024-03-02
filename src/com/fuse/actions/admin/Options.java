@@ -59,7 +59,7 @@ public class Options extends FSActionSupport {
 	private String cfdefault;
 	private String prChecked;
 	private String feedChecked;
-	private String[] title = { "Fuse", "FACTION" };
+	private String[] title = { "FACTION", "oss" };
 	private String message;
 	private String randChecked;
 	private Boolean readonly;
@@ -107,8 +107,8 @@ public class Options extends FSActionSupport {
 		this.feedChecked = EMS.getEnablefeed() == null || !EMS.getEnablefeed() ? "" : "checked";
 		this.randChecked = EMS.getEnableRandAppId() == null || !EMS.getEnableRandAppId() ? "" : "checked";
 		this.selfPeerReview = EMS.getSelfPeerReview() == null || !EMS.getSelfPeerReview() ? "" : "checked";
-		this.title[0] = EMS.getBoldTitle() == null ? "Fuse" : EMS.getBoldTitle();
-		this.title[1] = EMS.getOtherTitle() == null ? "FACTION" : EMS.getOtherTitle();
+		this.title[0] = EMS.getBoldTitle() == null ? "FACTION" : EMS.getBoldTitle();
+		this.title[1] = EMS.getOtherTitle() == null ? "community" : EMS.getOtherTitle();
 		
 		
 

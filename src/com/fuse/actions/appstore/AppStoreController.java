@@ -55,7 +55,7 @@ public class AppStoreController extends FSActionSupport{
 	
 	@Before(priority=1)
 	public String authorization() {
-		 if(!this.isAcadmin()) { 
+		 if(this.isAppStoreEnabled() && !this.isAcadmin()) { 
 			 AuditLog.notAuthorized( this,
 				 "Invalid Access to App Store", true);
 			 return LOGIN; 
@@ -232,7 +232,7 @@ public class AppStoreController extends FSActionSupport{
 	public String getApps() {
 		List<AppStore> apps = em.createQuery("from AppStore").getResultList();
 		assessmentApps = apps.stream()
-				.filter( app -> app.getEnabled() && app.getAssessmentEnabled())
+				.filter( app -> app.getEnabled() && (app.getAssessmentEnabled() || app.getReportEnabled()))
 				.sorted((a1,a2)-> Integer.compare(a1.getAssessmentOrder(), a2.getAssessmentOrder()))
 				.collect(Collectors.toList());
 		vulnerabilityApps = apps.stream()

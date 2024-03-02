@@ -53,7 +53,7 @@ public class SystemSettings {
 	private Boolean peerreview;
 	private Boolean selfPeerReview;
 	private Boolean enablefeed;
-	private String boldTitle = "Fuse";
+	private String boldTitle = "community";
 	private String otherTitle = "FACTION";
 	private Long verificationOption;
 	private Boolean enableRandAppId;

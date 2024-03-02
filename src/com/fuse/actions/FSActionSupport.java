@@ -60,7 +60,7 @@ import com.opensymphony.xwork2.interceptor.annotations.Before;
 						"contentType", "application/octet-stream", 
 				        "inputName", "_stream"})
 })
-public class FSActionSupport extends ActionSupport { 
+public class FSActionSupport extends ActionSupport implements SessionAware, ServletRequestAware, ServletResponseAware { 
 	
 
 	protected SessionMap<String,Object> JSESSION;  
@@ -80,8 +80,8 @@ public class FSActionSupport extends ActionSupport {
 	protected boolean feedEnabled;
 	protected boolean retestsEnabled;
 	protected String tier="";
-	protected String _title1 = "Fuse";
-	protected String _title2 = "FACTION";
+	protected String _title1 = "FACTION";
+	protected String _title2 = "oss";
 	protected String _token ="";
 	public String _message="";
 	public String _result="";
@@ -104,7 +104,7 @@ public class FSActionSupport extends ActionSupport {
 		return null;
 	}
 	
-	/*@Override
+	@Override
 	public void setSession(Map<String, Object> arg0) {
 		JSESSION = (SessionMap)arg0;
 		
@@ -130,7 +130,8 @@ public class FSActionSupport extends ActionSupport {
 			
 		}
 		
-	}*/
+	}
+	
 
 	private boolean getRole(String role){
 		return (boolean) (ActionContext.getContext().get(role) == null ? false :ActionContext.getContext().get(role)) ;
@@ -151,6 +152,10 @@ public class FSActionSupport extends ActionSupport {
 	}
 	public boolean isAcadmin(){
 		return getRole("isAdmin");
+	}
+	
+	public boolean isAppStoreEnabled(){
+		return FSUtils.getEnv("FACTION_APPSTORE_ENABLED").equals("true");
 	}
 	
 	public String checkAdmin(String errorMessage) {
@@ -190,10 +195,10 @@ public class FSActionSupport extends ActionSupport {
 		return MENUOPTION;
 	}
 
-	/*@Override
-	public void setServletRequest(HttpServletRequest arg0) {
-		this.request=arg0;
-		Cookie [] cookies = request.getCookies();
+	@Override
+	public void setServletRequest(HttpServletRequest request) {
+		this.request=request;
+		Cookie [] cookies = this.request.getCookies();
 		if(cookies == null)
 			return;
 		for(Cookie c : cookies){
@@ -203,10 +208,12 @@ public class FSActionSupport extends ActionSupport {
 		}
 		
 	}
+	
 	@Override
-	public void setServletResponse(HttpServletResponse arg0) {
-		this.response = arg0;
-	}*/
+	public void setServletResponse(HttpServletResponse response) {
+		this.response = response;
+		
+	}
 	
 	public String jsonOutput(String json) {
 		try {
@@ -319,6 +326,7 @@ public class FSActionSupport extends ActionSupport {
 	public String getVersion() {
 		return this.version; 
 	}
+
 	
 	
 }

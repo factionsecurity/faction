@@ -52,7 +52,7 @@ public class InstallExtensionController extends FSActionSupport {
 	
 	@Before(priority=1)
 	public String authorization() {
-		 if(!this.isAcadmin()) { 
+		 if(this.isAppStoreEnabled() && !this.isAcadmin()) { 
 			 AuditLog.notAuthorized( this,
 				 "Invalid Access to App Store", true);
 			 return LOGIN; 

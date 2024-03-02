@@ -102,14 +102,14 @@
 									classname="" id="campaign">
 									<s:iterator value="custom">
 										<tr>
-											<td><input value="${key}" id="key${id}"
+											<td><input value="<s:property value="key"/>" id="key${id}"
 												class="form-control pull-right" /></td>
-											<td><input id="var${id}" value="${variable}"
+											<td><input id="var${id}" value="<s:property value="variable"/>"
 												class="form-control pull-right" /></td>
-											<td><input id="default${id}" value="${defaultValue}"
+											<td><input id="default${id}" value="<s:property value="defaultValue"/>"
 												class="form-control pull-right" /></td>
-											<td>${fieldTypeStr}</td>
-											<td>${typeStr}</td>
+											<td><s:property value="fieldTypeStr"/></td>
+											<td><s:property value="typeStr"/></td>
 											<s:if test="readonly">
 												<td><input type=checkbox id="ro${id}" checked /></td>
 											</s:if>
@@ -155,9 +155,9 @@
 								</div>
 							</bs:mco>
 							<bs:inputgroup name="Bold Title:" colsize="12" id="title1"
-								placeholder="Fuse">${title[0]}</bs:inputgroup>
+								placeholder="Fuse"><s:property value="title[0]"/></bs:inputgroup>
 							<bs:inputgroup name="Secondary Title:" colsize="12" id="title2"
-								placeholder="FACTION">${title[1]}</bs:inputgroup>
+								placeholder="FACTION"><s:property value="title[1]"/></bs:inputgroup>
 							<br>
 							<bs:button color="info" size="md" colsize="3"
 								text="<i class='fa fa-save'></i> Save Titles" id="updateTitles">

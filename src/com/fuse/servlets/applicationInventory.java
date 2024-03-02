@@ -75,7 +75,7 @@ public class applicationInventory extends HttpServlet {
 				JSONObject json = new JSONObject();
 				json.put("appid", result.getApplicationId());
 				json.put("appname", result.getApplicationName());
-				json.put("distro", result.getDistrobutionList());
+				json.put("distro", result.getDistributionList());
 				JSONArray fields = new JSONArray();
 				if(result.getCustomFields()!= null){
 					for(String  key : result.getCustomFields().keySet()){

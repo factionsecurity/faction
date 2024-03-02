@@ -53,6 +53,7 @@ public class AppStore {
 	private Boolean vulnerabilityEnabled = false;
 	private Integer vulnerabilityOrder;
 	private Boolean inventoryEnabled = false;
+	private Boolean reportEnabled = false;
 	private Integer inventoryOrder;
 	private String base64JarFile;
 	private String hash;
@@ -123,6 +124,12 @@ public class AppStore {
 	}
 	public void setAssessmentEnabled(Boolean assessmentEnabled) {
 		this.assessmentEnabled = assessmentEnabled;
+	}
+	public Boolean getReportEnabled() {
+		return reportEnabled;
+	}
+	public void setReportEnabled(Boolean reportEnabled) {
+		this.reportEnabled = reportEnabled;
 	}
 	public Boolean getVerificationEnabled() {
 		return verificationEnabled;
@@ -273,6 +280,7 @@ public class AppStore {
 		Boolean isVerificationApp = false;
 		Boolean isVulnerabilityApp = false;
 		Boolean isInventoryApp = false;
+		Boolean isReportingApp = false;
 		while ((entry = jarStream.getNextJarEntry()) != null) {
 			if (!entry.isDirectory() && entry.getName().endsWith("description.md")) {
 				while(jarStream.available() == 1) {
@@ -307,6 +315,9 @@ public class AppStore {
 			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.AssessmentManager")) {
 				isAssessmentApp = true;
 			}
+			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.ReportManager")) {
+				isReportingApp=true;
+			}
 			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.VulnerabilityManager")) {
 				isVulnerabilityApp = true;
 			}
@@ -340,6 +351,7 @@ public class AppStore {
 		this.verificationEnabled = isVerificationApp;
 		this.vulnerabilityEnabled = isVulnerabilityApp;
 		this.inventoryEnabled = isInventoryApp;
+		this.reportEnabled = isReportingApp;
 		this.description = base64Description;
 		this.enabled = false;
 		this.uuid = UUID.randomUUID().toString();

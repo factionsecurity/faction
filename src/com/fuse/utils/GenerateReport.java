@@ -147,9 +147,9 @@ public class GenerateReport {
 
 			WordprocessingMLPackage mlp = WordprocessingMLPackage.load(is);
 
-			DocxUtils genDoc = new DocxUtils();
+			DocxUtils genDoc = new DocxUtils(mlp, a);
 			genDoc.FONT = RPO.getFont();
-			genDoc.generateDocx(mlp, a, customCSS);
+			genDoc.generateDocx(customCSS);
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			mlp.save(baos);
 			byte[] finalReport = baos.toByteArray();
@@ -201,9 +201,9 @@ public class GenerateReport {
 			// File(base.getFilename()));
 			WordprocessingMLPackage mlp = WordprocessingMLPackage.load(is);
 
-			DocxUtils gendoc = new DocxUtils();
+			DocxUtils gendoc = new DocxUtils(mlp, a);
 			gendoc.FONT = RPO.getFont();
-			mlp = gendoc.generateDocx(mlp, a, customCSS);
+			mlp = gendoc.generateDocx(customCSS);
 			gendoc.tocGenerator(mlp);
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			mlp.save(baos);
@@ -225,6 +225,7 @@ public class GenerateReport {
 				+ "'></img><br/>";
 		Assessment a = new Assessment();
 		User u = new User();
+		u.setId(1l);
 		u.setFname("Bob");
 		u.setLname("Dobbs");
 		u.setEmail("bdobs@supersecure.com");
@@ -235,6 +236,7 @@ public class GenerateReport {
 		List<User> hacker = new ArrayList<User>();
 		hacker.add(u);
 		hacker.add(u);
+		a.setId(1l);
 		a.setAssessor(hacker);
 		a.setRemediation(u);
 		a.setAppId("1337");
@@ -246,6 +248,7 @@ public class GenerateReport {
 		v1.setLevels(riskLevels);
 		Vulnerability v2 = new Vulnerability();
 		v2.setLevels(riskLevels);
+		v0.setId(1l);
 		v0.setName("Test Issue 1");
 		v0.setImpact(5l);
 		v0.setLikelyhood(5l);
@@ -254,6 +257,8 @@ public class GenerateReport {
 		v0.setDescription("Test Description with table <br> <table><tr><th>Site</th><th>Description</th></tr><tr><td><a href='https://www.factionsecurity.com'>https://www.factionsecurity.com</a></td><td>Something Descriptive</td></tr></table><br>");
 		v0.setDetails(details);
 		v0.setTracking("VID-1234");
+		v0.setAssessmentId(1l);
+		v1.setId(2l);
 		v1.setName("Test Issue 2");
 		v1.setImpact(4l);
 		v1.setLikelyhood(4l);
@@ -262,6 +267,8 @@ public class GenerateReport {
 		v1.setDescription("Test Description");
 		v1.setDetails(details);
 		v1.setTracking("VID-1235");
+		v1.setAssessmentId(1l);
+		v2.setId(3l);
 		v2.setName("Test Issue 3");
 		v2.setImpact(3l);
 		v2.setLikelyhood(3l);
@@ -270,6 +277,7 @@ public class GenerateReport {
 		v2.setDescription("Test Description");
 		v2.setDetails(details);
 		v2.setTracking("VID-1236");
+		v2.setAssessmentId(1l);
 		a.setVulns((new ArrayList<Vulnerability>()));
 		a.getVulns().add(v0);
 		a.getVulns().add(v1);
@@ -324,9 +332,9 @@ public class GenerateReport {
 			
 			WordprocessingMLPackage mlp = WordprocessingMLPackage.load(is);
 
-			DocxUtils genDoc = new DocxUtils();
+			DocxUtils genDoc = new DocxUtils(mlp, a);
 			genDoc.FONT = RPO.getFont();
-			mlp = genDoc.generateDocx(mlp, a, customCSS);
+			mlp = genDoc.generateDocx(customCSS);
 			genDoc.tocGenerator(mlp);
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			mlp.save(baos);
