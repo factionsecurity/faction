@@ -20,7 +20,8 @@ $(function(){
   let noteConfig = {
     mode: "balloon",
     minHeight: 200,
-    width: "100%"
+    width: "100%",
+    height: "auto"
 
   }
     let editors = $("[id^=editor]")
@@ -71,26 +72,30 @@ $(function(){
              "autoWidth": false,
              "order": [0, 'desc' ]
            });
-    	 $.each($("[id^=editor]"), function(index,obj){
-			 //SUNEDITOR.create($(obj))
-
-    	 });
+           
     	 
     	 $('#aqueue tbody').on( 'click', 'tr', function () {
-    		 var data = $('#aqueue').DataTable().row( this ).data();
+    		 let data = $('#aqueue').DataTable().row( this ).data();
     		 document.location="SetAssessment?id="+ data[4];
     	 });
     	 $('#vqueue tbody').on( 'click', 'tr', function () {
-    		 var data = $('#vqueue').DataTable().row( this ).data();
+    		 let data = $('#vqueue').DataTable().row( this ).data();
     		 document.location="Verifications?id=" + data[4];
     	 });
 		$.get('../services/getAssessments', function(data){
-				//json = JSON.parse(data);
-				var assessments=data.assessments;
-				var table = $("#aqueue").DataTable();
+				let assessments=data.assessments;
+				let table = $("#aqueue").DataTable();
 				assessments.forEach(function(assessment){
 					table.row.add([assessment[2], assessment[1], assessment[0], assessment[3], assessment[4]]).draw( false );
 				});
+		});
+		$.get('../services/getVerifications', function(data) {
+			let table = $("#vqueue").DataTable();
+			let verifications = data.verifications;
+			verifications.forEach(function(verification){
+				table.row.add([verification[2], verification[0], verification[4], verification[5], verification[3]]).draw(false);
+			});
+			updateColors();
 		});
 
     });
