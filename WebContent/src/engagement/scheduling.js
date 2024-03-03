@@ -65,7 +65,7 @@ let fromMarkdown = {
 }
 let editorOptions = {
 	codeMirror: CodeMirror,
-	plugins: [font, fontColor, fontSize, image, align, imageGallery, list, formatBlock, table, blockquote, fromMarkdown],
+	plugins: [font, fontColor, fontSize, image, align, imageGallery, list, formatBlock, table, blockquote, fromMarkdown, hilightColor],
 	buttonList: [
 		['undo', 'redo', 'font', 'fontSize', 'formatBlock'],
 		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
@@ -532,7 +532,7 @@ $(function() {
 
 
 			let data = "appid=" + $("#appId").val();
-			data += "&appname=" + EencodeURIComponent($("#appName").val());
+			data += "&appname=" + encodeURIComponent($("#appName").val());
 			$.post("../service/applicationInventory", data).done(function(resp) {
 				let invList = [];
 				invData = resp;

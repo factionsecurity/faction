@@ -16,6 +16,7 @@ import com.fuse.dao.Notification;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.User;
+import com.fuse.dao.Verification;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/dashboard/Dashboard.jsp")

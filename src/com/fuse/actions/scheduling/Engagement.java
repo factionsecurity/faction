@@ -98,10 +98,6 @@ public class Engagement  extends FSActionSupport{
 		if(!(this.isAcengagement() || this.isAcmanager())){
 			return AuditLog.notAuthorized(this, "User is not Engagment or Manager", true);
 		}
-		User user = this.getSessionUser();
-		
-		//Session session = HibHelper.getSessionFactory().openSession();
-		
 		custom = em.createQuery("from CustomType where type = 0 and (deleted IS NULL or deleted = false)").getResultList();
 		users = em.createQuery("from User").getResultList();
 		teams = em.createQuery("from Teams").getResultList();
@@ -123,12 +119,11 @@ public class Engagement  extends FSActionSupport{
 			if(u.getPermissions().isEngagement())
 				eng_users.add(u);
 		}
-		if(action.equals(""))
+		if(action.equals("")) {
 			ServletActionContext.getRequest().getSession().setAttribute("Files",null);
-			//this.JSESSION.put("Files",null);
+		}
 		
 		if(action!= null && action.equals("dateSearch")){
-			//.createQuery("from Assessment as a where a.start BETWEEN :start and :end or a.end BETWEEN :start and :end")
 			List<Assessment> asmts = em
 					.createQuery("from Assessment as a where (a.start >= :start and a.start <= :end) or (a.end >= :start and a.end <= :end)")
 					.setParameter("start", this.sdate)
@@ -157,10 +152,6 @@ public class Engagement  extends FSActionSupport{
 			}
 			
 			
-			//assessors = users;
-			
-			
-			//session.close();
 			return "assessorJSON";
 		}else if(action!= null && action.equals("createAssessment")){
 
@@ -318,7 +309,6 @@ public class Engagement  extends FSActionSupport{
 					first = false;
 				mongoQuery += " 'name' : { '$regex' : '.*" + FSUtils.sanitizeMongo(this.appName )+".*', '$options':'si'} ";
 			}
-			//if(assessorId != null && assessorId[0] != -1){
 			if(assessorId != null && assessorId.size() ==1 && assessorId.get(0) !=null){
 				if( !first ){
 					comma = ",";
