@@ -65,7 +65,7 @@ let fromMarkdown = {
 }
 let editorOptions = {
 	codeMirror: CodeMirror,
-	plugins: [font, fontColor, fontSize, image, align, imageGallery, list, formatBlock, table, blockquote, fromMarkdown, hilightColor],
+	plugins: [font, fontColor, fontSize, image, align, imageGallery, list, formatBlock, table, blockquote, fromMarkdown, hiliteColor],
 	buttonList: [
 		['undo', 'redo', 'font', 'fontSize', 'formatBlock'],
 		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
