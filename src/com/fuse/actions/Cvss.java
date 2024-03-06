@@ -13,4 +13,12 @@ public class Cvss extends FSActionSupport{
 		return SUCCESS;
 		
 	}
+	
+	@Action(value="CVSS40", results={
+			@Result(name="success",location="/WEB-INF/jsp/cvss40.jsp")
+	})
+	public String cvss40(){
+		return SUCCESS;
+		
+	}
 }

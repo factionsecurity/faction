@@ -99,7 +99,6 @@ global.editors = {
             $("#vulnModal").modal({	show: true,
             						keyboard: false,
             						backdrop: 'static'});
-            setUpCVSSModal();
 		  	$("#saveVuln").unbind();
 		  	$("#saveVuln").click(function(){
 			    let desc = global.editors.description.getContents();
@@ -395,20 +394,23 @@ function b64DecodeUnicode(str) {
 
 function setUpCVSSModal(){
 	
-		$("#cvss31Calc #cvss40Calc").on("click", function(){
-			const modalId = $(this).id;
+		$("#cvss31Calc,#cvss40Calc").on("click", function(){
+			console.log("adsfdf")
+			const modalId = this.id;
 			let cvssURL = "url:CVSS"
 			let title = "CVSS 3.1"
-			if(modalId.indexOf("40Modal") != -1){
+			let vectorId = "#cvss31String"
+			if(modalId.indexOf("40Calc") != -1){
 				cvssURL = "url:CVSS40"
 				title = "CVSS 4.0"
+				vectorId="#cvss40String"
 			}
 			$.confirm({
 				title: title,
 				content: cvssURL,
 				columnClass: 'col-md-12',
 				onContentReady: () => {
-					let vectorString = $("#cvssString").val();
+					let vectorString = $(vectorId).val();
 					if(vectorString.trim() != ""){
 						let vector = this.createCVSSObject(vectorString);
 						let severity = vector.getRating();

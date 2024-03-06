@@ -48,10 +48,9 @@
 					</bs:mco>
 				</bs:row>
 				<bs:row>
-						<bs:row>
-							<bs:mco colsize="12">
-								<h4><b><u>Exploitability Metrics</u></b></h4>
-							</bs:mco>
+					<bs:mco colsize="12">
+						<h4><b><u>Exploitability Metrics</u></b></h4>
+					</bs:mco>
 					<bs:mco colsize="6">
 						<bs:box type="success" title="Attack Complexity (AC)">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">

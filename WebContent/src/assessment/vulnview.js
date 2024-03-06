@@ -267,7 +267,8 @@ class VulnerablilityView {
 		this.editors.recommendation = suneditor.create("recommendation", this.editorOptions);
 		this.editors.details = suneditor.create("details", this.editorOptions);
 		this.setUpVulnAutoComplete()
-		this.setUpCVSSModal(false);
+		const is40 = $("#isCVSS40").val() == "true"
+		this.setUpCVSSModal(is40);
 
 
 	}
@@ -573,7 +574,7 @@ class VulnerablilityView {
 			}
 			let overall = this.convertCVSSSeverity(severity)
 			$("#overall").val(overall);
-			_this.updateCVSSScore(vector);
+			_this.updateCVSSScore(vector, is40);
 			$(".selected").find(".severity")[0].innerHTML = severity == "None"? "Recommended" : severity;
 			$(".selected").children()[0].className = `sev${severity== "None"? "Recommended" : severity}`
 			$($(".selected").children()[1]).attr('data-sort', score)

@@ -474,6 +474,7 @@ td:first-child {
 	</div>
 </div>
 
+<input type="hidden" id="isCVSS40" value="<s:property value="assessment.type.cvss40"/>"></input>
 
 <script>
   function getValueFromId(id){
