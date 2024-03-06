@@ -79,10 +79,14 @@ public class vulnerabilities {
 		public Integer impactId;
 		@JsonProperty("Active")
 		public Boolean active;
-		@JsonProperty("CvssScore")
-		public String cvssScore;
-		@JsonProperty("CvssString")
-		public String cvssString;
+		@JsonProperty("Cvss31Score")
+		public String cvss31Score;
+		@JsonProperty("Cvss31String")
+		public String cvss31String;
+		@JsonProperty("Cvss40Score")
+		public String cvss40Score;
+		@JsonProperty("Cvss40String")
+		public String cvss40String;
 		
 		public GenericVulnerability() {}
 		
@@ -180,19 +184,33 @@ public class vulnerabilities {
 			this.active = active;
 		}
 		
-		public String getCvssScore() {
-			return cvssScore;
+		public String getCvss31Score() {
+			return cvss31Score;
 		}
 
-		public void setCvssScore(String cvssScore) {
-			this.cvssScore = cvssScore;
+		public void setCvss31Score(String cvss31Score) {
+			this.cvss31Score = cvss31Score;
 		}
-		public String getCvssString() {
-			return cvssString;
+		public String getCvss31String() {
+			return cvss31String;
 		}
 
-		public void setCvssString(String cvssString) {
-			this.cvssString = cvssString;
+		public void setCvss31String(String cvss31String) {
+			this.cvss31String = cvss31String;
+		}
+		public String getCvss40Score() {
+			return cvss31Score;
+		}
+
+		public void setCvss40Score(String cvss40Score) {
+			this.cvss40Score = cvss40Score;
+		}
+		public String getCvss40String() {
+			return cvss40String;
+		}
+
+		public void setCvss40String(String cvss40String) {
+			this.cvss40String = cvss40String;
 		}
 	}
 	
@@ -333,8 +351,10 @@ public class vulnerabilities {
 								""+v.getImpact(),
 								""+v.getLikelyhood(),
 								""+v.getActive(),
-								v.getCvssScore(),
-								v.getCvssString()
+								v.getCvss31Score(),
+								v.getCvss31String(),
+								v.getCvss40Score(),
+								v.getCvss40String()
 							};
 						csvWriter.writeNext(line);
 					}
@@ -404,8 +424,10 @@ public class vulnerabilities {
 						Integer impactId = line[7].trim().equals("")? null : Integer.parseInt(line[7].trim()); 
 						Integer likelihoodId = line[8].trim().equals("")? null : Integer.parseInt(line[8].trim()); 
 						Boolean active = line[9].trim().equals("")? true: Boolean.parseBoolean(line[9].trim());
-						String cvssScore = line[10].trim().equals("")? null : line[10].trim();
-						String cvssString = line[11].trim().equals("")? null : line[11].trim();
+						String cvss31Score = line[10].trim().equals("")? null : line[10].trim();
+						String cvss31String = line[11].trim().equals("")? null : line[11].trim();
+						String cvss40Score = line[12].trim().equals("")? null : line[12].trim();
+						String cvss40String = line[13].trim().equals("")? null : line[13].trim();
 						if(name == null) {
 							return Response.status(400).entity(String.format(this.ERROR,"Name on line " + index + " is invalid")).build();
 						}
@@ -423,8 +445,10 @@ public class vulnerabilities {
 						dv.setLikelyhood(likelihoodId);
 						dv.setImpact(impactId);
 						dv.setActive(active);
-						dv.setCvssScore(cvssScore);
-						dv.setCvssString(cvssString);
+						dv.setCvss31Score(cvss31Score);
+						dv.setCvss31String(cvss31String);
+						dv.setCvss40Score(cvss40Score);
+						dv.setCvss40String(cvss40String);
 						if(catId == null) {
 							Category cat = (Category) em.createQuery("from Category where name = :name ")
 									.setParameter("name", catName)
@@ -520,8 +544,10 @@ public class vulnerabilities {
 						dv.setLikelyhood(gv.getLikelihoodId());
 						dv.setImpact(gv.getImpactId());
 						dv.setActive(gv.getActive());
-						dv.setCvssScore(gv.getCvssScore());
-						dv.setCvssString(gv.getCvssString());
+						dv.setCvss31Score(gv.getCvss31Score());
+						dv.setCvss31String(gv.getCvss31String());
+						dv.setCvss40Score(gv.getCvss40Score());
+						dv.setCvss40String(gv.getCvss40String());
 						if(gv.getCategoryId() == null) {
 							Category cat = (Category) em.createQuery("from Category where name = :name ")
 									.setParameter("name", gv.getCategoryName())
