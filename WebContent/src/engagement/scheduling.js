@@ -2,7 +2,7 @@ require('suneditor/dist/css/suneditor.min.css');
 require('../scripts/fileupload/css/fileinput.css');
 require('./scheduling.css');
 import suneditor from 'suneditor';
-import { font, fontColor, fontSize, align, image, imageGallery, list, formatBlock, table, blockquote, hiliteColor } from 'suneditor/src/plugins';
+import { font, fontColor, hiliteColor, fontSize, align, image, imageGallery, list, formatBlock, table, blockquote } from 'suneditor/src/plugins';
 import CodeMirror from 'codemirror';
 import 'codemirror/mode/htmlmixed/htmlmixed';
 import 'codemirror/lib/codemirror.css';

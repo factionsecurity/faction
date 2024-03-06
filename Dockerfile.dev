@@ -12,7 +12,6 @@ RUN rm -rf /usr/local/tomcat/webapps/docs
 RUN rm -rf /usr/local/tomcat/webapps/examples
 RUN rm -rf /usr/local/tomcat/webapps/ROOT
 
-
 COPY ./target/faction.war /usr/local/tomcat/webapps/ROOT.war
 EXPOSE 8080/tcp
 CMD ["/usr/local/tomcat/bin/catalina.sh", "run"]
