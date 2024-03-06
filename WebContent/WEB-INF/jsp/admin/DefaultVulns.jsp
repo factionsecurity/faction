@@ -32,10 +32,14 @@
 
 							<s:iterator value="levels">
 								<bs:row>
-									<bs:inputgroup name="Level ${riskId } Due Date:" colsize="6"
+									<s:set var="levelName" value="getLevelString(riskId)"/>
+									<bs:inputgroup name="${levelName}  - Level ${riskId } Due Date:" colsize="6"
 										id="due_${riskId}">${daysTillDue }</bs:inputgroup>
-									<bs:inputgroup name="Level ${riskId } Warning Date:"
+									<bs:inputgroup name="${levelName }- Level ${riskId } Warning Date:"
 										colsize="6" id="warn_${riskId}">${daysTillWarning}</bs:inputgroup>
+								</bs:row>
+								<bs:row>
+								&nbsp;
 								</bs:row>
 							</s:iterator>
 
@@ -92,14 +96,13 @@
 				<br />
 				<bs:row>
 					<bs:mco colsize="12">
-						<bs:box type="info" title="Risk Level Settings">
+						<bs:box type="info" title="Risk Level Settings <small>Change the name of the risk level</small>">
 							<s:iterator value="levels">
 								<bs:row>
-									<bs:mco colsize="2">
-										<label class="pull-right">Level ${riskId
-															}:</label>
+									<bs:mco colsize="3">
+										<label class="pull-right"><s:property value="getLevelString(riskId)"/> - Level ${riskId}:</label>
 									</bs:mco>
-									<bs:mco colsize="7">
+									<bs:mco colsize="6">
 										<input id="riskName${riskId }" class="form-control pull-right"
 											type="text" placeholder="Risk Name (ex. Critical)"
 											value="${risk}"></input>

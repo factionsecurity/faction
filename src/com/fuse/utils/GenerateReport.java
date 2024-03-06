@@ -197,8 +197,6 @@ public class GenerateReport {
 				is = base.getTemplate();
 			}
 
-			// WordprocessingMLPackage mlp = WordprocessingMLPackage.load(new
-			// File(base.getFilename()));
 			WordprocessingMLPackage mlp = WordprocessingMLPackage.load(is);
 
 			DocxUtils gendoc = new DocxUtils(mlp, a);
@@ -207,7 +205,6 @@ public class GenerateReport {
 			gendoc.tocGenerator(mlp);
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			mlp.save(baos);
-			// byte[] report = DocxUtils.updateTOC(baos.toByteArray());
 			byte[] finalReport = baos.toByteArray();
 
 			String docx = Base64.encodeBase64String(finalReport);
@@ -339,7 +336,6 @@ public class GenerateReport {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			mlp.save(baos);
 
-			// byte[] report = DocxUtils.updateTOC(baos.toByteArray());
 			byte[] finalReport = (baos.toByteArray());
 			return finalReport;
 

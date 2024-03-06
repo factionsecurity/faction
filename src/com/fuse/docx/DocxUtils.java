@@ -4,6 +4,8 @@ import java.io.StringWriter;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -42,7 +44,6 @@ import org.docx4j.wml.Tr;
 
 import com.fuse.dao.Assessment;
 import com.fuse.dao.CustomField;
-import com.fuse.dao.ExploitStep;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.extenderapi.Extensions;
@@ -173,21 +174,12 @@ public class DocxUtils {
 			int count = 1;
 			for (Vulnerability v : this.vulns) {
 				// Change Colors if need be
-				if(v.getSteps() != null) {
-					for (ExploitStep ex : v.getSteps()) {
-						String desc = ex.getDescription();
-						desc = desc.replaceAll("#FAC701", "#" + colorMap.get(v.getOverallStr()));
-						desc = desc.replaceAll("#FAC702", "#" + colorMap.get(v.getLikelyhoodStr()));
-						desc = desc.replaceAll("#FAC703", "#" + colorMap.get(v.getImpactStr()));
-						ex.setDescription(desc);
-
-					}
-				}
 				for (String xml : xmls) {
 					String nxml = xml.replaceAll("\\$\\{vulnName\\}", v.getName());
 					nxml = nxml.replaceAll("\\$\\{severity\\}", v.getOverallStr());
 					nxml = nxml.replaceAll("\\$\\{impact\\}", v.getImpactStr());
-					nxml = nxml.replaceAll("\\$\\{cvss\\}", v.getCvssScore());
+					nxml = nxml.replaceAll("\\$\\{cvssScore\\}", v.getCvssScore());
+					nxml = nxml.replaceAll("\\$\\{cvssString\\}", v.getCvssString());
 					nxml = nxml.replaceAll("\\$\\{tracking\\}", v.getTracking());
 					try {
 						nxml = nxml.replaceAll("\\$\\{vid\\}", "" + v.getId());
@@ -331,7 +323,8 @@ public class DocxUtils {
 					String nxml = xml.replaceAll("\\$\\{vulnName\\}", "No Issues disclosed.");
 					nxml = nxml.replaceAll("\\$\\{severity\\}", "");
 					nxml = nxml.replaceAll("\\$\\{impact\\}", "");
-					nxml = nxml.replaceAll("\\$\\{cvss\\}", "");
+					nxml = nxml.replaceAll("\\$\\{cvssScore\\}", "");
+					nxml = nxml.replaceAll("\\$\\{cvssString\\}", "");
 					nxml = nxml.replaceAll("\\$\\{tracking\\}", "");
 					try {
 						nxml = nxml.replaceAll("\\$\\{vid\\}", "");
@@ -373,6 +366,7 @@ public class DocxUtils {
 			throws Exception {
 
 		VariablePrepare.prepare(mlp);
+		
 
 
 		// Convert all tables and match and replace values
@@ -646,12 +640,13 @@ public class DocxUtils {
 		map.put("severity", v.getOverallStr());
 		map.put("likelihood", v.getLikelyhoodStr());
 		map.put("impact", v.getImpactStr());
+		map.put("cvssString", v.getCvssString());
+		map.put("cvssScore", v.getCvssScore());
 		try {
 			map.put("vid", "" + v.getId());
 		} catch (Exception ex) {
 		}
 		map.put("tracking", "" + v.getTracking());
-		map.put("cvss", "" + v.getCvssScore());
 
 		HashMap<String, List<Object>> map2 = new HashMap();
 
@@ -803,7 +798,8 @@ public class DocxUtils {
 				String nxml = xml.replaceAll("\\$\\{vulnName\\}", v.getName());
 				nxml = nxml.replaceAll("\\$\\{severity\\}", v.getOverallStr());
 				nxml = nxml.replaceAll("\\$\\{impact\\}", v.getImpactStr());
-				nxml = nxml.replaceAll("\\$\\{cvss\\}", v.getCvssScore());
+				nxml = nxml.replaceAll("\\$\\{cvssString\\}", v.getCvssScore());
+				nxml = nxml.replaceAll("\\$\\{cvssScore\\}", v.getCvssScore());
 				nxml = nxml.replaceAll("\\$\\{tracking\\}", v.getTracking());
 				try {
 					nxml = nxml.replaceAll("\\$\\{vid\\}", "" + v.getId());

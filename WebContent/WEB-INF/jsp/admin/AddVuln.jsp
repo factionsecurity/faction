@@ -133,22 +133,44 @@
 								</div>
 							</div>
 							<!-- /.form-group -->
-						</div>
-						<div class="form-group">
-							<div class="col-sm-6"></div>
-							<label for="title" class="col-sm-2 control-label">Likelihood
-								Severity: *</label>
-							<div class="col-sm-4">
-								<select class="select2 form-control" id="likelyhood"
-									style="width: 100%">
-									<s:iterator value="levels" status="stat">
-										<s:if
-											test="risk != null && risk != 'Unassigned' && risk != ''">
-											<option value="${stat.index}">${risk}</option>
-										</s:if>
-									</s:iterator>
-								</select>
+							<div class="form-group">
+								<label for="cvss31String" class="col-sm-2 control-label">CVSS 3.1:
+									</label>
+								<div class="col-sm-3 control-label">
+									<input class="form-control" id="cvss31String"
+										placeholder="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N" />
+								</div>
+								<div class="col-sm-1 control-label">
+									<span class="btn btn-primary" id="cvss31Calc"><i class="fa-solid fa-calculator"></i></span>
+								</div>
+								<label for="title" class="col-sm-2 control-label">Likelihood
+									Severity: *</label>
+								<div class="col-sm-4">
+									<select class="select2 form-control" id="likelyhood"
+										style="width: 100%">
+										<s:iterator value="levels" status="stat">
+											<s:if
+												test="risk != null && risk != 'Unassigned' && risk != ''">
+												<option value="${stat.index}">${risk}</option>
+											</s:if>
+										</s:iterator>
+									</select>
+								</div>
 							</div>
+							<div class="form-group">
+								<label for="cvss31String" class="col-sm-2 control-label">CVSS 4.0:
+									</label>
+								<div class="col-sm-3 control-label">
+									<input class="form-control" id="cvss40String"
+										placeholder="CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N" />
+								</div>
+								<div class="col-sm-1 control-label">
+									<span class="btn btn-primary" id="cvss40Calc"><i class="fa-solid fa-calculator"></i></span>
+								</div>
+							</div>
+						
+						
+						
 						</div>
 						<br>
 
@@ -166,9 +188,7 @@
 									<!-- /.box-header -->
 									<div class="box-body pad">
 										<textarea id="description" name="description" rows="10"
-											cols="80">
-
-                    </textarea>
+											cols="80"></textarea>
 									</div>
 								</div>
 								<!-- /.box -->
@@ -187,9 +207,7 @@
 									<!-- /.box-header -->
 									<div class="box-body pad">
 										<textarea id="recommendation" name="recommendation" rows="10"
-											cols="80">
-
-                    					</textarea>
+											cols="80"></textarea>
 									</div>
 								</div>
 								<!-- /.box -->
