@@ -596,69 +596,71 @@ class VulnerablilityView {
 					let vectorString = $("#cvssString").val();
 					if(vectorString.trim() != ""){
 						let vector = this.createCVSSObject(vectorString);
-						let score = vector.getScore();
+						let score = vector.Score();
 						let severity = this.getCVSSSeverity(score);
 						$("#modalScore").addClass(severity);
 						$("#modalScore").html(score);
 						$("#modalSeverity").addClass(severity);
 						$("#modalSeverity").html(severity);
-						let vObj = vector.getVectorObject();
 						setTimeout( () => {
-							$(`#av_${vObj['AV'].toLowerCase()}`).click()
-							$(`#ac_${vObj['AC'].toLowerCase()}`).click()
-							$(`#pr_${vObj['PR'].toLowerCase()}`).click()
-							$(`#ui_${vObj['UI'].toLowerCase()}`).click()
+							$(`#av_${vector.Get('AV').toLowerCase()}`).click()
+							$(`#ac_${vector.Get('AC').toLowerCase()}`).click()
+							$(`#pr_${vector.Get('PR').toLowerCase()}`).click()
+							$(`#ui_${vector.Get('UI').toLowerCase()}`).click()
 							
-							$(`#ei_${vObj['E'].toLowerCase()}`).click()
+							$(`#ei_${vector.Get('E').toLowerCase()}`).click()
 							
-							$(`#cr_${vObj['CR'].toLowerCase()}`).click()
-							$(`#ir_${vObj['IR'].toLowerCase()}`).click()
-							$(`#ar_${vObj['AR'].toLowerCase()}`).click()
+							$(`#cr_${vector.Get('CR').toLowerCase()}`).click()
+							$(`#ir_${vector.Get('IR').toLowerCase()}`).click()
+							$(`#ar_${vector.Get('AR').toLowerCase()}`).click()
 							
-							$(`#mav_${vObj['MAV'].toLowerCase()}`).click()
-							$(`#mac_${vObj['MAC'].toLowerCase()}`).click()
-							$(`#mpr_${vObj['MPR'].toLowerCase()}`).click()
-							$(`#mui_${vObj['MUI'].toLowerCase()}`).click()
+							$(`#mav_${vector.Get('MAV').toLowerCase()}`).click()
+							$(`#mac_${vector.Get('MAC').toLowerCase()}`).click()
+							$(`#mpr_${vector.Get('MPR').toLowerCase()}`).click()
+							$(`#mui_${vector.Get('MUI').toLowerCase()}`).click()
 							
 							
 							if(!_this.is40){
-								$(`#s_${vObj['S'].toLowerCase()}`).click()
-								$(`#c_${vObj['C'].toLowerCase()}`).click()
-								$(`#i_${vObj['I'].toLowerCase()}`).click()
-								$(`#a_${vObj['A'].toLowerCase()}`).click()
+								$(`#s_${vector.Get('S').toLowerCase()}`).click()
+								$(`#c_${vector.Get('C').toLowerCase()}`).click()
+								$(`#i_${vector.Get('I').toLowerCase()}`).click()
+								$(`#a_${vector.Get('A').toLowerCase()}`).click()
 								
 								
-								$(`#e_${vObj['E'].toLowerCase()}`).click()
-								$(`#rl_${vObj['RL'].toLowerCase()}`).click()
-								$(`#rc_${vObj['RC'].toLowerCase()}`).click()
+								$(`#e_${vector.Get('E').toLowerCase()}`).click()
+								$(`#rl_${vector.Get('RL').toLowerCase()}`).click()
+								$(`#rc_${vector.Get('RC').toLowerCase()}`).click()
 								
-								$(`#ms_${vObj['MS'].toLowerCase()}`).click()
-								$(`#mc_${vObj['MC'].toLowerCase()}`).click()
-								$(`#mi_${vObj['MI'].toLowerCase()}`).click()
-								$(`#ma_${vObj['MA'].toLowerCase()}`).click()
+								$(`#ms_${vector.Get('MS').toLowerCase()}`).click()
+								$(`#mc_${vector.Get('MC').toLowerCase()}`).click()
+								$(`#mi_${vector.Get('MI').toLowerCase()}`).click()
+								$(`#ma_${vector.Get('MA').toLowerCase()}`).click()
 							}else{
-								$(`#at_${vObj['AT'].toLowerCase()}`).click()
-								$(`#vc_${vObj['VC'].toLowerCase()}`).click()
-								$(`#vi_${vObj['VI'].toLowerCase()}`).click()
-								$(`#va_${vObj['VA'].toLowerCase()}`).click()
-								$(`#sc_${vObj['SC'].toLowerCase()}`).click()
-								$(`#si_${vObj['SI'].toLowerCase()}`).click()
-								$(`#sa_${vObj['SA'].toLowerCase()}`).click()
+								$(`#at_${vector.Get('AT').toLowerCase()}`).click()
+								$(`#vc_${vector.Get('VC').toLowerCase()}`).click()
+								$(`#vi_${vector.Get('VI').toLowerCase()}`).click()
+								$(`#va_${vector.Get('VA').toLowerCase()}`).click()
+								$(`#sc_${vector.Get('SC').toLowerCase()}`).click()
+								$(`#si_${vector.Get('SI').toLowerCase()}`).click()
+								$(`#sa_${vector.Get('SA').toLowerCase()}`).click()
+								
+								$(`#s_${vector.Get('S').toLowerCase()}`).click()
+								$(`#au_${vector.Get('AU').toLowerCase()}`).click()
+								$(`#r_${vector.Get('R').toLowerCase()}`).click()
+								$(`#re_${vector.Get('RE').toLowerCase()}`).click()
+								$(`#v_${vector.Get('V').toLowerCase()}`).click()
+								$(`#u_${vector.Get('U').toLowerCase()}`).click()
+								
+								$(`#mvc_${vector.Get('MVC').toLowerCase()}`).click()
+								$(`#mvi_${vector.Get('MVI').toLowerCase()}`).click()
+								$(`#mva_${vector.Get('MVA').toLowerCase()}`).click()
 								
 								
+								$(`#msc_${vector.Get('MSC').toLowerCase()}`).click()
+								$(`#msi_${vector.Get('MSI').toLowerCase()}`).click()
+								$(`#msa_${vector.Get('MSA').toLowerCase()}`).click()
 								
-								$(`#mvc_${vObj['MVC'].toLowerCase()}`).click()
-								$(`#mvi_${vObj['MVI'].toLowerCase()}`).click()
-								$(`#mva_${vObj['MVA'].toLowerCase()}`).click()
-								
-								
-								$(`#msc_${vObj['MSC'].toLowerCase()}`).click()
-								$(`#msi_${vObj['MSI'].toLowerCase()}`).click()
-								$(`#msa_${vObj['MSA'].toLowerCase()}`).click()
-								
-								
-								$(`#mat_${vObj['MAT'].toLowerCase()}`).click()
-								
+								$(`#mat_${vector.Get('MAT').toLowerCase()}`).click()
 								
 								
 							}
@@ -746,7 +748,7 @@ class VulnerablilityView {
 								});
 									
 								let vector = new CVSS31(cvssVector);
-								score = vector.getScore();
+								score = vector.Score();
 								severity = _this.getCVSSSeverity(score);
 								$("#modalCVSSString").val(vector.getCleanVectorString());
 								
@@ -759,6 +761,12 @@ class VulnerablilityView {
 								let si = $("input[name='si']:checked").val() || "X"
 								let sa = $("input[name='sa']:checked").val() || "X"
 								
+								let s = $("input[name='s']:checked").val() || "X"
+								let au = $("input[name='au']:checked").val() || "X"
+								let r = $("input[name='r']:checked").val() || "X"
+								let v = $("input[name='v']:checked").val() || "X"
+								let re = $("input[name='re']:checked").val() || "X"
+								let u = $("input[name='u']:checked").val() || "X"
 								
 								let mvc = $("input[name='mvc']:checked").val() || "X"
 								let mvi = $("input[name='mvi']:checked").val() || "X"
@@ -778,6 +786,12 @@ class VulnerablilityView {
 									SC: sc, 
 									SI: si, 
 									SA: sa, 
+									S: s, 
+									AU: au, 
+									R: r, 
+									V: v, 
+									RE: re, 
+									U: u,
 									MVC: mvc, 
 									MVI: mvi, 
 									MVA: mva, 

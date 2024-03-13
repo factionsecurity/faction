@@ -384,7 +384,7 @@
 				<bs:mco colsize="9">
 						<div class="btn-group btn-group-toggle" data-toggle="buttons">
 							<label class="btn btn-secondary vector"> <input
-								type="radio" name="mat" id="mac_x" autocomplete="off"
+								type="radio" name="mat" id="mat_x" autocomplete="off"
 								 value="X"> Not Defined (X)
 							</label> <label class="btn btn-secondary vector"> <input type="radio"
 								name="mat" id="mat_n" autocomplete="off" value="N"> None (N) 
@@ -423,7 +423,9 @@
 							</label> <label class="btn btn-secondary vector"> <input type="radio"
 								name="mui" id="mui_n" autocomplete="off" value="N"> None (N)
 							</label> <label class="btn btn-secondary vector"> <input type="radio"
-								name="mui" id="mui_r" autocomplete="off" value="R"> Required (R)
+								name="mui" id="mui_p" autocomplete="off" value="P"> Passive (P)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mui" id="mui_a" autocomplete="off" value="A"> Active (A)
 							</label>
 						</div>
 				</bs:mco>
