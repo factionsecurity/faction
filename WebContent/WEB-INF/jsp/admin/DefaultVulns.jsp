@@ -8,6 +8,106 @@
 .jconfirm-content input {
 	background: #030D1C;
 }
+.btn:active.focus, .btn:active:focus, .btn:focus {
+	outline: none !important;
+}
+
+.focus {
+	outline: none !important;
+}
+
+.active {
+	outline: none !important;
+}
+
+.activeVector {
+	background-color: purple !important;
+	color: white !important;
+	font-weight: bold;
+}
+
+label.btn {
+	background-color: lightgray;
+	color: #030D1C;
+}
+
+label.btn:hover {
+	font-weight: bold;
+}
+
+.scoreBody {
+	background-color: lightGray;
+	border-radius: 9px;
+	text-align: center;
+	padding-bottom: 5px;
+	margin-bottom: 40px;
+	width: 150px;
+}
+
+.scoreBody h3 {
+	font-size: xxx-large;
+	color: lightgray;
+	border-top-right-radius: 9px;
+	border-top-left-radius: 9px;
+	margin-top: 0px;
+}
+
+.scoreBody span {
+	font-size: large;
+	font-weight: bold;
+}
+
+h3.None {
+	background-color: #00a65a;
+}
+
+span.None {
+	color: #00a65a;
+}
+
+h3.Low {
+	background-color: #39cccc;
+}
+
+span.Low {
+	color: #39cccc;
+}
+
+h3.Medium {
+	background-color: #00c0ef;
+}
+
+span.Medium {
+	color: #00c0ef;
+}
+
+h3.High {
+	background-color: #f39c12;
+}
+
+span.High {
+	color: #f39c12;
+}
+
+h3.Critical {
+	background-color: #dd4b39;
+}
+
+span.Critical {
+	color: #dd4b39;
+}
+
+.circle {
+	border-radius: 50%;
+	width: 25px;
+	height: 25px;
+	padding: 7px;
+	padding-top: 6px;
+	font-size: small;
+	color: white;
+	z-index: 100000;
+}
+
 </style>
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">

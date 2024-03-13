@@ -400,10 +400,12 @@ function setUpCVSSModal(){
 			let cvssURL = "url:CVSS"
 			let title = "CVSS 3.1"
 			let vectorId = "#cvss31String"
+			let is40 = false;
 			if(modalId.indexOf("40Calc") != -1){
 				cvssURL = "url:CVSS40"
 				title = "CVSS 4.0"
 				vectorId="#cvss40String"
+				is40=true;
 			}
 			$.confirm({
 				title: title,
@@ -596,6 +598,46 @@ function setUpCVSSModal(){
 								
 								let mat = $("input[name='mat']:checked").val() || "X"
 								
+								let cvss40Vector = {
+									CVSS: "4.0", 
+									AT: at, 
+									VC: vc, 
+									VI: vi, 
+									VA: va, 
+									SC: sc, 
+									SI: si, 
+									SA: sa, 
+									MVC: mvc, 
+									MVI: mvi, 
+									MVA: mva, 
+									MSC: mcs, 
+									MSI: msi, 
+									MAT: mat
+								}
+								cvssVector = {
+									...cvss40Vector, 
+									...commonVector
+								}
+								
+								Object.keys(cvssVector).forEach( (a, _i) =>{
+									if(cvssVector[a] == "X"){
+										delete cvssVector[a];
+									}
+								});
+									
+								let vector = CVSS(cvssVector);
+								severity = vector.getRating();
+								score = vector.getScore();
+								if(vector.getTemporalScore() >0 && vector.getEnvironmentalScore() == 0){
+									score = vector.getTemporalScore();
+									severity = vector.getTemporalRating();
+								}
+								else if(vector.getEnvironmentalScore() > 0 ){
+									score = vector.getEnvironmentalScore() 
+									severity = vector.getEnvironmentalRating();
+								}
+								$("#modalCVSSString").val(vector.getCleanVectorString());
+								
 							}
 							
 							["Critical", "High", "Medium", "Low", "None"].forEach((a, b) => {
@@ -613,7 +655,11 @@ function setUpCVSSModal(){
 				buttons: {
 					save: () =>{
 						let cvssString = $("#modalCVSSString").val();
-						$("#cvssString").val(cvssString).trigger("change")
+						if(is40){
+							$("#cvss40String").val(cvssString).trigger("change")
+						}else{
+							$("#cvss31String").val(cvssString).trigger("change")
+						}
 
 					},
 					cancel: () => { }

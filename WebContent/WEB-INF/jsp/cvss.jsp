@@ -20,16 +20,16 @@
 						<bs:box type="success" title="Attack Vector (AV)">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">
 								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="attackVector" id="av_n" autocomplete="off"
+									type="radio" name="av" id="av_n" autocomplete="off"
 									 value="N" checked> Network (N)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="attackVector" id="av_a" autocomplete="off" value="A">
+									name="av" id="av_a" autocomplete="off" value="A">
 									Adjacent (A)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="attackVector" id="av_l" autocomplete="off" value="L"> Local
+									name="av" id="av_l" autocomplete="off" value="L"> Local
 									(L)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="attackVector" id="av_p" autocomplete="off" value="P">
+									name="av" id="av_p" autocomplete="off" value="P">
 									Physical (P)
 								</label>
 							</div>
@@ -39,10 +39,10 @@
 						<bs:box type="success" title="Scope (S)">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">
 								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="scope" id="s_u" autocomplete="off" value="U" checked>
+									type="radio" name="s" id="s_u" autocomplete="off" value="U" checked>
 									Unchanged (U)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="scope" id="s_c" autocomplete="off" value="C"> Changed (C)
+									name="s" id="s_c" autocomplete="off" value="C"> Changed (C)
 								</label>
 							</div>
 						</bs:box>
@@ -53,10 +53,10 @@
 						<bs:box type="success" title="Attack Complexity (AC)">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">
 								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="attackComplexity" id="ac_l" autocomplete="off"
+									type="radio" name="ac" id="ac_l" autocomplete="off"
 									 value="L" checked> Low (L)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="attackComplexity" id="ac_h" autocomplete="off" value="H">
+									name="ac" id="ac_h" autocomplete="off" value="H">
 									High (H)
 								</label>
 							</div>
@@ -66,13 +66,13 @@
 						<bs:box type="success" title="Confidentiality (C)">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">
 								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="confidentiality" id="c_n" autocomplete="off"
+									type="radio" name="c" id="c_n" autocomplete="off"
 									 value="N" checked> None (N)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="confidentiality" id="c_l" autocomplete="off" value="L"> Low
+									name="c" id="c_l" autocomplete="off" value="L"> Low
 									(L)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="confidentiality" id="c_h" autocomplete="off" value="H"> High
+									name="c" id="c_h" autocomplete="off" value="H"> High
 									(H)
 								</label>
 							</div>
@@ -84,12 +84,12 @@
 						<bs:box type="success" title="Privileges Required (PR)">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">
 								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="privileges" id="pr_n" autocomplete="off"
+									type="radio" name="pr" id="pr_n" autocomplete="off"
 									 value="N" checked> None (N)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="privileges" id="pr_l" autocomplete="off" value="L"> Low (L)
+									name="pr" id="pr_l" autocomplete="off" value="L"> Low (L)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="privileges" id="pr_h" autocomplete="off" value="H"> High (H)
+									name="pr" id="pr_h" autocomplete="off" value="H"> High (H)
 								</label>
 							</div>
 						</bs:box>
@@ -98,12 +98,12 @@
 						<bs:box type="success" title="Integrity (I)">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">
 								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="integrity" id="i_n" autocomplete="off"  value="N" checked>
+									type="radio" name="i" id="i_n" autocomplete="off"  value="N" checked>
 									None (N)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="integrity" id="i_l" autocomplete="off" value="L"> Low (L)
+									name="i" id="i_l" autocomplete="off" value="L"> Low (L)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="integrity" id="i_h" autocomplete="off" value="H"> High (H)
+									name="i" id="i_h" autocomplete="off" value="H"> High (H)
 								</label>
 							</div>
 						</bs:box>
@@ -114,10 +114,10 @@
 						<bs:box type="success" title="User Interaction (UI)">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">
 								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="userInteraction" id="ui_n" autocomplete="off"
+									type="radio" name="ui" id="ui_n" autocomplete="off"
 									 value="N" checked> None (N)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="userInteraction" id="ui_r" autocomplete="off" value="R">
+									name="ui" id="ui_r" autocomplete="off" value="R">
 									Required (R)
 								</label>
 							</div>
@@ -127,12 +127,12 @@
 						<bs:box type="success" title="Availability (A)">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">
 								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="availability" id="a_n" autocomplete="off"
+									type="radio" name="a" id="a_n" autocomplete="off"
 									 value="N" checked> None (N)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="availability" id="a_l" autocomplete="off" value="L"> Low (L)
+									name="a" id="a_l" autocomplete="off" value="L"> Low (L)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="availability" id="a_h" autocomplete="off" value="H"> High (H)
+									name="a" id="a_h" autocomplete="off" value="H"> High (H)
 								</label>
 							</div>
 						</bs:box>

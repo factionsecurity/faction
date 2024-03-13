@@ -13,394 +13,629 @@
 				<div style="direction:ltr; padding-left: 30px">
 				<bs:row>
 					<bs:mco colsize="6">
-					<h2>Base Score</h2>
-					</bs:mco>
-				</bs:row>
-				<bs:row>
-					<bs:mco colsize="6">
-						<bs:row>
-							<bs:mco colsize="12">
-								<h4><b><u>Exploitability Metrics</u></b></h4>
-							</bs:mco>
-							<bs:mco colsize="12">
-								<bs:box type="success" title="Attack Vector (AV)">
-									<div class="btn-group btn-group-toggle" data-toggle="buttons">
-										<label class="btn btn-secondary activeVector vector"> <input
-											type="radio" name="attackVector" id="av_n" autocomplete="off"
-											 value="N" checked> Network (N)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="attackVector" id="av_a" autocomplete="off" value="A">
-											Adjacent (A)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="attackVector" id="av_l" autocomplete="off" value="L"> Local
-											(L)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="attackVector" id="av_p" autocomplete="off" value="P">
-											Physical (P)
-										</label>
-									</div>
-								</bs:box>
-							</bs:mco>
-							
-							
-							
-						</bs:row>
+					<h2>Base Metrics</h2>
 					</bs:mco>
 				</bs:row>
 				<bs:row>
 					<bs:mco colsize="12">
-						<h4><b><u>Exploitability Metrics</u></b></h4>
-					</bs:mco>
-					<bs:mco colsize="6">
-						<bs:box type="success" title="Attack Complexity (AC)">
-							<div class="btn-group btn-group-toggle" data-toggle="buttons">
-								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="attackComplexity" id="ac_l" autocomplete="off"
-									 value="L" checked> Low (L)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="attackComplexity" id="ac_h" autocomplete="off" value="H">
-									High (H)
-								</label>
-							</div>
-						</bs:box>
-					</bs:mco>
-					<bs:mco colsize="6">
-						<bs:box type="success" title="Confidentiality (VC)">
-							<div class="btn-group btn-group-toggle" data-toggle="buttons">
-								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="confidentiality" id="c_n" autocomplete="off"
-									 value="N" checked> None (N)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="confidentiality" id="c_l" autocomplete="off" value="L"> Low
-									(L)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="confidentiality" id="c_h" autocomplete="off" value="H"> High
-									(H)
-								</label>
-							</div>
-						</bs:box>
+						<h4><b><center><u>Exploitability Metrics</u></center></b></h4>
+						<br/>
 					</bs:mco>
 				</bs:row>
 				<bs:row>
-					<bs:mco colsize="6">
-						<bs:box type="success" title="Privileges Required (PR)">
+					<bs:mco colsize="3"><label>Attack Vector (AV):</label></bs:mco>
+					<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary activeVector vector"> <input
+								type="radio" name="av" id="av_n" autocomplete="off"
+								 value="N" checked> Network (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="av" id="av_a" autocomplete="off" value="A">
+								Adjacent (A)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="av" id="av_l" autocomplete="off" value="L"> Local
+								(L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="av" id="av_p" autocomplete="off" value="P">
+								Physical (P)
+							</label>
+						</div>
+					</bs:mco>
+				</bs:row>
+				<br/>
+				<bs:row>
+					<bs:mco colsize="3"><label>Attack Complexity (AC):</label> </bs:mco>
+					<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary activeVector vector"> <input
+								type="radio" name="ac" id="ac_l" autocomplete="off"
+								 value="L" checked> Low (L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="ac" id="ac_h" autocomplete="off" value="H">
+								High (H)
+							</label>
+						</div>
+					</bs:mco>
+				</bs:row>
+				<br/>
+				<bs:row>
+					<bs:mco colsize="3"><label>Attack Requirements (AT):</label> </bs:mco>
+					<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary activeVector vector"> <input
+								type="radio" name="at" id="at_n" autocomplete="off"
+								 value="N" checked> None (N)
+							</label><label class="btn btn-secondary vector"> <input
+								type="radio" name="at" id="at_p" autocomplete="off"
+								 value="P" checked> Present (P)
+							</label>
+						</div>
+					</bs:mco>
+				</bs:row>
+				<br/>
+				<bs:row>
+					<bs:mco colsize="3"><label>Privileges Required (PR):</label> </bs:mco>
+					<bs:mco colsize="9">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">
 								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="privileges" id="pr_n" autocomplete="off"
+									type="radio" name="pr" id="pr_n" autocomplete="off"
 									 value="N" checked> None (N)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="privileges" id="pr_l" autocomplete="off" value="L"> Low (L)
+									name="pr" id="pr_l" autocomplete="off" value="L"> Low (L)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="privileges" id="pr_h" autocomplete="off" value="H"> High (H)
+									name="pr" id="pr_h" autocomplete="off" value="H"> High (H)
 								</label>
 							</div>
-						</bs:box>
 					</bs:mco>
-					<bs:mco colsize="6">
-						<bs:box type="success" title="Integrity (I)">
+				</bs:row>
+				<br/>
+				<bs:row>
+					<bs:mco colsize="3"><label>User Interaction (UI):</label> </bs:mco>
+					<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary activeVector vector"> <input
+								type="radio" name="ui" id="ui_n" autocomplete="off"
+								 value="N" checked> None (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="ui" id="ui_p" autocomplete="off" value="P">
+								Passive (P)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="ui" id="ui_a" autocomplete="off" value="A">
+								Active (A)
+							</label>
+						</div>
+					</bs:mco>
+				</bs:row>
+				<br/>
+				<bs:row>
+					<bs:mco colsize="12">
+						<hr>
+						<h4><b><center><u>Vulnerable System Impact Metrics</u></center></b></h4>
+						<br/>
+					</bs:mco>
+				</bs:row>
+				<bs:row>
+					<bs:mco colsize="3"><label>Confidentiality (VC):</label> </bs:mco>
+					<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary activeVector vector"> <input
+								type="radio" name="vc" id="vc_n" autocomplete="off"
+								 value="N" checked> None (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="vc" id="vc_l" autocomplete="off" value="L"> Low
+								(L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="vc" id="vc_h" autocomplete="off" value="H"> High
+								(H)
+							</label>
+						</div>
+					</bs:mco>
+				</bs:row>
+				<br/>
+				<bs:row>
+					<bs:mco colsize="3"><label>Integrity (VI):</label></bs:mco>
+					<bs:mco colsize="9">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">
 								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="integrity" id="i_n" autocomplete="off"  value="N" checked>
+									type="radio" name="vi" id="vi_n" autocomplete="off"  value="N" checked>
 									None (N)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="integrity" id="i_l" autocomplete="off" value="L"> Low (L)
+									name="vi" id="vi_l" autocomplete="off" value="L"> Low (L)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="integrity" id="i_h" autocomplete="off" value="H"> High (H)
+									name="vi" id="vi_h" autocomplete="off" value="H"> High (H)
 								</label>
 							</div>
-						</bs:box>
 					</bs:mco>
 				</bs:row>
+				<br/>
 				<bs:row>
-					<bs:mco colsize="6">
-						<bs:box type="success" title="User Interaction (UI)">
+					<bs:mco colsize="3"><label>Availability (VA):</label> </bs:mco>
+					<bs:mco colsize="9">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">
 								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="userInteraction" id="ui_n" autocomplete="off"
+									type="radio" name="va" id="va_n" autocomplete="off"
 									 value="N" checked> None (N)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="userInteraction" id="ui_r" autocomplete="off" value="R">
-									Required (R)
+									name="va" id="va_l" autocomplete="off" value="L"> Low (L)
+								</label> <label class="btn btn-secondary vector"> <input type="radio"
+									name="va" id="va_h" autocomplete="off" value="H"> High (H)
 								</label>
 							</div>
-						</bs:box>
 					</bs:mco>
-					<bs:mco colsize="6">
-						<bs:box type="success" title="Availability (A)">
+				</bs:row>
+				<br/>
+				<bs:row>
+					<bs:mco colsize="12">
+						<hr>
+						<h4><b><center><u>Subsequent System Impact Metrics</u></center></b></h4>
+						<br/>
+					</bs:mco>
+				</bs:row>
+				<bs:row>
+					<bs:mco colsize="3"><label>Confidentiality (SC):</label> </bs:mco>
+					<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary activeVector vector"> <input
+								type="radio" name="sc" id="sc_n" autocomplete="off"
+								 value="N" checked> None (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="sc" id="sc_l" autocomplete="off" value="L"> Low
+								(L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="sc" id="sc_h" autocomplete="off" value="H"> High
+								(H)
+							</label>
+						</div>
+					</bs:mco>
+				</bs:row>
+				<br/>
+				<bs:row>
+					<bs:mco colsize="3"><label>Integrity (SI):</label></bs:mco>
+					<bs:mco colsize="9">
 							<div class="btn-group btn-group-toggle" data-toggle="buttons">
 								<label class="btn btn-secondary activeVector vector"> <input
-									type="radio" name="availability" id="a_n" autocomplete="off"
+									type="radio" name="si" id="si_n" autocomplete="off"  value="N" checked>
+									None (N)
+								</label> <label class="btn btn-secondary vector"> <input type="radio"
+									name="si" id="si_l" autocomplete="off" value="L"> Low (L)
+								</label> <label class="btn btn-secondary vector"> <input type="radio"
+									name="si" id="si_h" autocomplete="off" value="H"> High (H)
+								</label>
+							</div>
+					</bs:mco>
+				</bs:row>
+				<br/>
+				<bs:row>
+					<bs:mco colsize="3"><label>Availability (SA):</label></bs:mco>
+					<bs:mco colsize="9">
+							<div class="btn-group btn-group-toggle" data-toggle="buttons">
+								<label class="btn btn-secondary activeVector vector"> <input
+									type="radio" name="sa" id="sa_n" autocomplete="off"
 									 value="N" checked> None (N)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="availability" id="a_l" autocomplete="off" value="L"> Low (L)
+									name="sa" id="sa_l" autocomplete="off" value="L"> Low (L)
 								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="availability" id="a_h" autocomplete="off" value="H"> High (H)
+									name="sa" id="sa_h" autocomplete="off" value="H"> High (H)
 								</label>
 							</div>
-						</bs:box>
+					</bs:mco>
+				</bs:row>
+				<hr>
+				<bs:row>
+					<bs:mco colsize="12">
+				 <h2>Supplemental Metrics (Optional)</h2>
+				</bs:mco>
+			</bs:row>
+				<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>Safety (S):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="s" id="s_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="s" id="s_n" autocomplete="off" value="N"> Negligible (N) 
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="s" id="s_p" autocomplete="off" value="P"> Present (P) 
+							</label> 
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>Automatable (AU):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="au" id="au_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="au" id="au_n" autocomplete="off" value="N"> No (N) 
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="au" id="au_y" autocomplete="off" value="Y"> Yes (Y)
+							</label> 
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>Recovery (R):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="r" id="r_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="r" id="r_a" autocomplete="off" value="A"> Automate (A) 
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="r" id="r_u" autocomplete="off" value="U"> User (U) 
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="r" id="r_i" autocomplete="off" value="I"> Irrecoverable (I) 
+							</label> 
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>Value Density (V):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="v" id="v_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="v" id="v_d" autocomplete="off" value="D"> Diffuse (D) 
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="v" id="v_c" autocomplete="off" value="C"> Concentrated (C) 
+							</label> 
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>Vulnerability Response Effort (RE):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="re" id="re_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="re" id="re_l" autocomplete="off" value="L"> Low (L) 
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="re" id="re_m" autocomplete="off" value="M"> Moderate (M) 
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="re" id="re_h" autocomplete="off" value="H"> High (H) 
+							</label> 
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>Provider Urgency (U):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="u" id="u_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="u" id="u_c" autocomplete="off" value="C"> Clear (C)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="u" id="u_g" autocomplete="off" value="G"> Green (G)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="u" id="u_a" autocomplete="off" value="A"> Amber (A)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="u" id="u_r" autocomplete="off" value="R"> Red (R)
+							</label> 
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="12">
+				 <h2>Environmental (Modified Base Metrics)</h2>
+				</bs:mco>
+			</bs:row>
+				<br/>
+			<bs:row>
+				<bs:mco colsize="12">
+					<h4><b><center><u>Exploitability Metrics</u></center></b></h4>
+					<br/>
+				</bs:mco>
+			</bs:row>
+			<bs:row>
+				<bs:mco colsize="3"><label>Attack Vector (MAV):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="mav" id="mav_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mav" id="mav_n" autocomplete="off" value="N"> Network (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mav" id="mav_a" autocomplete="off" value="A"> Adjacent Network (A)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mav" id="mav_l" autocomplete="off" value="L"> Local (L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mav" id="mav_p" autocomplete="off" value="P"> Physical (P)
+							</label>
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>Attack Complexity (MAC):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="mac" id="mac_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mac" id="mac_l" autocomplete="off" value="L"> Low (L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mac" id="mac_h" autocomplete="off" value="H"> High (H)
+							</label>
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>Attack Requirements (MAT):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="mat" id="mac_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mat" id="mat_n" autocomplete="off" value="N"> None (N) 
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mat" id="mat_p" autocomplete="off" value="P"> Present (P)
+							</label>
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>Privileges Required (MPR):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="mpr" id="mpr_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mpr" id="mpr_n" autocomplete="off" value="N"> None (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mpr" id="mpr_l" autocomplete="off" value="L"> Low (L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mpr" id="mpr_h" autocomplete="off" value="H"> High (H)
+							</label>
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>User Interaction (MUI):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="mui" id="mui_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mui" id="mui_n" autocomplete="off" value="N"> None (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mui" id="mui_r" autocomplete="off" value="R"> Required (R)
+							</label>
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="12">
+					<hr>
+					<h4><b><center><u>Vulnerable System Impact Metrics</u></center></b></h4>
+					<br/>
+				</bs:mco>
+			</bs:row>
+			<bs:row>
+				<bs:mco colsize="3"><label> Confidentiality (MVC):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="mvc" id="mvc_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mvc" id="mvc_n" autocomplete="off" value="N"> None (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mvc" id="mvc_l" autocomplete="off" value="L"> Low (L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mvc" id="mvc_h" autocomplete="off" value="H"> High (H)
+							</label>
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label> Integrity (MVI):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="mvi" id="mvi_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mvi" id="mvi_n" autocomplete="off" value="N"> None (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mvi" id="mvi_l" autocomplete="off" value="L"> Low (L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mvi" id="mvi_h" autocomplete="off" value="H"> High (H)
+							</label>
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label> Availability (MVA):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="mva" id="mva_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mva" id="mva_n" autocomplete="off" value="N"> None (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mva" id="mva_l" autocomplete="off" value="L"> Low (L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="mva" id="mva_h" autocomplete="off" value="H"> High (H)
+							</label>
+						</div>
+				</bs:mco>
+			</bs:row>
+			<bs:row>
+				<bs:mco colsize="12">
+					<hr>
+					<h4><b><center><u>Subsequent System Impact Metrics</u></center></b></h4>
+					<br/>
+				</bs:mco>
+			</bs:row>
+			<bs:row>
+				<bs:mco colsize="3"><label> Confidentiality (MSC):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="msc" id="msc_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="msc" id="msc_n" autocomplete="off" value="N"> Negligible (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="msc" id="msc_l" autocomplete="off" value="L"> Low (L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="msc" id="msc_h" autocomplete="off" value="H"> High (H)
+							</label>
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label> Integrity (MSI):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="msi" id="msi_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="msi" id="msi_s" autocomplete="off" value="S"> Safety (S)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="msi" id="msi_n" autocomplete="off" value="N"> Negligible (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="msi" id="msi_l" autocomplete="off" value="L"> Low (L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="msi" id="msi_h" autocomplete="off" value="H"> High (H)
+							</label>
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label> Availability (MSA):</label> </bs:mco>
+				<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="msa" id="msi_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="msa" id="msa_s" autocomplete="off" value="S"> Safety (S)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="msa" id="msa_n" autocomplete="off" value="N"> Negligible (N)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="msa" id="msa_l" autocomplete="off" value="L"> Low (L)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="msa" id="msa_h" autocomplete="off" value="H"> High (H)
+							</label>
+						</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="12">
+				<hr>
+				 <h2>Environmental (Security Requirements)</h2>
+				</bs:mco>
+			</bs:row>
+				<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>Confidentiality Requirement (CR):</label> </bs:mco>
+				<bs:mco colsize="9">
+								<div class="btn-group btn-group-toggle" data-toggle="buttons">
+									<label class="btn btn-secondary vector"> <input
+										type="radio" name="cr" id="cr_x" autocomplete="off"
+										 value="X"> Not Defined (X)
+									</label> <label class="btn btn-secondary vector"> <input type="radio"
+										name="cr" id="cr_l" autocomplete="off" value="L"> Low (L)
+									</label> <label class="btn btn-secondary vector"> <input type="radio"
+										name="cr" id="cr_m" autocomplete="off" value="M"> Medium (M)
+									</label> <label class="btn btn-secondary vector"> <input type="radio"
+										name="cr" id="cr_h" autocomplete="off" value="H"> High (H)
+									</label>
+								</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>Integrity Requirement (IR):</label> </bs:mco>
+				<bs:mco colsize="9">
+								<div class="btn-group btn-group-toggle" data-toggle="buttons">
+									<label class="btn btn-secondary vector"> <input
+										type="radio" name="ir" id="ir_x" autocomplete="off"
+										 value="X"> Not Defined (X)
+									</label> <label class="btn btn-secondary vector"> <input type="radio"
+										name="ir" id="ir_l" autocomplete="off" value="L"> Low (L)
+									</label> <label class="btn btn-secondary vector"> <input type="radio"
+										name="ir" id="ir_m" autocomplete="off" value="M"> Medium (M)
+									</label> <label class="btn btn-secondary vector"> <input type="radio"
+										name="ir" id="ir_h" autocomplete="off" value="H"> High (H)
+									</label>
+								</div>
+				</bs:mco>
+			</bs:row>
+			<br/>
+			<bs:row>
+				<bs:mco colsize="3"><label>Availability Requirement (AR):</label> </bs:mco>
+				<bs:mco colsize="9">
+								<div class="btn-group btn-group-toggle" data-toggle="buttons">
+									<label class="btn btn-secondary vector"> <input
+										type="radio" name="ar" id="ar_x" autocomplete="off"
+										 value="X"> Not Defined (X)
+									</label> <label class="btn btn-secondary vector"> <input type="radio"
+										name="ar" id="ar_l" autocomplete="off" value="L"> Low (L)
+									</label> <label class="btn btn-secondary vector"> <input type="radio"
+										name="ar" id="ar_m" autocomplete="off" value="M"> Medium (M)
+									</label> <label class="btn btn-secondary vector"> <input type="radio"
+										name="ar" id="ar_h" autocomplete="off" value="H"> High (H)
+									</label>
+								</div>
 					</bs:mco>
 				</bs:row>
 				<bs:row>
 					<bs:mco colsize="12">
-								<hr/>
-					 <h2>Temporal Score (Optional)</h2>
+					<hr>
+					 <h2>Threat Metrics</h2>
 					</bs:mco>
 				</bs:row>
+				<br/>
 				<bs:row>
-					<bs:mco colsize="12">
-						<bs:box type="success" title="Exploit Code Maturity (E)">
-							<div class="btn-group btn-group-toggle" data-toggle="buttons">
-								<label class="btn btn-secondary vector"> <input
-									type="radio" name="e" id="e_x" autocomplete="off"
-									 value="X"> Not Defined (X)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="e" id="e_u" autocomplete="off" value="U"> Unproven (U)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="e" id="e_p" autocomplete="off" value="P"> Proof of Concept (P)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="e" id="e_f" autocomplete="off" value="F"> Functional (F)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="e" id="e_h" autocomplete="off" value="H"> High (H)
-								</label>
-							</div>
-						</bs:box>
-					</bs:mco>
-				</bs:row>
-				<bs:row>
-					<bs:mco colsize="12">
-						<bs:box type="success" title="Remediation Level (RL)">
-							<div class="btn-group btn-group-toggle" data-toggle="buttons">
-								<label class="btn btn-secondary vector"> <input
-									type="radio" name="rl" id="rl_x" autocomplete="off"
-									 value="X"> Not Defined (X)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="rl" id="rl_o" autocomplete="off" value="O"> Official Fix (O)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="rl" id="rl_t" autocomplete="off" value="T"> Temporary Fix (T)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="rl" id="rl_w" autocomplete="off" value="W"> Work Around (W)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="rl" id="rl_u" autocomplete="off" value="U"> Unavailable (U)
-								</label>
-							</div>
-						</bs:box>
-					</bs:mco>
-				</bs:row>
-				<bs:row>
-					<bs:mco colsize="12">
-						<bs:box type="success" title="Report Confidende (RC)">
-							<div class="btn-group btn-group-toggle" data-toggle="buttons">
-								<label class="btn btn-secondary vector"> <input
-									type="radio" name="rc" id="rc_x" autocomplete="off"
-									 value="X"> Not Defined (X)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="rc" id="rc_u" autocomplete="off" value="U"> Unknown (U) 
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="rc" id="rc_r" autocomplete="off" value="R"> Reasonable (R)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="rc" id="rc_c" autocomplete="off" value="C"> Confirmed (C) 
-								</label> 
-							</div>
-						</bs:box>
-					</bs:mco>
-				</bs:row>
-				<bs:row>
-					<bs:mco colsize="12">
-								<hr/>
-					<h2>Environmental Score (Optional)</h2>
-					</bs:mco>
-				</bs:row>
-				<bs:row>
-					<bs:mco colsize="12">
-						<h4><b><u>Exploitability Metrics</u></b></h4>
-					</bs:mco>
-					<bs:mco colsize="12">
-						<bs:box type="success" title="Modified Attack Vector (MAV)">
-							<div class="btn-group btn-group-toggle" data-toggle="buttons">
-								<label class="btn btn-secondary vector"> <input
-									type="radio" name="mav" id="mav_x" autocomplete="off"
-									 value="X"> Not Defined (X)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="mav" id="mav_n" autocomplete="off" value="N"> Network (N)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="mav" id="mav_a" autocomplete="off" value="A"> Adjacent Network (A)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="mav" id="mav_l" autocomplete="off" value="L"> Local (L)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="mav" id="mav_p" autocomplete="off" value="P"> Physical (P)
-								</label>
-							</div>
-						</bs:box>
-					</bs:mco>
-					<bs:mco colsize="12">
-						<bs:box type="success" title="Modified Attack Complexity (MAC)">
-							<div class="btn-group btn-group-toggle" data-toggle="buttons">
-								<label class="btn btn-secondary vector"> <input
-									type="radio" name="mac" id="mac_x" autocomplete="off"
-									 value="X"> Not Defined (X)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="mac" id="mac_l" autocomplete="off" value="L"> Low (L)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="mac" id="mac_h" autocomplete="off" value="H"> High (H)
-								</label>
-							</div>
-						</bs:box>
-					</bs:mco>
-					<bs:mco colsize="12">
-						<bs:box type="success" title="Modified Privileges Required (MPR)">
-							<div class="btn-group btn-group-toggle" data-toggle="buttons">
-								<label class="btn btn-secondary vector"> <input
-									type="radio" name="mpr" id="mpr_x" autocomplete="off"
-									 value="X"> Not Defined (X)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="mpr" id="mpr_n" autocomplete="off" value="N"> None (N)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="mpr" id="mpr_l" autocomplete="off" value="L"> Low (L)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="mpr" id="mpr_h" autocomplete="off" value="H"> High (H)
-								</label>
-							</div>
-						</bs:box>
-					</bs:mco>
-					<bs:mco colsize="12">
-						<bs:box type="success" title="Modified User Interaction (MUI)">
-							<div class="btn-group btn-group-toggle" data-toggle="buttons">
-								<label class="btn btn-secondary vector"> <input
-									type="radio" name="mui" id="mui_x" autocomplete="off"
-									 value="X"> Not Defined (X)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="mui" id="mui_n" autocomplete="off" value="N"> None (N)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="mui" id="mui_r" autocomplete="off" value="R"> Required (R)
-								</label>
-							</div>
-						</bs:box>
-					</bs:mco>
-					<bs:mco colsize="12">
-						<bs:box type="success" title="Modified Scope (MS)">
-							<div class="btn-group btn-group-toggle" data-toggle="buttons">
-								<label class="btn btn-secondary vector"> <input
-									type="radio" name="ms" id="ms_x" autocomplete="off"
-									 value="X"> Not Defined (X)
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="ms" id="ms_u" autocomplete="off" value="U"> Unchanged (U) 
-								</label> <label class="btn btn-secondary vector"> <input type="radio"
-									name="ms" id="ms_c" autocomplete="off" value="C"> Changed (C)
-								</label>
-							</div>
-						</bs:box>
-					</bs:mco>
-				</bs:row>
-				<bs:row>
-					<bs:mco colsize="6">
-						<bs:row>
-							<bs:mco colsize="12">
-								<h4><b><u>Impact Metrics</u></b></h4>
-							</bs:mco>
-							<bs:mco colsize="12">
-								<bs:box type="success" title="Modified Confidentiality (MC)">
-									<div class="btn-group btn-group-toggle" data-toggle="buttons">
-										<label class="btn btn-secondary vector"> <input
-											type="radio" name="mc" id="mc_x" autocomplete="off"
-											 value="X"> Not Defined (X)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="mc" id="mc_n" autocomplete="off" value="N"> None (N)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="mc" id="mc_l" autocomplete="off" value="L"> Low (L)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="mc" id="mc_h" autocomplete="off" value="H"> High (H)
-										</label>
-									</div>
-								</bs:box>
-							</bs:mco>
-							<bs:mco colsize="12">
-								<bs:box type="success" title="Modified Integrity (MI)">
-									<div class="btn-group btn-group-toggle" data-toggle="buttons">
-										<label class="btn btn-secondary vector"> <input
-											type="radio" name="mi" id="mi_x" autocomplete="off"
-											 value="X"> Not Defined (X)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="mi" id="mi_n" autocomplete="off" value="N"> None (N)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="mi" id="mi_l" autocomplete="off" value="L"> Low (L)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="mi" id="mi_h" autocomplete="off" value="H"> High (H)
-										</label>
-									</div>
-								</bs:box>
-							</bs:mco>
-							<bs:mco colsize="12">
-								<bs:box type="success" title="Modified Availability (MA)">
-									<div class="btn-group btn-group-toggle" data-toggle="buttons">
-										<label class="btn btn-secondary vector"> <input
-											type="radio" name="ma" id="ma_x" autocomplete="off"
-											 value="X"> Not Defined (X)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="ma" id="ma_n" autocomplete="off" value="N"> None (N)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="ma" id="ma_l" autocomplete="off" value="L"> Low (L)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="ma" id="ma_h" autocomplete="off" value="H"> High (H)
-										</label>
-									</div>
-								</bs:box>
-							</bs:mco>
-						</bs:row>
-					</bs:mco>
-					<bs:mco colsize="6">
-						<bs:row>
-							<bs:mco colsize="12">
-								<h4><b><u>Impact SubScore Metrics</u></b></h4>
-							</bs:mco>
-							<bs:mco colsize="12">
-								<bs:box type="success" title="Confidentiality Requirement (CR)">
-									<div class="btn-group btn-group-toggle" data-toggle="buttons">
-										<label class="btn btn-secondary vector"> <input
-											type="radio" name="cr" id="cr_x" autocomplete="off"
-											 value="X"> Not Defined (X)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="cr" id="cr_l" autocomplete="off" value="L"> Low (L)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="cr" id="cr_m" autocomplete="off" value="M"> Medium (M)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="cr" id="cr_h" autocomplete="off" value="H"> High (H)
-										</label>
-									</div>
-								</bs:box>
-							</bs:mco>
-							<bs:mco colsize="12">
-								<bs:box type="success" title="Integrity Requirement (IR)">
-									<div class="btn-group btn-group-toggle" data-toggle="buttons">
-										<label class="btn btn-secondary vector"> <input
-											type="radio" name="ir" id="ir_x" autocomplete="off"
-											 value="X"> Not Defined (X)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="ir" id="ir_l" autocomplete="off" value="L"> Low (L)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="ir" id="ir_m" autocomplete="off" value="M"> Medium (M)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="ir" id="ir_h" autocomplete="off" value="H"> High (H)
-										</label>
-									</div>
-								</bs:box>
-							</bs:mco>
-							<bs:mco colsize="12">
-								<bs:box type="success" title="Availability Requirement (AR)">
-									<div class="btn-group btn-group-toggle" data-toggle="buttons">
-										<label class="btn btn-secondary vector"> <input
-											type="radio" name="ar" id="ar_x" autocomplete="off"
-											 value="X"> Not Defined (X)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="ar" id="ar_l" autocomplete="off" value="L"> Low (L)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="ar" id="ar_m" autocomplete="off" value="M"> Medium (M)
-										</label> <label class="btn btn-secondary vector"> <input type="radio"
-											name="ar" id="ar_h" autocomplete="off" value="H"> High (H)
-										</label>
-									</div>
-								</bs:box>
-							</bs:mco>
-						</bs:row>
+					<bs:mco colsize="3"><label>Exploit Maturity (E):</label></bs:mco>
+					<bs:mco colsize="9">
+						<div class="btn-group btn-group-toggle" data-toggle="buttons">
+							<label class="btn btn-secondary vector"> <input
+								type="radio" name="e" id="e_x" autocomplete="off"
+								 value="X"> Not Defined (X)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="e" id="e_u" autocomplete="off" value="U"> Unreported (U)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="e" id="e_p" autocomplete="off" value="P"> Proof of Concept (P)
+							</label> <label class="btn btn-secondary vector"> <input type="radio"
+								name="e" id="e_a" autocomplete="off" value="A"> Attacked (A)
+							</label>
+						</div>
 					</bs:mco>
 				</bs:row>
 			</div>

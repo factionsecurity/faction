@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@pandatix/js-cvss": "^0.4.4",
     "@popperjs/core": "^2.11.6",
     "@turingpointde/cvss.js": "^1.5.0",
     "adminlte": "^2.4.1",

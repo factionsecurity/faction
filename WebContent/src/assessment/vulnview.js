@@ -18,7 +18,7 @@ import 'jquery-confirm';
 import 'select2';
 import '../scripts/jquery.autocomplete.min';
 import { marked } from 'marked';
-import CVSS from "@turingpointde/cvss.js";
+import { CVSS31, CVSS40 } from '@pandatix/js-cvss';
 
 class SaveQueue {
 	constructor(caller, assessmentId, saveCallback, updateVulnsCallback) {
@@ -267,10 +267,23 @@ class VulnerablilityView {
 		this.editors.recommendation = suneditor.create("recommendation", this.editorOptions);
 		this.editors.details = suneditor.create("details", this.editorOptions);
 		this.setUpVulnAutoComplete()
-		const is40 = $("#isCVSS40").val() == "true"
-		this.setUpCVSSModal(is40);
+		this.is40 = $("#isCVSS40").val() == "true"
+		this.setUpCVSSModal(this.is40);
 
 
+	}
+	getCVSSSeverity(score) {
+		const limits = {
+			"None": [0, 0],
+			"Low": [0.1, 3.9],
+			"Medium": [4, 6.9],
+			"High": [7, 8.9],
+			"Critical": [9, 10]
+		}
+		if (score == 0) {
+			return "None"
+		}
+		return Object.keys(limits).reduce((acc, key) => score >= limits[key][0] && score <= limits[key][1] ? key : acc, "None")
 	}
 
 	catHearder(params, data) {
@@ -515,37 +528,23 @@ class VulnerablilityView {
 		}
 	}
 	
-	createCVSSObject(cvssString, is40){
+	createCVSSObject(cvssString){
 		try{
-			let vector = CVSS(cvssString);
-			if(!vector.isValid && is40){
-				return CVSS("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N");
-			}else if( !vector.isValid ) {
-				return CVSS("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N");
-			}else{
-				return vector;
-			}
+			return this.is40? new CVSS40(cvssString) : new CVSS31(cvssString);
 		}catch(e){
-			if(is40){
-				return CVSS("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N");
+			if(this.is40){
+				return new CVSS40("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N");
 			}else{
-				return CVSS("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N");
+				return new CVSS31("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N");
 			}
 		}
 		
 	}
 	
 	updateCVSSScore(vector){
-		let score = vector.getScore();
-		let severity = vector.getRating();
-		if(vector.getTemporalScore() >0 && vector.getEnvironmentalScore() == 0){
-			score = vector.getTemporalScore();
-			severity = vector.getTemporalRating();
-		}
-		else if(vector.getEnvironmentalScore() > 0 ){
-			score = vector.getEnvironmentalScore() 
-			severity = vector.getEnvironmentalRating();
-		}
+		console.log(vector)
+		let score = vector.Score();
+		let severity = this.getCVSSSeverity(score);
 		$("#score").html(score);
 		$("#severity").html(severity);
 		["Critical", "High", "Medium", "Low", "None"].forEach((a, b) => {
@@ -562,19 +561,11 @@ class VulnerablilityView {
 		$("#cvssString").on("change input", () => {
 			let cvssString = $("#cvssString").val();
 			let vector = this.createCVSSObject(cvssString);
-			let score = vector.getScore();
-			let severity = vector.getRating();
-			if(vector.getTemporalScore() >0 && vector.getEnvironmentalScore() == 0){
-				score = vector.getTemporalScore();
-				severity = vector.getTemporalRating();
-			}
-			else if(vector.getEnvironmentalScore() > 0 ){
-				score = vector.getEnvironmentalScore() 
-				severity = vector.getEnvironmentalRating();
-			}
+			let score = vector.Score();
+			let severity = this.getCVSSSeverity(score);
 			let overall = this.convertCVSSSeverity(severity)
 			$("#overall").val(overall);
-			_this.updateCVSSScore(vector, is40);
+			_this.updateCVSSScore(vector);
 			$(".selected").find(".severity")[0].innerHTML = severity == "None"? "Recommended" : severity;
 			$(".selected").children()[0].className = `sev${severity== "None"? "Recommended" : severity}`
 			$($(".selected").children()[1]).attr('data-sort', score)
@@ -587,14 +578,16 @@ class VulnerablilityView {
 
 		})
 	}
-	setUpCVSSModal(is40){
+	setUpCVSSModal(){
 		let cvssURL = "url:CVSS"
 		let title = "CVSS 3.1"
-		if(is40){
+		if(this.is40){
 			cvssURL = "url:CVSS40"
 			title = "CVSS 4.0"
 		}
+		let _this = this;
 		$("#cvssModal").on("click", () => {
+			
 			$.confirm({
 				title: title,
 				content: cvssURL,
@@ -603,8 +596,8 @@ class VulnerablilityView {
 					let vectorString = $("#cvssString").val();
 					if(vectorString.trim() != ""){
 						let vector = this.createCVSSObject(vectorString);
-						let severity = vector.getRating();
 						let score = vector.getScore();
+						let severity = this.getCVSSSeverity(score);
 						$("#modalScore").addClass(severity);
 						$("#modalScore").html(score);
 						$("#modalSeverity").addClass(severity);
@@ -628,7 +621,7 @@ class VulnerablilityView {
 							$(`#mui_${vObj['MUI'].toLowerCase()}`).click()
 							
 							
-							if(!is40){
+							if(!_this.is40){
 								$(`#s_${vObj['S'].toLowerCase()}`).click()
 								$(`#c_${vObj['C'].toLowerCase()}`).click()
 								$(`#i_${vObj['I'].toLowerCase()}`).click()
@@ -680,10 +673,10 @@ class VulnerablilityView {
 						});
 						$(el).addClass("activeVector");
 						setTimeout(() => {
-							let av = $("input[name='attackVector']:checked").val()
-							let ac = $("input[name='attackComplexity']:checked").val()
-							let pr = $("input[name='privileges']:checked").val()
-							let ui = $("input[name='userInteraction']:checked").val()
+							let av = $("input[name='av']:checked").val()
+							let ac = $("input[name='ac']:checked").val()
+							let pr = $("input[name='pr']:checked").val()
+							let ui = $("input[name='ui']:checked").val()
 							
 							let ei = $("input[name='ei']:checked").val() || "X"
 							let cr = $("input[name='cr']:checked").val() || "X"
@@ -714,7 +707,7 @@ class VulnerablilityView {
 							let cvssString="";
 									
 							
-							if(!is40){
+							if(!_this.is40){
 								let c = $("input[name='confidentiality']:checked").val()
 								let i = $("input[name='integrity']:checked").val()
 								let a = $("input[name='availability']:checked").val()
@@ -752,17 +745,9 @@ class VulnerablilityView {
 									}
 								});
 									
-								let vector = CVSS(cvssVector);
-								severity = vector.getRating();
+								let vector = new CVSS31(cvssVector);
 								score = vector.getScore();
-								if(vector.getTemporalScore() >0 && vector.getEnvironmentalScore() == 0){
-									score = vector.getTemporalScore();
-									severity = vector.getTemporalRating();
-								}
-								else if(vector.getEnvironmentalScore() > 0 ){
-									score = vector.getEnvironmentalScore() 
-									severity = vector.getEnvironmentalRating();
-								}
+								severity = _this.getCVSSSeverity(score);
 								$("#modalCVSSString").val(vector.getCleanVectorString());
 								
 							}else{
@@ -785,6 +770,39 @@ class VulnerablilityView {
 								let msa = $("input[name='msa']:checked").val() || "X"
 								
 								let mat = $("input[name='mat']:checked").val() || "X"
+								let cvss40Vector = {
+									AT: at, 
+									VC: vc, 
+									VI: vi, 
+									VA: va, 
+									SC: sc, 
+									SI: si, 
+									SA: sa, 
+									MVC: mvc, 
+									MVI: mvi, 
+									MVA: mva, 
+									MSC: msc, 
+									MSI: msi, 
+									MSA: msa, 
+									MAT: mat
+								}
+								cvssVector = {
+									...cvss40Vector, 
+									...commonVector
+								}
+								let vector = new CVSS40();
+								Object.keys(cvssVector).forEach( (a, _i) =>{
+									if(cvssVector[a] != "X"){
+										vector.Set(a,cvssVector[a]);
+									}
+								});
+								
+								
+								
+								score = vector.Score()
+								severity = _this.getCVSSSeverity(score);
+								console.log(vector)
+								$("#modalCVSSString").val(vector.Vector());
 								
 							}
 							
