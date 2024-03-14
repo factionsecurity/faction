@@ -9,8 +9,8 @@
 	<section class="content">
 		<bs:row>
 			<bs:mco colsize="10">
-			<div style="max-height: 1000px; width: 900px; overflow-y: auto; direction:rtl; ">
-				<div style="direction:ltr; padding-left: 30px">
+			<div class="cvss-content" style="overflow-y: auto; direction:rtl; ">
+				<div style="direction:ltr; padding-left: 30px;">
 				<bs:row>
 					<bs:mco colsize="6">
 					<h2>Base Metrics</h2>

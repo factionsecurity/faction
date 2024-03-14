@@ -595,6 +595,7 @@ class VulnerablilityView {
 				onContentReady: () => {
 					let vectorString = $("#cvssString").val();
 					if(vectorString.trim() != ""){
+						//resize:
 						let vector = this.createCVSSObject(vectorString);
 						let score = vector.Score();
 						let severity = this.getCVSSSeverity(score);
@@ -603,6 +604,8 @@ class VulnerablilityView {
 						$("#modalSeverity").addClass(severity);
 						$("#modalSeverity").html(severity);
 						setTimeout( () => {
+							let height = $(".jconfirm-content-pane")[0].clientHeight;
+							$(".cvss-content")[0].style.maxHeight=`${height - 15}px`
 							$(`#av_${vector.Get('AV').toLowerCase()}`).click()
 							$(`#ac_${vector.Get('AC').toLowerCase()}`).click()
 							$(`#pr_${vector.Get('PR').toLowerCase()}`).click()
