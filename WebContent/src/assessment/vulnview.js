@@ -530,7 +530,15 @@ class VulnerablilityView {
 	
 	createCVSSObject(cvssString){
 		try{
-			return this.is40? new CVSS40(cvssString) : new CVSS31(cvssString);
+			if(cvssString.indexOf("CVSS:4.0") == 0){
+				return new CVSS40(cvssString);
+			}else if(cvssString.indexOf("CVSS:3") == 0){
+				return new CVSS31(cvssString);
+			}else if(this.is40){
+				return new CVSS40("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N");
+			}else{
+				return new CVSS31("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N");
+			}
 		}catch(e){
 			if(this.is40){
 				return new CVSS40("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N");
@@ -541,9 +549,25 @@ class VulnerablilityView {
 		
 	}
 	
+	getCVSSScore(vector){
+		if(typeof vector.BaseScore == 'function'){
+			let score = vector.BaseScore();
+			const tmpScore = vector.TemporalScore();
+			const envScore = vector.EnvironmentalScore();
+			if(tmpScore != 0 && tmpScore < score){
+				score = tmpScore
+			}
+			if(envScore != 0 && envScore < score){
+				score = envScore
+			}
+			return score;
+		}else{
+			return vector.Score();
+		}
+	}
+	
 	updateCVSSScore(vector){
-		console.log(vector)
-		let score = vector.Score();
+		let score = this.getCVSSScore(vector);
 		let severity = this.getCVSSSeverity(score);
 		$("#score").html(score);
 		$("#severity").html(severity);
@@ -561,7 +585,7 @@ class VulnerablilityView {
 		$("#cvssString").on("change input", () => {
 			let cvssString = $("#cvssString").val();
 			let vector = this.createCVSSObject(cvssString);
-			let score = vector.Score();
+			let score = this.getCVSSScore(vector);
 			let severity = this.getCVSSSeverity(score);
 			let overall = this.convertCVSSSeverity(severity)
 			$("#overall").val(overall);
@@ -597,7 +621,7 @@ class VulnerablilityView {
 					if(vectorString.trim() != ""){
 						//resize:
 						let vector = this.createCVSSObject(vectorString);
-						let score = vector.Score();
+						let score = this.getCVSSScore(vector);
 						let severity = this.getCVSSSeverity(score);
 						$("#modalScore").addClass(severity);
 						$("#modalScore").html(score);
@@ -713,10 +737,10 @@ class VulnerablilityView {
 									
 							
 							if(!_this.is40){
-								let c = $("input[name='confidentiality']:checked").val()
-								let i = $("input[name='integrity']:checked").val()
-								let a = $("input[name='availability']:checked").val()
-								let s = $("input[name='scope']:checked").val()
+								let c = $("input[name='c']:checked").val()
+								let i = $("input[name='i']:checked").val()
+								let a = $("input[name='a']:checked").val()
+								let s = $("input[name='s']:checked").val()
 								
 								let e = $("input[name='e']:checked").val() || "X"
 								let rl = $("input[name='rl']:checked").val() || "X"
@@ -726,7 +750,6 @@ class VulnerablilityView {
 								let mi = $("input[name='mi']:checked").val() || "X"
 								let ma = $("input[name='ma']:checked").val() || "X"
 								let cvss31Vector = {
-									CVSS: "3.1", 
 									C: c, 
 									I: i, 
 									A: a, 
@@ -744,16 +767,22 @@ class VulnerablilityView {
 									...commonVector
 								}
 								
+								let vector = new CVSS31();
 								Object.keys(cvssVector).forEach( (a, _i) =>{
-									if(cvssVector[a] == "X"){
-										delete cvssVector[a];
+									if(cvssVector[a] != "X"){
+										vector.Set(a,cvssVector[a]);
 									}
 								});
-									
-								let vector = new CVSS31(cvssVector);
-								score = vector.Score();
+								console.log(vector);
+								score = _this.getCVSSScore(vector);
 								severity = _this.getCVSSSeverity(score);
-								$("#modalCVSSString").val(vector.getCleanVectorString());
+								//fixes a bug in the cvss library
+								let vectorString = "CVSS:3.1";
+								for (const [t] of Object.entries(vector._metrics)) {
+									const n = vector.Get(t);
+									null != n && "X" != n && (vectorString = vectorString.concat("/", t, ":", n))
+								}
+								$("#modalCVSSString").val(vectorString);
 								
 							}else{
 								let at = $("input[name='at']:checked").val() || "X"
@@ -816,7 +845,7 @@ class VulnerablilityView {
 								
 								
 								
-								score = vector.Score()
+								score = _this.getCVSSScore(vector);
 								severity = _this.getCVSSSeverity(score);
 								console.log(vector)
 								$("#modalCVSSString").val(vector.Vector());

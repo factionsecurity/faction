@@ -8,7 +8,7 @@
 	<section class="content">
 		<bs:row>
 			<bs:mco colsize="10">
-			<div style="max-height: 1000px; width: 900px; overflow-y: auto; direction:rtl; ">
+			<div class="cvss-content" style="width: 900px; overflow-y: auto; direction:rtl; ">
 				<div style="direction:ltr; padding-left: 30px">
 				<bs:row>
 					<bs:mco colsize="6">
