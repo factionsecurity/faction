@@ -269,7 +269,9 @@ class VulnerablilityView {
 		this.setUpVulnAutoComplete()
 		this.is40 = $("#isCVSS40").val() == "true"
 		this.cvss = new CVSS("", this.is40);
-		this.cvss.setUpCVSSModal();
+		this.cvss.setUpCVSSModal("cvssModal", "cvssString", (resultCVSSString) =>{
+			$("#cvssString").val(resultCVSSString).trigger("change")
+		});
 
 
 	}

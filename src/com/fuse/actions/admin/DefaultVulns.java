@@ -101,7 +101,7 @@ public class DefaultVulns  extends FSActionSupport{
 		else
 			this.verOption = 0l;
 		
-		vulntypes = em.createQuery("from CustomType where type = 1").getResultList();
+		vulntypes = em.createQuery("from CustomType where type = 1 and (deleted IS NULL or deleted = false)").getResultList();
 		if(this.isAcassessor() && action != null && action.equals("json") && terms != null ){
 
 			terms = FSUtils.sanitizeMongo(terms);
@@ -289,6 +289,8 @@ public class DefaultVulns  extends FSActionSupport{
 			dv.setOverall(this.overall);
 			dv.setDescription(this.description.trim());
 			dv.setRecommendation(this.recommendation.trim());
+			dv.setCvss31String(this.cvss31String.trim());
+			dv.setCvss40String(this.cvss40String.trim());
 			if(cf != null && !cf.equals("")){
 				JSONParser parse = new JSONParser();
 				JSONArray array = (JSONArray)parse.parse(cf);

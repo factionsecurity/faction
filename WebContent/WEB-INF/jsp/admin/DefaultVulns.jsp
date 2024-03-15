@@ -8,6 +8,7 @@
 .jconfirm-content input {
 	background: #030D1C;
 }
+
 .btn:active.focus, .btn:active:focus, .btn:focus {
 	outline: none !important;
 }
@@ -107,7 +108,6 @@ span.Critical {
 	color: white;
 	z-index: 100000;
 }
-
 </style>
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
@@ -132,10 +132,12 @@ span.Critical {
 
 							<s:iterator value="levels">
 								<bs:row>
-									<s:set var="levelName" value="getLevelString(riskId)"/>
-									<bs:inputgroup name="${levelName}  - Level ${riskId } Due Date:" colsize="6"
+									<s:set var="levelName" value="getLevelString(riskId)" />
+									<bs:inputgroup
+										name="${levelName}  - Level ${riskId } Due Date:" colsize="6"
 										id="due_${riskId}">${daysTillDue }</bs:inputgroup>
-									<bs:inputgroup name="${levelName }- Level ${riskId } Warning Date:"
+									<bs:inputgroup
+										name="${levelName }- Level ${riskId } Warning Date:"
 										colsize="6" id="warn_${riskId}">${daysTillWarning}</bs:inputgroup>
 								</bs:row>
 								<bs:row>
@@ -168,7 +170,8 @@ span.Critical {
 				</bs:row>
 				<bs:row>
 					<bs:mco colsize="3">
-						<button class="btn btn-danger" id="importDB">Import from Faction</button>
+						<button class="btn btn-danger" id="importDB">Import from
+							Faction</button>
 
 					</bs:mco>
 					<bs:mco colsize="3">
@@ -184,7 +187,7 @@ span.Critical {
 				<bs:row>
 				</bs:row>
 				<bs:row>
-				<br/>
+					<br />
 				</bs:row>
 				<bs:row>
 					<bs:mco colsize="12">
@@ -196,11 +199,13 @@ span.Critical {
 				<br />
 				<bs:row>
 					<bs:mco colsize="12">
-						<bs:box type="info" title="Risk Level Settings <small>Change the name of the risk level</small>">
+						<bs:box type="info"
+							title="Risk Level Settings <small>Change the name of the risk level</small>">
 							<s:iterator value="levels">
 								<bs:row>
 									<bs:mco colsize="3">
-										<label class="pull-right"><s:property value="getLevelString(riskId)"/> - Level ${riskId}:</label>
+										<label class="pull-right"><s:property
+												value="getLevelString(riskId)" /> - Level ${riskId}:</label>
 									</bs:mco>
 									<bs:mco colsize="6">
 										<input id="riskName${riskId }" class="form-control pull-right"
@@ -226,30 +231,30 @@ span.Critical {
 
 		<jsp:include page="../footer.jsp" />
 		<script>
-							let vulnTypes = []
-								<s:iterator value = "vulntypes" status="stat">
-									vulnTypes.push(${ id });
-	</s:iterator >
+			let vulnTypes = []
+<s:iterator value = "vulntypes" status="stat">
+			vulnTypes.push(${ id });
+</s:iterator >
 
-								function getValueFromId(id) {
-									switch (id) {
-		  	<s:iterator value="levels">
-										case "${riskId}": return "${risk}";
-									</s:iterator>
-		  	default : return "Unassigned";
-								}
-							return -1;
-	  }
-							function getIdFromValue(value) {
-								switch (value) {
-		  	<s:iterator value="levels">
-									case "${risk}": return ${riskId};
-								</s:iterator>
-		  	default : return "-1";
-							}
-							return -1;
-	  }
-						</script>
+			function getValueFromId(id) {
+				switch (id) {
+		  		<s:iterator value="levels">
+					case "${riskId}": return "${risk}";
+				</s:iterator>
+		  			default : return "Unassigned";
+				}
+				return -1;
+	  		}
+			function getIdFromValue(value) {
+				switch (value) {
+		  		<s:iterator value="levels">
+					case "${risk}": return ${riskId};
+				</s:iterator>
+		  			default : return "-1";
+				}
+				return -1;
+	  		}
+		</script>
 		<script src="../dist/js/default_vulns.js"></script>
 
 		</body>

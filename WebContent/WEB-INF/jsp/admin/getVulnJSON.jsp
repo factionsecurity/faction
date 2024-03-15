@@ -11,5 +11,7 @@
 	"impact" : <s:property value="impact"/>,
 	"category" : <s:property value="category"/>, 
 	"overall" : <s:property value="overall"/>,
+	"cvss31String" : "<s:property value="cvss31String"/>",
+	"cvss40String" : "<s:property value="cvss40String"/>",
 	"cf" : [<s:iterator value="fields" status="stat"><s:if test="#stat.index!=0">,</s:if>{ "id" : ${id}, "typeid" : ${type.id}, "value" : "${value}"}</s:iterator>]
 }

@@ -102,7 +102,8 @@ export default class CVSS {
 		}
 		
 	}
-	setUpCVSSModal(){
+	setUpCVSSModal(btnId, valueId, saveCallback){
+		console.log("setup");
 		let cvssURL = "url:CVSS"
 		let title = "CVSS 3.1"
 		if(this.is40){
@@ -110,14 +111,21 @@ export default class CVSS {
 			title = "CVSS 4.0"
 		}
 		let _this = this;
-		$("#cvssModal").on("click", () => {
+		$(`#${btnId}`).on("click", () => {
+			console.log("clicked");
 			
 			$.confirm({
 				title: title,
 				content: cvssURL,
 				columnClass: 'col-md-12',
 				onContentReady: () => {
-					let vectorString = $("#cvssString").val();
+					let vectorString = $(`#${valueId}`).val();
+					//resize form so scroll works correclty
+					setTimeout( () => {
+						let height = $(".jconfirm-content-pane")[0].clientHeight;
+						$(".cvss-content")[0].style.maxHeight=`${height - 15}px`
+					}, 100);
+					
 					if(vectorString.trim() != ""){
 						
 						//This is to reset values when we have a project that has changed from 3.1 to 4.0 or vice versa
@@ -133,9 +141,6 @@ export default class CVSS {
 						$("#modalSeverity").addClass(severity);
 						$("#modalSeverity").html(severity);
 						setTimeout( () => {
-							//resize:
-							let height = $(".jconfirm-content-pane")[0].clientHeight;
-							$(".cvss-content")[0].style.maxHeight=`${height - 15}px`
 							
 							$(`#av_${this.vector.Get('AV').toLowerCase()}`).click()
 							$(`#ac_${this.vector.Get('AC').toLowerCase()}`).click()
@@ -365,8 +370,7 @@ export default class CVSS {
 				buttons: {
 					save: () =>{
 						let cvssString = _this.getVector();
-						$("#cvssString").val(cvssString).trigger("change")
-
+						saveCallback(cvssString);
 					},
 					cancel: () => { }
 				}

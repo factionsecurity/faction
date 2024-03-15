@@ -158,7 +158,7 @@
 								</div>
 							</div>
 							<div class="form-group">
-								<label for="cvss31String" class="col-sm-2 control-label">CVSS 4.0:
+								<label for="cvss40String" class="col-sm-2 control-label">CVSS 4.0:
 									</label>
 								<div class="col-sm-3 control-label">
 									<input class="form-control" id="cvss40String"
@@ -169,10 +169,10 @@
 								</div>
 							</div>
 						
-						
-						
 						</div>
 						<br>
+						
+						<!-- TODO: Add custom fields here -->
 
 
 						<div class="row">
