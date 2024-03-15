@@ -18,7 +18,7 @@ import 'jquery-confirm';
 import 'select2';
 import '../scripts/jquery.autocomplete.min';
 import { marked } from 'marked';
-import { CVSS31, CVSS40 } from '@pandatix/js-cvss';
+import CVSS from '../cvss';
 
 class SaveQueue {
 	constructor(caller, assessmentId, saveCallback, updateVulnsCallback) {
@@ -268,22 +268,10 @@ class VulnerablilityView {
 		this.editors.details = suneditor.create("details", this.editorOptions);
 		this.setUpVulnAutoComplete()
 		this.is40 = $("#isCVSS40").val() == "true"
-		this.setUpCVSSModal(this.is40);
+		this.cvss = new CVSS("", this.is40);
+		this.cvss.setUpCVSSModal();
 
 
-	}
-	getCVSSSeverity(score) {
-		const limits = {
-			"None": [0, 0],
-			"Low": [0.1, 3.9],
-			"Medium": [4, 6.9],
-			"High": [7, 8.9],
-			"Critical": [9, 10]
-		}
-		if (score == 0) {
-			return "None"
-		}
-		return Object.keys(limits).reduce((acc, key) => score >= limits[key][0] && score <= limits[key][1] ? key : acc, "None")
 	}
 
 	catHearder(params, data) {
@@ -517,79 +505,17 @@ class VulnerablilityView {
 
 	}
 	
-	convertCVSSSeverity(severity){
-		switch(severity){
-			case "Critical": return 5;
-			case "High": return 4;
-			case "Medium": return 3;
-			case "Low": return 2;
-			case "None": return 1;
-			default: return 1;
-		}
-	}
-	
-	createCVSSObject(cvssString){
-		try{
-			if(cvssString.indexOf("CVSS:4.0") == 0){
-				return new CVSS40(cvssString);
-			}else if(cvssString.indexOf("CVSS:3") == 0){
-				return new CVSS31(cvssString);
-			}else if(this.is40){
-				return new CVSS40("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N");
-			}else{
-				return new CVSS31("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N");
-			}
-		}catch(e){
-			if(this.is40){
-				return new CVSS40("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N");
-			}else{
-				return new CVSS31("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N");
-			}
-		}
-		
-	}
-	
-	getCVSSScore(vector){
-		if(typeof vector.BaseScore == 'function'){
-			let score = vector.BaseScore();
-			const tmpScore = vector.TemporalScore();
-			const envScore = vector.EnvironmentalScore();
-			if(tmpScore != 0 && tmpScore < score){
-				score = tmpScore
-			}
-			if(envScore != 0 && envScore < score){
-				score = envScore
-			}
-			return score;
-		}else{
-			return vector.Score();
-		}
-	}
-	
-	updateCVSSScore(vector){
-		let score = this.getCVSSScore(vector);
-		let severity = this.getCVSSSeverity(score);
-		$("#score").html(score);
-		$("#severity").html(severity);
-		["Critical", "High", "Medium", "Low", "None"].forEach((a, b) => {
-			$("#score").removeClass(a);
-			$("#severity").removeClass(a);
-		});
-		$("#score").addClass(severity);
-		$("#severity").addClass(severity);
-		$("#cvssScore").val(score)
-	}
 	
 	setUpCVSSScoreEvents(){
 		let _this = this;
 		$("#cvssString").on("change input", () => {
 			let cvssString = $("#cvssString").val();
-			let vector = this.createCVSSObject(cvssString);
-			let score = this.getCVSSScore(vector);
-			let severity = this.getCVSSSeverity(score);
-			let overall = this.convertCVSSSeverity(severity)
+			_this.cvss.createCVSSObject(cvssString);
+			let score = _this.cvss.getCVSSScore(vector);
+			let severity = _this.cvss.getCVSSSeverity(score);
+			let overall = _this.cvss.convertCVSSSeverity(severity)
 			$("#overall").val(overall);
-			_this.updateCVSSScore(vector);
+			this.cvss.updateCVSSScore(vector);
 			$(".selected").find(".severity")[0].innerHTML = severity == "None"? "Recommended" : severity;
 			$(".selected").children()[0].className = `sev${severity== "None"? "Recommended" : severity}`
 			$($(".selected").children()[1]).attr('data-sort', score)
@@ -601,281 +527,6 @@ class VulnerablilityView {
 			_this.queue.push(_this.vulnId, "overall", overall); 
 
 		})
-	}
-	setUpCVSSModal(){
-		let cvssURL = "url:CVSS"
-		let title = "CVSS 3.1"
-		if(this.is40){
-			cvssURL = "url:CVSS40"
-			title = "CVSS 4.0"
-		}
-		let _this = this;
-		$("#cvssModal").on("click", () => {
-			
-			$.confirm({
-				title: title,
-				content: cvssURL,
-				columnClass: 'col-md-12',
-				onContentReady: () => {
-					let vectorString = $("#cvssString").val();
-					if(vectorString.trim() != ""){
-						//resize:
-						let vector = this.createCVSSObject(vectorString);
-						let score = this.getCVSSScore(vector);
-						let severity = this.getCVSSSeverity(score);
-						$("#modalScore").addClass(severity);
-						$("#modalScore").html(score);
-						$("#modalSeverity").addClass(severity);
-						$("#modalSeverity").html(severity);
-						setTimeout( () => {
-							let height = $(".jconfirm-content-pane")[0].clientHeight;
-							$(".cvss-content")[0].style.maxHeight=`${height - 15}px`
-							$(`#av_${vector.Get('AV').toLowerCase()}`).click()
-							$(`#ac_${vector.Get('AC').toLowerCase()}`).click()
-							$(`#pr_${vector.Get('PR').toLowerCase()}`).click()
-							$(`#ui_${vector.Get('UI').toLowerCase()}`).click()
-							
-							$(`#ei_${vector.Get('E').toLowerCase()}`).click()
-							
-							$(`#cr_${vector.Get('CR').toLowerCase()}`).click()
-							$(`#ir_${vector.Get('IR').toLowerCase()}`).click()
-							$(`#ar_${vector.Get('AR').toLowerCase()}`).click()
-							
-							$(`#mav_${vector.Get('MAV').toLowerCase()}`).click()
-							$(`#mac_${vector.Get('MAC').toLowerCase()}`).click()
-							$(`#mpr_${vector.Get('MPR').toLowerCase()}`).click()
-							$(`#mui_${vector.Get('MUI').toLowerCase()}`).click()
-							
-							
-							if(!_this.is40){
-								$(`#s_${vector.Get('S').toLowerCase()}`).click()
-								$(`#c_${vector.Get('C').toLowerCase()}`).click()
-								$(`#i_${vector.Get('I').toLowerCase()}`).click()
-								$(`#a_${vector.Get('A').toLowerCase()}`).click()
-								
-								
-								$(`#e_${vector.Get('E').toLowerCase()}`).click()
-								$(`#rl_${vector.Get('RL').toLowerCase()}`).click()
-								$(`#rc_${vector.Get('RC').toLowerCase()}`).click()
-								
-								$(`#ms_${vector.Get('MS').toLowerCase()}`).click()
-								$(`#mc_${vector.Get('MC').toLowerCase()}`).click()
-								$(`#mi_${vector.Get('MI').toLowerCase()}`).click()
-								$(`#ma_${vector.Get('MA').toLowerCase()}`).click()
-							}else{
-								$(`#at_${vector.Get('AT').toLowerCase()}`).click()
-								$(`#vc_${vector.Get('VC').toLowerCase()}`).click()
-								$(`#vi_${vector.Get('VI').toLowerCase()}`).click()
-								$(`#va_${vector.Get('VA').toLowerCase()}`).click()
-								$(`#sc_${vector.Get('SC').toLowerCase()}`).click()
-								$(`#si_${vector.Get('SI').toLowerCase()}`).click()
-								$(`#sa_${vector.Get('SA').toLowerCase()}`).click()
-								
-								$(`#s_${vector.Get('S').toLowerCase()}`).click()
-								$(`#au_${vector.Get('AU').toLowerCase()}`).click()
-								$(`#r_${vector.Get('R').toLowerCase()}`).click()
-								$(`#re_${vector.Get('RE').toLowerCase()}`).click()
-								$(`#v_${vector.Get('V').toLowerCase()}`).click()
-								$(`#u_${vector.Get('U').toLowerCase()}`).click()
-								
-								$(`#mvc_${vector.Get('MVC').toLowerCase()}`).click()
-								$(`#mvi_${vector.Get('MVI').toLowerCase()}`).click()
-								$(`#mva_${vector.Get('MVA').toLowerCase()}`).click()
-								
-								
-								$(`#msc_${vector.Get('MSC').toLowerCase()}`).click()
-								$(`#msi_${vector.Get('MSI').toLowerCase()}`).click()
-								$(`#msa_${vector.Get('MSA').toLowerCase()}`).click()
-								
-								$(`#mat_${vector.Get('MAT').toLowerCase()}`).click()
-								
-								
-							}
-							
-						},100);
-					}
-
-					$('.vector').on("click", function(event) {
-						let el = this;
-						$(el).parent().children().each((_index, e) => {
-							$(e).removeClass("activeVector");
-						});
-						$(el).addClass("activeVector");
-						setTimeout(() => {
-							let av = $("input[name='av']:checked").val()
-							let ac = $("input[name='ac']:checked").val()
-							let pr = $("input[name='pr']:checked").val()
-							let ui = $("input[name='ui']:checked").val()
-							
-							let ei = $("input[name='ei']:checked").val() || "X"
-							let cr = $("input[name='cr']:checked").val() || "X"
-							let ir = $("input[name='ir']:checked").val() || "X"
-							let ar = $("input[name='ar']:checked").val() || "X"
-							let mav = $("input[name='mav']:checked").val() || "X"
-							let mac = $("input[name='mac']:checked").val() || "X"
-							let mpr = $("input[name='mpr']:checked").val() || "X"
-							let mui = $("input[name='mui']:checked").val() || "X"
-							
-							let commonVector ={
-									AV: av,
-									AC: ac,
-									PR: pr,
-									UI: ui, 
-									EI: ei, 
-									CR: cr, 
-									IR: ir, 
-									AR: ar, 
-									MAV: mav, 
-									MAC: mac, 
-									MPR: mpr, 
-									MUI: mui 
-							}
-							let cvssVector = {}
-							let score = 0.0;
-							let severity = "None";
-							let cvssString="";
-									
-							
-							if(!_this.is40){
-								let c = $("input[name='c']:checked").val()
-								let i = $("input[name='i']:checked").val()
-								let a = $("input[name='a']:checked").val()
-								let s = $("input[name='s']:checked").val()
-								
-								let e = $("input[name='e']:checked").val() || "X"
-								let rl = $("input[name='rl']:checked").val() || "X"
-								let rc = $("input[name='rc']:checked").val() || "X"
-								let ms = $("input[name='ms']:checked").val() || "X"
-								let mc = $("input[name='mc']:checked").val() || "X"
-								let mi = $("input[name='mi']:checked").val() || "X"
-								let ma = $("input[name='ma']:checked").val() || "X"
-								let cvss31Vector = {
-									C: c, 
-									I: i, 
-									A: a, 
-									S: s, 
-									E: e, 
-									RL: rl, 
-									RC: rc, 
-									MS: ms, 
-									MC: mc, 
-									MI: mi, 
-									MA: ma	
-								}
-								cvssVector = {
-									...cvss31Vector, 
-									...commonVector
-								}
-								
-								let vector = new CVSS31();
-								Object.keys(cvssVector).forEach( (a, _i) =>{
-									if(cvssVector[a] != "X"){
-										vector.Set(a,cvssVector[a]);
-									}
-								});
-								console.log(vector);
-								score = _this.getCVSSScore(vector);
-								severity = _this.getCVSSSeverity(score);
-								//fixes a bug in the cvss library
-								let vectorString = "CVSS:3.1";
-								for (const [t] of Object.entries(vector._metrics)) {
-									const n = vector.Get(t);
-									null != n && "X" != n && (vectorString = vectorString.concat("/", t, ":", n))
-								}
-								$("#modalCVSSString").val(vectorString);
-								
-							}else{
-								let at = $("input[name='at']:checked").val() || "X"
-								let vc = $("input[name='vc']:checked").val() || "X"
-								let vi = $("input[name='vi']:checked").val() || "X"
-								let va = $("input[name='va']:checked").val() || "X"
-								let sc = $("input[name='sc']:checked").val() || "X"
-								let si = $("input[name='si']:checked").val() || "X"
-								let sa = $("input[name='sa']:checked").val() || "X"
-								
-								let s = $("input[name='s']:checked").val() || "X"
-								let au = $("input[name='au']:checked").val() || "X"
-								let r = $("input[name='r']:checked").val() || "X"
-								let v = $("input[name='v']:checked").val() || "X"
-								let re = $("input[name='re']:checked").val() || "X"
-								let u = $("input[name='u']:checked").val() || "X"
-								
-								let mvc = $("input[name='mvc']:checked").val() || "X"
-								let mvi = $("input[name='mvi']:checked").val() || "X"
-								let mva = $("input[name='mva']:checked").val() || "X"
-								
-								
-								let msc = $("input[name='msc']:checked").val() || "X"
-								let msi = $("input[name='msi']:checked").val() || "X"
-								let msa = $("input[name='msa']:checked").val() || "X"
-								
-								let mat = $("input[name='mat']:checked").val() || "X"
-								let cvss40Vector = {
-									AT: at, 
-									VC: vc, 
-									VI: vi, 
-									VA: va, 
-									SC: sc, 
-									SI: si, 
-									SA: sa, 
-									S: s, 
-									AU: au, 
-									R: r, 
-									V: v, 
-									RE: re, 
-									U: u,
-									MVC: mvc, 
-									MVI: mvi, 
-									MVA: mva, 
-									MSC: msc, 
-									MSI: msi, 
-									MSA: msa, 
-									MAT: mat
-								}
-								cvssVector = {
-									...cvss40Vector, 
-									...commonVector
-								}
-								let vector = new CVSS40();
-								Object.keys(cvssVector).forEach( (a, _i) =>{
-									if(cvssVector[a] != "X"){
-										vector.Set(a,cvssVector[a]);
-									}
-								});
-								
-								
-								
-								score = _this.getCVSSScore(vector);
-								severity = _this.getCVSSSeverity(score);
-								console.log(vector)
-								$("#modalCVSSString").val(vector.Vector());
-								
-							}
-							
-							["Critical", "High", "Medium", "Low", "None"].forEach((a, b) => {
-								$("#modalScore").removeClass(a);
-								$("#modalSeverity").removeClass(a);
-							});
-							$("#modalScore").addClass(severity);
-							$("#modalScore").html(score);
-							$("#modalSeverity").addClass(severity);
-							$("#modalSeverity").html(severity);
-						}, 200);
-
-					});
-				},
-				buttons: {
-					save: () =>{
-						let cvssString = $("#modalCVSSString").val();
-						$("#cvssString").val(cvssString).trigger("change")
-
-					},
-					cancel: () => { }
-				}
-			})
-
-		});
-		
 	}
 
 	setUpVulnAutoComplete() {
@@ -1135,7 +786,7 @@ class VulnerablilityView {
 		$('[id*="header"]').each((_a, h) => h.innerHTML = "");
 		$("#title").val("");
 		$("#cvssString").val("")
-		this.updateCVSSScore(this.createCVSSObject(""))
+		this.cvss.updateCVSSScore(this.cvss.createCVSSObject(""))
 		$("#impact").attr("intVal", "-1");
 		$("#impact").val("").trigger("change");
 		$("#likelyhood").val("").trigger("change");
@@ -1238,7 +889,7 @@ class VulnerablilityView {
 			}
 			_this.queue.push(_this.vulnId, this.id, `${val}`);
 		}));
-		this.setUpCVSSScoreEvents();
+		this.cvss.setUpCVSSScoreEvents();
 
 	}
 	setEditorContents(type, data) {
@@ -1263,8 +914,8 @@ class VulnerablilityView {
 
 			$("#title").val($("<div/>").html(data.name).text());
 			$("#cvssString").val($("<div/>").html(data.cvssString).text())
-			let vector = _this.createCVSSObject(data.cvssString);
-			_this.updateCVSSScore(vector);
+			let vector = _this.cvss.createCVSSObject(data.cvssString);
+			_this.cvss.updateCVSSScore(vector);
 			_this.setEditorContents("description", data.description);
 			_this.setEditorContents("recommendation", data.recommendation);
 			_this.setEditorContents("details", data.details);
