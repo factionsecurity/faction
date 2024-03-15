@@ -510,12 +510,12 @@ class VulnerablilityView {
 		let _this = this;
 		$("#cvssString").on("change input", () => {
 			let cvssString = $("#cvssString").val();
-			_this.cvss.createCVSSObject(cvssString);
-			let score = _this.cvss.getCVSSScore(vector);
+			_this.cvss.updateCVSSString(cvssString);
+			let score = _this.cvss.getCVSSScore();
 			let severity = _this.cvss.getCVSSSeverity(score);
 			let overall = _this.cvss.convertCVSSSeverity(severity)
 			$("#overall").val(overall);
-			this.cvss.updateCVSSScore(vector);
+			this.cvss.updateCVSSScore();
 			$(".selected").find(".severity")[0].innerHTML = severity == "None"? "Recommended" : severity;
 			$(".selected").children()[0].className = `sev${severity== "None"? "Recommended" : severity}`
 			$($(".selected").children()[1]).attr('data-sort', score)
@@ -786,7 +786,7 @@ class VulnerablilityView {
 		$('[id*="header"]').each((_a, h) => h.innerHTML = "");
 		$("#title").val("");
 		$("#cvssString").val("")
-		this.cvss.updateCVSSScore(this.cvss.createCVSSObject(""))
+		this.cvss.updateCVSSScore(this.cvss.updateCVSSString(""))
 		$("#impact").attr("intVal", "-1");
 		$("#impact").val("").trigger("change");
 		$("#likelyhood").val("").trigger("change");
@@ -889,7 +889,7 @@ class VulnerablilityView {
 			}
 			_this.queue.push(_this.vulnId, this.id, `${val}`);
 		}));
-		this.cvss.setUpCVSSScoreEvents();
+		this.setUpCVSSScoreEvents();
 
 	}
 	setEditorContents(type, data) {
@@ -914,7 +914,7 @@ class VulnerablilityView {
 
 			$("#title").val($("<div/>").html(data.name).text());
 			$("#cvssString").val($("<div/>").html(data.cvssString).text())
-			let vector = _this.cvss.createCVSSObject(data.cvssString);
+			let vector = _this.cvss.updateCVSSString(data.cvssString);
 			_this.cvss.updateCVSSScore(vector);
 			_this.setEditorContents("description", data.description);
 			_this.setEditorContents("recommendation", data.recommendation);

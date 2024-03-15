@@ -6,6 +6,10 @@ export default class CVSS {
 		this.is40 = is40;
 		this.vector = this.createCVSSObject(cvssString);
 	}
+	
+	is31(){
+		return typeof this.vector.BaseScore == "function"
+	}
 	convertCVSSSeverity(severity){
 		switch(severity){
 			case "Critical": return 5;
@@ -16,11 +20,14 @@ export default class CVSS {
 			default: return 1;
 		}
 	}
+	updateCVSSString(cvssString){
+		this.vector = this.createCVSSObject(cvssString);		
+	}
 	createCVSSObject(cvssString){
 		try{
 			if(cvssString.indexOf("CVSS:4.0") == 0){
 				return new CVSS40(cvssString);
-			}else if(cvssString.indexOf("CVSS:3") == 0){
+			}else if(cvssString.indexOf("CVSS:3") == 0 ){
 				return new CVSS31(cvssString);
 			}else if(this.is40){
 				return new CVSS40("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N");
@@ -51,7 +58,7 @@ export default class CVSS {
 	}
 	
 	getCVSSScore(){
-		if(typeof this.vector.BaseScore == 'function'){
+		if(this.is31()){
 			let score = this.vector.BaseScore();
 			const tmpScore = this.vector.TemporalScore();
 			const envScore = this.vector.EnvironmentalScore();
@@ -83,11 +90,17 @@ export default class CVSS {
 	
 	getVector(){
 		//fixes a bug in the cvss library
-		let vectorString = "CVSS:3.1";
-		for (const [t] of Object.entries(this.vector._metrics)) {
-			const n = this.vector.Get(t);
-			null != n && "X" != n && (vectorString = vectorString.concat("/", t, ":", n))
+		if(this.is31()){
+			let vectorString = "CVSS:3.1";
+			for (const [t] of Object.entries(this.vector._metrics)) {
+				const n = this.vector.Get(t);
+				null != n && "X" != n && (vectorString = vectorString.concat("/", t, ":", n))
+			}
+			return vectorString;
+		}else{
+			return this.vector.Vector()
 		}
+		
 	}
 	setUpCVSSModal(){
 		let cvssURL = "url:CVSS"
@@ -106,7 +119,13 @@ export default class CVSS {
 				onContentReady: () => {
 					let vectorString = $("#cvssString").val();
 					if(vectorString.trim() != ""){
-						//resize:
+						
+						//This is to reset values when we have a project that has changed from 3.1 to 4.0 or vice versa
+						if(_this.is40 && _this.is31()){
+							this.updateCVSSString("");
+						}else if(!_this.is40 && !_this.is31()){
+							this.updateCVSSString("");
+						}
 						let score = this.getCVSSScore();
 						let severity = this.getCVSSSeverity(score);
 						$("#modalScore").addClass(severity);
@@ -114,8 +133,10 @@ export default class CVSS {
 						$("#modalSeverity").addClass(severity);
 						$("#modalSeverity").html(severity);
 						setTimeout( () => {
+							//resize:
 							let height = $(".jconfirm-content-pane")[0].clientHeight;
 							$(".cvss-content")[0].style.maxHeight=`${height - 15}px`
+							
 							$(`#av_${this.vector.Get('AV').toLowerCase()}`).click()
 							$(`#ac_${this.vector.Get('AC').toLowerCase()}`).click()
 							$(`#pr_${this.vector.Get('PR').toLowerCase()}`).click()
@@ -132,7 +153,7 @@ export default class CVSS {
 							$(`#mpr_${this.vector.Get('MPR').toLowerCase()}`).click()
 							$(`#mui_${this.vector.Get('MUI').toLowerCase()}`).click()
 							
-							
+								
 							if(!_this.is40){
 								$(`#s_${this.vector.Get('S').toLowerCase()}`).click()
 								$(`#c_${this.vector.Get('C').toLowerCase()}`).click()
@@ -343,7 +364,7 @@ export default class CVSS {
 				},
 				buttons: {
 					save: () =>{
-						let cvssString = $("#modalCVSSString").val();
+						let cvssString = _this.getVector();
 						$("#cvssString").val(cvssString).trigger("change")
 
 					},
