@@ -27,7 +27,7 @@ Other Features:           
 1. Extendable with Custom Plugins similar to Burp Extender.
 2. Custom Report Variables
 
-__Want to see it in action?__ -> [Faction Video Overview](https://www.youtube.com/watch?v=cYi71oofUdU)
+__Want to see it in action?__ -> [Faction YouTube Channel](https://www.youtube.com/@factionsecurity/videos)
 
 ## Quick Setup
 __Requirements__
