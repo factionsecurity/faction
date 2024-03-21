@@ -86,13 +86,13 @@
 							<div class="form-group">
 								<label for="title" class="col-sm-2 control-label">Title:
 									*</label>
-								<div class="col-sm-4 control-label">
+								<div class="col-sm-6 control-label">
 									<input class="form-control" id="title"
 										placeholder="Vulnerbility Name" />
 								</div>
 								<label for="title" class="col-sm-2 control-label">Overall
 									Severity: *</label>
-								<div class="col-sm-4">
+								<div class="col-sm-2">
 									<select class="select2 form-control" id="overall"
 										style="width: 100%">
 										<s:iterator value="levels" status="stat">
@@ -107,7 +107,7 @@
 
 							<div class="form-group">
 								<label class="col-sm-2 control-label">Category: *</label>
-								<div class="col-sm-4">
+								<div class="col-sm-6">
 									<select class="form-control select2" style="width: 100%;"
 										id="catNameSelect">
 										<s:iterator value="categories">
@@ -120,7 +120,7 @@
 
 								<label for="title" class="col-sm-2 control-label">Impact
 									Severity: *</label>
-								<div class="col-sm-4">
+								<div class="col-sm-2">
 									<select class="select2 form-control" id="impact"
 										style="width: 100%">
 										<s:iterator value="levels" status="stat">
@@ -136,16 +136,20 @@
 							<div class="form-group">
 								<label for="cvss31String" class="col-sm-2 control-label">CVSS 3.1:
 									</label>
-								<div class="col-sm-3 control-label">
+								<div class="col-sm-4 control-label">
 									<input class="form-control" id="cvss31String"
 										placeholder="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N" />
+								</div>
+								<div class="col-sm-1 control-label">
+									<input class="form-control" id="cvss31Score"
+										placeholder="0.0" />
 								</div>
 								<div class="col-sm-1 control-label">
 									<span class="btn btn-primary" id="cvss31Calc"><i class="fa-solid fa-calculator"></i></span>
 								</div>
 								<label for="title" class="col-sm-2 control-label">Likelihood
 									Severity: *</label>
-								<div class="col-sm-4">
+								<div class="col-sm-2">
 									<select class="select2 form-control" id="likelyhood"
 										style="width: 100%">
 										<s:iterator value="levels" status="stat">
@@ -160,9 +164,13 @@
 							<div class="form-group">
 								<label for="cvss40String" class="col-sm-2 control-label">CVSS 4.0:
 									</label>
-								<div class="col-sm-3 control-label">
+								<div class="col-sm-4 control-label">
 									<input class="form-control" id="cvss40String"
 										placeholder="CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N" />
+								</div>
+								<div class="col-sm-1 control-label">
+									<input class="form-control" id="cvss40Score"
+										placeholder="0.0" />
 								</div>
 								<div class="col-sm-1 control-label">
 									<span class="btn btn-primary" id="cvss40Calc"><i class="fa-solid fa-calculator"></i></span>

@@ -153,7 +153,7 @@ public class Assessment {
 				}
 			});
 		}else {
-			Collections.sort( this.getVulns(), (Vulnerability v1, Vulnerability v2) -> v2.getOverall().compareTo(v1.getOverall()));
+			Collections.sort( this.vulns, (Vulnerability v1, Vulnerability v2) -> v2.getOverall().compareTo(v1.getOverall()));
 		}
 		return this.vulns;
 	}

@@ -396,12 +396,14 @@ $(function() {
 	});
 	let cvss31 = new CVSS("", false);
 
-	cvss31.setUpCVSSModal("cvss31Calc", "cvss31String", (updatedVector) => {
-		$("#cvss31String").val(updatedVector).trigger("change")
+	cvss31.setUpCVSSModal("cvss31Calc", "cvss31String", (vector, score) => {
+		$("#cvss31String").val(vector).trigger("change")
+		$("#cvss31Score").val(score).trigger("change")
 	});
 	let cvss40 = new CVSS("", true);
-	cvss40.setUpCVSSModal("cvss40Calc", "cvss40String", (updatedVector) => {
-		$("#cvss40String").val(updatedVector).trigger("change")
+	cvss40.setUpCVSSModal("cvss40Calc", "cvss40String", (vector, score) => {
+		$("#cvss40String").val(vector).trigger("change")
+		$("#cvss40Score").val(score).trigger("change")
 	});
 });
 function b64DecodeUnicode(str) {

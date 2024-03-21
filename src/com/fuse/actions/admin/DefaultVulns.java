@@ -290,7 +290,9 @@ public class DefaultVulns  extends FSActionSupport{
 			dv.setDescription(this.description.trim());
 			dv.setRecommendation(this.recommendation.trim());
 			dv.setCvss31String(this.cvss31String.trim());
+			dv.setCvss31Score(this.cvss31Score.trim());
 			dv.setCvss40String(this.cvss40String.trim());
+			dv.setCvss40Score(this.cvss40Score.trim());
 			if(cf != null && !cf.equals("")){
 				JSONParser parse = new JSONParser();
 				JSONArray array = (JSONArray)parse.parse(cf);
@@ -328,8 +330,6 @@ public class DefaultVulns  extends FSActionSupport{
 		}else if(action != null && action.equals("getvuln") && vulnId != null ){
 			
 			
-			/*DefaultVulnerability dv = (DefaultVulnerability)session.createQuery("from DefaultVulnerability where id = :id")
-					.setLong("id", vulnId).uniqueResult();*/
 			DefaultVulnerability dv = VulnerabilityQueries.getDefaultVulnerability(em,  vulnId);
 			this.name = dv.getName();
 			this.catname = dv.getCategory().getName();
@@ -340,7 +340,6 @@ public class DefaultVulns  extends FSActionSupport{
 			this.description = URLEncoder.encode(Base64.getEncoder().encodeToString(dv.getDescription().getBytes()),"UTF-8");
 			this.recommendation = URLEncoder.encode(Base64.getEncoder().encodeToString(dv.getRecommendation().getBytes()),"UTF-8");
 			
-			//session.close();
 			return "getvuln";
 			
 			
@@ -579,6 +578,10 @@ public class DefaultVulns  extends FSActionSupport{
 			values.add(""+vuln.getOverall()          );
 			values.add(""+vuln.getImpact()           );
 			values.add(""+vuln.getLikelyhood()       );
+			values.add(vuln.getCvss31String());
+			values.add(vuln.getCvss31Score());
+			values.add(vuln.getCvss40String());
+			values.add(vuln.getCvss40Score());
 			for(String c : custom) {
 				values.add(c);		
 			}

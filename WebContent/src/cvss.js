@@ -103,7 +103,6 @@ export default class CVSS {
 		
 	}
 	setUpCVSSModal(btnId, valueId, saveCallback){
-		console.log("setup");
 		let cvssURL = "url:CVSS"
 		let title = "CVSS 3.1"
 		if(this.is40){
@@ -112,7 +111,6 @@ export default class CVSS {
 		}
 		let _this = this;
 		$(`#${btnId}`).on("click", () => {
-			console.log("clicked");
 			
 			$.confirm({
 				title: title,
@@ -120,6 +118,7 @@ export default class CVSS {
 				columnClass: 'col-md-12',
 				onContentReady: () => {
 					let vectorString = $(`#${valueId}`).val();
+					console.log(vectorString);
 					//resize form so scroll works correclty
 					setTimeout( () => {
 						let height = $(".jconfirm-content-pane")[0].clientHeight;
@@ -134,6 +133,7 @@ export default class CVSS {
 						}else if(!_this.is40 && !_this.is31()){
 							this.updateCVSSString("");
 						}
+						this.updateCVSSString(vectorString);
 						let score = this.getCVSSScore();
 						let severity = this.getCVSSSeverity(score);
 						$("#modalScore").addClass(severity);
@@ -370,7 +370,7 @@ export default class CVSS {
 				buttons: {
 					save: () =>{
 						let cvssString = _this.getVector();
-						saveCallback(cvssString);
+						saveCallback(cvssString, _this.getCVSSScore());
 					},
 					cancel: () => { }
 				}

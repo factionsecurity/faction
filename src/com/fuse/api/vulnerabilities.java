@@ -80,13 +80,13 @@ public class vulnerabilities {
 		@JsonProperty("Active")
 		public Boolean active;
 		@JsonProperty("Cvss31Score")
-		public String cvss31Score;
+		public String cvss31Score="";
 		@JsonProperty("Cvss31String")
-		public String cvss31String;
+		public String cvss31String="";
 		@JsonProperty("Cvss40Score")
-		public String cvss40Score;
+		public String cvss40Score="";
 		@JsonProperty("Cvss40String")
-		public String cvss40String;
+		public String cvss40String="";
 		
 		public GenericVulnerability() {}
 		
@@ -101,6 +101,10 @@ public class vulnerabilities {
 			this.likelihoodId = defaultVuln.getLikelyhood();
 			this.impactId = defaultVuln.getImpact();
 			this.active = defaultVuln.getActive();
+			this.cvss31Score = defaultVuln.getCvss31Score() == null ? "" : defaultVuln.getCvss31Score();
+			this.cvss31String = defaultVuln.getCvss31String() == null ? "" : defaultVuln.getCvss31String();
+			this.cvss40Score = defaultVuln.getCvss40Score() == null? "" : defaultVuln.getCvss40Score();
+			this.cvss40String = defaultVuln.getCvss40String() == null ? "" : defaultVuln.getCvss40String();
 			
 		}
 
