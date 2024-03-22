@@ -830,7 +830,7 @@ class VulnerablilityView {
 			_this.queue.push(_this.vulnId, "description", encodeURIComponent(contents));
 		}
 		this.editors.description.onChange = function(contents, core) {
-			if (contents.endsWith("</div>")) {
+			if (!contents.endsWith("</p>")) {
 				_this.editors.description.setContents(contents + "<p><br></p>");
 			}
 			contents = marked.parse(contents)
@@ -840,7 +840,7 @@ class VulnerablilityView {
 			_this.queue.push(_this.vulnId, "recommendation", encodeURIComponent(contents));
 		}
 		this.editors.recommendation.onChange = function(contents, core) {
-			if (contents.endsWith("</div>")) {
+			if (!contents.endsWith("</p>")) {
 				_this.editors.remediation.setContents(contents + "<p><br></p>");
 			}
 			_this.queue.push(_this.vulnId, "recommendation", encodeURIComponent(contents));
@@ -849,7 +849,7 @@ class VulnerablilityView {
 			_this.queue.push(_this.vulnId, "details", encodeURIComponent(contents));
 		}
 		this.editors.details.onChange = function(contents, core) {
-			if (contents.endsWith("</div>")) {
+			if (!contents.endsWith("</p>")) {
 				_this.editors.details.setContents(contents + "<p><br></p>");
 			}
 			_this.queue.push(_this.vulnId, "details", encodeURIComponent(contents));

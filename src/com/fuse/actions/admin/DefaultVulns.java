@@ -222,13 +222,16 @@ public class DefaultVulns  extends FSActionSupport{
 				this._message = "Invalid Impact.";
 				return this.ERRORJSON;
 			}
-			if(this.description == null || this.description.trim().equals("") ) {
-				this._message = "Missing Description.";
+			if(this.category == null) {
+				this._message = "Missing Category.";
 				return this.ERRORJSON;
 			}
-			if(this.recommendation == null || this.recommendation.trim().equals("") ) {
-				this._message = "Missing Recommendation.";
-				return this.ERRORJSON;
+			
+			if(this.description == null) {
+				this.description="";
+			}
+			if(this.recommendation == null) {
+				this.recommendation="";
 			}
 			
 			DefaultVulnerability ds = VulnerabilityQueries.getDefaultVulnerability(em, this.name);
@@ -244,10 +247,14 @@ public class DefaultVulns  extends FSActionSupport{
 				dv.setName(this.name.trim());
 				dv.setCategory(cat);
 				dv.setImpact(this.impact);
+				dv.setRecommendation(this.recommendation);
+				dv.setCvss31String(this.cvss31String.trim());
+				dv.setCvss31Score(this.cvss31Score.trim());
+				dv.setCvss40String(this.cvss40String.trim());
+				dv.setCvss40Score(this.cvss40Score.trim());
 				dv.setLikelyhood(this.likelyhood);
 				dv.setOverall(this.overall);
 				dv.setDescription(this.description);
-				dv.setRecommendation(this.recommendation);
 				dv.setActive(true);
 				em.persist(dv);
 				AuditLog.audit(this,"Default Vulnerability Added",AuditLog.UserAction, AuditLog.CompDefaultVuln, dv.getId(),false);
@@ -262,13 +269,16 @@ public class DefaultVulns  extends FSActionSupport{
 				this._message = "Empty vulnerability name";
 				return this.ERRORJSON;
 			}
-			if(this.recommendation == null || this.recommendation.trim().equals("")) {
-				this._message = "Empty Recommendation.";
+			
+			if(this.category == null) {
+				this._message = "Missing Category.";
 				return this.ERRORJSON;
 			}
-			if(this.description == null || this.description.trim().equals("")) {
-				this._message = "Empty Description.";
-				return this.ERRORJSON;
+			if(this.description == null) {
+				this.description="";
+			}
+			if(this.recommendation == null) {
+				this.recommendation="";
 			}
 			
 			DefaultVulnerability testDV = VulnerabilityQueries.getDefaultVulnerability(em, this.name);
@@ -284,15 +294,15 @@ public class DefaultVulns  extends FSActionSupport{
 			
 			dv.setName(this.name.trim());
 			dv.setCategory(cat);
-			dv.setImpact(this.impact);
-			dv.setLikelyhood(this.likelyhood);
-			dv.setOverall(this.overall);
 			dv.setDescription(this.description.trim());
 			dv.setRecommendation(this.recommendation.trim());
 			dv.setCvss31String(this.cvss31String.trim());
 			dv.setCvss31Score(this.cvss31Score.trim());
 			dv.setCvss40String(this.cvss40String.trim());
 			dv.setCvss40Score(this.cvss40Score.trim());
+			dv.setImpact(this.impact);
+			dv.setLikelyhood(this.likelyhood);
+			dv.setOverall(this.overall);
 			if(cf != null && !cf.equals("")){
 				JSONParser parse = new JSONParser();
 				JSONArray array = (JSONArray)parse.parse(cf);
@@ -324,6 +334,7 @@ public class DefaultVulns  extends FSActionSupport{
 			em.persist(dv);
 			AuditLog.audit(this,"Default Vulnerability Updated",AuditLog.UserAction, AuditLog.CompDefaultVuln, dv.getId(),false);
 			HibHelper.getInstance().commit();
+			return this.SUCCESSJSON;
 			
 			
 			

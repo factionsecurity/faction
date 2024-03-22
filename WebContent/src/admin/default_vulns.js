@@ -77,6 +77,17 @@ global.editors = {
 	description: suneditor.create("description", editorOptions),
 	recommendation: suneditor.create("recommendation", editorOptions)
 };
+global.editors.description.onChange = function(contents, core) {
+	console.log(contents)
+	if (!contents.endsWith("</p>")) {
+		global.editors.description.setContents(contents + "<p><br></p>");
+	}
+}
+global.editors.recommendation.onChange = function(contents, core) {
+	if (!contents.endsWith("</p>")) {
+		global.editors.remediation.setContents(contents + "<p><br></p>");
+	}
+}
 
 global.editVuln = function editVuln(id) {
 
@@ -102,7 +113,7 @@ global.editVuln = function editVuln(id) {
 			backdrop: 'static'
 		});
 		$("#saveVuln").unbind();
-		$("#saveVuln").click(function() {
+		$(".saveVuln").click(function() {
 			let desc = global.editors.description.getContents();
 			let rec = global.editors.recommendation.getContents();
 			let postData = "description=" + encodeURIComponent(desc);
@@ -129,7 +140,8 @@ global.editVuln = function editVuln(id) {
 			postData += "&action=savevuln";
 			postData += "&_token=" + _token;
 			$.post("DefaultVulns", postData, function(resp) {
-				alertRedirect(resp);
+				$(`#vuln_title_${id}`).html($("#title").val());
+				$("#vulnModal").modal('hide');
 			});
 		});
 
@@ -169,7 +181,7 @@ global.deleteVuln = function deleteVuln(id) {
 							});
 						}
 					} else {
-						document.location.reload();
+						$(`#vuln_title_${id}`).parent().remove()
 					}
 				});
 			},
@@ -232,12 +244,12 @@ global.toggleVuln = function toggleVuln(id, state) {
 $(function() {
 	$(".select2").select2();
 
-	$("#overall").on('change', (event) => {
+	/*$("#overall").on('change', (event) => {
 		let sev = event.target.value;
 		$("#impact").val(sev).trigger("change");
 		$("#likelyhood").val(sev).trigger("change");
 
-	})
+	})*/
 
 	$('#catTable').DataTable({
 		"paging": true,
@@ -274,39 +286,51 @@ $(function() {
 		});
 	});
 	$("#addVuln").click(function() {
+		let desc = global.editors.description.setContents("");
+		let rec = global.editors.recommendation.setContents("");
+		$("#title").val("");
+		$("#impact").val(0).trigger('change')
+		$("#likelyhood").val(0).trigger('change')
+		$("#overall").val(0).trigger('change')
+		$("#catNameSelect").val(0).trigger('change')
+		$("#cvss31String").val('');
+		$("#cvss40String").val('');
+		$("#cvss31Score").val('');
+		$("#cvss40Score").val('');
 		$("#vulnModal").modal({
 			show: true,
 			keyboard: false,
 			backdrop: 'static'
 		});
-	});
-	$("#saveVuln").click(function() {
-		let desc = global.editors.description.getContents();
-		let rec = global.editors.recommendation.getContents();
-		let data = "description=" + encodeURIComponent(desc);
-		data += "&recommendation=" + encodeURIComponent(rec);
-		data += "&name=" + $("#title").val();
-		data += "&impact=" + $("#impact").val();
-		data += "&likelyhood=" + $("#likelyhood").val()
-		data += "&overall=" + $("#overall").select2("val")
-		data += "&category=" + $("#catNameSelect").select2("val");
-		data += "&cvss31String=" + $("#cvss31String").val();
-		data += "&cvss40String=" + $("#cvss40String").val();
-		data += "&cvss31Score=" + $("#cvss31Score").val();
-		data += "&cvss40Score=" + $("#cvss40Score").val();
-		let fields = [];
-		for (let vulnId of vulnTypes) {
-				let val = $(`#type${vulnId}`).val();
-				if(`${val}` == "undefined"){
-					val=""
-				}
-			fields.push(`{"typeid" : ${vulnId}, "value" : "${val}"}`);
-		}
-		data += '&cf=[' + fields.join(",") + "]";
-		data += "&action=addvuln";
-		data += "&_token=" + _token;
-		$.post("DefaultVulns", data, function(resp) {
-			alertRedirect(resp);
+		$(".saveVuln").unbind();
+		$(".saveVuln").click(function() {
+			let desc = global.editors.description.getContents();
+			let rec = global.editors.recommendation.getContents();
+			let data = "description=" + encodeURIComponent(desc);
+			data += "&recommendation=" + encodeURIComponent(rec);
+			data += "&name=" + $("#title").val();
+			data += "&impact=" + $("#impact").val()
+			data += "&likelyhood=" + $("#likelyhood").val()
+			data += "&overall=" + $("#overall").val()
+			data += "&category=" + ($("#catNameSelect").val() == null ?  "": $("#catNameSelect").val())
+			data += "&cvss31String=" + $("#cvss31String").val();
+			data += "&cvss40String=" + $("#cvss40String").val();
+			data += "&cvss31Score=" + $("#cvss31Score").val();
+			data += "&cvss40Score=" + $("#cvss40Score").val();
+			let fields = [];
+			for (let vulnId of vulnTypes) {
+					let val = $(`#type${vulnId}`).val();
+					if(`${val}` == "undefined"){
+						val=""
+					}
+				fields.push(`{"typeid" : ${vulnId}, "value" : "${val}"}`);
+			}
+			data += '&cf=[' + fields.join(",") + "]";
+			data += "&action=addvuln";
+			data += "&_token=" + _token;
+			$.post("DefaultVulns", data, function(resp) {
+				alertRedirect(resp);
+			});
 		});
 	});
 
@@ -390,7 +414,6 @@ function setIntVal(value, el) {
 
 
 $(function() {
-	console.log("jere");
 	$("#downloadVulns").click(function() {
 		document.location = "GetVulnsCSV";
 	});
@@ -399,11 +422,16 @@ $(function() {
 	cvss31.setUpCVSSModal("cvss31Calc", "cvss31String", (vector, score) => {
 		$("#cvss31String").val(vector).trigger("change")
 		$("#cvss31Score").val(score).trigger("change")
+		const overall = cvss31.convertCVSSSeverity(cvss31.getCVSSSeverity(score));
+		$("#overall").val(overall).trigger('change');
+		
 	});
 	let cvss40 = new CVSS("", true);
 	cvss40.setUpCVSSModal("cvss40Calc", "cvss40String", (vector, score) => {
 		$("#cvss40String").val(vector).trigger("change")
 		$("#cvss40Score").val(score).trigger("change")
+		const overall = cvss40.convertCVSSSeverity(cvss40.getCVSSSeverity(score));
+		$("#overall").val(overall).trigger('change');
 	});
 });
 function b64DecodeUnicode(str) {

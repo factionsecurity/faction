@@ -41,7 +41,7 @@
 				<tbody>
 					<s:iterator value="vulnerabilities">
 						<tr>
-							<td><s:property value="name" /></td>
+							<td id="vuln_title_${id}"><s:property value="name" /></td>
 							<td><s:property value="updateRiskLevels()" /> <s:property
 									value="overallStr" /></td>
 							<td><input class="" type="checkbox"
@@ -181,6 +181,17 @@
 						<br>
 						
 						<!-- TODO: Add custom fields here -->
+						
+						<div class="row">
+								<div class="col-sm-8">
+								</div>
+								<div class="col-sm-4">
+									<button type="button" class="btn btn-primary saveVuln pull-right" id="saveVuln">
+										<i class="fa fa-save"></i> Save changes
+									</button>
+								</div>
+						</div>
+						<br/>
 
 
 						<div class="row">
@@ -202,6 +213,17 @@
 								<!-- /.box -->
 							</div>
 						</div>
+						<br/>
+						<div class="row">
+								<div class="col-sm-8">
+								</div>
+								<div class="col-sm-4">
+									<button type="button" class="btn btn-primary saveVuln pull-right" id="saveVuln">
+										<i class="fa fa-save"></i> Save changes
+									</button>
+								</div>
+						</div>
+						<br/>
 						<div class="row">
 							<!-- Vuln Recommendation Section -->
 							<div class="col-md-12">
@@ -228,7 +250,7 @@
 			<div class="modal-footer bg-red">
 				<button type="button" class="btn btn-default pull-left"
 					data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-primary" id="saveVuln">
+				<button type="button" class="btn btn-primary saveVuln" id="saveVuln">
 					<i class="fa fa-save"></i> Save changes
 				</button>
 			</div>
