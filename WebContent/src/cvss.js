@@ -92,9 +92,15 @@ export default class CVSS {
 		//fixes a bug in the cvss library
 		if(this.is31()){
 			let vectorString = "CVSS:3.1";
+			const required = ['AV', 'AC', 'PR', 'UI', 'S', 'C', 'I', 'A'];
+			for( const r of required){
+				vectorString = vectorString.concat("/", r, ":", this.vector.Get(r));
+			}
 			for (const [t] of Object.entries(this.vector._metrics)) {
-				const n = this.vector.Get(t);
-				null != n && "X" != n && (vectorString = vectorString.concat("/", t, ":", n))
+				if( !required.includes(t)){
+					const n = this.vector.Get(t);
+					null != n && "X" != n && (vectorString = vectorString.concat("/", t, ":", n))
+				}
 			}
 			return vectorString;
 		}else{
@@ -147,7 +153,7 @@ export default class CVSS {
 							$(`#pr_${this.vector.Get('PR').toLowerCase()}`).click()
 							$(`#ui_${this.vector.Get('UI').toLowerCase()}`).click()
 							
-							$(`#ei_${this.vector.Get('E').toLowerCase()}`).click()
+							$(`#e_${this.vector.Get('E').toLowerCase()}`).click()
 							
 							$(`#cr_${this.vector.Get('CR').toLowerCase()}`).click()
 							$(`#ir_${this.vector.Get('IR').toLowerCase()}`).click()
@@ -166,7 +172,6 @@ export default class CVSS {
 								$(`#a_${this.vector.Get('A').toLowerCase()}`).click()
 								
 								
-								$(`#e_${this.vector.Get('E').toLowerCase()}`).click()
 								$(`#rl_${this.vector.Get('RL').toLowerCase()}`).click()
 								$(`#rc_${this.vector.Get('RC').toLowerCase()}`).click()
 								
@@ -219,7 +224,7 @@ export default class CVSS {
 							let pr = $("input[name='pr']:checked").val()
 							let ui = $("input[name='ui']:checked").val()
 							
-							let ei = $("input[name='ei']:checked").val() || "X"
+							let e = $("input[name='e']:checked").val() || "X"
 							let cr = $("input[name='cr']:checked").val() || "X"
 							let ir = $("input[name='ir']:checked").val() || "X"
 							let ar = $("input[name='ar']:checked").val() || "X"
@@ -233,7 +238,7 @@ export default class CVSS {
 									AC: ac,
 									PR: pr,
 									UI: ui, 
-									EI: ei, 
+									E: e, 
 									CR: cr, 
 									IR: ir, 
 									AR: ar, 
@@ -254,7 +259,6 @@ export default class CVSS {
 								let a = $("input[name='a']:checked").val()
 								let s = $("input[name='s']:checked").val()
 								
-								let e = $("input[name='e']:checked").val() || "X"
 								let rl = $("input[name='rl']:checked").val() || "X"
 								let rc = $("input[name='rc']:checked").val() || "X"
 								let ms = $("input[name='ms']:checked").val() || "X"
@@ -280,9 +284,7 @@ export default class CVSS {
 								}
 								
 								Object.keys(cvssVector).forEach( (a, _i) =>{
-									if(cvssVector[a] != "X"){
-										_this.vector.Set(a,cvssVector[a]);
-									}
+									_this.vector.Set(a,cvssVector[a]);
 								});
 								score = _this.getCVSSScore();
 								severity = _this.getCVSSSeverity(score);
@@ -342,9 +344,7 @@ export default class CVSS {
 									...commonVector
 								}
 								Object.keys(cvssVector).forEach( (a, _i) =>{
-									if(cvssVector[a] != "X"){
 										_this.vector.Set(a,cvssVector[a]);
-									}
 								});
 								
 								
@@ -368,7 +368,7 @@ export default class CVSS {
 					});
 				},
 				buttons: {
-					save: () =>{
+					update: () =>{
 						let cvssString = _this.getVector();
 						saveCallback(cvssString, _this.getCVSSScore());
 					},

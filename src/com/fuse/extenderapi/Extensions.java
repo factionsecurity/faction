@@ -177,7 +177,6 @@ public class Extensions {
 	public String updateReport(Assessment localAssessment, String reportText) {
 		if (!this.isExtended())
 			return reportText;
-		EntityManager em = HibHelper.getInstance().getEM();
 		try {
 			// Clone Assessment
 			com.faction.elements.Assessment tmpAssessment = new com.faction.elements.Assessment();
@@ -233,8 +232,6 @@ public class Extensions {
 			ex.printStackTrace();
 		} catch (Throwable ex) {
 			ex.printStackTrace();
-		} finally {
-			em.close();
 		}
 		return reportText;
 	}

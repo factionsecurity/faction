@@ -42,7 +42,7 @@
 					<s:iterator value="vulnerabilities">
 						<tr>
 							<td id="vuln_title_${id}"><s:property value="name" /></td>
-							<td><s:property value="updateRiskLevels()" /> <s:property
+							<td id="vuln_sev_${id}"><s:property value="updateRiskLevels()" /> <s:property
 									value="overallStr" /></td>
 							<td><input class="" type="checkbox"
 								onclick="toggleVuln(${id },${active == false ? 'false' : 'true'})"

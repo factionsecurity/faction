@@ -1,4 +1,5 @@
 require('bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.min.css');
+require('../loading/css/jquery-loading.css');
 import '../scripts/fileupload/js/fileinput.min';
 import 'jquery';
 import 'bootstrap';
@@ -7,6 +8,7 @@ import 'jquery-confirm';
 import 'bootstrap-switch';
 import Sortable from 'sortablejs/modular/sortable.core.esm.js';
 import { marked } from 'marked';
+import '../loading/js/jquery-loading';
 
 
 class AppStore {
@@ -60,9 +62,13 @@ class AppStore {
 				$(".list-group-item").removeClass("active");
 				$(event.item).addClass("active");
 				let id = $(event.item).data("id");
+				$('#appBox').addClass("disabled");
+				$('#appLoading').show();
+				$("#loadingbox").loading({ overlay: true, base: 0.3 });
 				fetch(`GetDetails?id=${id}`)
 				.then( response => response.json())
 				.then( json => {
+					$('#appLoading').hide();
 					$('#appBox').removeClass("disabled");
 					$("#appConfigs").html("");
 					$('#appDescription').html(marked.parse(_this.b64DecodeUnicode(json.description)));

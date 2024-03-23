@@ -4,16 +4,12 @@ import java.io.StringWriter;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
-import javax.persistence.EntityManager;
 
 import org.docx4j.TextUtils;
 import org.docx4j.TraversalUtil;
@@ -37,9 +33,7 @@ import org.docx4j.wml.R;
 import org.docx4j.wml.RFonts;
 import org.docx4j.wml.STTabTlc;
 import org.docx4j.wml.Tbl;
-import org.docx4j.wml.TblWidth;
 import org.docx4j.wml.Tc;
-import org.docx4j.wml.TcPr;
 import org.docx4j.wml.Tr;
 
 import com.fuse.dao.Assessment;

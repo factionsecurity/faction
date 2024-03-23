@@ -86,6 +86,10 @@ font-weight: normal;
 }
 .appStoreButton{
 }
+
+#appLoading{
+	display:none;
+}
 </style>
 <div class="content-wrapper">
 	<!-- Content Header (Page header) -->
@@ -133,6 +137,42 @@ font-weight: normal;
 				</bs:mco>
 			</bs:mco>
 			<bs:mco colsize="6">
+				<bs:box type="primary" title="Extension Description" id="appLoading">
+					<div id="loadingbox" class="extensionDescription js-loading">
+					<bs:row>
+						<bs:mco colsize="9">
+						</bs:mco>
+						<bs:mco colsize="3">
+  						</bs:mco>
+  					</bs:row>
+					<bs:row>
+						<bs:mco colsize="2" style="min-width: 200px"><img src="../app-default.png" class="appLogo"/></bs:mco>
+						<bs:mco colsize="8">
+						<h1 >Loading Extension <br/><small>Version: 0.0</small></h1>
+							By: <span class="appAuthor">...</span> <br/>
+							Link: ...<br/>
+							Hash: ...<br/>
+						</bs:mco>
+					</bs:row>
+					<bs:row>
+						<bs:mco colsize="12">
+						<div class="appDescription">
+						</div>
+						</bs:mco>
+					</bs:row>
+					<bs:row>
+						<bs:mco colsize="12">
+						</bs:mco>
+					</bs:row>
+					<bs:row>
+						<br/>
+						<bs:mco colsize="2">
+  						</bs:mco>
+  					</bs:row>
+					</div>
+					<script>
+					</script>
+				</bs:box>
 				<bs:box type="primary disabled" title="Extension Description" id="appBox">
 					<div class="extensionDescription">
 					<bs:row>

@@ -141,6 +141,8 @@ global.editVuln = function editVuln(id) {
 			postData += "&_token=" + _token;
 			$.post("DefaultVulns", postData, function(resp) {
 				$(`#vuln_title_${id}`).html($("#title").val());
+				let severityName = $("#overall option:selected").text();
+				$(`#vuln_sev_${id}`).html(severityName);
 				$("#vulnModal").modal('hide');
 			});
 		});
