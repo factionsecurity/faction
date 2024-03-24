@@ -98,7 +98,7 @@ In 1.2 we will be releasing the Faction App Store which will make it easier for 
 
 Note you can reorder extensions so that updates for one can affect updates to the next. 
 
-### ⭐️ Extensions for Custom Grphics
+### ⭐️ Extensions for Custom Graphics
 Extensions will also allow custom bar charts to your reports:
 ![image](https://github.com/factionsecurity/faction/assets/2343831/1657ed40-fdd3-4b29-afd3-b5d3aa8f78c5)
 
