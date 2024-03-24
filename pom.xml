@@ -402,7 +402,7 @@
 		<dependency>
 			<groupId>org.pac4j</groupId>
 			<artifactId>pac4j-oidc</artifactId>
-			<version>3.0.0</version>
+			<version>4.5.5</version>
 			<exclusions>
 				<exclusion>
 					<groupId>javax.activation</groupId>
