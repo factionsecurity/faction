@@ -20,6 +20,9 @@ import '../scripts/jquery.autocomplete.min';
 import 'select2';
 import { marked } from 'marked';
 import Chart from 'chart.js/auto';
+import TurndownService from 'turndown'
+let html2md = new TurndownService()
+
 
 
 global._token = $("#_token")[0].value;
@@ -77,6 +80,43 @@ let fromMarkdown = {
 		const html = marked.parse(md);
 		const div = document.createElement("div");
 		div.innerHTML = html;
+		const parent = selected[0].parentNode;
+		parent.insertBefore(div, selected[0]);
+		for (let i = 0; i < selected.length; i++) {
+			selected[i].remove();
+		}
+	}
+}
+plugins['fromMarkdown'] = fromMarkdown;
+let toMarkdown = {
+	name: 'toMarkdown',
+	display: 'command',
+	title: 'Convert To Markdown',
+	buttonClass: '',
+	innerHTML: '<i class="fa-brands fa-markdown" style="color:lightgray; transform: rotate(180deg);"></i>',
+	add: function(core, targetElement) {
+		core.context.toMarkdown = {
+			targetButton: targetElement,
+			preElement: null
+		}
+	},
+	active: function(element) {
+		if (element) {
+			this.util.addClass(this.context.toMarkdown.targetButton.firstChild, 'mdEnabled');
+			this.context.toMarkdown.preElement = element;
+			return true;
+		} else {
+			this.util.removeClass(this.context.toMarkdown.targetButton.firstChild, 'mdEnabled');
+			this.context.toMarkdown.preElement = null;
+		}
+		return false;
+	},
+	action: function() {
+		let selected = this.getSelectedElements();
+		const html = selected.reduce((acc, item) => acc + item.outerHTML + "", "");
+		const md = html2md.turndown(html);
+		const div = document.createElement("div");
+		div.innerHTML = `<pre>${md}</pre>`;
 		const parent = selected[0].parentNode;
 		parent.insertBefore(div, selected[0]);
 		for (let i = 0; i < selected.length; i++) {
