@@ -6,6 +6,14 @@
 <jsp:include page="../header.jsp" />
 <link rel="stylesheet" href="../plugins/iCheck/all.css">
 
+<style>
+	.meta {
+		font-weight: bold;
+		margin-left: 30px;
+	}
+
+</style>
+
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
 	<!-- Content Header (Page header) -->
@@ -22,28 +30,45 @@
 		<bs:row>
 			<bs:mco colsize="9">
 				<bs:box type="info" 
-					title="<i class='glyphicon  glyphicon-list-alt'></i> Vulnerability Info">
+					title="<i class='glyphicon  glyphicon-list-alt'></i>&nbsp;&nbsp;Vulnerability Info">
 					<div style="height: 140px">
 					<bs:row>
-						<bs:mco colsize="12">
-							<bs:datatable
-								columns="App Name, Overall, Impact, Likelyhood, Start, End, Report"
-								classname="primary" id="">
-								<tr>
-									<td><s:property value="verification.assessment.appId" /> - <s:property value="verification.assessment.name" /></td>
-									<td><s:property
-											value="verification.verificationItems[0].vulnerability.overallStr" /></td>
-									<td><s:property
-											value="verification.verificationItems[0].vulnerability.impactStr" /></td>
-									<td><s:property
-											value="verification.verificationItems[0].vulnerability.likelyhoodStr" /></td>
-									<td><s:date name="verification.start" format="MM/dd/yyyy" /></td>
-									<td><s:date name="verification.end" format="MM/dd/yyyy" /></td>
-									<td><bs:button color="info" size="md" colsize="12"
-											text="<span class='fa fa-file'></span> Full Report" id="open"></bs:button></td>
-								</tr>
-							</bs:datatable>
-						</bs:mco>
+						<s:if test="verification.assessment.type.cvss40 || verification.assessment.type.cvss31">
+							<bs:mco colsize="1">
+								<div class="scoreBody" style="margin-top: 5px">
+									<h3 class="scoreBox <s:property value="verification.verificationItems[0].vulnerability.overallStr"/>" id="score"><s:property value="verification.verificationItems[0].vulnerability.cvssScore"/></h3>
+									<span class="severityBox <s:property value="verification.verificationItems[0].vulnerability.overallStr"/>" id="severity"><s:property value="verification.verificationItems[0].vulnerability.overallStr"/></span>
+								</div>
+							</bs:mco>
+							<bs:mco colsize="2">
+								<span class='meta'><u>Category:</u></span><br/>
+								<span class='meta'><s:property value="verification.verificationItems[0].vulnerability.category.name"/></span><br/>
+								<br/>
+								<span class='meta'><u>CVSS Vector:</u></span><br/>
+								<span class='meta'><s:property value="verification.verificationItems[0].vulnerability.cvssString"/></span><br/>
+							</bs:mco>
+						</s:if>
+						<s:else>
+							<bs:mco colsize="12">
+								<bs:datatable
+									columns="App Name, Overall, Impact, Likelyhood, Start, End, Report"
+									classname="primary" id="">
+									<tr>
+										<td><s:property value="verification.assessment.appId" /> - <s:property value="verification.assessment.name" /></td>
+										<td><s:property
+												value="verification.verificationItems[0].vulnerability.overallStr" /></td>
+										<td><s:property
+												value="verification.verificationItems[0].vulnerability.impactStr" /></td>
+										<td><s:property
+												value="verification.verificationItems[0].vulnerability.likelyhoodStr" /></td>
+										<td><s:date name="verification.start" format="MM/dd/yyyy" /></td>
+										<td><s:date name="verification.end" format="MM/dd/yyyy" /></td>
+										<td><bs:button color="info" size="md" colsize="12"
+												text="<span class='fa fa-file'></span> Full Report" id="open"></bs:button></td>
+									</tr>
+								</bs:datatable>
+							</bs:mco>
+						</s:else>
 					</bs:row>
 					</div>
 				</bs:box>

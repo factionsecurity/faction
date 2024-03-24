@@ -285,7 +285,7 @@
 			<div class="box-header">
 				<h3 class="box-title">
 					<i class="glyphicon glyphicon-asterisk"></i> Detailed Summary /
-					Risk Analysis<span id="risk_header" class="edited"></span><small></small>
+					Risk Analysis / Scope<span id="risk_header" class="edited"></span><small></small>
 				</h3>
 				<div class="box-tools pull-right"></div>
 			</div>

@@ -73,7 +73,7 @@ const editorDisabled = {
 	codeMirror: CodeMirror,
 	defaultStyle: 'font-family: arial; font-size: 18px',
 	buttonList: ['codeView'],
-	minHeight: 500,
+	minHeight: 547,
 	width: "100%",
 	readOnly: true,
 	height: "auto",

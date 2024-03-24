@@ -39,7 +39,6 @@ font-size: xx-large;
 }
 .meta {
 font-weight: bold;
-line-height: 30px;
 }
 .catName {
 color:white;
@@ -132,27 +131,29 @@ color:white;
 			    	<bs:row>
 			    		<s:if test="asmt.type.cvss31 || asmt.type.cvss40">
 						<bs:mco colsize="1">
-							<div class="scoreBody">
-								<h3 class="scoreBox ${overallStr}" id="score">${cvssScore }</h3>
-								<span class="severityBox ${overallStr }" id="severity">${overallStr}</span>
+							<div class="scoreBody" style="margin-top:5px">
+								<h3 class="scoreBox <s:property value="overallStr"/>" id="score"> <s:property value="cvssScore"/></h3>
+								<span class="severityBox <s:property value="overallStr"/>" id="severity"><s:property value="overallStr"/></span>
 							</div>
 						</bs:mco>
 			    		<bs:mco colsize="2">
-			    			<br/>
+							<span class='meta'><u>Category:</u></span><br/>
+							<span class='meta'><s:property value="category.name"/></span><br/>
+							<br/>
 							<span class='meta'><u>CVSS Vector:</u></span><br/>
-							<span class='meta'>${cvssString }</span><br/>
+							<span class='meta'><s:property value="cvssString"/></span><br/>
 						</bs:mco>
 			    		</s:if>
 			    		<s:else>
 			    		<bs:mco colsize="12">
 							<div class='rating'>
 								<span class='meta'>Category:</span><br/>
-								<span class='catName'>${category.name }</span><br/>
+								<span class='catName'><s:property value="category.name"/></span><br/>
 								<span class='meta'>Severity:</span>
 								<br>
-								<span class='label ' title='Severity'>${overallStr} Severity</span>
-								<span class='label ' title='Impact'>${impactStr} Impact</span>
-								<span class='label ' title='Likelihood'>${likelyhoodStr} Likelihood</span>
+								<span class='label ' title='Severity'><s:property value="overallStr"/> Severity</span>
+								<span class='label ' title='Impact'><s:property value="impactStr"/> Impact</span>
+								<span class='label ' title='Likelihood'><s:property value="likelyhoodStr"/> Likelihood</span>
 							</div>
 							</bs:mco>
 			    		</s:else>
