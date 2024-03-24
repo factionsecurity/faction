@@ -737,27 +737,15 @@ public class DocxUtils {
 		return content;
 
 	}
-	
 
 	private void setFindings(String customCSS)
 			throws JAXBException, Docx4JException {
 		int begin = getIndex(mlp.getMainDocumentPart(), "${fiBegin}");
 		int end = getIndex(mlp.getMainDocumentPart(), "${fiEnd}");
-		int detailBegin = getIndex(mlp.getMainDocumentPart(), "${detailBegin}");
-		int detailEnd = getIndex(mlp.getMainDocumentPart(), "${detailEnd}");
 		if (begin == -1)
 			return;
 		if (end == -1)
 			return;
-		boolean isDetailSection = !(detailBegin == -1 || detailEnd == -1);
-				
-		List<Object> detailTemplate = new LinkedList();
-		if(isDetailSection) {
-			for (int i = detailBegin; i <= detailEnd; i++) {
-				detailTemplate.add(mlp.getMainDocumentPart().getContent().get(i));
-			}
-		}
-			
 
 		HashMap<String, String> colorMap = new HashMap();
 		HashMap<String, String> cellMap = new HashMap();
@@ -765,7 +753,6 @@ public class DocxUtils {
 		// Get relevent parts of the document and put them into a
 		// temporary array.
 		List<Object> findingTemplate = new LinkedList();
-		
 		for (int i = begin; i <= end; i++) {
 			findingTemplate.add(mlp.getMainDocumentPart().getContent().get(i));
 			List<Object> paragraphs = getAllElementFromObject(mlp.getMainDocumentPart().getContent().get(i), P.class);
@@ -791,7 +778,6 @@ public class DocxUtils {
 
 				}
 			}
-			
 		}
 		// Remove the elements from the doc. These will be replaced with
 		// out temp array when its updated later on
