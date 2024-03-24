@@ -143,6 +143,7 @@ font-weight: normal;
 						<bs:mco colsize="9">
 						</bs:mco>
 						<bs:mco colsize="3">
+  							<button class="btn btn-primary" ><i class="fa fa-upload"></i>&nbsp;&nbsp;Install Update</button>
   						</bs:mco>
   					</bs:row>
 					<bs:row>

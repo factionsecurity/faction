@@ -214,11 +214,11 @@ public class AssessmentView extends FSActionSupport {
 				return this.ERRORJSON;
 			}
 			if (assessment.isInPr()) {
-				this._message = "Assessment cannot be changed while in PeerReview.";
+				this._message = "Assessment cannot be changed while in Peer Review.";
 				return this.ERRORJSON;
 			}
 			if (assessment.isPrComplete()) {
-				this._message = "Assessment cannot be changed user acknowledges the PeerReview.";
+				this._message = "Assessment cannot be changed unill user acknowledges the Peer Review.";
 				return this.ERRORJSON;
 			}
 
