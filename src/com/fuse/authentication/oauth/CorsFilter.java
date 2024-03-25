@@ -16,7 +16,6 @@ public class CorsFilter implements Filter {
         HttpServletResponse response = (HttpServletResponse) servletResponse;
 
         // Authorize (allow) all domains to consume the content
-        //response.addHeader("Access-Control-Allow-Origin", "http://localhost:3000");
         response.addHeader("Access-Control-Allow-Methods", "GET");
         response.addHeader("Access-Control-Allow-Headers", "*");
 

@@ -14,7 +14,9 @@
 "dfvulnid" : "<s:property value="current.defaultVuln.id"/>",
 "dfcat" : "<s:property value="current.defaultVuln.category.name"/>",
 "dfcatid" : "<s:property value="current.defaultVuln.category.id"/>",
-"catid" : "<s:property value="current.category.id"/>"
+"catid" : "<s:property value="current.category.id"/>",
+"cvssScore" : "<s:property value="current.cvssScore"/>",
+"cvssString" : "<s:property value="current.cvssString"/>"
 }
 
 

@@ -57,6 +57,10 @@ public class DefaultVulns  extends FSActionSupport{
 	private Integer overall;
 	private Integer impact;
 	private Integer likelyhood;
+	private String cvss31Score;
+	private String cvss40Score;
+	private String cvss31String;
+	private String cvss40String;
 	private List<DefaultVulnerability>vulnerabilities;
 	private Long vulnId;
 	private String catname;
@@ -97,7 +101,7 @@ public class DefaultVulns  extends FSActionSupport{
 		else
 			this.verOption = 0l;
 		
-		vulntypes = em.createQuery("from CustomType where type = 1").getResultList();
+		vulntypes = em.createQuery("from CustomType where type = 1 and (deleted IS NULL or deleted = false)").getResultList();
 		if(this.isAcassessor() && action != null && action.equals("json") && terms != null ){
 
 			terms = FSUtils.sanitizeMongo(terms);
@@ -133,6 +137,10 @@ public class DefaultVulns  extends FSActionSupport{
 			this.overall = dv.getOverall();
 			this.description = URLEncoder.encode(Base64.getEncoder().encodeToString(dv.getDescription().getBytes()),"UTF-8");
 			this.recommendation = URLEncoder.encode(Base64.getEncoder().encodeToString(dv.getRecommendation().getBytes()),"UTF-8");
+			this.cvss31Score = dv.getCvss31Score();
+			this.cvss40Score = dv.getCvss40Score();
+			this.cvss31String = dv.getCvss31String();
+			this.cvss40String = dv.getCvss40String();
 			this.fields = dv.getCustomFields();
 			//session.close();
 			return "getvuln";
@@ -214,13 +222,16 @@ public class DefaultVulns  extends FSActionSupport{
 				this._message = "Invalid Impact.";
 				return this.ERRORJSON;
 			}
-			if(this.description == null || this.description.trim().equals("") ) {
-				this._message = "Missing Description.";
+			if(this.category == null) {
+				this._message = "Missing Category.";
 				return this.ERRORJSON;
 			}
-			if(this.recommendation == null || this.recommendation.trim().equals("") ) {
-				this._message = "Missing Recommendation.";
-				return this.ERRORJSON;
+			
+			if(this.description == null) {
+				this.description="";
+			}
+			if(this.recommendation == null) {
+				this.recommendation="";
 			}
 			
 			DefaultVulnerability ds = VulnerabilityQueries.getDefaultVulnerability(em, this.name);
@@ -236,10 +247,14 @@ public class DefaultVulns  extends FSActionSupport{
 				dv.setName(this.name.trim());
 				dv.setCategory(cat);
 				dv.setImpact(this.impact);
+				dv.setRecommendation(this.recommendation);
+				dv.setCvss31String(this.cvss31String.trim());
+				dv.setCvss31Score(this.cvss31Score.trim());
+				dv.setCvss40String(this.cvss40String.trim());
+				dv.setCvss40Score(this.cvss40Score.trim());
 				dv.setLikelyhood(this.likelyhood);
 				dv.setOverall(this.overall);
 				dv.setDescription(this.description);
-				dv.setRecommendation(this.recommendation);
 				dv.setActive(true);
 				em.persist(dv);
 				AuditLog.audit(this,"Default Vulnerability Added",AuditLog.UserAction, AuditLog.CompDefaultVuln, dv.getId(),false);
@@ -254,13 +269,16 @@ public class DefaultVulns  extends FSActionSupport{
 				this._message = "Empty vulnerability name";
 				return this.ERRORJSON;
 			}
-			if(this.recommendation == null || this.recommendation.trim().equals("")) {
-				this._message = "Empty Recommendation.";
+			
+			if(this.category == null) {
+				this._message = "Missing Category.";
 				return this.ERRORJSON;
 			}
-			if(this.description == null || this.description.trim().equals("")) {
-				this._message = "Empty Description.";
-				return this.ERRORJSON;
+			if(this.description == null) {
+				this.description="";
+			}
+			if(this.recommendation == null) {
+				this.recommendation="";
 			}
 			
 			DefaultVulnerability testDV = VulnerabilityQueries.getDefaultVulnerability(em, this.name);
@@ -276,11 +294,15 @@ public class DefaultVulns  extends FSActionSupport{
 			
 			dv.setName(this.name.trim());
 			dv.setCategory(cat);
+			dv.setDescription(this.description.trim());
+			dv.setRecommendation(this.recommendation.trim());
+			dv.setCvss31String(this.cvss31String.trim());
+			dv.setCvss31Score(this.cvss31Score.trim());
+			dv.setCvss40String(this.cvss40String.trim());
+			dv.setCvss40Score(this.cvss40Score.trim());
 			dv.setImpact(this.impact);
 			dv.setLikelyhood(this.likelyhood);
 			dv.setOverall(this.overall);
-			dv.setDescription(this.description.trim());
-			dv.setRecommendation(this.recommendation.trim());
 			if(cf != null && !cf.equals("")){
 				JSONParser parse = new JSONParser();
 				JSONArray array = (JSONArray)parse.parse(cf);
@@ -312,14 +334,13 @@ public class DefaultVulns  extends FSActionSupport{
 			em.persist(dv);
 			AuditLog.audit(this,"Default Vulnerability Updated",AuditLog.UserAction, AuditLog.CompDefaultVuln, dv.getId(),false);
 			HibHelper.getInstance().commit();
+			return this.SUCCESSJSON;
 			
 			
 			
 		}else if(action != null && action.equals("getvuln") && vulnId != null ){
 			
 			
-			/*DefaultVulnerability dv = (DefaultVulnerability)session.createQuery("from DefaultVulnerability where id = :id")
-					.setLong("id", vulnId).uniqueResult();*/
 			DefaultVulnerability dv = VulnerabilityQueries.getDefaultVulnerability(em,  vulnId);
 			this.name = dv.getName();
 			this.catname = dv.getCategory().getName();
@@ -330,7 +351,6 @@ public class DefaultVulns  extends FSActionSupport{
 			this.description = URLEncoder.encode(Base64.getEncoder().encodeToString(dv.getDescription().getBytes()),"UTF-8");
 			this.recommendation = URLEncoder.encode(Base64.getEncoder().encodeToString(dv.getRecommendation().getBytes()),"UTF-8");
 			
-			//session.close();
 			return "getvuln";
 			
 			
@@ -569,6 +589,10 @@ public class DefaultVulns  extends FSActionSupport{
 			values.add(""+vuln.getOverall()          );
 			values.add(""+vuln.getImpact()           );
 			values.add(""+vuln.getLikelyhood()       );
+			values.add(vuln.getCvss31String());
+			values.add(vuln.getCvss31Score());
+			values.add(vuln.getCvss40String());
+			values.add(vuln.getCvss40Score());
 			for(String c : custom) {
 				values.add(c);		
 			}
@@ -801,6 +825,58 @@ public class DefaultVulns  extends FSActionSupport{
 	}
 	public String getTier(){
 		return FSUtils.getEnv("FACTION_TIER");
+	}
+	
+	public String getCvss31Score() {
+		return cvss31Score;
+	}
+
+
+	public void setCvss31Score(String cvss31Score) {
+		this.cvss31Score = cvss31Score;
+	}
+
+
+	public String getCvss40Score() {
+		return cvss40Score;
+	}
+
+
+	public void setCvss40Score(String cvss40Score) {
+		this.cvss40Score = cvss40Score;
+	}
+
+
+	public String getCvss31String() {
+		return cvss31String;
+	}
+
+
+	public void setCvss31String(String cvss31String) {
+		this.cvss31String = cvss31String;
+	}
+
+
+	public String getCvss40String() {
+		return cvss40String;
+	}
+
+
+	public void setCvss40String(String cvss40String) {
+		this.cvss40String = cvss40String;
+	}
+
+
+	public String getLevelString(Integer level) {
+		switch(level) {
+		case 0: return "Informational"; 
+		case 1: return "Recommended"; 
+		case 2: return "Low"; 
+		case 3: return "Medium"; 
+		case 4: return "High"; 
+		case 5: return "Critical"; 
+		default: return "Custom";
+		}
 	}
 	
 }

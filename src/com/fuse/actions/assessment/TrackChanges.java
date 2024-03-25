@@ -39,7 +39,7 @@ import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
 
 @Namespace("/portal")
-@Result(name = "success", location = "/WEB-INF/jsp/peerreviews/PeerReviewIce.jsp")
+@Result(name = "success", location = "/WEB-INF/jsp/peerreviews/TrackChanges.jsp")
 public class TrackChanges extends FSActionSupport {
 
 	private Assessment asmt;
@@ -75,6 +75,7 @@ public class TrackChanges extends FSActionSupport {
 		assessment.setId(pr.getAssessment().getId());
 		assessment.setAppId(pr.getAssessment().getAppId());
 		assessment.setName(pr.getAssessment().getName());
+		assessment.setType(pr.getAssessment().getType());
 		return assessment;
 	}
 
@@ -83,6 +84,8 @@ public class TrackChanges extends FSActionSupport {
 		Assessment asmt;
 		try {
 			asmt = review.exportAssessment(em);
+			//TODO: Need to fix this so it happens in the export command
+			asmt.setType(pr.getAssessment().getType());
 			if (this.summary != null)
 				review.setSummary1(this.summary);
 			if (this.risk != null)
@@ -186,6 +189,7 @@ public class TrackChanges extends FSActionSupport {
 		Assessment assessment = pr.getAssessment();
 		Comment comment = pr.getComments().get(pr.getComments().size() - 1);
 		Assessment updatedAssessment = comment.exportAssessment(em);
+		updatedAssessment.setType(assessment.getType());
 		comment.setAcceptedEdits(true);
 
 		// Save Everything...
@@ -214,6 +218,12 @@ public class TrackChanges extends FSActionSupport {
 		for (Vulnerability v : assessment.getVulns()) {
 			if (v.getDescription().matches(trackChangesTest)) {
 				errors.add("Vulnerability " + v.getName() + " Description contains UnAccepted Edits");
+			}
+			if (v.getRecommendation().matches(trackChangesTest)) {
+				errors.add("Vulnerability " + v.getName() + " Recommendation contains UnAccepted Edits");
+			}
+			if (v.getDetails().matches(trackChangesTest)) {
+				errors.add("Vulnerability " + v.getName() + " Details contains UnAccepted Edits");
 			}
 		}
 		JSONObject result = new JSONObject();
@@ -402,6 +412,7 @@ public class TrackChanges extends FSActionSupport {
 		asmt.setId(pr.getAssessment().getId());
 		asmt.setAppId(pr.getAssessment().getAppId());
 		asmt.setName(pr.getAssessment().getName());
+		asmt.setType(pr.getAssessment().getType());
 
 		files = (List<Files>) em.createQuery("from Files where type = :type and entityId = :id")
 				.setParameter("type", Files.ASSESSMENT).setParameter("id", pr.getAssessment().getId()).getResultList();
@@ -445,6 +456,7 @@ public class TrackChanges extends FSActionSupport {
 		asmt.setId(pr.getAssessment().getId());
 		asmt.setAppId(pr.getAssessment().getAppId());
 		asmt.setName(pr.getAssessment().getName());
+		asmt.setType(pr.getAssessment().getType());
 		this.showComplete = false;
 		this.showSave = false;
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();

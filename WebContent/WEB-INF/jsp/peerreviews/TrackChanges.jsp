@@ -39,7 +39,6 @@ font-size: xx-large;
 }
 .meta {
 font-weight: bold;
-line-height: 30px;
 }
 .catName {
 color:white;
@@ -128,16 +127,40 @@ color:white;
 			  	${v.updateRiskLevels()}
 			   <bs:row>
 				<bs:mco colsize="12">
-			    <bs:box title="
-			    		<b><u>${name }</u></b><br><br>
-			    		<div class='rating'>
-			    		<span class='meta'>Category:</span><br/>
-			    		<span class='catName'>${category.name }</span><br/>
-			    		<span class='meta'>Severity:</span><br><span class='label ' title='Severity'>${overallStr} Severity</span>
-			    		<span class='label ' title='Impact'>${impactStr} Impact</span>
-			    		<span class='label ' title='Likelihood'>${likelyhoodStr} Likelihood</span>
-			    		</div>
-			    		" type="warning">
+			    <bs:box title="<b style='color:lightgray'><u>${name }</u></b>" type="warning">
+			    	<bs:row>
+			    		<s:if test="asmt.type.cvss31 || asmt.type.cvss40">
+						<bs:mco colsize="1">
+							<div class="scoreBody" style="margin-top:5px">
+								<h3 class="scoreBox <s:property value="overallStr"/>" id="score"> <s:property value="cvssScore"/></h3>
+								<span class="severityBox <s:property value="overallStr"/>" id="severity"><s:property value="overallStr"/></span>
+							</div>
+						</bs:mco>
+			    		<bs:mco colsize="2">
+							<span class='meta'><u>Category:</u></span><br/>
+							<span class='meta'><s:property value="category.name"/></span><br/>
+							<br/>
+							<span class='meta'><u>CVSS Vector:</u></span><br/>
+							<span class='meta'><s:property value="cvssString"/></span><br/>
+						</bs:mco>
+			    		</s:if>
+			    		<s:else>
+			    		<bs:mco colsize="12">
+							<div class='rating'>
+								<span class='meta'>Category:</span><br/>
+								<span class='catName'><s:property value="category.name"/></span><br/>
+								<span class='meta'>Severity:</span>
+								<br>
+								<span class='label ' title='Severity'><s:property value="overallStr"/> Severity</span>
+								<span class='label ' title='Impact'><s:property value="impactStr"/> Impact</span>
+								<span class='label ' title='Likelihood'><s:property value="likelyhoodStr"/> Likelihood</span>
+							</div>
+							</bs:mco>
+			    		</s:else>
+			    	</bs:row>
+			    	<bs:row>
+			    		&nbsp;
+			    	</bs:row>
 			    	<bs:row>
 					   
 						<bs:mco colsize="7">
@@ -294,6 +317,7 @@ color:white;
 	let prid="${prid}";
 	let asmtId="${asmt.id}";
 colors = ["#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"];
+	<s:if test="!(asmt.type.cvss31 || asmt.type.cvss40)">
 	 <% int count=9; %>
 	 <s:iterator value="levels" begin="9" end="0" step="-1" status="stat">
 	 	<s:if test="risk != null && risk != 'Unassigned' && risk != ''">
@@ -301,6 +325,7 @@ colors = ["#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39
 			<% count = count-1; %>
 		</s:if>
 	</s:iterator>
+	</s:if>
    
    </script>
 	

@@ -15,6 +15,7 @@ import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.spec.KeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,6 +40,7 @@ import javax.persistence.EntityManager;
 import javax.servlet.ServletContext;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -431,6 +433,29 @@ public class FSUtils {
 			return "";
 		}
 
+	}
+	
+	public static String md5hash(String data) {
+		try {
+			MessageDigest md;
+			md = MessageDigest.getInstance("md5");
+			byte[] hash = md.digest(data.getBytes());
+			return Hex.encodeHexString( hash );
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	public static String md5hash(byte [] data) {
+		try {
+			MessageDigest md;
+			md = MessageDigest.getInstance("md5");
+			byte[] hash = md.digest(data);
+			return Hex.encodeHexString( hash );
+		} catch (NoSuchAlgorithmException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public static String encryptPassword(String password) {

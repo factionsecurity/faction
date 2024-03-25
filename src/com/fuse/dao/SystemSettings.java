@@ -1,7 +1,7 @@
 package com.fuse.dao;
 
 import java.util.ArrayList;
-
+import java.util.Arrays;
 import java.util.List;
 
 import javax.persistence.ElementCollection;
@@ -53,7 +53,7 @@ public class SystemSettings {
 	private Boolean peerreview;
 	private Boolean selfPeerReview;
 	private Boolean enablefeed;
-	private String boldTitle = "Fuse";
+	private String boldTitle = "community";
 	private String otherTitle = "FACTION";
 	private Long verificationOption;
 	private Boolean enableRandAppId;
@@ -65,6 +65,7 @@ public class SystemSettings {
 	@ElementCollection
 	private List<String> status = new ArrayList<String>();
 	private String defaultStatus;
+	private String defaultRating;
 	private String ldapURL;
 	private String ldapBaseDn;
 	private String ldapBindDn;
@@ -73,6 +74,7 @@ public class SystemSettings {
 	private String ldapSearchDn;
 	private Boolean ldapInsecureSSL=false;
 	private String ldapObjectClass;
+	
 	
 	public void initSMTPSettings() {
 		if(this.server == null || this.server == "") {
@@ -428,6 +430,13 @@ public class SystemSettings {
 	public void setDefaultStatus(String defaultStatus) {
 		this.defaultStatus = defaultStatus;
 	}
+	public String getDefaultRating() {
+		return defaultRating;
+	}
+
+	public void setDefaultRating(String defaultRating) {
+		this.defaultRating = defaultRating;
+	}
 
 	public String getLdapURL() {
 		return ldapURL;
@@ -506,7 +515,8 @@ public class SystemSettings {
 	public Boolean getSelfPeerReview() {
 		return this.selfPeerReview;
 	}
-	
+
+
 	@Transient
 	public OidcConfiguration getOdicConfig() {
 		OidcConfiguration config = new OidcConfiguration();
@@ -534,6 +544,11 @@ public class SystemSettings {
         Clients clients = new Clients(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback",
                 oidcClient, new AnonymousClient());
 		SecurityFilterWrapper.getInstance().setConfig(new Config(clients));
+	}
+	
+	@Transient
+	public List<String> getRatings() {
+		return new ArrayList<>(Arrays.asList( new String[]{"Native", "CVSS 3.1"}));
 	}
 	
 

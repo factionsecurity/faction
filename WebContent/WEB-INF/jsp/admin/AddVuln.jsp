@@ -41,8 +41,8 @@
 				<tbody>
 					<s:iterator value="vulnerabilities">
 						<tr>
-							<td><s:property value="name" /></td>
-							<td><s:property value="updateRiskLevels()" /> <s:property
+							<td id="vuln_title_${id}"><s:property value="name" /></td>
+							<td id="vuln_sev_${id}"><s:property value="updateRiskLevels()" /> <s:property
 									value="overallStr" /></td>
 							<td><input class="" type="checkbox"
 								onclick="toggleVuln(${id },${active == false ? 'false' : 'true'})"
@@ -86,13 +86,13 @@
 							<div class="form-group">
 								<label for="title" class="col-sm-2 control-label">Title:
 									*</label>
-								<div class="col-sm-4 control-label">
+								<div class="col-sm-6 control-label">
 									<input class="form-control" id="title"
 										placeholder="Vulnerbility Name" />
 								</div>
 								<label for="title" class="col-sm-2 control-label">Overall
 									Severity: *</label>
-								<div class="col-sm-4">
+								<div class="col-sm-2">
 									<select class="select2 form-control" id="overall"
 										style="width: 100%">
 										<s:iterator value="levels" status="stat">
@@ -107,7 +107,7 @@
 
 							<div class="form-group">
 								<label class="col-sm-2 control-label">Category: *</label>
-								<div class="col-sm-4">
+								<div class="col-sm-6">
 									<select class="form-control select2" style="width: 100%;"
 										id="catNameSelect">
 										<s:iterator value="categories">
@@ -120,7 +120,7 @@
 
 								<label for="title" class="col-sm-2 control-label">Impact
 									Severity: *</label>
-								<div class="col-sm-4">
+								<div class="col-sm-2">
 									<select class="select2 form-control" id="impact"
 										style="width: 100%">
 										<s:iterator value="levels" status="stat">
@@ -133,24 +133,65 @@
 								</div>
 							</div>
 							<!-- /.form-group -->
-						</div>
-						<div class="form-group">
-							<div class="col-sm-6"></div>
-							<label for="title" class="col-sm-2 control-label">Likelihood
-								Severity: *</label>
-							<div class="col-sm-4">
-								<select class="select2 form-control" id="likelyhood"
-									style="width: 100%">
-									<s:iterator value="levels" status="stat">
-										<s:if
-											test="risk != null && risk != 'Unassigned' && risk != ''">
-											<option value="${stat.index}">${risk}</option>
-										</s:if>
-									</s:iterator>
-								</select>
+							<div class="form-group">
+								<label for="cvss31String" class="col-sm-2 control-label">CVSS 3.1:
+									</label>
+								<div class="col-sm-4 control-label">
+									<input class="form-control" id="cvss31String"
+										placeholder="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N" />
+								</div>
+								<div class="col-sm-1 control-label">
+									<input class="form-control" id="cvss31Score"
+										placeholder="0.0" />
+								</div>
+								<div class="col-sm-1 control-label">
+									<span class="btn btn-primary" id="cvss31Calc"><i class="fa-solid fa-calculator"></i></span>
+								</div>
+								<label for="title" class="col-sm-2 control-label">Likelihood
+									Severity: *</label>
+								<div class="col-sm-2">
+									<select class="select2 form-control" id="likelyhood"
+										style="width: 100%">
+										<s:iterator value="levels" status="stat">
+											<s:if
+												test="risk != null && risk != 'Unassigned' && risk != ''">
+												<option value="${stat.index}">${risk}</option>
+											</s:if>
+										</s:iterator>
+									</select>
+								</div>
 							</div>
+							<div class="form-group">
+								<label for="cvss40String" class="col-sm-2 control-label">CVSS 4.0:
+									</label>
+								<div class="col-sm-4 control-label">
+									<input class="form-control" id="cvss40String"
+										placeholder="CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N" />
+								</div>
+								<div class="col-sm-1 control-label">
+									<input class="form-control" id="cvss40Score"
+										placeholder="0.0" />
+								</div>
+								<div class="col-sm-1 control-label">
+									<span class="btn btn-primary" id="cvss40Calc"><i class="fa-solid fa-calculator"></i></span>
+								</div>
+							</div>
+						
 						</div>
 						<br>
+						
+						<!-- TODO: Add custom fields here -->
+						
+						<div class="row">
+								<div class="col-sm-8">
+								</div>
+								<div class="col-sm-4">
+									<button type="button" class="btn btn-primary saveVuln pull-right" id="saveVuln">
+										<i class="fa fa-save"></i> Save changes
+									</button>
+								</div>
+						</div>
+						<br/>
 
 
 						<div class="row">
@@ -166,14 +207,23 @@
 									<!-- /.box-header -->
 									<div class="box-body pad">
 										<textarea id="description" name="description" rows="10"
-											cols="80">
-
-                    </textarea>
+											cols="80"></textarea>
 									</div>
 								</div>
 								<!-- /.box -->
 							</div>
 						</div>
+						<br/>
+						<div class="row">
+								<div class="col-sm-8">
+								</div>
+								<div class="col-sm-4">
+									<button type="button" class="btn btn-primary saveVuln pull-right" id="saveVuln">
+										<i class="fa fa-save"></i> Save changes
+									</button>
+								</div>
+						</div>
+						<br/>
 						<div class="row">
 							<!-- Vuln Recommendation Section -->
 							<div class="col-md-12">
@@ -187,9 +237,7 @@
 									<!-- /.box-header -->
 									<div class="box-body pad">
 										<textarea id="recommendation" name="recommendation" rows="10"
-											cols="80">
-
-                    					</textarea>
+											cols="80"></textarea>
 									</div>
 								</div>
 								<!-- /.box -->
@@ -202,7 +250,7 @@
 			<div class="modal-footer bg-red">
 				<button type="button" class="btn btn-default pull-left"
 					data-dismiss="modal">Close</button>
-				<button type="button" class="btn btn-primary" id="saveVuln">
+				<button type="button" class="btn btn-primary saveVuln" id="saveVuln">
 					<i class="fa fa-save"></i> Save changes
 				</button>
 			</div>

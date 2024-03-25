@@ -198,9 +198,8 @@ public class AssessmentView extends FSActionSupport {
 		} else if (this.action != null && this.action.equals("finalize")) {
 			if (!this.testToken(false))
 				return this.ERRORJSON;
-
-			if (assessment != null && assessment.getCompleted() != null) {
-				this._message = "Assessment has been finalized.";
+			
+			if (this.isAssessmentBlocked(assessment, user)) {
 				return this.ERRORJSON;
 			}
 
@@ -213,19 +212,11 @@ public class AssessmentView extends FSActionSupport {
 				this._message = "Assessment does not exist.";
 				return this.ERRORJSON;
 			}
-			if (assessment.isInPr()) {
-				this._message = "Assessment cannot be changed while in PeerReview.";
+			
+			if (this.isAssessmentBlocked(assessment, user)) {
 				return this.ERRORJSON;
 			}
-			if (assessment.isPrComplete()) {
-				this._message = "Assessment cannot be changed user acknowledges the PeerReview.";
-				return this.ERRORJSON;
-			}
-
-			if (assessment.isFinalized()) {
-				this._message = "Assessment has been finalized.";
-				return this.ERRORJSON;
-			}
+			
 			if (this.riskAnalysis != null)
 				assessment.setRiskAnalysis(this.riskAnalysis);
 			if (this.notes != null)
@@ -272,15 +263,10 @@ public class AssessmentView extends FSActionSupport {
 		Assessment assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), assessmentId,
 				AssessmentQueries.OnlyNonCompleted);
 
-		if (assessment == null) {
-			this._message = "Assessment Not Found or is Finalized";
+		if (this.isAssessmentBlocked(assessment, user)) {
 			return this.ERRORJSON;
 		}
-
-		if (assessment != null && assessment.getCompleted() != null) {
-			this._message = "Assessment has been finalized.";
-			return this.ERRORJSON;
-		}
+		
 		if (assessment.getCustomFields() != null) {
 			for (CustomField cf : assessment.getCustomFields()) {
 				if (cf.getId().equals(this.cfid)) {
@@ -370,13 +356,7 @@ public class AssessmentView extends FSActionSupport {
 		Assessment asmt = AssessmentQueries.getAssessmentByUserId(em, user.getId(), asmtId,
 				AssessmentQueries.OnlyNonCompleted);
 
-		if (asmt == null) {
-			this._message = "Assessment Not Found or is Finalized";
-			return this.ERRORJSON;
-		}
-
-		if (asmt.isInPr()) {
-			this._message = "Assessment Already in PeerReview";
+		if (this.isAssessmentBlocked(assessment, user)) {
 			return this.ERRORJSON;
 		}
 		/// Are the checklists complete
@@ -551,6 +531,48 @@ public class AssessmentView extends FSActionSupport {
 			return "lockError";
 		}
 	}
+	private boolean blockingPR(Long asmtId) {
+
+		PeerReview prTemp = (PeerReview) em.createNativeQuery("{\"assessment_id\" : " + asmtId + "}", PeerReview.class)
+				.getResultList().stream().findFirst().orElse(null);
+		boolean prSubmitted = false;
+		boolean prComplete = false;
+		if (prTemp != null) {
+			prSubmitted = true;
+			if (prTemp.getCompleted() != null && prTemp.getCompleted().getTime() != 0) {
+				prComplete = true;
+			} else
+				prComplete = false;
+		}
+
+		if (prSubmitted && !prComplete) {
+			return true;
+		} else
+			return false;
+	}
+	private boolean isAssessmentBlocked(Assessment assessment, User user) {
+		if (this.blockingPR(assessment.getId())) {
+			this._message = "Assessment cannot be updated when in Peer Review.";
+			return true; 
+		}
+		if( !assessment.isAcceptedEdits()) {
+			this._message = "Assessment cannot be updated until the Peer Review's Edits are Accepted. <br><br>"
+					+ "<a class='btn btn-primary' href='Assessment#tab_3'> Click Here to Accept Edits</a>";
+			return true; 
+		}
+		
+		if (assessment != null && assessment.getCompleted() != null) {
+			this._message = "Vulnerability cannot be changed once the assessment is Finalized.";
+			return true; 
+		}
+
+		if (!assessment.getAssessor().stream().anyMatch(u -> u.getId() == user.getId())) {
+			this._message = "You Are not the owner of this Assessment";
+			return true; 
+		}
+		return false;
+		
+	}
 
 	public boolean isNotesLockedbyAnotherUser() {
 		return assessment.isNotesLock() && assessment.getNotesLockBy() != null
@@ -643,28 +665,18 @@ public class AssessmentView extends FSActionSupport {
 				this.jsonResponse = msg.toJSONString();
 				return "finerrorJson";
 			}
-			/*
-			 * if(!prComplete){ JSONObject msg = new JSONObject(); msg.put("errors",
-			 * "PeerReview has not been completed."); this.jsonResponse =
-			 * msg.toJSONString(); return "finerrorJson"; }
-			 */
 
 			String result = this.IsCheckListComplete(assessment);
 			if (result != null)
 				return result;
 
 		}
-		// HibHelper.getInstance().preJoin();
-		// em.joinTransaction();
 		assessment.setCompleted(new Date());
 		assessment.setFinalized();
 		List<Vulnerability> vulns = assessment.getVulns();
-		// em.getTransaction().begin();
 		for (Vulnerability v : vulns) {
 			v.setOpened(new Date());
-			// em.persist(v);
 		}
-		// em.persist(assessment);
 		List<Notification> notifiers = new ArrayList();
 		for (User a : assessment.getAssessor()) {
 			Notification n = new Notification();
@@ -674,19 +686,8 @@ public class AssessmentView extends FSActionSupport {
 					"Assessment <b>" + assessment.getName() + "</b> was finalized: <a href='../service/Report.pdf?guid="
 							+ assessment.getFinalReport().getFilename() + "'>Report</a>");
 			notifiers.add(n);
-			// em.persist(n);
 		}
-		Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-		if (amgr.checkIfExtended()) {
-			try {
-				amgr.execute(em, assessment, AssessmentManager.Operation.Finalize);
-			} catch (Exception ex) {
-				ex.printStackTrace();
-			}
-		}
-		// AuditLog.audit(this, "Assessment Finalized", AuditLog.UserAction,
-		// AuditLog.CompAssessment, assessment.getId(), false);
-		// HibHelper.getInstance().commit();
+		
 		AssessmentQueries.saveAll(this, assessment, em, "Assessment Finalized", assessment.getVulns(), assessment,
 				notifiers);
 
@@ -697,6 +698,11 @@ public class AssessmentView extends FSActionSupport {
 		EmailThread emailThread = new EmailThread(assessment,
 				"Assessment Completed for " + assessment.getName() + " [ " + assessment.getAppId() + " ]", email);
 		TaskQueueExecutor.getInstance().execute(emailThread);
+		
+		// Run all Extensions
+		Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+		amgr.execute(assessment, AssessmentManager.Operation.Finalize);
+		
 		return this.SUCCESSJSON;
 	}
 

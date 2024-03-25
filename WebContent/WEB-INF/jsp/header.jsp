@@ -8,7 +8,7 @@
   <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=Edge">
-    <title>${_title1} ${_title2}</title>
+    <title><s:property value="_title1"/> <s:property value="_title2"/></title>
    
     <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
     <link rel="stylesheet" href="../plugins/select2/select2.min.css">
@@ -220,7 +220,7 @@
             	<li class="<s:property value="activeMetrics"/>"><a href="Metrics"><i class="glyphicon glyphicon-signal"></i> <span>Metrics</span></a></li>
             </s:if>
             <s:if test="acmanager || acadmin || acengagement">
-            <li class="treeview <s:property value="activeChecklist"/><s:property value="activeUsers"/><s:property value="activeOptions"/>">
+            <li class="treeview <s:property value="activeAppStore"/><s:property value="activeChecklist"/><s:property value="activeUsers"/><s:property value="activeOptions"/>">
               <a href="#"><i class="glyphicon glyphicon-cog"></i> <span>Admin</span> <i class="fa fa-angle-left pull-right"></i></a>
               <ul class="treeview-menu">
               	<s:if test="acadmin == true ">
@@ -232,14 +232,18 @@
                 <s:if test="acmanager || acadmin">
                 <li class="<s:property value="activeChecklist"/>"><a href="Checklists">Checklists</a></li>
                 </s:if>
+                <s:if test="acadmin && appStoreEnabled">
+                <li class="<s:property value="activeAppStore"/>"><a href="AppStoreDashboard">App Store</a></li>
+                </s:if>
+                <s:elseif test="acadmin">
+                <li class="<s:property value="activeAppStore"/>"><a href="Upgrade"><i class="label bg-purple">&nbsp;<div class='fa fa-arrow-up'>&nbsp;</div></i>App Store</a></li>
+                </s:elseif>
               </ul>
             </li>
             </s:if>
             <li class="treeview <s:property value="activeVulns"/><s:property value="activeCms"/><s:property value="activeTemplates"/>">
               <a href="#"><i class="glyphicon glyphicon-book"></i> <span>Templates</span> <i class="fa fa-angle-left pull-right"></i></a>
               <ul class="treeview-menu">
-                <!-- <li class="<s:property value="activeVulnTemplates"/>"><a href="VulnerabilityTemplates">Vulnerabilities</a></li>
-                <li class="<s:property value="activeCats"/>" ><a href="Options">Categories</a></li>-->
                 <li class="<s:property value="activeTemplates"/>" ><a href="Templates">Assessment Templates</a></li>
                 <li class="<s:property value="activeCms"/>" ><a href="cms">Report Designer</a></li>
                 <li class="<s:property value="activeVulns"/>"><a href="DefaultVulns">Default Vulnerabilities</a></li>
@@ -249,35 +253,6 @@
         </section>
         <!-- /.sidebar -->
       </aside>
-
-       <s:if test="userLimitReached" >
-      	<div class="licenseNotification alert alert-danger alert-dismissible">
-        	<button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-        	<h4><i class="icon fa fa-ban"></i> Alert!</h4>
-        User Limit Reached. Contact your administator to obtain a new license that supports your current User Level.
-      	</div>
-      </s:if>
-      <s:if test="expireDateApproaching">
-      <div class="licenseNotification alert alert-warning alert-dismissible">
-        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-        <h4><i class="icon fa fa-ban"></i> Warning!</h4>
-        You license is close to expiring. Contact your administator to update your license. 
-      </div>
-      </s:if>
-       <s:if test="licenseExpired">
-      <div class="licenseNotification alert alert-danger alert-dismissible">
-        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-        <h4><i class="icon fa fa-ban"></i> Alert!</h4>
-        You license is currently Expired. Contact your administator to update your license.
-      </div>
-      </s:if>
-      <s:if test="noLicense">
-      <div class="licenseNotification alert alert-danger alert-dismissible">
-        <button type="button" class="close" data-dismiss="alert" aria-hidden="true">×</button>
-        <h4><i class="icon fa fa-ban"></i> Alert!</h4>
-        A license is currently not installed. <a href="License">Click here to install your license.</a>
-      </div>
-      </s:if>
       
 
      

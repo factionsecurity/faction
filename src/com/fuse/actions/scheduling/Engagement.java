@@ -82,9 +82,10 @@ public class Engagement  extends FSActionSupport{
 	public Integer count;
 	public String search;
 	private Boolean randId = true;
-	private List<String> status;
-	private String statusName;
+	private List<String> ratings;
+	private String ratingName;
 	private String defaultStatus;
+	private String defaultRating;
 	private String back;
 	
 
@@ -108,15 +109,15 @@ public class Engagement  extends FSActionSupport{
 			this.randId = ss.getEnableRandAppId();
 		else
 			this.randId = true;
-		this.status = ss.getStatus();
-		this.defaultStatus = ss.getDefaultStatus();
+		this.ratings = ss.getRatings();
+		this.defaultRating = ss.getDefaultRating();
 		
 		eng_users = new ArrayList<User>();
 		asmt_users = new ArrayList<User>();
 		for(User u : users){
-			if(u.getPermissions().isAssessor())
+			if(u.getPermissions() != null && u.getPermissions().isAssessor())
 				asmt_users.add(u);
-			if(u.getPermissions().isEngagement())
+			if(u.getPermissions() != null && u.getPermissions().isEngagement())
 				eng_users.add(u);
 		}
 		if(action.equals("")) {
@@ -147,7 +148,7 @@ public class Engagement  extends FSActionSupport{
 						u.setAssessmentCount(u.getAssessmentCount()+1);
 					}
 				}
-				if(u.getTeam() != null && u.getTeam().getId().longValue() == this.selectedTeam.longValue() && u.getPermissions().isAssessor())
+				if(u.getTeam() != null && u.getTeam().getId().longValue() == this.selectedTeam.longValue() && u.getPermissions() != null && u.getPermissions().isAssessor())
 					assessors.add(u);
 			}
 			
@@ -201,10 +202,10 @@ public class Engagement  extends FSActionSupport{
 				this._message = "Start and End Dates Could Be Missing";
 				return this.ERRORJSON;
 			}
-			if(statusName != null && !statusName.trim().equals("")) {
+			if(ratingName != null && !ratingName.trim().equals("")) {
 				
-				if(!ss.getStatus().stream().anyMatch(s -> s.equals(this.statusName.trim()))) {
-					this._message = "Status is not defined.";
+				if(!ss.getRatings().stream().anyMatch(s -> s.equals(this.ratingName.trim()))) {
+					this._message = "Rating is not defined.";
 					return this.ERRORJSON;
 				}
 			}
@@ -223,10 +224,6 @@ public class Engagement  extends FSActionSupport{
 			am.setEnd(edate);
 			am.setEngagement(engagement);
 			am.setRemediation(remediation);
-			am.setStatus(this.statusName);
-			//List<User>hackers = new ArrayList<User>();
-			//hackers.add(assessor);
-			
 			am.setAssessor(hackers);
 			am.setType(Type);
 			am.setDistributionList(this.distro);
@@ -259,15 +256,6 @@ public class Engagement  extends FSActionSupport{
 				ex.printStackTrace();
 			}
 			
-			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-			if(amgr.checkIfExtended()){
-				try{
-					amgr.execute(em, am, AssessmentManager.Operation.Create);
-				}catch(Exception ex){
-					ex.printStackTrace();
-				}
-			}
-			
 			
 			em.persist(am);
 			AuditLog.audit(this, "Assessment Created" , AuditLog.UserAction,
@@ -296,6 +284,10 @@ public class Engagement  extends FSActionSupport{
 			
 			EmailThread emailThread = new EmailThread(am, "New Assessment Assigned to You", email);
 			TaskQueueExecutor.getInstance().execute(emailThread);
+			
+			// Run All extensions
+			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+			amgr.execute(am, AssessmentManager.Operation.Create);
 			
 			return this.SUCCESSJSON;
 			
@@ -337,13 +329,6 @@ public class Engagement  extends FSActionSupport{
 				}else
 					first = false;
 				mongoQuery += comma + " 'appId' : '" + this.appid + "' ";
-			}
-			if(statusName != null && !statusName.trim().equals("")) {
-				if( !first ){
-					comma = ",";
-				}else
-					first = false;
-				mongoQuery += comma + " 'status' : '" + this.statusName.trim() + "' ";
 			}
 			mongoQuery += " } ";
 			//EntityManager em = HibHelper.getEM();
@@ -410,20 +395,15 @@ public class Engagement  extends FSActionSupport{
 			
 			
 			
-			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-			if(amgr.checkIfExtended()){
-				try{
-					amgr.execute(em, a, AssessmentManager.Operation.Delete);
-				}catch(Exception ex){
-					ex.printStackTrace();
-				}
-			}
 			
 			AuditLog.audit(this, "Assessment " + a.getAppId() + " " + a.getName() 
 			+ " Deleted" , AuditLog.UserAction, AuditLog.CompAssessment, a.getId(), false);
 
 			em.createNativeQuery("db.Assessment.remove({ '_id': " + a.getId() + " })").executeUpdate();
 			HibHelper.getInstance().commit();
+			
+			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+			amgr.execute(a, AssessmentManager.Operation.Delete);
 			
 			return SUCCESSJSON;
 				
@@ -665,23 +645,23 @@ public class Engagement  extends FSActionSupport{
 
 
 
-	public List<String> getStatus() {
-		return status;
+	public List<String> getRatings() {
+		return ratings;
 	}
 
 
 
 
-	public void setStatusName(String statusName) {
-		this.statusName = statusName;
+	public void setRatingName(String ratingName) {
+		this.ratingName = ratingName;
 	}
 
 
 
 
 
-	public String getDefaultStatus() {
-		return defaultStatus;
+	public String getDefaultRating() {
+		return defaultRating;
 	}
 	
 	public String getBack() {

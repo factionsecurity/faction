@@ -1,6 +1,7 @@
 package com.fuse.dao;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -16,12 +17,15 @@ import javax.persistence.OneToMany;
 import javax.persistence.TableGenerator;
 import javax.persistence.Transient;
 
+import org.apache.logging.log4j.util.PropertySource.Comparator;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
+
+import com.fuse.dao.AssessmentType;
 
 /*
  * This table contains all PR comments and archived for history
@@ -45,6 +49,8 @@ public class Comment {
 	private String summary2;
 	private String summary1_notes;
 	private String summary2_notes;
+	@ManyToOne
+	private AssessmentType type;
 	private Boolean acceptedEdits=false;
 	@ElementCollection
 	private List<String> vulnerabilities;
@@ -147,6 +153,13 @@ public class Comment {
 	public void setAcceptedEdits(Boolean acceptedEdits) {
 		this.acceptedEdits = acceptedEdits;
 	}
+	
+	public void setType(AssessmentType type) {
+		this.type = type;
+	}
+	public AssessmentType getType() {
+		return this.type;
+	}
 
 	@Transient
 	private void addVuln(Vulnerability v, boolean blankNotes) {
@@ -158,6 +171,8 @@ public class Comment {
 		json.put("desc", v.getDescription());
 		json.put("rec", v.getRecommendation());
 		json.put("details", v.getDetails());
+		json.put("cvss_score", v.getCvssScore());
+		json.put("cvss_string", v.getCvssString());
 		if (blankNotes) {
 			json.put("rec_notes", "<p></p>");
 			json.put("desc_notes", "<p></p>");
@@ -198,6 +213,7 @@ public class Comment {
 		this.summary2 = (a.getRiskAnalysis() == null ? "<p></p>" : a.getRiskAnalysis());
 		this.summary1_notes = ("<p></p>");
 		this.summary2_notes = ("<p></p>");
+		this.type=a.getType();
 		this.addVulns(a.getVulns(), blankNotes);
 	}
 
@@ -224,6 +240,7 @@ public class Comment {
 		a.setRiskAnalysis(this.summary2);
 		a.setPr_sum_notes(this.summary1_notes);
 		a.setPr_risk_notes(this.summary2_notes);
+		a.setType(this.type);
 		JSONParser parse = new JSONParser();
 		List<Vulnerability> vulns = new ArrayList<>();
 		for (String json : this.vulnerabilities) {
@@ -247,9 +264,10 @@ public class Comment {
 			v.setLikelyhood((Long) vuln.get("likelihood"));
 			v.setDesc_notes("" + (vuln.get("desc_notes") == null ? "" : vuln.get("desc_notes")));
 			v.setRec_notes("" + (vuln.get("rec_notes") == null ? "" : vuln.get("rec_notes")));
+			v.setCvssString("" + (vuln.get("cvss_string") == null ? "" : vuln.get("cvss_string")));
+			v.setCvssScore("" + (vuln.get("cvss_score") == null ? "" : vuln.get("cvss_score")));
 			vulns.add(v);
 		}
-		vulns.sort((Vulnerability s1, Vulnerability s2)->s2.getOverall().compareTo(s1.getOverall()));
 		a.setVulns(vulns);
 		return a;
 	}
