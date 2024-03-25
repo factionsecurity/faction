@@ -793,6 +793,21 @@ $(function() {
 			}
 		});
 	});
+	$(".globalTemplate, .userTemplate").on("dblclick", async (event)=>{
+		let id = event.target.parentElement.id
+		let value = event.target.value;
+		let type = "summary";
+		if(id.indexOf('risk') != -1){
+			type='risk'
+		}
+		await $.get('tempSearchDetail?tmpId=' + value)
+			.done(function(data) {
+				let template = data.templates[0].text;
+				let text = getEditorText(type) + "\n" + template;
+				setEditorContents(text, type, false);
+			});
+	})
+	
 	$(".addTemplate").on('click', async (event) => {
 		let type = $(event.currentTarget).attr("for")
 		let selected = $(`#${type}Templates option:selected`);
