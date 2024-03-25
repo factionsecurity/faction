@@ -532,7 +532,7 @@ $(function() {
 
 
 			let data = "appid=" + $("#appId").val();
-			data += "&appname=" + EencodeURIComponent($("#appName").val());
+			data += "&appname=" + encodeURIComponent($("#appName").val());
 			$.post("../service/applicationInventory", data).done(function(resp) {
 				let invList = [];
 				invData = resp;

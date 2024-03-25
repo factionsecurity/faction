@@ -8,6 +8,7 @@
 
 ![image](https://github.com/factionsecurity/faction/assets/2343831/d9237bed-302f-4e6a-9716-22ae88d0dc36)
 
+___News: Faction 1.2 Release in March: [More Info](https://github.com/orgs/factionsecurity/discussions/40)___
 
 FACTION is your entire assessment workflow in a box. With FACTION you can:
 1. Automate pen testing and security assessment Reports
@@ -26,7 +27,7 @@ Other Features:           
 1. Extendable with Custom Plugins similar to Burp Extender.
 2. Custom Report Variables
 
-__Want to see it in action?__ -> [Faction Video Overview](https://www.youtube.com/watch?v=cYi71oofUdU)
+__Want to see it in action?__ -> [Faction YouTube Channel](https://www.youtube.com/@factionsecurity/videos)
 
 ## Quick Setup
 __Requirements__
@@ -46,7 +47,7 @@ On the first boot, it will ask you to create an admin account.
 
 ## Import the Vulnerability Templates
 1. Navigate to Templates -> Default Vulnerabilities
-2. Click Update from VulnDB. 
+2. Click Update from Faction. 
 
 ## Customize reports
 You can find out more information about creating your own custom report templates here:
@@ -87,5 +88,25 @@ __Assessor Retest Interface__
 
 __Vulnerability Status Tracking__
 ![image](https://github.com/factionsecurity/faction/assets/2343831/a1973dba-663c-4617-bd78-ffb08eb27973)
+
+# Upcomming 1.2 Release Preview
+
+In 1.2 we will be releasing the Faction App Store which will make it easier for developers to extend faction. Faction Extensions can be used to trigger custom code when certain events happen in your workflow like sending all vulnerbilities to Jira when the assessment is complete or update a tracking system when retests pass or fail. We will be providing example Extensions once the release is complete in March. For now here are some example screenshots of the new App Store Dashboard and some example extensions. 🎉
+
+### ⭐️ Jira Integration and AppStore Dashboard
+![image](https://github.com/factionsecurity/faction/assets/2343831/53feb37e-cc66-401c-9ef0-e43fd4dc9f51)
+
+Note you can reorder extensions so that updates for one can affect updates to the next. 
+
+### ⭐️ Extensions for Custom Graphics
+Extensions will also allow custom bar charts to your reports:
+![image](https://github.com/factionsecurity/faction/assets/2343831/1657ed40-fdd3-4b29-afd3-b5d3aa8f78c5)
+
+Generated report with graphics:
+![image](https://github.com/factionsecurity/faction/assets/2343831/abf9b5d4-2638-411d-a57c-89fcd5819976)
+
+
+
+
 
 

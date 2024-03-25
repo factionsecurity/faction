@@ -64,8 +64,8 @@ public class verifications {
 				for(Verification v  : ver){
 					v.getVerificationItems().get(0).getVulnerability().updateRiskLevels(em);
 					JSONObject obj = Support.dao2JSON(v.getVerificationItems().get(0).getVulnerability(), Vulnerability.class);
-					obj.put("Start", "" + v.getStart());
-					obj.put("End", "" + v.getEnd());
+					obj.put("Start", "" + v.getStart().getTime());
+					obj.put("End", "" + v.getEnd().getTime());
 					obj.put("AppId", v.getAssessment().getAppId());
 					obj.put("AssessmentName", v.getAssessment().getName());
 					String tracking = v.getVerificationItems().get(0).getVulnerability().getTracking();
