@@ -89,9 +89,9 @@ __Assessor Retest Interface__
 __Vulnerability Status Tracking__
 ![image](https://github.com/factionsecurity/faction/assets/2343831/a1973dba-663c-4617-bd78-ffb08eb27973)
 
-# Upcomming 1.2 Release Preview
+# 1.2 Release Updates
 
-In 1.2 we will be releasing the Faction App Store which will make it easier for developers to extend faction. Faction Extensions can be used to trigger custom code when certain events happen in your workflow like sending all vulnerbilities to Jira when the assessment is complete or update a tracking system when retests pass or fail. We will be providing example Extensions once the release is complete in March. For now here are some example screenshots of the new App Store Dashboard and some example extensions. 🎉
+Faction 1.2 introduces the App Store! The Faction App Store will make it easier for developers to extend faction. Faction Extensions can be used to trigger custom code when certain events happen in your workflow like sending all vulnerbilities to Jira when the assessment is complete or update a tracking system when retests pass or fail. More information can be found in the [documentation site](https://docs.factionsecurity.com). 
 
 ### ⭐️ Jira Integration and AppStore Dashboard
 ![image](https://github.com/factionsecurity/faction/assets/2343831/53feb37e-cc66-401c-9ef0-e43fd4dc9f51)
