@@ -5130,3 +5130,11 @@ h3.Critical {
 span.Critical {
 	color: #dd4b39;
 }
+
+code {
+	background-color: #f9f9f9 !important;
+	font-family: monospace !important;
+	color: #666 !important;
+	padding: 5px;
+	
+}

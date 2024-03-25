@@ -456,7 +456,9 @@ public class Assessment {
 
 	@Transient
 	public boolean isAcceptedEdits() {
-		if (this.workflow != null && this.workflow == 3)
+		if(this.workflow != null && this.workflow == 0) {
+			return true;
+		}else if (this.workflow != null && this.workflow == 3)
 			return true;
 		else
 			return false;

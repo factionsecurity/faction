@@ -356,7 +356,7 @@ public class AssessmentView extends FSActionSupport {
 		Assessment asmt = AssessmentQueries.getAssessmentByUserId(em, user.getId(), asmtId,
 				AssessmentQueries.OnlyNonCompleted);
 
-		if (this.isAssessmentBlocked(assessment, user)) {
+		if (this.isAssessmentBlocked(asmt, user)) {
 			return this.ERRORJSON;
 		}
 		/// Are the checklists complete
