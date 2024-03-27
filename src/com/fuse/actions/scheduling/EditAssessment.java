@@ -63,8 +63,6 @@ public class EditAssessment extends FSActionSupport {
 	private Long campId;
 	private List<Files> files;
 	private String cf;
-	private String statusName;
-	private List<String> status;
 	private Boolean randId = true;
 	private List<AuditLog> logs;
 	private String updatedText = "";
@@ -96,7 +94,6 @@ public class EditAssessment extends FSActionSupport {
 			this.randId = ss.getEnableRandAppId();
 		else
 			this.randId = true;
-		this.status = ss.getStatus();
 
 		if (action != null && action.equals("get")) {
 			currentAssessment = em.find(Assessment.class, (long) this.aid);
@@ -170,13 +167,6 @@ public class EditAssessment extends FSActionSupport {
 				return this.ERRORJSON;
 			}
 
-			if (statusName != null && !statusName.trim().equals("")) {
-
-				if (!ss.getStatus().stream().anyMatch(s -> s.equals(this.statusName.trim()))) {
-					this._message = "Status is not defined.";
-					return this.ERRORJSON;
-				}
-			}
 
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
@@ -201,7 +191,6 @@ public class EditAssessment extends FSActionSupport {
 					am.setType(Type);
 					am.setAccessNotes(this.notes);
 					am.setDistributionList(this.distro);
-					am.setStatus(statusName);
 					Map<String, Files> sessionfiles = null;
 					if (camp != null)
 						am.setCampaign(camp);
@@ -561,16 +550,8 @@ public class EditAssessment extends FSActionSupport {
 		this.cf = cf;
 	}
 
-	public List<String> getStatus() {
-		return status;
-	}
-
 	public Boolean getRandId() {
 		return randId;
-	}
-
-	public void setStatusName(String statusName) {
-		this.statusName = statusName;
 	}
 
 	public List<AuditLog> getLogs() {
