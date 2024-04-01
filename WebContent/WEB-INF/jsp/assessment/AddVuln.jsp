@@ -209,6 +209,7 @@ td:first-child {
 								</div>
 
 							</bs:row>
+							<s:if test="assessment.type.cvss31 || assessment.type.cvss40" >
 							<div class="cvss<s:property value="assessment.type.cvss31 || assessment.type.cvss40"/>">
 								<bs:row>
 										<div class="form-group">
@@ -224,6 +225,7 @@ td:first-child {
 										</div>
 								</bs:row>
 							</div>
+							</s:if>
 						</bs:mco>
 						<bs:mco colsize="6">
 							<div class="cvss<s:property value="!(assessment.type.cvss31||assessment.type.cvss40)"/>">
