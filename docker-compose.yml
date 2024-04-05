@@ -12,7 +12,7 @@ services:
   tomcat-service:
     build:
       context: .
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile
       target: base_app
     volumes:
         - "~/.faction/templates:/opt/faction/templates"
