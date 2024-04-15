@@ -78,13 +78,14 @@ let fromMarkdown = {
 		let selected = this.getSelectedElements();
 		const md = selected.reduce((acc, item) => acc + item.innerText + "\n", "");
 		const html = marked.parse(md);
-		const div = document.createElement("div");
+		const div = document.createElement("p");
 		div.innerHTML = html;
 		const parent = selected[0].parentNode;
 		parent.insertBefore(div, selected[0]);
 		for (let i = 0; i < selected.length; i++) {
 			selected[i].remove();
 		}
+		this.history.push(true)
 	}
 }
 plugins['fromMarkdown'] = fromMarkdown;
@@ -132,7 +133,7 @@ var editorOptions = {
 		['undo', 'redo', 'fontSize', 'formatBlock', 'textStyle'],
 		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
 		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown'],
+		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown', 'codeView'],
 
 	],
 	defaultStyle: 'font-family: arial; font-size: 18px',
@@ -320,7 +321,7 @@ function setEditorContents(contents, editor, isEncoded) {
 }
 $(function() {
 	global._token = $("#_token")[0].value;
-	editors.summary = suneditor.create("summary", editorOptions);
+	editors.summary = suneditor.create("summary", {...editorOptions});
 	editors.summary.onInput = function(contents, core) {
 		queueSave("summary");
 	}
@@ -333,7 +334,7 @@ $(function() {
 		}
 	}
 
-	editors.risk = suneditor.create("riskAnalysis", editorOptions);
+	editors.risk = suneditor.create("riskAnalysis", {...editorOptions});
 	editors.risk.onInput = function(contents, core) {
 		queueSave("risk");
 	}
@@ -346,7 +347,7 @@ $(function() {
 			editors.risk.setContents(contents + "<p><br></p>");
 		}
 	}
-	editors.notes = suneditor.create("notes", editorOptions);
+	editors.notes = suneditor.create("notes", {...editorOptions});
 	editors.notes.onInput = function(contents, core) {
 		queueSave("notes");
 	}

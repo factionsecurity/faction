@@ -219,6 +219,7 @@ class VulnerablilityView {
 					selected[i].remove();
 				}
 				this.history.push(true)
+				console.log(this);
 			}
 		}
 		plugins['fromMarkdown'] = fromMarkdown;
@@ -229,7 +230,7 @@ class VulnerablilityView {
 				['undo', 'redo', 'fontSize', 'formatBlock', 'textStyle'],
 				['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
 				['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-				['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown'],
+				['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown', 'codeView'],
 
 			],
 			defaultStyle: 'font-family: arial; font-size: 18px',
@@ -263,9 +264,9 @@ class VulnerablilityView {
 		});
 		this.setUpEventHandlers()
 		this.updateColors();
-		this.editors.description = suneditor.create("description", this.editorOptions);
-		this.editors.recommendation = suneditor.create("recommendation", this.editorOptions);
-		this.editors.details = suneditor.create("details", this.editorOptions);
+		this.editors.description = suneditor.create("description", {...this.editorOptions});
+		this.editors.recommendation = suneditor.create("recommendation", {...this.editorOptions});
+		this.editors.details = suneditor.create("details", {...this.editorOptions});
 		this.setUpVulnAutoComplete()
 		this.is40 = $("#isCVSS40").val() == "true"
 		this.cvss = new CVSS("", this.is40);
@@ -841,7 +842,7 @@ class VulnerablilityView {
 		}
 		this.editors.recommendation.onChange = function(contents, core) {
 			if (!contents.endsWith("</p>")) {
-				_this.editors.remediation.setContents(contents + "<p><br></p>");
+				_this.editors.recommendation.setContents(contents + "<p><br></p>");
 			}
 			_this.queue.push(_this.vulnId, "recommendation", encodeURIComponent(contents));
 		}
