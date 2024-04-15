@@ -209,9 +209,9 @@ class VulnerablilityView {
 			},
 			action: function() {
 				let selected = this.getSelectedElements();
-				const md = selected.reduce((acc, item) => acc + item.innerText + "\n", "");
+				const md = selected.reduce((acc, item) => acc + item.innerText + "<br/>", "");
 				const html = marked.parse(md);
-				const div = document.createElement("div");
+				const div = document.createElement("p");
 				div.innerHTML = html;
 				const parent = selected[0].parentNode;
 				parent.insertBefore(div, selected[0]);
@@ -900,6 +900,9 @@ class VulnerablilityView {
 			decoded = decoded + "<p><br></p>";
 		}
 		this.editors[type].setContents(marked.parse(decoded));
+		console.log(this.editors[type])
+		this.editors[type].core.history.reset();
+		this.editors[type].core.history.push(true);
 	}
 	getVuln(id) {
 		this.vulnId = id;
@@ -913,7 +916,6 @@ class VulnerablilityView {
 		let _this = this;
 		$("#vulnForm").removeClass("disabled");
 		$.get('AddVulnerability?vulnid=' + id + '&action=get').done(function(data) {
-
 			$("#title").val($("<div/>").html(data.name).text());
 			$("#cvssString").val($("<div/>").html(data.cvssString).text())
 			let vector = _this.cvss.updateCVSSString(data.cvssString);
