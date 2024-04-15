@@ -48,7 +48,7 @@ let fromMarkdown = {
 		let selected = this.getSelectedElements();
 		const md = selected.reduce((acc, item) => acc + item.innerText + "\n", "");
 		const html = marked.parse(md);
-		const div = document.createElement("div");
+		const div = document.createElement("p");
 		div.innerHTML = html;
 		const parent = selected[0].parentNode;
 		parent.insertBefore(div, selected[0]);
@@ -67,15 +67,15 @@ let editorOptions = {
 		['undo', 'redo', 'fontSize', 'formatBlock', 'textStyle'],
 		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
 		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown'],
+		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown', 'codeView'],
 	],
 	defaultStyle: 'font-family: arial; font-size: 18px',
 	minHeight: 500,
 	height: "auto"
 };
 global.editors = {
-	description: suneditor.create("description", editorOptions),
-	recommendation: suneditor.create("recommendation", editorOptions)
+	description: suneditor.create("description", {...editorOptions}),
+	recommendation: suneditor.create("recommendation", {...editorOptions})
 };
 global.editors.description.onChange = function(contents, core) {
 	console.log(contents)
@@ -94,6 +94,8 @@ global.editVuln = function editVuln(id) {
 	$.get('DefaultVulns?vulnId=' + id + '&action=getvuln').done(function(data) {
 		global.editors.description.setContents(marked.parse(b64DecodeUnicode(data.desc)));
 		global.editors.recommendation.setContents(marked.parse(b64DecodeUnicode(data.rec)));
+		global.editors.description.core.history.reset();
+		global.editors.recommendation.core.history.push(true);
 
 		$("#title").val($("<div/>").html(data.name).text());
 		setIntVal(data.impact, "impact");
@@ -288,8 +290,11 @@ $(function() {
 		});
 	});
 	$("#addVuln").click(function() {
+		
 		let desc = global.editors.description.setContents("");
 		let rec = global.editors.recommendation.setContents("");
+		global.editors.description.core.history.reset();
+		global.editors.recommendation.core.history.push(true);
 		$("#title").val("");
 		$("#impact").val(0).trigger('change')
 		$("#likelyhood").val(0).trigger('change')

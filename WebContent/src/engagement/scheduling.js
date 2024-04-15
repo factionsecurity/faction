@@ -2,7 +2,7 @@ require('suneditor/dist/css/suneditor.min.css');
 require('../scripts/fileupload/css/fileinput.css');
 require('./scheduling.css');
 import suneditor from 'suneditor';
-import { font, fontColor, hiliteColor, fontSize, align, image, imageGallery, list, formatBlock, table, blockquote } from 'suneditor/src/plugins';
+import { font, fontColor, hiliteColor, fontSize, align, image, imageGallery, list, formatBlock, table, blockquote, codeView } from 'suneditor/src/plugins';
 import CodeMirror from 'codemirror';
 import 'codemirror/mode/htmlmixed/htmlmixed';
 import 'codemirror/lib/codemirror.css';
@@ -53,7 +53,7 @@ let fromMarkdown = {
 		let selected = this.getSelectedElements();
 		const md = selected.reduce( (acc,item) => acc + item.innerText +"\n", "") ;
 		const html = marked.parse(md);
-		const div = document.createElement("div");
+		const div = document.createElement("p");
 		div.innerHTML = html;
 		const parent = selected[0].parentNode;
 		parent.insertBefore(div, selected[0]);
@@ -65,12 +65,12 @@ let fromMarkdown = {
 }
 let editorOptions = {
 	codeMirror: CodeMirror,
-	plugins: [font, fontColor, fontSize, image, align, imageGallery, list, formatBlock, table, blockquote, fromMarkdown, hiliteColor],
+	plugins: [font, fontColor, fontSize, image, align, imageGallery, list, formatBlock, table, blockquote, fromMarkdown, hiliteColor, codeView],
 	buttonList: [
 		['undo', 'redo', 'font', 'fontSize', 'formatBlock'],
 		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
 		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown'],
+		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown', 'codeView'],
 
 	],
 	defaultStyle: 'font-family: arial; font-size: 18px',
