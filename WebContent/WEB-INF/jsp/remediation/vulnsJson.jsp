@@ -21,8 +21,8 @@
 	"appId" :"<s:property value="assessment.appId"/>", 
 	"vid" : "<s:property value="vuln.id"/>", 
 	"dist" : "<s:property value="assessment.DistributionList"/>", 
-	"notes" : "<s:property value="assessment.AccessNotes" escapeJavaScript="true"/>",
-	"name" : "<s:property value="assessment.name" escapeJavaScript="true"/>",
+	"notes" : "<s:property value="assessment.AccessNotes"/>",
+	"name" : "<s:property value="assessment.name"/>",
 	"isVer" : ${isVer},
 	"severity" : {
 		"overall" :  "${vuln.overall}",

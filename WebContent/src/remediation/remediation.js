@@ -364,7 +364,10 @@ $(function() {
 		$("#controls").hide();
 		let qs = "OpenVulns?action=get&appId=" + $("#appid").val() + "&appname=" + $("#appname").val() + "&tracking=" + $("#tracking").val();
 		for (let riskId of levels) {
-			qs += `&risk%5B${riskId}%5D=true`
+			if ($(`#levelbx${riskId}`).is(":checked"))
+				qs += `&risk%5B${riskId}%5D=true`
+			else
+				qs += `&risk%5B${riskId}%5D=false`
 
 		}
 		if ($("#closedcbx").is(":checked")) {

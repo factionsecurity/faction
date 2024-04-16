@@ -2,7 +2,7 @@ require('suneditor/dist/css/suneditor.min.css');
 require('../scripts/fileupload/css/fileinput.css');
 require('./scheduling.css');
 import suneditor from 'suneditor';
-import { font, fontColor, hiliteColor, fontSize, align, image, imageGallery, list, formatBlock, table, blockquote, codeView } from 'suneditor/src/plugins';
+import plugins from 'suneditor/src/plugins';
 import CodeMirror from 'codemirror';
 import 'codemirror/mode/htmlmixed/htmlmixed';
 import 'codemirror/lib/codemirror.css';
@@ -63,9 +63,10 @@ let fromMarkdown = {
 		this.history.push(true)
 	}
 }
+plugins['fromMarkdown'] = fromMarkdown;
 let editorOptions = {
 	codeMirror: CodeMirror,
-	plugins: [font, fontColor, fontSize, image, align, imageGallery, list, formatBlock, table, blockquote, fromMarkdown, hiliteColor, codeView],
+	plugins: plugins, 
 	buttonList: [
 		['undo', 'redo', 'font', 'fontSize', 'formatBlock'],
 		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
