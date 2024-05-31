@@ -786,6 +786,7 @@ class VulnerablilityView {
 		$("#vulnForm").addClass("disabled")
 		this.editors.description.setContents("")
 		this.editors.recommendation.setContents("");
+		this.editors.details.setContents("");
 		$('[id*="header"]').each((_a, h) => h.innerHTML = "");
 		$("#title").val("");
 		$("#cvssString").val("")
