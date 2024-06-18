@@ -166,11 +166,18 @@ public class uploadAssessment extends HttpServlet {
             	
             	asmt.setCampaign(c);
             	
-            	//Set the assessment type but don't automatically create assessment types
             	AssessmentType at = (AssessmentType) em.createQuery("from AssessmentType where type = :name")
             			.setParameter("name", type)
             			.getResultList().stream().findFirst().orElse(null);
-            	asmt.setType(at);
+            	if(at == null) {
+            		AssessmentType newType = new AssessmentType();
+            		newType.setType(type);
+            		em.persist(newType);
+            		asmt.setType(newType);
+            		
+            	}else {
+            		asmt.setType(at);
+            	}
             	
             	//Set assessment startdate and duration
             	asmt.setStart(startDate);
@@ -235,7 +242,7 @@ public class uploadAssessment extends HttpServlet {
 		asmt.setVulns(new ArrayList<Vulnerability>());
 		
 		if(appid == null || appid.trim().equals("")) {
-			String randId = "" + ((Math.random() * (1000000 - 1000)) + 1000);
+			String randId = "" + (int)((Math.random() * (1000000 - 1000)) + 1000);
 			asmt.setAppId(randId);
 		}else {
 			asmt.setAppId(appid);

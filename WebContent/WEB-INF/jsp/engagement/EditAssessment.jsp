@@ -120,12 +120,12 @@
 			];
 		let finalized = <s:property value="currentAssessment.finalized"/>
 		let workflow = "<s:property value="currentAssessment.workflow"/>";
-    	let engName=<s:property value="currentAssessment.engagement.Id"/>;
+    	let engName="<s:property value="currentAssessment.engagement.Id"/>";
     	
-       let remName=<s:property value="currentAssessment.remediation.Id"/>;
-       let campName=<s:property value="currentAssessment.campaign.id"/>;
-       let teamName=<s:property value="currentAssessment.assessor[0].team.id"/>;
-       let assType=<s:property value="currentAssessment.type.id"/>;
+       let remName="<s:property value="currentAssessment.remediation.Id"/>";
+       let campName="<s:property value="currentAssessment.campaign.id"/>";
+       let teamName="<s:property value="currentAssessment.assessor[0].team.id"/>";
+       let assType="<s:property value="currentAssessment.type.id"/>";
        let statName="<s:property value="currentAssessment.status"/>";
        let aid="<s:property value="aid"/>";
 	   let initialPreviewDownloadUrl = 'GetEngFile?name={key}';
