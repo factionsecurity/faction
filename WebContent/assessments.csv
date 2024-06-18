@@ -1,3 +1,3 @@
-AppID,Start Date YYYYMMDD,Duration in Days, Assessment Type, Assessors separated by ';', Campaign Name, Custom Fields
-12345,20170707,5,Ethical Hacking,John Doe,2016 Assessments,"{}"
-264176,20170707,5,Source Code,John Doe;Jane Doe,2017 Assessments,"{ 'feildName':'Variable', 'fieldName2':'otherVariable'}" 
+AppID,AppName, Start Date YYYYMMDD,Duration in Days, Assessment Type, Assessors separated by ';', Campaign Name, Custom Fields
+12345,PCI Assessment, 20240101,5,Ethical Hacking,John Doe,2016 Assessments,"{}"
+264176,Web Services Assessment,20240201,5,Source Code,John Doe;Jane Doe,2017 Assessments,"{ 'feildName':'Variable', 'fieldName2':'otherVariable'}" 

@@ -503,7 +503,7 @@ $(function() {
 
 	});
 	searchTable.on('draw', function(){
-		$('#searchResults').unbind('click', 'tr');
+		$('#searchResults').off('click', 'tr');
 		$('#searchResults').on('click', 'tr', function(event){
 			const id = searchTable.row(this).data()[11]
 			console.log(event.target.outerHTML)

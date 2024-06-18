@@ -26,6 +26,7 @@ import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
+import com.fuse.dao.Vulnerability;
 import com.faction.elements.results.InventoryResult;
 import com.fuse.extenderapi.Extensions;
 import com.opencsv.CSVReader;
@@ -126,18 +127,19 @@ public class uploadAssessment extends HttpServlet {
 		reader.readNext();
         while ((line = reader.readNext()) != null) {
         	String appid = line[0];
-        	Date startDate=sdf.parse(line[1]);
-        	Integer days = Integer.parseInt(line[2]);
-        	String type=line[3];
-        	String names=line[4];
-        	String camp=line[5];
-        	String custom=line[6];
+        	String appName = line[1];
+        	Date startDate=sdf.parse(line[2]);
+        	Integer days = Integer.parseInt(line[3]);
+        	String type=line[4];
+        	String names=line[5];
+        	String camp=line[6];
+        	String custom=line[7];
         	JSONParser parse = new JSONParser();
         	
         	JSONObject json = (JSONObject) parse.parse(custom.replaceAll("'", "\""));
         	
         	
-        	Assessment asmt = getAssessmentByAppID(appid, em);
+        	Assessment asmt = getOrCreateAssessmentByAppID(appid, appName, em);
         	
         	//Merge data with existing assessment information
         	if(asmt != null){
@@ -164,11 +166,18 @@ public class uploadAssessment extends HttpServlet {
             	
             	asmt.setCampaign(c);
             	
-            	//Set the assessment type but don't automatically create assessment types
             	AssessmentType at = (AssessmentType) em.createQuery("from AssessmentType where type = :name")
             			.setParameter("name", type)
             			.getResultList().stream().findFirst().orElse(null);
-            	asmt.setType(at);
+            	if(at == null) {
+            		AssessmentType newType = new AssessmentType();
+            		newType.setType(type);
+            		em.persist(newType);
+            		asmt.setType(newType);
+            		
+            	}else {
+            		asmt.setType(at);
+            	}
             	
             	//Set assessment startdate and duration
             	asmt.setStart(startDate);
@@ -220,7 +229,7 @@ public class uploadAssessment extends HttpServlet {
 
 	}
 	
-	private Assessment getAssessmentByAppID(String appid, EntityManager em){
+	private Assessment getOrCreateAssessmentByAppID(String appid, String appName, EntityManager em){
 		
 		
 		//Find and existing assessment
@@ -230,7 +239,14 @@ public class uploadAssessment extends HttpServlet {
 		
 
 		Assessment asmt = new Assessment();
-		asmt.setAppId(appid);
+		asmt.setVulns(new ArrayList<Vulnerability>());
+		
+		if(appid == null || appid.trim().equals("")) {
+			String randId = "" + (int)((Math.random() * (1000000 - 1000)) + 1000);
+			asmt.setAppId(randId);
+		}else {
+			asmt.setAppId(appid);
+		}
 		
 		
 		if(asmtHold != null){
@@ -244,6 +260,7 @@ public class uploadAssessment extends HttpServlet {
 
 			
 		}else{
+			asmt.setName(appName);
 		
 			List<CustomType> ctypes = (List<CustomType>) em.createQuery("from CustomType where type = :type")
 				.setParameter("type", 0)
