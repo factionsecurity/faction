@@ -649,8 +649,8 @@ class VulnerablilityView {
 		let _this = this;
 		$("#addVuln").click(function() {
 			_this.disableAutoSave();
-			const desc = _this.getEditorText("description");
-			const rec = _this.getEditorText("recommendation");
+			const desc = "";
+			const rec = "";
 			let data = "id=" + _this.assesssmentId;
 			data += "&description=" + encodeURIComponent(desc);
 			data += "&recommendation=" + encodeURIComponent(rec);
