@@ -72,9 +72,9 @@ public class DocxUtilsUnitTest {
 		Assessment assessment = GenerateReport.createTestAssessment(team, type, levels);
 		WordprocessingMLPackage mlp = WordprocessingMLPackage.load(initialFile);
 
-		DocxUtils genDoc = new DocxUtils();
+		DocxUtils genDoc = new DocxUtils(mlp, assessment);
 		genDoc.FONT = "Calibri";
-		mlp = genDoc.generateDocx(mlp, assessment, customCSS);
+		mlp = genDoc.generateDocx(customCSS);
 		genDoc.tocGenerator(mlp);
 		ByteArrayOutputStream baos = new ByteArrayOutputStream();
 		mlp.save(baos);
