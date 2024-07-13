@@ -24,6 +24,34 @@
  */
 
 /*!
+ * TOAST UI Color Picker
+ * @version 2.2.8
+ * @author NHN Cloud FE Development Team <dl_javascript@nhn.com>
+ * @license MIT
+ */
+
+/*!
+ * TOAST UI Editor : Code Syntax Highlight Plugin
+ * @version 3.1.0 | Fri Aug 05 2022
+ * @author NHN Cloud FE Development Lab <dl_javascript@nhn.com>
+ * @license MIT
+ */
+
+/*!
+ * TOAST UI Editor : Color Syntax Plugin
+ * @version 3.1.0 | Fri Aug 05 2022
+ * @author NHN Cloud FE Development Lab <dl_javascript@nhn.com>
+ * @license MIT
+ */
+
+/*!
+ * TOAST UI Editor : Table Merged Cell Plugin
+ * @version 3.1.0 | Fri Aug 05 2022
+ * @author NHN Cloud FE Development Lab <dl_javascript@nhn.com>
+ * @license MIT
+ */
+
+/*!
  * jQuery JavaScript Library v3.6.3
  * https://jquery.com/
  *
@@ -87,3 +115,5 @@ PERFORMANCE OF THIS SOFTWARE.
  * @author NHN Cloud FE Development Lab <dl_javascript@nhn.com>
  * @license MIT
  */
+
+// @license RGB <-> HSV conversion utilities based off of http://www.cs.rit.edu/~ncs/color/t_convert.html

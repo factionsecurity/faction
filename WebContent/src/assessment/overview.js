@@ -2,7 +2,12 @@ require('../scripts/fileupload/css/fileinput.css');
 require('./overview.css');
 require('../loading/css/jquery-loading.css');
 import Editor from '@toast-ui/editor'
+import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
+import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
+import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
 import '@toast-ui/editor/dist/toastui-editor.css';
+import 'tui-color-picker/dist/tui-color-picker.css';
+import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
 import '../loading/js/jquery-loading';
 import 'jquery';
 import 'datatables.net';
@@ -207,7 +212,8 @@ function createEditor(id){
 				previewStyle: 'vertical',
 				height: 'auto',
 				autofocus: false,
-				height: '520px'
+				height: '560px',
+				plugins: [colorSyntax, tableMergedCell]
 			});
 	editors[id].hide();
 	editors[id].setHTML(initialHTML[id], false);
