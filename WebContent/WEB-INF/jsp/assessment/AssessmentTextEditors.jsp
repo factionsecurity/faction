@@ -12,6 +12,15 @@
 	min-height: 570px;
 	max-height: 570px;
 }
+#summary{
+	background-color:white;
+}
+#risk{
+	background-color:white;
+}
+#notes{
+	background-color:white;
+}
 </style>
 
 
@@ -198,10 +207,10 @@
 			<!-- /.box-header -->
 			<div class="box-body pad">
 				<form>
-					<bs:editor name="editor1" toolbar="Full" id="summary"
+					<div name="editor1" toolbar="Full" id="summary"
 						clickToEnable="false" readonly="${hideit}">
 						<s:property value="assessment.summary" />
-					</bs:editor>
+					</div>
 				</form>
 				<s:if test="!(hideit)">
 					<br>
@@ -249,10 +258,6 @@
 				</div>
 				<s:if test="!(hideit)">
 					<div class="row">
-						<!-- <div class="col-md-8">
-							<input class="form-control searchTemplate"
-								for="summary" placeholder="Search for Template" />
-						</div>-->
 						<div class="col-md-1"></div>
 						<div class="col-md-11" style="padding-top: 8px">
 							<span id="saveTemplateSideBar"
@@ -293,10 +298,9 @@
 			<!-- /.box-header -->
 			<div class="box-body pad">
 				<form>
-					<bs:editor name="editor2" toolbar="Full" id="riskAnalysis"
+					<div name="editor2" toolbar="Full" id="risk"
 						clickToEnable="false" readonly="${hideit}">
-						<s:property value="assessment.riskAnalysis" />
-					</bs:editor>
+					</div>
 				</form>
 				<s:if test="!(hideit)">
 					<br>
@@ -383,10 +387,9 @@
 			<!-- /.box-header -->
 			<div class="box-body pad">
 				<form>
-					<bs:editor name="editor3" toolbar="Full" id="notes"
+					<div name="editor3" toolbar="Full" id="notes"
 						clickToEnable="false" readonly="${hideit}">
-						<s:property value="assessment.Notes" />
-					</bs:editor>
+					</div>
 				</form>
 			</div>
 		</div>

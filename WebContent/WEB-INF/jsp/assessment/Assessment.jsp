@@ -26,6 +26,8 @@ color:#00a65a
 }
 .disabled{
 	background: lightgray;
+	opacity: 0.2;
+	pointer-events: none;
 }
 .lockUser{
 color: white;
@@ -122,6 +124,10 @@ color: white;
 <jsp:include page="../footer.jsp" />
 <script>
 let id = "${id}";
+let summary1 = `<s:property value="assessment.summary"/>`;
+let summary2 = `<s:property value="assessment.riskAnalysis"/>`;
+let notes = `<s:property value="assessment.Notes"/>`;
+console.log('updatedi45')
 </script>
 <script src="../dist/js/overview.js"></script>
 

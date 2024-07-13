@@ -3,6 +3,13 @@ require('jquery-fileinput/fileinput.css');
 require('./overview.css');
 require('../loading/css/jquery-loading.css');
 import suneditor from 'suneditor';
+import Editor from '@toast-ui/editor'
+import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
+import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
+import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
+import '@toast-ui/editor/dist/toastui-editor.css';
+import 'tui-color-picker/dist/tui-color-picker.css';
+import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
 import plugins from 'suneditor/src/plugins';
 import CodeMirror from 'codemirror';
 import 'codemirror/mode/htmlmixed/htmlmixed';
@@ -183,6 +190,8 @@ class VulnerablilityView {
 		this.queue = new SaveQueue(this, assessmentId, this.saveChanges, (vulns) => { this.updateVulnsCallback(vulns) });
 		this.vulnId = -1;
 		this.editors = {};
+		this.descUndoCount=0;
+		this.initialHTML={};
 		this.assesssmentId = assessmentId //$("#assessmentId")[0].value;
 		let fromMarkdown = {
 			name: 'fromMarkdown',
@@ -208,16 +217,19 @@ class VulnerablilityView {
 				return false;
 			},
 			action: function() {
+				this.history.push(true)
 				let selected = this.getSelectedElements();
 				const md = selected.reduce((acc, item) => acc + item.innerText + "<br/>", "");
 				const html = marked.parse(md);
-				const div = document.createElement("p");
+				const div = this.util.createElement("p");
 				div.innerHTML = html;
 				const parent = selected[0].parentNode;
-				parent.insertBefore(div, selected[0]);
-				for (let i = 0; i < selected.length; i++) {
-					selected[i].remove();
+				for (let i = 1; i < selected.length; i++) {
+					this.util.removeItem(selected[i])
+					//selected[i].remove();
 				}
+				this.util.changeElement(selected[0], div)
+				//parent.insertBefore(div, selected[0]);
 				this.history.push(true)
 				console.log(this);
 			}
@@ -264,9 +276,25 @@ class VulnerablilityView {
 		});
 		this.setUpEventHandlers()
 		this.updateColors();
-		this.editors.description = suneditor.create("description", {...this.editorOptions});
-		this.editors.recommendation = suneditor.create("recommendation", {...this.editorOptions});
-		this.editors.details = suneditor.create("details", {...this.editorOptions});
+		this.editors.description = new Editor({
+				el: document.querySelector('#description'),
+				previewStyle: 'vertical',
+				height: '600px',
+				autofocus: false
+			});
+			
+		this.editors.recommendation =  new Editor({
+				el: document.querySelector('#recommendation'),
+				previewStyle: 'vertical',
+				height: '600px',
+				autofocus: false
+			});
+		this.editors.details = new Editor({
+				el: document.querySelector('#details'),
+				previewStyle: 'vertical',
+				height: '600px',
+				autofocus: false
+			});
 		this.setUpVulnAutoComplete()
 		this.is40 = $("#isCVSS40").val() == "true"
 		this.cvss = new CVSS("", this.is40);
@@ -332,7 +360,7 @@ class VulnerablilityView {
 		$("#" + el).val(value).trigger("change");
 	};
 	getEditorText(name) {
-		const html = this.editors[name].getContents();
+		const html = this.editors[name].getHTML();
 		return Array.from($(html)).filter(a => a.innerHTML != "<br>").map(a => a.outerHTML).join("")
 	}
 	updateColors() {
@@ -389,6 +417,9 @@ class VulnerablilityView {
 		});
 	}
 	saveChanges(data, _this) {
+		//data = data.replaceAll("%3Cp%3E", "").replaceAll("%3C%2Fp%3E", "%3Cbr%3E").replaceAll("%3Cbr%3E%3Cbr%3E%3Cbr%3E", "%3Cbr%3E%3Cbr%3E")
+		data = data.replaceAll("%3C%2Fp%3E%3Cp%3E%3Cbr%3E%3C%2Fp%3E%3Cp%3E", "%3Cbr%3E%3C%2Fp%3E%3Cp%3E");
+		console.log(data)
 		data = `${data}&_token=${_this._token}`
 		$.post("updateVulnerability", data, function(resp) {
 			if (resp.result != "success") {
@@ -577,8 +608,8 @@ class VulnerablilityView {
 							"yes": function() {
 								$.get('DefaultVulns?action=getvuln&vulnId=' + vulnid)
 									.done(function(data) {
-										_this.editors.description.setContents(marked.parse(_this.b64DecodeUnicode(data.desc)));
-										_this.editors.recommendation.setContents(marked.parse(_this.b64DecodeUnicode(data.rec)));
+										_this.setEditorContents("description", data.desc)
+										_this.setEditorContents("recommendation", data.rec)
 										_this.setIntVal(data.likelyhood, 'likelyhood');
 										_this.setIntVal(data.impact, 'impact');
 										_this.setIntVal(data.overall, 'overall');
@@ -614,8 +645,8 @@ class VulnerablilityView {
 				} else {
 					$.get('DefaultVulns?action=getvuln&vulnId=' + vulnid)
 						.done(function(data) {
-							_this.editors.description.setContents(marked.parse(_this.b64DecodeUnicode(data.desc)).replace(/\n/g, " "));
-							_this.editors.recommendation.setContents(marked.parse(_this.b64DecodeUnicode(data.rec)).replace(/\n/g, " "));
+							_this.setEditorContents("description", data.desc)
+							_this.setEditorContents("recommendation", data.rec)
 							_this.setIntVal(data.likelyhood, 'likelyhood');
 							_this.setIntVal(data.impact, 'impact');
 							_this.setIntVal(data.overall, 'overall');
@@ -706,8 +737,6 @@ class VulnerablilityView {
 			$(".selected").each((_a, s) => $(s).removeClass("selected"))
 			$(this).addClass("selected");
 			_this.getVuln(_this.vulnId);
-
-
 		});
 		$("#vulntable span[id^=deleteVuln]").each((_index, element) => {
 			$(element).on('click', event => {
@@ -784,9 +813,9 @@ class VulnerablilityView {
 	deleteVulnForm() {
 		this.disableAutoSave()
 		$("#vulnForm").addClass("disabled")
-		this.editors.description.setContents("")
-		this.editors.recommendation.setContents("");
-		this.editors.details.setContents("");
+		this.setEditorContents("recommendation", "", true);
+		this.setEditorContents("details", "", true);
+		this.setEditorContents("description", "", true);
 		$('[id*="header"]').each((_a, h) => h.innerHTML = "");
 		$("#title").val("");
 		$("#cvssString").val("")
@@ -810,12 +839,9 @@ class VulnerablilityView {
 		console.log("disable autosave")
 		$('[id*="header"]').each((_a, h) => h.innerHTML = "");
 
-		this.editors.recommendation.onChange = function() { };
-		this.editors.recommendation.onChange = function() { };
-		this.editors.description.onChange = function() { };
-		this.editors.description.onInput = function() { };
-		this.editors.details.onChange = function() { };
-		this.editors.details.onInput = function() { };
+		this.editors.recommendation.off('change');
+		this.editors.description.off('change')
+		this.editors.details.off('change')
 		$("#title").unbind('input');
 		$("#overall").unbind('input');
 		$("#impact").unbind('input');
@@ -828,34 +854,28 @@ class VulnerablilityView {
 
 	enableAutoSave() {
 		let _this = this;
-		this.editors.description.onInput = function(contents, core) {
+		this.descUndoCount=0;
+		this.editors.description.on( 'keydown', function(a,e){
+			const html = _this.editors.description.getHTML()
+			if ((e.ctrlKey || e.metaKey) && e.key == 'z' && html == _this.initialHTML.description) {
+				e.preventDefault();
+				throw new Error("Prevent Undo");
+			 }
+		})
+		
+		this.editors.description.on( 'change', function(){
+			_this.descUndoCount++;
+			let contents = _this.editors.description.getHTML()
 			_this.queue.push(_this.vulnId, "description", encodeURIComponent(contents));
-		}
-		this.editors.description.onChange = function(contents, core) {
-			if (!contents.endsWith("</p>")) {
-				_this.editors.description.setContents(contents + "<p><br></p>");
-			}
-			contents = marked.parse(contents)
-			_this.queue.push(_this.vulnId, "description", encodeURIComponent(contents));
-		}
-		this.editors.recommendation.onInput = function(contents, core) {
+		});
+		this.editors.recommendation.on( 'change', function() {
+			let contents = _this.editors.recommendation.getHTML()
 			_this.queue.push(_this.vulnId, "recommendation", encodeURIComponent(contents));
-		}
-		this.editors.recommendation.onChange = function(contents, core) {
-			if (!contents.endsWith("</p>")) {
-				_this.editors.recommendation.setContents(contents + "<p><br></p>");
-			}
-			_this.queue.push(_this.vulnId, "recommendation", encodeURIComponent(contents));
-		}
-		this.editors.details.onInput = function(contents, core) {
+		});
+		this.editors.details.on( 'change', function() {
+			let contents = _this.editors.details.getHTML()
 			_this.queue.push(_this.vulnId, "details", encodeURIComponent(contents));
-		}
-		this.editors.details.onChange = function(contents, core) {
-			if (!contents.endsWith("</p>")) {
-				_this.editors.details.setContents(contents + "<p><br></p>");
-			}
-			_this.queue.push(_this.vulnId, "details", encodeURIComponent(contents));
-		}
+		});
 		$("#title").on('input', function(event) {
 			$(".selected").find(".vulnName")[0].innerHTML = $(this).val()
 			_this.queue.push(_this.vulnId, "title", $(this).val());
@@ -896,15 +916,23 @@ class VulnerablilityView {
 		this.setUpCVSSScoreEvents();
 
 	}
-	setEditorContents(type, data) {
+	setEditorContents(type, data, createNew=false) {
 		let decoded = this.b64DecodeUnicode(data);
-		if (decoded.endsWith("</div>")) {
-			decoded = decoded + "<p><br></p>";
+		if(createNew){
+			this.editors[type].destroy();
+			this.editors[type] = new Editor({
+				el: document.querySelector('#' + type),
+				previewStyle: 'vertical',
+				height: '600px',
+				autofocus: false,
+				plugins: [colorSyntax, tableMergedCell]
+			});
 		}
-		this.editors[type].setContents(marked.parse(decoded));
 		console.log(this.editors[type])
-		this.editors[type].core.history.reset();
-		this.editors[type].core.history.push(true);
+		this.editors[type].hide();	
+		this.editors[type].setHTML(decoded, false);
+		this.initialHTML[type] = this.editors[type].getHTML();
+		this.editors[type].show();	
 	}
 	getVuln(id) {
 		this.vulnId = id;
@@ -922,16 +950,17 @@ class VulnerablilityView {
 			$("#cvssString").val($("<div/>").html(data.cvssString).text())
 			let vector = _this.cvss.updateCVSSString(data.cvssString);
 			_this.cvss.updateCVSSScore(vector);
-			_this.setEditorContents("description", data.description);
-			_this.setEditorContents("recommendation", data.recommendation);
-			_this.setEditorContents("details", data.details);
+			_this.setEditorContents("recommendation", data.recommendation, true);
+			_this.setEditorContents("details", data.details, true);
+			_this.setEditorContents("description", data.description, true);
 			_this.setIntVal(data.overall, 'overall');
 			_this.setIntVal(data.likelyhood, 'likelyhood');
 			_this.setIntVal(data.impact, 'impact');
 			_this.setIntVal(data.catid, 'dcategory');
 			$(data.cf).each(function(a, b) {
 				let el = $("#type" + b.typeid);
-				if (el[0].type == 'checkbox' && b.value == 'true') {
+				console.log(el);
+				/*if (el[0].type == 'checkbox' && b.value == 'true') {
 					$(el).prop('checked', true);
 
 				}
@@ -940,7 +969,7 @@ class VulnerablilityView {
 				}
 				else {
 					$(el).val(b.value).trigger('change');
-				}
+				}*/
 
 			});
 			_this.enableAutoSave()

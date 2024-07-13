@@ -3,6 +3,8 @@ require('../scripts/fileupload/css/fileinput.css');
 require('./overview.css');
 require('../loading/css/jquery-loading.css');
 import suneditor from 'suneditor';
+import Editor from '@toast-ui/editor'
+import '@toast-ui/editor/dist/toastui-editor.css';
 import colorPicker from 'suneditor/src/plugins/modules/_colorPicker';
 import plugins from 'suneditor/src/plugins';
 import CodeMirror from 'codemirror';
@@ -146,13 +148,6 @@ let engagementOptions = {
 	height: 500
 }
 
-function setEditorText_bk(id, data) {
-	if (typeof editors[id] == 'undefined') {
-		$('#' + id).html(data);
-	} else {
-		editors[id].setContents(data);
-	}
-}
 function alertMessage(resp, success) {
 	if (typeof resp.message == "undefined")
 		$.alert(
@@ -185,7 +180,7 @@ function alertMessage(resp, success) {
 }
 
 function getEditorText(name) {
-	let html = editors[name].getContents(true);
+	let html = editors[name].getHTML()
 	return Array.from($(html)).filter(a => a.innerHTML != "<br>").map(a => a.outerHTML).join("")
 }
 function showLoading(com) {
@@ -312,54 +307,61 @@ function setEditorContents(contents, editor, isEncoded) {
 	if (isEncoded) {
 		contents = b64DecodeUnicode(contents)
 	}
-	//This fixes issuen with images that makes it hard to edit
-	if (contents.endsWith("</div>") || contents.endsWith("</table>")) {
-		editors[editor].setContents(contents + "<p><br></p>");
-	}else{
-		editors[editor].setContents(contents);
-	}
+	console.log(contents)
+	editors[editor].setHTML(contents, false);
+	editors[editor].moveCursorToStart(false);
+}
+function entityDecode(encoded){
+	let textArea = document.createElement("textarea");
+	textArea.innerHTML = encoded;
+	return textArea.innerText;
+	
 }
 $(function() {
 	global._token = $("#_token")[0].value;
-	editors.summary = suneditor.create("summary", {...editorOptions});
-	editors.summary.onInput = function(contents, core) {
-		queueSave("summary");
-	}
-	editors.summary.onChange = function(contents, core) {
+	editors.summary = new Editor({
+				el: document.querySelector('#summary'),
+				previewStyle: 'vertical',
+				height: 'auto',
+				autofocus: false,
+				height: '490px'
+			});
+	editors.summary.hide();
+	editors.summary.setHTML(entityDecode(summary1), false);
+	editors.summary.show();
+	editors.summary.on('change', function() {
 		if (document.getElementById(`summary_header`).innerHTML == "") {
 			queueSave("summary");
 		}
-		if (!contents.endsWith("</p>")) {
-			editors.summary.setContents(contents + "<p><br></p>");
-		}
-	}
-
-	editors.risk = suneditor.create("riskAnalysis", {...editorOptions});
-	editors.risk.onInput = function(contents, core) {
-		queueSave("risk");
-	}
-	editors.risk.onChange = function(contents, core) {
-		//setEditorContents(contents, 'risk', false);
-		if (document.getElementById(`risk_header`).innerHTML == "") {
+	});
+	editors.risk = new Editor({
+				el: document.querySelector('#risk'),
+				previewStyle: 'vertical',
+				autofocus: false,
+				height: '490px'
+			});
+	editors.risk.hide();
+	editors.risk.setHTML(entityDecode(summary2), false);
+	editors.risk.show();
+	editors.risk.on('change', function() {
+		if (document.getElementById(`summary_header`).innerHTML == "") {
 			queueSave("risk");
 		}
-		if (!contents.endsWith("</p>")) {
-			editors.risk.setContents(contents + "<p><br></p>");
-		}
-	}
-	editors.notes = suneditor.create("notes", {...editorOptions});
-	editors.notes.onInput = function(contents, core) {
-		queueSave("notes");
-	}
-	editors.notes.onChange = function(contents, core) {
-		//setEditorContents(contents, 'notes', false);
-		if (document.getElementById(`notes_header`).innerHTML == "") {
+	});
+	editors.notes = new Editor({
+				el: document.querySelector('#notes'),
+				previewStyle: 'vertical',
+				autofocus: false,
+				height: '490px'
+			});
+	editors.notes.hide();
+	editors.notes.setHTML(entityDecode(notes), false);
+	editors.notes.show();
+	editors.notes.on('change', function() {
+		if (document.getElementById(`summary_header`).innerHTML == "") {
 			queueSave("notes");
 		}
-		if (!contents.endsWith("</p>")) {
-			editors.notes.setContents(contents + "<p><br></p>");
-		}
-	}
+	});
 	suneditor.create("engagmentnotes", engagementOptions);
 	let errorMessageShown=false;
 	setInterval(() => {
@@ -386,16 +388,16 @@ $(function() {
 			}
 			["notes", "risk", "summary"].forEach(function(type) {
 				if (resp[type] && resp[type].isLock) {
-					editors[type].core.context.element.wysiwygFrame.classList.add("disabled");
+					
+					$("#" + type).addClass("disabled")
+					
 					document.getElementById(`${type}_header`).innerHTML = `<i class="lockUser">Editing by ${resp[type].lockBy} ${resp[type].lockAt}</i>`
-					editors[type].disabled();
 					setEditorContents(resp[type].updatedText, type, true);
 				} else {
-					editors[type].enable();
 					if (document.getElementById(`${type}_header`).innerHTML.indexOf("*") == -1) {
 						document.getElementById(`${type}_header`).innerHTML = "";
 					}
-					editors[type].core.context.element.wysiwygFrame.classList.remove("disabled");
+					$("#" + type).removeClass("disabled")
 				}
 			});
 		}
@@ -417,7 +419,6 @@ $(function() {
 		})
 
 	}, 1000);
-
 
 	$("#addList").click(function() {
 
