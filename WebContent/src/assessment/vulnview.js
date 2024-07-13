@@ -793,6 +793,9 @@ class VulnerablilityView {
 	enableAutoSave() {
 		let _this = this;
 		this.descUndoCount=0;
+		/// This is a hack becuase toastui does not have inital undo history set correctly
+		/// https://github.com/nhn/tui.editor/issues/3195
+		
 		this.editors.description.on( 'keydown', function(a,e){
 			const html = _this.editors.description.getHTML()
 			if ((e.ctrlKey || e.metaKey) && e.key == 'z' && html == _this.initialHTML.description) {

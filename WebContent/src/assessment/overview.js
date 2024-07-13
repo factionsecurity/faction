@@ -21,11 +21,12 @@ let html2md = new TurndownService()
 
 
 global._token = $("#_token")[0].value;
-var editors = {
+let editors = {
 	risk: {},
 	summary: {},
 	notes: {}
 };
+let initialHTML={}
 
 
 
@@ -199,7 +200,7 @@ function entityDecode(encoded){
 }
 
 function createEditor(id){
-	const initData = entityDecode($(`#${id}`).html());
+	initialHTML[id] = entityDecode($(`#${id}`).html());
 	$(`#${id}`).html("");
 	editors[id]= new Editor({
 				el: document.querySelector(`#${id}`),
@@ -209,13 +210,24 @@ function createEditor(id){
 				height: '520px'
 			});
 	editors[id].hide();
-	editors[id].setHTML(entityDecode(initData), false);
+	editors[id].setHTML(initialHTML[id], false);
+	initialHTML[id] = editors[id].getHTML();
 	editors[id].show();
 	editors[id].on('change', function() {
 		if (document.getElementById(`${id}_header`).innerHTML == "") {
 			queueSave(id);
 		}
 	});
+	
+	/// This is a hack becuase toastui does not have inital undo history set correctly
+	/// https://github.com/nhn/tui.editor/issues/3195
+	editors[id].on( 'keydown', function(a,e){
+		const html = editors[id].getHTML()
+		if ((e.ctrlKey || e.metaKey) && e.key == 'z' && html == initialHTML[id]) {
+			e.preventDefault();
+			throw new Error("Prevent Undo");
+		 }
+	})
 	
 }
 $(function() {
@@ -693,7 +705,7 @@ $(function() {
 		
 	}
 	$(".globalTemplate, .userTemplate").on("dblclick", async (event)=>{
-		await setUpListEvent(event)
+		await setUpListEvents(event)
 	})
 	
 	$(".addTemplate").on('click', async (event) => {
