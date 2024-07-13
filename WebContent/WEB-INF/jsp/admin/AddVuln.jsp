@@ -206,8 +206,8 @@
 									</div>
 									<!-- /.box-header -->
 									<div class="box-body pad">
-										<textarea id="description" name="description" rows="10"
-											cols="80"></textarea>
+										<div id="description" name="description" rows="10"
+											cols="80"></div>
 									</div>
 								</div>
 								<!-- /.box -->
@@ -236,8 +236,8 @@
 									</div>
 									<!-- /.box-header -->
 									<div class="box-body pad">
-										<textarea id="recommendation" name="recommendation" rows="10"
-											cols="80"></textarea>
+										<div id="recommendation" name="recommendation" rows="10"
+											cols="80"></div>
 									</div>
 								</div>
 								<!-- /.box -->
