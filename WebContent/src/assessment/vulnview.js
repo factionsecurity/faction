@@ -1,8 +1,6 @@
-require('suneditor/dist/css/suneditor.min.css');
 require('jquery-fileinput/fileinput.css');
 require('./overview.css');
 require('../loading/css/jquery-loading.css');
-import suneditor from 'suneditor';
 import Editor from '@toast-ui/editor'
 import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
 import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
@@ -10,10 +8,6 @@ import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
 import '@toast-ui/editor/dist/toastui-editor.css';
 import 'tui-color-picker/dist/tui-color-picker.css';
 import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
-import plugins from 'suneditor/src/plugins';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/htmlmixed/htmlmixed';
-import 'codemirror/lib/codemirror.css';
 import '../loading/js/jquery-loading';
 import 'jquery';
 import 'datatables.net';
@@ -193,62 +187,6 @@ class VulnerablilityView {
 		this.descUndoCount=0;
 		this.initialHTML={};
 		this.assesssmentId = assessmentId //$("#assessmentId")[0].value;
-		let fromMarkdown = {
-			name: 'fromMarkdown',
-			display: 'command',
-			title: 'Convert Markdown',
-			buttonClass: '',
-			innerHTML: '<i class="fa-brands fa-markdown" style="color:lightgray"></i>',
-			add: function(core, targetElement) {
-				core.context.fromMarkdown = {
-					targetButton: targetElement,
-					preElement: null
-				}
-			},
-			active: function(element) {
-				if (element) {
-					this.util.addClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
-					this.context.fromMarkdown.preElement = element;
-					return true;
-				} else {
-					this.util.removeClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
-					this.context.fromMarkdown.preElement = null;
-				}
-				return false;
-			},
-			action: function() {
-				this.history.push(true)
-				let selected = this.getSelectedElements();
-				const md = selected.reduce((acc, item) => acc + item.innerText + "<br/>", "");
-				const html = marked.parse(md);
-				const div = this.util.createElement("p");
-				div.innerHTML = html;
-				const parent = selected[0].parentNode;
-				for (let i = 1; i < selected.length; i++) {
-					this.util.removeItem(selected[i])
-					//selected[i].remove();
-				}
-				this.util.changeElement(selected[0], div)
-				//parent.insertBefore(div, selected[0]);
-				this.history.push(true)
-				console.log(this);
-			}
-		}
-		plugins['fromMarkdown'] = fromMarkdown;
-		this.editorOptions = {
-			codeMirror: CodeMirror,
-			plugins: plugins,
-			buttonList: [
-				['undo', 'redo', 'fontSize', 'formatBlock', 'textStyle'],
-				['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
-				['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-				['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown', 'codeView'],
-
-			],
-			defaultStyle: 'font-family: arial; font-size: 18px',
-			minHeight: 500,
-			height: 'auto'
-		};
 		this.editorTimeout = {};
 		this.clearLockTimeout = {};
 		$(".select2").select2();

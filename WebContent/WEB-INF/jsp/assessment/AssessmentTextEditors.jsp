@@ -21,6 +21,9 @@
 #notes{
 	background-color:white;
 }
+#engagmentnotes{
+	background-color:white;
+}
 </style>
 
 
@@ -300,6 +303,7 @@
 				<form>
 					<div name="editor2" toolbar="Full" id="risk"
 						clickToEnable="false" readonly="${hideit}">
+						<s:property value="assessment.riskAnalysis"/>
 					</div>
 				</form>
 				<s:if test="!(hideit)">
@@ -389,6 +393,7 @@
 				<form>
 					<div name="editor3" toolbar="Full" id="notes"
 						clickToEnable="false" readonly="${hideit}">
+						<s:property value="assessment.Notes"/>
 					</div>
 				</form>
 			</div>
@@ -414,10 +419,10 @@
 			<div class="box-body pad">
 				<div class="col-md-6">
 					<form>
-						<bs:editor name="engagmentnotes" toolbar="None"
+						<div name="engagmentnotes" toolbar="None"
 							id="engagmentnotes" readonly="true" clickToEnable="false">
 							<s:property value="assessment.accessNotes" />
-						</bs:editor>
+						</div>
 					</form>
 				</div>
 				<div class="col-md-6">

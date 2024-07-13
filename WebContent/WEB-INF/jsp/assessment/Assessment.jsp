@@ -124,10 +124,6 @@ color: white;
 <jsp:include page="../footer.jsp" />
 <script>
 let id = "${id}";
-let summary1 = `<s:property value="assessment.summary"/>`;
-let summary2 = `<s:property value="assessment.riskAnalysis"/>`;
-let notes = `<s:property value="assessment.Notes"/>`;
-console.log('updatedi45')
 </script>
 <script src="../dist/js/overview.js"></script>
 

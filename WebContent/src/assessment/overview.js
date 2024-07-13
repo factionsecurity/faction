@@ -1,15 +1,8 @@
-require('suneditor/dist/css/suneditor.min.css');
 require('../scripts/fileupload/css/fileinput.css');
 require('./overview.css');
 require('../loading/css/jquery-loading.css');
-import suneditor from 'suneditor';
 import Editor from '@toast-ui/editor'
 import '@toast-ui/editor/dist/toastui-editor.css';
-import colorPicker from 'suneditor/src/plugins/modules/_colorPicker';
-import plugins from 'suneditor/src/plugins';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/htmlmixed/htmlmixed';
-import 'codemirror/lib/codemirror.css';
 import '../loading/js/jquery-loading';
 import 'jquery';
 import 'datatables.net';
@@ -35,118 +28,6 @@ var editors = {
 };
 
 
-plugins.table.createCells = function(nodeName, cnt, returnElement) {
-	nodeName = nodeName.toLowerCase();
-
-	if (!returnElement) {
-		let cellsHTML = '';
-		while (cnt > 0) {
-			cellsHTML += '<' + nodeName + '>&nbsp;</' + nodeName + '>';
-			cnt--;
-		}
-		return cellsHTML;
-	} else {
-		const cell = this.util.createElement(nodeName);
-		cell.innerHTML = '&nbsp;';
-		return cell;
-	}
-}
-
-global.editors = editors;
-let fromMarkdown = {
-	name: 'fromMarkdown',
-	display: 'command',
-	title: 'Convert Markdown',
-	buttonClass: '',
-	innerHTML: '<i class="fa-brands fa-markdown" style="color:lightgray"></i>',
-	add: function(core, targetElement) {
-		core.context.fromMarkdown = {
-			targetButton: targetElement,
-			preElement: null
-		}
-	},
-	active: function(element) {
-		if (element) {
-			this.util.addClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
-			this.context.fromMarkdown.preElement = element;
-			return true;
-		} else {
-			this.util.removeClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
-			this.context.fromMarkdown.preElement = null;
-		}
-		return false;
-	},
-	action: function() {
-		let selected = this.getSelectedElements();
-		const md = selected.reduce((acc, item) => acc + item.innerText + "\n", "");
-		const html = marked.parse(md);
-		const div = document.createElement("p");
-		div.innerHTML = html;
-		const parent = selected[0].parentNode;
-		parent.insertBefore(div, selected[0]);
-		for (let i = 0; i < selected.length; i++) {
-			selected[i].remove();
-		}
-		this.history.push(true)
-	}
-}
-plugins['fromMarkdown'] = fromMarkdown;
-let toMarkdown = {
-	name: 'toMarkdown',
-	display: 'command',
-	title: 'Convert To Markdown',
-	buttonClass: '',
-	innerHTML: '<i class="fa-brands fa-markdown" style="color:lightgray; transform: rotate(180deg);"></i>',
-	add: function(core, targetElement) {
-		core.context.toMarkdown = {
-			targetButton: targetElement,
-			preElement: null
-		}
-	},
-	active: function(element) {
-		if (element) {
-			this.util.addClass(this.context.toMarkdown.targetButton.firstChild, 'mdEnabled');
-			this.context.toMarkdown.preElement = element;
-			return true;
-		} else {
-			this.util.removeClass(this.context.toMarkdown.targetButton.firstChild, 'mdEnabled');
-			this.context.toMarkdown.preElement = null;
-		}
-		return false;
-	},
-	action: function() {
-		let selected = this.getSelectedElements();
-		const html = selected.reduce((acc, item) => acc + item.outerHTML + "", "");
-		const md = html2md.turndown(html);
-		const div = document.createElement("div");
-		div.innerHTML = `<pre>${md}</pre>`;
-		const parent = selected[0].parentNode;
-		parent.insertBefore(div, selected[0]);
-		for (let i = 0; i < selected.length; i++) {
-			selected[i].remove();
-		}
-	}
-}
-plugins['fromMarkdown'] = fromMarkdown;
-var editorOptions = {
-	codeMirror: CodeMirror,
-	plugins: plugins,
-	buttonList: [
-		['undo', 'redo', 'fontSize', 'formatBlock', 'textStyle'],
-		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
-		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown', 'codeView'],
-
-	],
-	defaultStyle: 'font-family: arial; font-size: 18px',
-	height: "auto",
-	minHeight: 500
-};
-let engagementOptions = {
-	defaultStyle: 'font-family: arial; font-size: 18px',
-	buttonList: [],
-	height: 500
-}
 
 function alertMessage(resp, success) {
 	if (typeof resp.message == "undefined")
@@ -180,8 +61,7 @@ function alertMessage(resp, success) {
 }
 
 function getEditorText(name) {
-	let html = editors[name].getHTML()
-	return Array.from($(html)).filter(a => a.innerHTML != "<br>").map(a => a.outerHTML).join("")
+	return editors[name].getHTML()
 }
 function showLoading(com) {
 	$(com).loading({ overlay: true, base: 0.3 });
@@ -317,52 +197,51 @@ function entityDecode(encoded){
 	return textArea.innerText;
 	
 }
-$(function() {
-	global._token = $("#_token")[0].value;
-	editors.summary = new Editor({
-				el: document.querySelector('#summary'),
+
+function createEditor(id){
+	const initData = entityDecode($(`#${id}`).html());
+	$(`#${id}`).html("");
+	editors[id]= new Editor({
+				el: document.querySelector(`#${id}`),
 				previewStyle: 'vertical',
 				height: 'auto',
 				autofocus: false,
-				height: '490px'
+				height: '520px'
 			});
-	editors.summary.hide();
-	editors.summary.setHTML(entityDecode(summary1), false);
-	editors.summary.show();
-	editors.summary.on('change', function() {
-		if (document.getElementById(`summary_header`).innerHTML == "") {
-			queueSave("summary");
+	editors[id].hide();
+	editors[id].setHTML(entityDecode(initData), false);
+	editors[id].show();
+	editors[id].on('change', function() {
+		if (document.getElementById(`${id}_header`).innerHTML == "") {
+			queueSave(id);
 		}
 	});
-	editors.risk = new Editor({
-				el: document.querySelector('#risk'),
+	
+}
+$(function() {
+	global._token = $("#_token")[0].value;
+	createEditor("summary")
+	createEditor("risk")
+	createEditor("notes")
+	let initialNotes = entityDecode($("#engagmentnotes").html());
+	$("#engagmentnotes").html("");
+	editors.engagenotes = new Editor({
+				el: document.querySelector('#engagmentnotes'),
+				toolbarItems:[],
 				previewStyle: 'vertical',
 				autofocus: false,
-				height: '490px'
+				viewer: true,
+				height: '520px',
+				initialEditType: 'wysiwyg'
 			});
-	editors.risk.hide();
-	editors.risk.setHTML(entityDecode(summary2), false);
-	editors.risk.show();
-	editors.risk.on('change', function() {
-		if (document.getElementById(`summary_header`).innerHTML == "") {
-			queueSave("risk");
-		}
+	editors.engagenotes.setHTML(initialNotes, false);
+	editors.engagenotes.on('keydown', function(t,e) {
+		if ( !((e.ctrlKey || e.metaKey) && e.key == 'c')) {
+			e.preventDefault();
+			throw new Error("Prevent Edit");
+		 }
+		
 	});
-	editors.notes = new Editor({
-				el: document.querySelector('#notes'),
-				previewStyle: 'vertical',
-				autofocus: false,
-				height: '490px'
-			});
-	editors.notes.hide();
-	editors.notes.setHTML(entityDecode(notes), false);
-	editors.notes.show();
-	editors.notes.on('change', function() {
-		if (document.getElementById(`summary_header`).innerHTML == "") {
-			queueSave("notes");
-		}
-	});
-	suneditor.create("engagmentnotes", engagementOptions);
 	let errorMessageShown=false;
 	setInterval(() => {
 		$.get("CheckLocks").done((resp) => {
@@ -721,6 +600,9 @@ $(function() {
 						$(option).val(template.tmpId);
 						$(option).html(template.title);
 						$(`#${type}Templates`).append(option).trigger("change");
+						$(option).on("dblclick", async (event)=>{
+							await setUpListEvents(event)
+						})
 					}
 					alertMessage(resp, "Template Updated.");
 				});
@@ -795,7 +677,7 @@ $(function() {
 			}
 		});
 	});
-	$(".globalTemplate, .userTemplate").on("dblclick", async (event)=>{
+	async function setUpListEvents(event) {
 		let id = event.target.parentElement.id
 		let value = event.target.value;
 		let type = "summary";
@@ -805,9 +687,13 @@ $(function() {
 		await $.get('tempSearchDetail?tmpId=' + value)
 			.done(function(data) {
 				let template = data.templates[0].text;
-				let text = getEditorText(type) + "\n" + template;
+				let text = getEditorText(type) + "\n\n" + template;
 				setEditorContents(text, type, false);
 			});
+		
+	}
+	$(".globalTemplate, .userTemplate").on("dblclick", async (event)=>{
+		await setUpListEvent(event)
 	})
 	
 	$(".addTemplate").on('click', async (event) => {
@@ -820,7 +706,7 @@ $(function() {
 					textData.push(data.templates[0].text);
 				});
 		}
-		let text = textData.join("\n");
+		let text = textData.join("\n\n");
 		$.confirm({
 			title: "Confirm?",
 			content: "Are you sure you want to Overwrite, Append, or Prepend the current text?",
@@ -834,14 +720,14 @@ $(function() {
 				prepend: {
 					text: "Prepend",
 					action: function() {
-						text = text + "\n" + getEditorText(type);
+						text = text + "\n\n" + getEditorText(type);
 						setEditorContents(text, type, false);
 					}
 				},
 				append: {
 					text: "Append",
 					action: function() {
-						text = getEditorText(type) + "\n" + text;
+						text = getEditorText(type) + "\n\n" + text;
 						setEditorContents(text, type, false);
 					}
 				},
