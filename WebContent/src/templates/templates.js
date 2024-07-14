@@ -1,4 +1,3 @@
-require('suneditor/dist/css/suneditor.min.css');
 import 'jquery';
 import 'datatables.net';
 import 'datatables.net-bs';
@@ -7,42 +6,29 @@ import 'jquery-ui';
 import 'jquery-confirm';
 import '../scripts/jquery.autocomplete.min';
 import 'select2';
-import suneditor from 'suneditor';
-import colorPicker from 'suneditor/src/plugins/modules/_colorPicker';
-import plugins from 'suneditor/src/plugins';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/htmlmixed/htmlmixed';
-import 'codemirror/lib/codemirror.css';
 import 'jquery-confirm';
+import Editor from '@toast-ui/editor'
+import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
+import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
+import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
+import '@toast-ui/editor/dist/toastui-editor.css';
+import 'tui-color-picker/dist/tui-color-picker.css';
+import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
 
 
 
 $(function() {
-	let editorOptions = {
-		codeMirror: CodeMirror,
-		plugins: plugins,
-		buttonList: [
-			['undo', 'redo','fontSize', 'formatBlock','textStyle'],
-			['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
-			['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-			['link', 'image', 'fullScreen', 'showBlocks'],
-
-		],
-		defaultStyle: 'font-family: arial; font-size: 18px',
-		height: 900,
-		width: "100%",
-		callBackSave: function(){
-			saveIt()
-		}
-	};
 	global._token = $("#_token")[0].value;
-	let editor = suneditor.create("templateEditor", editorOptions);
-	editor.onInput = function(contents, core){
+	let editor = new Editor({
+				el: document.querySelector('#templateEditor'),
+				previewStyle: 'vertical',
+				height: '600px',
+				autofocus: false
+			});
+	editor.on( 'change', function(t, e){
 		$("#edits").html("*");
-	}
-	editor.onSave = function(){
-		console.log("save")
-	}
+	})
+	
 	global.table = $('#templateTable').DataTable({
 		"paging": true,
 		"lengthChange": false,
@@ -53,7 +39,7 @@ $(function() {
 	function ShowSummary(templateId){
 		$.get('tempSearchDetail?tmpId=' + templateId).done(function(data) {
 			const text = data.templates[0].text;
-			editor.setContents(text);
+			editor.setHTML(text);
 		});
 	}
 	$("#templateTable").on('click', 'tbody tr',function(event){
@@ -105,7 +91,7 @@ $(function() {
 		const templateName = rowData[1]
 		const type = rowData[2]
 		let data = `term=${templateName}`
-		data += "&summary=" + encodeURIComponent(editor.getContents());
+		data += "&summary=" + encodeURIComponent(editor.getHTML());
 		data += `&type=${type}`;
 		data += "&global=true";
 		data += "&active=true";

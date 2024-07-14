@@ -14,6 +14,9 @@
 <link href="../plugins/jquery-confirm/css/jquery-confirm.css"
 	media="all" rel="stylesheet" type="text/css" />
 <style>
+#templateEditor{
+	background-color: white;
+}
 </style>
 <div class="content-wrapper">
 	<!-- Content Header (Page header) -->
@@ -85,9 +88,9 @@
 						</div>
 						<div class="box-body">
 							<form>
-							<bs:editor name="templateEditor" toolbar="Full" id="templateEditor"
+							<div name="templateEditor" toolbar="Full" id="templateEditor"
 								clickToEnable="false" >
-							</bs:editor>
+							</div>
 							</form>
 						</div>
 						<!-- /.box-body -->
