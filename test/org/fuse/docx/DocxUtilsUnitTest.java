@@ -6,16 +6,25 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Query;
 
 import org.docx4j.convert.in.xhtml.XHTMLImporterImpl;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
-import org.junit.Test;
 
+import org.junit.Test;
+import org.mockito.Mockito;
+
+import com.fuse.dao.AppStore;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AssessmentType;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.Teams;
+import com.fuse.dao.User;
 import com.fuse.docx.DocxUtils;
 import com.fuse.utils.GenerateReport;
 
@@ -87,4 +96,41 @@ public class DocxUtilsUnitTest {
 
 	}
 
+	@Test
+	public void generateReportWithTemplateAndTextboxWithoutVulns() throws Exception {
+		String currentWorkingDir = System.getProperty("user.dir");
+		File initialFile = new File(currentWorkingDir + "/target/classes/default-report-template-with-textbox.docx");
+		File resultFile = new File(currentWorkingDir + "/target/classes/resultwithtextbox.docx");
+
+		WordprocessingMLPackage mlp = WordprocessingMLPackage.load(initialFile);
+		Assessment assessment = Mockito.mock(Assessment.class);
+        EntityManagerFactory entityManagerFactory = Mockito.mock(EntityManagerFactory.class);
+        EntityManager entityManager = Mockito.mock(EntityManager.class);
+        Query query = Mockito.mock(Query.class);
+
+        Mockito.when(entityManagerFactory.createEntityManager()).thenReturn(entityManager);
+        Mockito.when(entityManager.createQuery("from AppStore order by order")).thenReturn(query);
+        Mockito.when(query.getResultList()).thenReturn(new ArrayList<AppStore>());
+		Mockito.when(assessment.getAssessor()).thenReturn(new ArrayList<User>() {{
+            add(new User((long)1, "first", "last"));
+        }});
+		Mockito.when(assessment.getRemediation()).thenReturn(new User((long)2, "first", "last"));
+		Mockito.when(assessment.getType()).thenReturn(new AssessmentType((long)1, "something"));
+		Mockito.when(assessment.getStart()).thenReturn(new Date());
+		Mockito.when(assessment.getEnd()).thenReturn(new Date());
+		Mockito.when(assessment.getGuid()).thenReturn("");
+
+		DocxUtils genDoc = new DocxUtils(entityManagerFactory, mlp, assessment);
+		genDoc.FONT = "Calibri";
+		mlp = genDoc.generateDocx(null);
+		genDoc.tocGenerator(mlp);
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		mlp.save(baos);
+		byte[] report = (baos.toByteArray());
+
+		File outFile = new File(resultFile.toString());
+		FileOutputStream outputStream = new FileOutputStream(outFile);
+		outputStream.write(report);
+		outputStream.close();
+	}
 }
