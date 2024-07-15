@@ -21,6 +21,7 @@ import com.mongodb.BasicDBObject;
 public class OpenVulns extends FSActionSupport {
 
 	private String appname = "";
+	private String vulnName = "";
 	private String appId = "";
 	private List<Combo> combos;
 	private String crit = "";
@@ -49,7 +50,7 @@ public class OpenVulns extends FSActionSupport {
 
 		// EntityManager em = HibHelper.getEM();
 		if (action.equals("get")) {
-
+			this.vulnName = FSUtils.sanitizeMongo(this.vulnName);
 			this.appname = FSUtils.sanitizeMongo(this.appname);
 			this.appId = FSUtils.sanitizeMongo(this.appId);
 			this.appname = FSUtils.sanitizeMongo(this.appname);
@@ -86,6 +87,10 @@ public class OpenVulns extends FSActionSupport {
 				String newMongo = "db.Assessment.aggregate(" + "[ "
 						+ "{ '$lookup': { 'from':'Vulnerability', 'localField': '_id', 'foreignField':'assessmentId', 'as': 'vuln' }},"
 						+ "{'$unwind':'$vuln' }, " + "{'$match': { " + "  'completed' : {'$exists':true},";
+				
+				if (!this.vulnName.equals("")) {
+					newMongo += " 'vuln.name' : {'$regex' : '.*" + this.vulnName + ".*', '$options': 'i' },";
+				}
 				if (!this.appname.equals("")) {
 					newMongo += " 'name' : {'$regex' : '.*" + this.appname + ".*', '$options': 'i' },";
 				}
@@ -217,6 +222,14 @@ public class OpenVulns extends FSActionSupport {
 
 	public void setAppname(String appname) {
 		this.appname = appname;
+	}
+	
+	public String getVulnName() {
+		return vulnName;
+	}
+
+	public void setVulnName(String vulnName) {
+		this.vulnName = vulnName;
 	}
 
 	public String getAppId() {

@@ -1,11 +1,12 @@
-
-require('suneditor/dist/css/suneditor.min.css');
 require('../scripts/fileupload/css/fileinput.css');
-import suneditor from 'suneditor';
-import plugins from 'suneditor/src/plugins';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/htmlmixed/htmlmixed';
-import 'codemirror/lib/codemirror.css';
+require('../loading/css/jquery-loading.css');
+import Editor from '@toast-ui/editor'
+import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
+import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
+import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
+import '@toast-ui/editor/dist/toastui-editor.css';
+import 'tui-color-picker/dist/tui-color-picker.css';
+import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
 import {} from 'jquery';
 import '../scripts/fileupload/js/fileinput.min';
 import 'bootstrap'
@@ -13,77 +14,42 @@ import 'jquery-ui';
 import 'jquery-confirm';
 import {} from 'icheck'
 import { marked } from 'marked';
-
-let fromMarkdown = {
-	name: 'fromMarkdown',
-	display: 'command',
-	title: 'Convert Markdown',
-	buttonClass: '',
-	innerHTML: '<i class="fa-brands fa-markdown" style="color:lightgray"></i>',
-	add: function(core, targetElement) {
-		core.context.fromMarkdown = {
-			targetButton: targetElement,
-			preElement: null
-		}
-	},
-	active: function(element) {
-		if (element) {
-			this.util.addClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
-			this.context.fromMarkdown.preElement = element;
-			return true;
-		} else {
-			this.util.removeClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
-			this.context.fromMarkdown.preElement = null;
-		}
-		return false;
-	},
-	action: function() {
-		let selected = this.getSelectedElements();
-		const md = selected.reduce((acc, item) => acc + item.innerText + "\n", "");
-		const html = marked.parse(md);
-		const div = document.createElement("div");
-		div.innerHTML = html;
-		const parent = selected[0].parentNode;
-		parent.insertBefore(div, selected[0]);
-		for (let i = 0; i < selected.length; i++) {
-			selected[i].remove();
-		}
+let initialHTML={}
+function createEditor(id, disabled){
+	initialHTML[id] = entityDecode($(`#${id}`).html());
+	$(`#${id}`).html("");
+	let editor = new Editor({
+			el: document.querySelector(`#${id}`),
+			previewStyle: 'vertical',
+			height: 'auto',
+			autofocus: false,
+			height: '560px',
+			viewer: disabled,
+			plugins: [colorSyntax, tableMergedCell]
+		});
+	editor.hide();
+	editor.setHTML(initialHTML[id], false);
+	initialHTML[id] = editor.getHTML();
+	editor.show();
+	if(disabled){
+		editor.on('keydown', function(t,e) {
+			if ( !((e.ctrlKey || e.metaKey) && e.key == 'c')) {
+				e.preventDefault();
+				throw new Error("Prevent Edit");
+			 }
+			
+		});
 	}
+	return editor;
 }
-plugins['fromMarkdown'] = fromMarkdown;
-
-var editorOptions = {
-	codeMirror: CodeMirror,
-	plugins: plugins,
-	buttonList: [
-		['undo', 'redo', 'fontSize', 'formatBlock', 'textStyle'],
-		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
-		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown'],
-
-	],
-	defaultStyle: 'font-family: arial; font-size: 18px',
-	height: "auto",
-	width: "100%",
-	minHeight: 500
-};
 
 
-const editorDisabled = {
-	codeMirror: CodeMirror,
-	defaultStyle: 'font-family: arial; font-size: 18px',
-	buttonList: ['codeView'],
-	minHeight: 547,
-	width: "100%",
-	readOnly: true,
-	height: "auto",
-};
 const editors = {
-	notes: suneditor.create("notes", editorDisabled),
-	failNotes: suneditor.create("failnotes", editorOptions),
-	description: suneditor.create("description", editorDisabled),
-	recommendation: suneditor.create("recommendation", editorDisabled),
-	details: suneditor.create("details", editorDisabled)
+	notes: createEditor("notes", true), 
+	failNotes: createEditor("failnotes", false),
+	description: createEditor("description", true),
+	recommendation: createEditor("recommendation", true),
+	details: createEditor("details", true)
 }
 
 function getFiles() {
@@ -105,10 +71,6 @@ function downloadFile(id) {
 }
 
 $(function() {
-	editors['notes'].readOnly(true);
-	editors['description'].readOnly(true);
-	editors['recommendation'].readOnly(true);
-	editors['details'].readOnly(true);
 	getFiles()
 
 	$("#open").click(function() {
@@ -129,7 +91,7 @@ $(function() {
 					let pass = $('input:radio[name=r3]:checked').val();
 
 					let data = "pass=" + pass;
-					data += `&notes=${encodeURIComponent(editors["failNotes"].getContents())}`;
+					data += `&notes=${encodeURIComponent(editors["failNotes"].getHTML())}`;
 					data += `&vid=${vulnId}`;
 					data += `&ver=${verificationId}`;
 					data += "&action=submit";
@@ -153,7 +115,7 @@ $(function() {
 			buttons: {
 				confirm: function() {
 
-					let data = `&notes=${encodeURIComponent(editors["failNotes"].getContents())}`;
+					let data = `&notes=${encodeURIComponent(editors["failNotes"].getHTML())}`;
 					data += `&vid=${vulnId}`;
 					data += `&ver=${verificationId}`;
 					$.post("CancelVerification", data).done( () => {
@@ -183,7 +145,7 @@ $(function() {
 					let pass = $('input:radio[name=r3]:checked').val();
 
 					let data = "pass=" + pass;
-					data += `&notes=${editors["failNotes"].getContents()}`;
+					data += `&notes=${editors["failNotes"].getHTML()}`;
 					data += `&vid=${vulnId}`;
 					data += `&ver=${verificationId}`;
 					data += "&action=submitDev"
@@ -212,7 +174,7 @@ $(function() {
 					let pass = $('input:radio[name=r3]:checked').val();
 
 					let data = "pass=" + pass;
-					data += `&notes=${editors["failNotes"].getContents()}`;
+					data += `&notes=${editors["failNotes"].getHTML()}`;
 					data += `&vid=${vulnId}`;
 					data += `&ver=${verificationId}`;
 					data += "&action=submitProd"
@@ -238,3 +200,9 @@ $(function() {
 
 
 });
+function entityDecode(encoded){
+	let textArea = document.createElement("textarea");
+	textArea.innerHTML = encoded;
+	return textArea.innerText;
+	
+}

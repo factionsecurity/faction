@@ -1,14 +1,14 @@
 
-require('suneditor/dist/css/suneditor.min.css');
 require('../scripts/fileupload/css/fileinput.css');
 require('../loading/css/jquery-loading.css');
-//require('bootstrap/dist/css/bootstrap.css');
-import suneditor from 'suneditor';
-import plugins from 'suneditor/src/plugins';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/htmlmixed/htmlmixed';
-import 'codemirror/lib/codemirror.css';
 import '../loading/js/jquery-loading';
+import Editor from '@toast-ui/editor'
+import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
+import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
+import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
+import '@toast-ui/editor/dist/toastui-editor.css';
+import 'tui-color-picker/dist/tui-color-picker.css';
+import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
 import 'jquery';
 import 'datatables.net';
 import 'datatables.net-bs';
@@ -22,19 +22,23 @@ import 'bootstrap-daterangepicker';
 import '../scripts/jquery.autocomplete.min';
 
 $(function() {
-	let editorOptions = {
-		codeMirror: CodeMirror,
-		plugins: plugins,
-		buttonList: [
-			['undo', 'redo', 'font', 'fontSize', 'formatBlock', 'textStyle'],
-			['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
-			['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-			['link', 'image', 'fullScreen', 'showBlocks', 'codeView' ],
-
-		],
-		defaultStyle: 'font-family: arial; font-size: 18px',
-		height: 500
-	};
+	
+	function createEditor(id){
+		let initialHTML= entityDecode($(`#${id}`).html());
+		$(`#${id}`).html("");
+		let editor = new Editor({
+			el: document.querySelector(`#${id}`),
+			previewStyle: 'vertical',
+			height: 'auto',
+			autofocus: false,
+			height: '560px',
+			plugins: [colorSyntax, tableMergedCell]
+		});
+		editor.hide();
+		editor.setHTML(initialHTML, false);
+		editor.show();
+		return editor;
+	}
 
 	$(".select2").select2();
 	$("#remUser").select2("val", defaultRemId);
@@ -45,13 +49,14 @@ $(function() {
 	$("#vuln_note_select").val(`${defaultVulnId}`).trigger('change.select2');
 
 	$("#vuln_note_select").select2({ disabled: 'readonly' });
+	
+	let notes =  createEditor("notes")
+	let remNotes= createEditor("RemNotes")
+	let chSevNotes= createEditor("chSevNotes")
+	let nprodNotes= createEditor("nprodNotes")
+	let prodNotes= createEditor("prodNotes")
+	let verNotes= createEditor("verNotes")
 
-	let notes = suneditor.create("notes", editorOptions);
-	let remNotes = suneditor.create("RemNotes", editorOptions);
-	let chSevNotes = suneditor.create("chSevNotes", editorOptions);
-	let nprodNotes = suneditor.create("nprodNotes", editorOptions);
-	let prodNotes = suneditor.create("prodNotes", editorOptions);
-	let verNotes = suneditor.create("verNotes", editorOptions);
 
 	$("#files").fileinput({
 		overwriteInitial: false,
@@ -156,7 +161,7 @@ $(function() {
 			return;
 		}
 
-		let noteData = notes.getContents();
+		let noteData = notes.getHTML();
 		let data = "action=update";
 		data += `&verId=${defaultSearchId}`;
 		data += "&start=" + start;
@@ -226,8 +231,8 @@ $(function() {
 			return;
 		}
 
-		$.post('../service/getVerifications', 'id=' + $(this).val()).done(function(adata) {
-			let json = JSON.parse(adata);
+		$.post('../services/getVerifications', 'id=' + $(this).val()).done(function(adata) {
+			let json = adata;
 			let N = json.count;
 			for (let i = 0; i < N; i++) {
 				let s = json.verifications[i][2];
@@ -296,8 +301,8 @@ $(function() {
 		end = end.setDate(end.getDate() + 1);
 		copiedEventObject.end = end;
 		calendar.addEvent(copiedEventObject, true);
-		$.post('../service/getVerifications', `id=${defaultSearchId}`).done(function(adata) {
-			let json = JSON.parse(adata);
+		$.post('../services/getVerifications', `id=${defaultSearchId}`).done(function(adata) {
+			let json = adata;
 			let N = json.count;
 			for (let i = 0; i < N; i++) {
 				let s = json.verifications[i][2];
@@ -425,7 +430,7 @@ $(function() {
 				allowedFileExtensions: ['jpg', 'gif', 'png', 'pdf', 'doc', 'xls', 'xlsx', 'docx', 'txt', 'csv', 'bmp', 'jpeg', 'xml', 'zip', 'rar', 'tar', 'gzip', 'tar.gz'],
 
 			});
-			notes.setContents($("<div />").html(data[9].notes).text());
+			notes.setHTML($("<div />").html(data[9].notes).text());
 		}
 	});
 	/*** Notes section ***/
@@ -474,7 +479,7 @@ $(function() {
 		//CKEDITOR.replace("nprodNotes");
 	});
 	$("#noteSave").click(function() {
-		let newNote = remNotes.getContents();
+		let newNote = remNotes.getHTML();
 		let data = "action=insertNote";
 		data += `&note=${newNote}`;
 		data += `&vulnId=${defaultVulnId}`;
@@ -485,7 +490,7 @@ $(function() {
 	});
 	//change severity
 	$("#saveSev").click(function() {
-		let newNote = chSevNotes.getContents();
+		let newNote = chSevNotes.getHTML();
 		let data = "action=changeSev";
 		data += `&note=${newNote}`;
 		data += `&vulnId=${defaultVulnId}`;
@@ -502,7 +507,7 @@ $(function() {
 	});
 	//save non-prod
 	$("#saveNprod").click(function() {
-		let newNote = nprodNotes.getContents();
+		let newNote = nprodNotes.getHTML();
 		let data = "action=closeInDev";
 		data += `&note=${newNote}`;
 		data += `&vulnId=${defaultVulnId}`;
@@ -515,7 +520,7 @@ $(function() {
 	});
 	//save in prod
 	$("#saveProd").click(function() {
-		let newNote = prodNotes.getContents();
+		let newNote = prodNotes.getHTML();
 		let data = "action=closeInProd";
 		data += `&note=${newNote}`;
 		data += `&vulnId=${defaultVulnId}`;
@@ -529,7 +534,7 @@ $(function() {
 	});
 	//cancel the verification
 	$("#closeVerBtn").click(function() {
-		let newNote = verNotes.getContents();
+		let newNote = verNotes.getHTML();
 		let data = "action=closeVerification";
 		data += `&note=${newNote}`;
 		data += `&vulnId=${defaultVulnId}`;
@@ -552,7 +557,7 @@ $(function() {
 		$.get(`RemVulnData?action=getNotes&vulnId=${defaultVulnId}`).done(function(data) {
 			let notes = data.notes;
 			$("#noteHistory").html("");
-			remNotes.setContents("");
+			remNotes.setHTML("");
 			notes.forEach(function(note) {
 				let decodedNote = $("<div/>").html(note.note).text();
 				$("#noteHistory").append(`<b><i class='fa fa-clock-o'></i>${note.date} - <i>${note.creator}</i></b> 

@@ -17,6 +17,10 @@
 	href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css'
 	rel='stylesheet' />
 <style>
+#notes,#RemNotes,#chSevNotes,#nprodNotes,#prodNotes,#verNotes{
+	background-color: white;
+}
+
 .chSevTable td {
 	padding: 10px;
 }
@@ -140,7 +144,7 @@
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<textarea id="chSevNotes" name="chSevNotes"></textarea>
+					<div id="chSevNotes" name="chSevNotes"></div>
 				</bs:mco>
 			</bs:row>
 
@@ -166,7 +170,7 @@
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<textarea id="nprodNotes" name="nprodNotes"></textarea>
+					<div id="nprodNotes" name="nprodNotes"></div>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>
@@ -190,7 +194,7 @@
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<textarea id="prodNotes" name="nprodNotes"></textarea>
+					<div id="prodNotes" name="nprodNotes"></div>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>
@@ -211,7 +215,7 @@
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<textarea id="verNotes" name="verNotes"></textarea>
+					<div id="verNotes" name="verNotes"></div>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>

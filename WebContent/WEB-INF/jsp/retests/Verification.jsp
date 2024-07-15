@@ -11,6 +11,10 @@
 		font-weight: bold;
 		margin-left: 30px;
 	}
+	
+	#notes, #description, #recommendation, #failnotes, #details{
+		background-color: white;
+	}
 
 </style>
 

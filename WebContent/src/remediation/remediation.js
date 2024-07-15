@@ -253,9 +253,9 @@ $(function() {
 		copiedEventObject.end = end;
 		//$('#calendar').fullCalendar('renderEvent', copiedEventObject, true);
 		calendar.addEvent(copiedEventObject, true);
-		$.post('../service/getVerifications', 'id=' + $(this).val()).done(function(adata) {
+		$.post('../services/getVerifications', 'id=' + $(this).val()).done(function(adata) {
 			//console.log(adata);
-			let json = JSON.parse(adata);
+			let json = adata;
 			console.log(json);
 			let N = json.count;
 			for (let i = 0; i < N; i++) {

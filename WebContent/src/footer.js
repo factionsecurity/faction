@@ -203,4 +203,10 @@ global.b64DecodeUnicode = function b64DecodeUnicode(str) {
 		return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
 	}).join(''));
 };
+global.entityDecode = function entityDecode(encoded){
+	let textArea = document.createElement("textarea");
+	textArea.innerHTML = encoded;
+	return textArea.innerText;
+	
+}
 
