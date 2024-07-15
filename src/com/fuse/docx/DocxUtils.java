@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import javax.persistence.EntityManagerFactory;
 
 import org.docx4j.TextUtils;
 import org.docx4j.TraversalUtil;
@@ -39,6 +40,7 @@ import org.docx4j.wml.CTTxbxContent;
 
 import com.fuse.dao.Assessment;
 import com.fuse.dao.CustomField;
+import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.extenderapi.Extensions;
@@ -60,13 +62,19 @@ public class DocxUtils {
 	private List<Vulnerability> vulns;
 	private final WordprocessingMLPackage mlp;
 	
-	public DocxUtils(WordprocessingMLPackage mlp, Assessment assessment) {
+	public DocxUtils(EntityManagerFactory entityManagerFactory, WordprocessingMLPackage mlp, Assessment assessment) {
 		this.mlp = mlp;
-		this.reportExtension = new Extensions(Extensions.EventType.REPORT_MANAGER);
+		this.reportExtension = new Extensions(entityManagerFactory, Extensions.EventType.REPORT_MANAGER);
 		this.assessment = assessment;
 		this.vulns = assessment.getVulns();
 	}
 
+	public DocxUtils(WordprocessingMLPackage mlp, Assessment assessment) {
+		this.mlp = mlp;
+		this.reportExtension = new Extensions(HibHelper.getInstance().getEMF(), Extensions.EventType.REPORT_MANAGER);
+		this.assessment = assessment;
+		this.vulns = assessment.getVulns();
+	}
 	
 	private boolean cellContains(Tc cell, String variable) {
 		for (Object obj : cell.getContent()) {

@@ -37,6 +37,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Query;
 
 import org.apache.commons.compress.harmony.unpack200.bytecode.forms.ThisFieldRefForm;
 import org.springframework.beans.BeanUtils;
@@ -72,8 +74,20 @@ public class Extensions {
 	private List<ReportManager> reportManagers = new ArrayList<>();
 	private List<Log> logs = new ArrayList<>();
 	private EventType type;
+	private final EntityManagerFactory entityManagerFactory;
+	
+	public Extensions(EntityManagerFactory entityManagerFactory, EventType type) {
+		this.entityManagerFactory = entityManagerFactory;
+		this.type = type;
+		try {
+			this.loadExtensions();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public Extensions(EventType type) {
+		this.entityManagerFactory = HibHelper.getInstance().getEMF();
 		this.type = type;
 		try {
 			this.loadExtensions();
@@ -557,7 +571,7 @@ public class Extensions {
 	}
 
 	private List<AppStore> sortApps() {
-		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+		EntityManager em = entityManagerFactory.createEntityManager();
 		try {
 			List<AppStore> apps = em.createQuery("from AppStore order by order").getResultList();
 			return apps;

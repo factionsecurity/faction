@@ -276,12 +276,14 @@ public class GenerateReport {
 		v2.setDetails(details);
 		v2.setTracking("VID-1236");
 		v2.setAssessmentId(1l);
+		a.setType(type);
 		a.setVulns((new ArrayList<Vulnerability>()));
 		a.getVulns().add(v0);
 		a.getVulns().add(v1);
 		a.getVulns().add(v2);
 		a.setStart(new Date());
 		a.setEnd(new Date());
+
 		
 		return a;
 
