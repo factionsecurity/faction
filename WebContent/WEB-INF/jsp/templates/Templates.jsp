@@ -35,13 +35,13 @@
 
 
 		<div class="row">
-			<div class="col-md-3">
+			<div class="col-md-4">
 
 				<div class="box box-primary">
 					<div class="box-body">
 
 						<div class="row">
-							<div class="col-sm-3" style="margin-bottom: -30px; z-index: 1">
+							<div class="col-sm-4" style="margin-bottom: -30px; z-index: 1">
 								<button class="btn btn-block btn-primary btn-sm"
 									id="createTemplate">New Template</button>
 							</div>
@@ -50,7 +50,7 @@
 							class="table table-striped table-hover dataTable">
 							<thead class="theader">
 								<tr>
-									<th>id</th>
+									<th></th>
 									<th>Description</th>
 									<th>Active</th>
 									<th></th>
@@ -80,7 +80,7 @@
 				</div>
 				<!-- /.box -->
 			</div>
-			<div class="col-md-9">
+			<div class="col-md-8">
 				<div class="col-md-12">
 
 					<div id="editorContainer" class="box box-primary disabled">

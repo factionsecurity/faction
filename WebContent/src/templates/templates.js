@@ -77,7 +77,9 @@ $(function() {
 		$("#editorContainer").removeClass("disabled")
 		$.get('tempSearchDetail?tmpId=' + templateId).done(function(data) {
 			const text = data.templates[0].text;
-			editor.setHTML(text);
+			editor.hide();
+			editor.setHTML(text, false);
+			editor.show(false);
 			editor.on( 'change', function(t, e){
 				$("#edits").html("*");
 			})
@@ -131,16 +133,17 @@ $(function() {
 		let rowData = table.row(tr).data()
 		const templateName = rowData[1]
 		const type = rowData[2]
-		let data = `term=${templateName}`
+		let data = `tmpId=${rowData[0]}`
 		data += "&summary=" + encodeURIComponent(editor.getHTML());
-		data += `&type=${type}`;
-		data += "&global=true";
 		data += "&active=true";
 		data += "&_token=" + global._token;
-		$.post("tempSave", data).done(function(resp) {
+		$.post("globalSave", data).done(function(resp) {
 			_token = resp.token;
-			$("#edits").html("");
-		});
+			if(alertMessage(resp, "Saved!")){
+				$("#edits").html("");
+			}	
+		
+		})
 		
 	}
 	

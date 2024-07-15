@@ -52,18 +52,28 @@ global.alertMessage = function alertMessage(resp, success) {
 				title: "SUCCESS!",
 				type: "green",
 				content: success,
-				columnClass: 'small'
+				columnClass: 'small',
+				autoClose: 'OK|2000',
+				buttons: {
+					OK: ()=>{}
+				}
 			}
 		);
+		return true;
 	} else {
 		$.alert(
 			{
 				title: "Error",
 				type: "red",
 				content: resp.message,
-				columnClass: 'small'
+				columnClass: 'small',
+				autoClose: 'OK|2000',
+				buttons: {
+					OK: ()=>{}
+				}
 			}
 		);
+		return false;
 	}
 
 	//global._token = resp.token;
