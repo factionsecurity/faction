@@ -93,6 +93,33 @@ public class BoilerPlateConfig extends FSActionSupport {
 
 		return "tempSearchDetailJson";
 	}
+	@Action(value = "globalSave", results = {
+			@Result(name = "tempSearchJson", location = "/WEB-INF/jsp/assessment/tempSearchJSON.jsp") })
+	public String globalSaveTemplate() {
+		BoilerPlate bp = (BoilerPlate) em
+				.createQuery(
+						"from BoilerPlate where id=:id and global=true")
+				.setParameter("id", this.tmpId)
+				.getResultList().stream()
+				.findFirst().orElse(null);
+		if (bp == null) {
+			this._message ="Invalid Boilerplate";
+			return this.ERRORJSON;
+		}
+		bp.setText(FSUtils.sanitizeHTML(this.summary));
+		bp.setUser(this.getSessionUser());
+		bp.setCreated(new Date());
+		bp.setActive(this.active);
+
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		em.persist(bp);
+		HibHelper.getInstance().commit();
+		boilers = new ArrayList<BoilerPlate>();
+		boilers.add(bp);
+
+		return "tempSearchJson";
+	}
 
 	@Action(value = "tempSave", results = {
 			@Result(name = "tempSearchJson", location = "/WEB-INF/jsp/assessment/tempSearchJSON.jsp") })
