@@ -1,12 +1,13 @@
 require('suneditor/dist/css/suneditor.min.css');
 require('../scripts/fileupload/css/fileinput.css');
 require('../loading/css/jquery-loading.css');
-//require('bootstrap/dist/css/bootstrap.css');
-import suneditor from 'suneditor';
-import plugins from 'suneditor/src/plugins';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/htmlmixed/htmlmixed';
-import 'codemirror/lib/codemirror.css';
+import Editor from '@toast-ui/editor'
+import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
+import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
+import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
+import '@toast-ui/editor/dist/toastui-editor.css';
+import 'tui-color-picker/dist/tui-color-picker.css';
+import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
 import '../loading/js/jquery-loading';
 import 'jquery';
 import 'datatables.net';
@@ -21,25 +22,24 @@ import 'bootstrap-daterangepicker';
 import '../scripts/jquery.autocomplete.min';
 import { marked } from 'marked';
 
-let editorOptions = {
-	codeMirror: CodeMirror,
-	plugins: plugins,
-	buttonList: [
-		['undo', 'redo', 'font', 'fontSize', 'formatBlock', 'textStyle'],
-		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
-		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks'],
+	
+function createEditor(id){
+	return new Editor({
+				el: document.querySelector(`#${id}`),
+				previewStyle: 'vertical',
+				height: 'auto',
+				autofocus: false,
+				height: '560px',
+				plugins: [colorSyntax, tableMergedCell]
+			});
+}
 
-	],
-	defaultStyle: 'font-family: arial; font-size: 18px',
-	height: 500
-};
 let editors = {
-	notes: suneditor.create("notes", editorOptions),
-	remNotes: suneditor.create("RemNotes", editorOptions),
-	chSevNotes: suneditor.create("chSevNotes", editorOptions),
-	nprodNotes: suneditor.create("nprodNotes", editorOptions),
-	prodNotes: suneditor.create("prodNotes", editorOptions)
+	notes: createEditor("notes"), 
+	remNotes: createEditor("RemNotes"),
+	chSevNotes: createEditor("chSevNotes"),
+	nprodNotes:createEditor("nprodNotes"),
+	prodNotes: createEditor("prodNotes")
 }
 let calendar = null;
 global.genCal = function genCal() {
@@ -171,7 +171,7 @@ $(function() {
 		}
 
 		//showLoading(".content");
-		let notes = editors["notes"].getContents();
+		let notes = editors["notes"].getHTML();
 		let data = "action=create";
 		//data+="&vulnId="+vid;
 		//data+="&vulnId="+vids;
@@ -352,7 +352,7 @@ $(function() {
 
 	}
 
-	$("#search, #appid, #appname, #tracking").bind("click keypress", function(evt) {
+	$("#search, #appid, #appname, #tracking, #vulnName").bind("click keypress", function(evt) {
 
 		if (evt.currentTarget.type == "text" && evt.type == "click")
 			return;
@@ -362,7 +362,7 @@ $(function() {
 		console.log(evt);
 
 		$("#controls").hide();
-		let qs = "OpenVulns?action=get&appId=" + $("#appid").val() + "&appname=" + $("#appname").val() + "&tracking=" + $("#tracking").val();
+		let qs = `OpenVulns?action=get&appId=${$("#appid").val()}&appname=${$("#appname").val()}&tracking=${$("#tracking").val()}&vulnName=${$("#vulnName").val()}`
 		for (let riskId of levels) {
 			if ($(`#levelbx${riskId}`).is(":checked"))
 				qs += `&risk%5B${riskId}%5D=true`
@@ -381,30 +381,44 @@ $(function() {
 			"destroy": true,
 
 			"paging": true,
-			"pageLength": 15,
+			"pageLength": 10,
 			"lengthChange": false,
 			"searching": false,
 			"ordering": true,
 			"info": true,
 			"autoWidth": true,
-			"order": [[4, "desc"]],
+			"order": [[1, "desc"]],
 			serverSide: true,
 			ajax: {
 				"url": qs,
 				"type": "POST"
 			},
 			columnDefs: [
-				{
-					targets: [1, 2],
+				/*{
+					targets: [1, 2, 3],
 					render: function(data, type, row) {
-						return data.substr(0, 30) + "...";
+						if(data.length > 30){
+							return data.substr(0, 30) + "...";
+						}else{
+							return data;
+						}
 					}
-				},
+				},*/
 				{
 					targets: [6],
 					render: function(data, type, row) {
 						return updateColor(data);
 					}
+					
+				},
+				{
+					targets: [7,8,9],
+					width: "30px"
+					
+				},
+				{
+					targets: [0],
+					width: "10px"
 					
 				}
 			]
@@ -489,7 +503,9 @@ $(function() {
 
 			//$("#files").fileinput('destroy');
 			//getFiles();	
-			editors["notes"].setContents($("<div />").html(data[11].notes).text());
+			editors["notes"].hide()
+			editors["notes"].setHTML($("<div />").html(data[11].notes).text());
+			editors["notes"].show(false)
 		}
 		return false;
 	});
@@ -532,7 +548,7 @@ $(function() {
 		$("#prodModal").modal('show');
 	});
 	$("#noteSave").click(function() {
-		let newNote = editors["remNotes"].getContents();
+		let newNote = encodeURIComponent(editors["remNotes"].getHTML());
 		let data = "action=insertNote";
 		data += "&note=" + newNote;
 		data += "&vulnId=" + $("#vuln_note_select").val();
@@ -542,7 +558,7 @@ $(function() {
 
 	});
 	$("#saveSev").click(function() {
-		let newNote = editors["chSevNotes"].getContents();
+		let newNote = editors["chSevNotes"].getHTML();
 		let data = "action=changeSev";
 		data += "&note=" + newNote;
 		data += "&vulnId=" + $("#vuln_note_select").val();
@@ -559,7 +575,7 @@ $(function() {
 
 	});
 	$("#saveNprod").click(function() {
-		let newNote = editors['nprodNotes'].getContents();
+		let newNote = editors['nprodNotes'].getHTML();
 		let data = "action=closeInDev";
 		data += "&note=" + newNote;
 		data += "&vulnId=" + $("#vuln_note_select").val();
@@ -570,7 +586,7 @@ $(function() {
 		});
 	});
 	$("#saveProd").click(function() {
-		let newNote = editors['prodNotes'].getContents();
+		let newNote = editors['prodNotes'].getHTML();
 		let data = "action=closeInProd";
 		data += "&note=" + newNote;
 		data += "&vulnId=" + $("#vuln_note_select").val();
@@ -585,7 +601,9 @@ function refreshNotes(thevid) {
 	$.get("RemVulnData?action=getNotes&vulnId=" + thevid).done(function(data) {
 		let notes = data.notes;
 		$("#noteHistory").html("");
-		editors['remNotes'].setContents("");
+		editors['remNotes'].hide();
+		editors['remNotes'].setHTML("", false);
+		editors['remNotes'].show(false);
 		notes.forEach(function(note) {
 			let decodedNote = $("<div/>").html(note.note).text();
 			console.log(decodedNote);

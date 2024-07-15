@@ -1,11 +1,11 @@
 <%@page import="org.apache.struts2.components.Include"%><%@ page language="java" contentType="application/json; charset=UTF-8"
     pageEncoding="UTF-8"%><%@ taglib prefix="s" uri="/struts-tags" %><% boolean first=true;%>{ "data" : [<s:iterator value="combos">
 <% if(first){ first=false;}else{ %>,<%}%>[ "<input class='remselect' type='checkbox' onclick='return false'/>",
+"<s:property value="vuln.name"/>" , 
 "<s:property value="assessment.appId"/>\n<s:property value="assessment.name"/>", 
 "<s:iterator value="assessment.assessor"><s:property value="fname"/> <s:property value="lname"/>\n</s:iterator>",
 "<s:property value="vuln.tracking"/>" , 
 "<s:if test="isVer">Out for Verification</s:if>",
-"<s:property value="vuln.name"/>" , 
 "<s:property value="vuln.overallStr"/>" ,  
 <s:if test="vuln.closed== null">
 "<s:date name="vuln.opened"  format="MM/dd/yyyy"/> <i class='fa fa-edit' onclick='changeDate(this)'/>", 

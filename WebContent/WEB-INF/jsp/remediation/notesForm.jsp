@@ -14,8 +14,8 @@
 		<bs:row>
 			<bs:mco colsize="12">
 				<label>Vulnerability Notes:</label>
-				<textarea id="RemNotes" name="RemNotes" rows="10" cols="80">             
-		 </textarea>
+				<div id="RemNotes" name="RemNotes" rows="10" cols="80">             
+		 </div>
 			</bs:mco>
 		</bs:row>
 		<br/>

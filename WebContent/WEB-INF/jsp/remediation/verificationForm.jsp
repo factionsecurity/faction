@@ -21,9 +21,9 @@
 	 <bs:row>
 	 	<bs:mco colsize="12">
 	 		<label>Verification Notes:</label>
-            <textarea id="notes" name="notes" rows="10" cols="80"> 
+            <div id="notes" name="notes" rows="10" cols="80"> 
             	   <s:property value="note"/>            
-            </textarea>
+            </div>
 	 	</bs:mco>
 	 </bs:row>
 	  <!--  Add Distribution list section -->
@@ -44,16 +44,20 @@
        <bs:button size="lg" color="primary" colsize="12" text="<i class='glyphicon glyphicon-plus'></i> Save Verification" id="addVerification"></bs:button>
      </bs:row>
 </bs:mco> <!--  End of Top col -->
-<bs:mco colsize="2">
-	<label>Upload Files:</label>
-	<input id="files" type="file" multiple name="file_data"/>
-</bs:mco>
 <bs:mco colsize="4">
+<bs:row>
 	<div class="box box-primary">
         <div class="box-body">
           <!-- THE CALENDAR -->
           <div id="calendar"></div>
         </div><!-- /.box-body -->
      </div><!-- /. box -->
+</bs:row>
+<bs:row>
+<bs:mco colsize="12">
+	<label>Upload Files:</label>
+	<input id="files" type="file" multiple name="file_data"/>
+</bs:mco>
+</bs:row>
 </bs:mco>
 </bs:row>

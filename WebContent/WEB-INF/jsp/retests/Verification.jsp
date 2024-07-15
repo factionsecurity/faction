@@ -114,9 +114,9 @@
 
 					<bs:row>
 						<bs:mco colsize="12">
-							<textarea name="notes" id="notes" disabled>
+							<div name="notes" id="notes" disabled>
 					  <s:property value="verification.Notes" />
-				  </textarea>
+				  </div>
 						</bs:mco>
 					</bs:row>
 				</bs:box>
@@ -124,25 +124,25 @@
 			<bs:mco colsize="6">
 				<bs:box type="warning"
 					title="<i class='glyphicon  glyphicon-edit'></i>  Assessor Pass or Fail Notes">
-					<textarea id="failnotes" name="failnotes"></textarea>
+					<div id="failnotes" name="failnotes"></div>
 				</bs:box>
 			</bs:mco>
 		</bs:row>
 		<bs:row>
 			<bs:mco colsize="9">
 				<bs:box type="info" title="Vulnerability Description">
-					<textarea id="description" name="description"><s:property
-							value="verification.verificationItems[0].vulnerability.description" /></textarea>
+					<div id="description" name="description"><s:property
+							value="verification.verificationItems[0].vulnerability.description" /></div>
 				</bs:box>
 
 				<bs:box type="info" title="Vulnerability Recommendation">
-					<textarea id="recommendation" name="recommendation"><s:property
-							value="verification.verificationItems[0].vulnerability.recommendation" /></textarea>
+					<div id="recommendation" name="recommendation"><s:property
+							value="verification.verificationItems[0].vulnerability.recommendation" /></div>
 				</bs:box>
 
 				<bs:box type="info" title="Vulnerability Details">
-					<textarea id="details" name="details"><s:property
-							value="verification.verificationItems[0].vulnerability.details" /></textarea>
+					<div id="details" name="details"><s:property
+							value="verification.verificationItems[0].vulnerability.details" /></div>
 				</bs:box>
 			</bs:mco>
 			<bs:mco colsize="3">

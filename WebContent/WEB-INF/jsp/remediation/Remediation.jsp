@@ -17,6 +17,9 @@
 <link href="../dist/css/Fuse.css" media="all" rel="stylesheet"
 	type="text/css" />
 <style>
+#notes,#RemNotes,#chSevNotes,#nprodNotes,#prodNotes{
+	background-color: white;
+}
 .chSevTable td {
 	padding: 10px;
 }
@@ -57,6 +60,28 @@
 .select2-results {
 	border: 1px solid #030D1C;
 	border-width: 0px 1px 1px 1px;
+}
+
+#noteHistory table {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+#noteHistory td, #noteHistory th {
+    border: 0.3px solid #acb9ca;
+    padding: 2px;
+  	padding-left: 8px;
+}
+#noteHistory td div {
+   word-break: break-all !important;
+}
+#noteHistory th {
+  white-space: nowrap !important;
+  background-color: #afbfcf;
+  display: table-cell;
+  vertical-align: inherit;
+  font-weight: normal;
+  color: #030d1c;
 }
 </style>
 
@@ -144,7 +169,7 @@
 	<bs:row>
 		<bs:mco colsize="12">
 			<b>Add Notes:</b>
-			<textarea id="chSevNotes" name="chSevNotes"></textarea>
+			<div id="chSevNotes" name="chSevNotes"></div>
 		</bs:mco>
 	</bs:row>
 
@@ -170,7 +195,7 @@
 	<bs:row>
 		<bs:mco colsize="12">
 			<b>Add Notes:</b>
-			<textarea id="nprodNotes" name="nprodNotes"></textarea>
+			<div id="nprodNotes" name="nprodNotes"></div>
 		</bs:mco>
 	</bs:row>
 </bs:modal>
@@ -194,7 +219,7 @@
 	<bs:row>
 		<bs:mco colsize="12">
 			<b>Add Notes:</b>
-			<textarea id="prodNotes" name="nprodNotes"></textarea>
+			<div id="prodNotes" name="nprodNotes"></div>
 		</bs:mco>
 	</bs:row>
 </bs:modal>
