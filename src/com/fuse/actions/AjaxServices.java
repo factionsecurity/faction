@@ -10,6 +10,7 @@ import javax.persistence.EntityManager;
 
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
+import org.apache.struts2.convention.annotation.Result;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -34,7 +35,12 @@ public class AjaxServices extends FSActionSupport {
 	private String campname;
 	private String username;
 
-	@Action(value = "getAssessments")
+	@Action(value = "getAssessments",
+			results = {@Result(
+				name="_json",type = "stream"
+				, params = {
+						"contentType", "application/json;charset=UTF-8", 
+				        "inputName", "_stream"})})
 	public String getAssessments() {
 		User user = this.getSessionUser();
 		if (user == null) {
@@ -123,7 +129,12 @@ public class AjaxServices extends FSActionSupport {
 		return this.jsonOutput("{ \"count\" : 0}");
 	}
 
-	@Action(value = "getVerifications")
+	@Action(value = "getVerifications",
+			results = {@Result(
+				name="_json",type = "stream"
+				, params = {
+						"contentType", "application/json;charset=UTF-8", 
+				        "inputName", "_stream"})})
 	public String getVerifications() {
 		User user = this.getSessionUser();
 		if (user == null)

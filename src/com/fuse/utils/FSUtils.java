@@ -134,7 +134,7 @@ public class FSUtils {
 						"small", "big", "pre", "code", "cite", "samp", "sub", "sup", "strike", "center", "blockquote",
 						"hr", "br", "col", "font", "div", "img", "ul", "ol", "li", "dd", "dt", "dl", "tbody", "thead",
 						"tfoot", "table", "td", "th", "tr", "colgroup", "fieldset", "legend", "del", "ins", "figure",
-						"span", "figcaption")
+						"span", "figcaption", "ins")
 				.toFactory();
 		String sanitized = policyBuilder.sanitize(html);
 

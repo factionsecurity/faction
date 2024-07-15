@@ -48,10 +48,12 @@ public class getAssessments extends HttpServlet {
 		if (user == null)
 			return;
 		if (user.getPermissions().isAssessor() || user.getPermissions().isManager()) {
-			PrintWriter out = response.getWriter();
 			response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 			response.setHeader("Pragma", "no-cache");
 			response.setDateHeader("Expires", 0);
+			response.setCharacterEncoding("UTF-8");
+			response.setContentType("application/json;charset=UTF-8");
+			PrintWriter out = response.getWriter();
 
 			EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 			try {
@@ -132,10 +134,12 @@ public class getAssessments extends HttpServlet {
 		if (user == null)
 			return;
 
-		PrintWriter out = response.getWriter();
 		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 		response.setHeader("Pragma", "no-cache");
 		response.setDateHeader("Expires", 0);
+		response.setCharacterEncoding("UTF-8");
+		response.setContentType("application/json;charset=UTF-8");
+		PrintWriter out = response.getWriter();
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		String[] ids = request.getParameter("id").split(",");
 

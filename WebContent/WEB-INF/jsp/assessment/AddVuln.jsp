@@ -168,6 +168,16 @@ td:first-child {
 .cvssfalse {
 	display: none;
 }
+
+#description {
+	background-color: white
+}
+#recommendation {
+	background-color: white
+}
+#details {
+	background-color: white
+}
 </style>
 
 <div class="row">
@@ -358,10 +368,10 @@ td:first-child {
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="description" toolbar="Full" id="description"
+										<div name="description" toolbar="Full" id="description"
 											clickToEnable="false">
 
-										</bs:editor>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -381,10 +391,10 @@ td:first-child {
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="recommendation" toolbar="Full"
+										<div name="recommendation" toolbar="Full"
 											id="recommendation" clickToEnable="false">
 
-										</bs:editor>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -404,10 +414,10 @@ td:first-child {
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="details" toolbar="Full" id="details"
+										<div name="details" toolbar="Full" id="details"
 											clickToEnable="false">
 
-										</bs:editor>
+										</div>
 									</div>
 								</div>
 							</div>

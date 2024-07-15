@@ -11,6 +11,11 @@
   "dependencies": {
     "@pandatix/js-cvss": "^0.4.4",
     "@popperjs/core": "^2.11.6",
+    "@toast-ui/editor": "^3.2.2",
+    "@toast-ui/editor-plugin-code-syntax-highlight": "^3.1.0",
+    "@toast-ui/editor-plugin-color-syntax": "^3.1.0",
+    "@toast-ui/editor-plugin-table-merged-cell": "^3.1.0",
+    "@toast-ui/toastmark": "0.0.1-alpha.1",
     "@turingpointde/cvss.js": "^1.5.0",
     "adminlte": "^2.4.1",
     "bootstrap": "^3.4.1",

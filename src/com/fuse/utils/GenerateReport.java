@@ -234,6 +234,7 @@ public class GenerateReport {
 		hacker.add(u);
 		hacker.add(u);
 		a.setId(1l);
+		a.setType(type);
 		a.setAssessor(hacker);
 		a.setRemediation(u);
 		a.setAppId("1337");
@@ -281,7 +282,8 @@ public class GenerateReport {
 		a.getVulns().add(v1);
 		a.getVulns().add(v2);
 		a.setStart(new Date());
-		a.setEnd(new Date());		
+		a.setEnd(new Date());
+
 		
 		return a;
 

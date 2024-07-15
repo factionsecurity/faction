@@ -26,6 +26,8 @@ color:#00a65a
 }
 .disabled{
 	background: lightgray;
+	opacity: 0.2;
+	pointer-events: none;
 }
 .lockUser{
 color: white;

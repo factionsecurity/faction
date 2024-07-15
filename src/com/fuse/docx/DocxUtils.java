@@ -36,6 +36,7 @@ import org.docx4j.wml.STTabTlc;
 import org.docx4j.wml.Tbl;
 import org.docx4j.wml.Tc;
 import org.docx4j.wml.Tr;
+import org.docx4j.wml.CTTxbxContent;
 
 import com.fuse.dao.Assessment;
 import com.fuse.dao.CustomField;
@@ -1109,6 +1110,9 @@ public class DocxUtils {
 		} else if (paragraph.getParent() instanceof Hdr) {
 			// located in a header element
 			final Hdr parent = (Hdr) paragraph.getParent();
+			return parent.getContent();
+		} else if (paragraph.getParent() instanceof CTTxbxContent) {
+			final CTTxbxContent parent = (CTTxbxContent) paragraph.getParent();
 			return parent.getContent();
 		} else {
 			// paragraph located in main document part

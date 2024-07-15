@@ -91,20 +91,18 @@ public class applicationInventory extends HttpServlet {
 				}
 				array.add(json);
 			}
+			response.setCharacterEncoding("UTF-8");
+			response.setContentType("application/json;charset=UTF-8");
 			PrintWriter out = response.getWriter();
-			response.setContentType("application/json");
 			out.print(array.toJSONString());
 		}else{
 			List<Assessment> as = null;
 			if(!appid.equals("") && !appname.equals("")){
 				String query = "{$or : [{_appId : { $regex : '.*"+FSUtils.sanitizeMongo(appid)+".*', $options : 'i'}}, { 'name' : { $regex : '.*"+FSUtils.sanitizeMongo(appname)+".*', $options : 'i'}}]}";
-				//String query = "{ 'name' : { $regex : '.*"+FSUtils.sanitizeMongo(appname) + ".*', $options : 'i'}, "
-				//		+ "$where: '/^"+FSUtils.sanitizeMongo(appid)+".*/.test(this.appId)'}";
 				as = FSUtils.sortUniqueAssessment(em.createNativeQuery(query, Assessment.class).getResultList());
 				
 
 			}else if(!appid.equals("")){
-				//String query = "{ $where: '/^"+FSUtils.sanitizeMongo(appid)+".*/.test(this.appId)'}";
 				String query = "{_appId : { $regex : '.*"+FSUtils.sanitizeMongo(appid)+".*', $options : 'i'}}";
 				as = FSUtils.sortUniqueAssessment(em.createNativeQuery(query, Assessment.class).getResultList());
 				
@@ -128,7 +126,7 @@ public class applicationInventory extends HttpServlet {
 					
 				}
 				PrintWriter out = response.getWriter();
-				response.setContentType("application/json");
+				response.setContentType("application/json;charset=UTF-8");
 				out.print(array.toJSONString());
 				em.close();
 				return;
@@ -158,7 +156,7 @@ public class applicationInventory extends HttpServlet {
 				array.add(json);
 			}
 			PrintWriter out = response.getWriter();
-			response.setContentType("application/json");
+			response.setContentType("application/json;charset=UTF-8");
 			out.print(array.toJSONString());
 			em.close();
 		}
