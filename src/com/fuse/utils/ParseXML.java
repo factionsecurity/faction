@@ -107,15 +107,22 @@ public class ParseXML {
 
 	public List<Vulnerability> parseXML(File data, ReportMap map, Long asmtId, List<CustomType> customTypes,
 			boolean removeDups) {
-		return this.parseXML(data, asmtId, map.getListname(), map.getMapping(), map.getMapRating(), map.getVulnMap(),
-				map.getDefaultVuln(), map.getCustomFields(), customTypes, removeDups);
+		try {
+			return this.parseXML(data, asmtId, map.getListname(), map.getMapping(), map.getMapRating(), map.getVulnMap(),
+					map.getDefaultVuln(), map.getCustomFields(), customTypes, removeDups);
+		} catch (ParserConfigurationException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	public List<Vulnerability> parseXML(File data, Long asmtId, String startNodes, List<MapItem> map,
 			Map<String, Long> severities, List<VulnMap> vulnMap, DefaultVulnerability genericVuln,
-			Map<String, String> custFieldMap, List<CustomType> customTypes, boolean removeDups) {
+			Map<String, String> custFieldMap, List<CustomType> customTypes, boolean removeDups) throws ParserConfigurationException {
 
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
 		DocumentBuilder builder;
 		Document doc;
 		List<Vulnerability> vulns = new ArrayList();
