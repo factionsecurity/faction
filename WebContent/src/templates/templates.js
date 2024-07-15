@@ -25,9 +25,6 @@ $(function() {
 				height: '600px',
 				autofocus: false
 			});
-	editor.on( 'change', function(t, e){
-		$("#edits").html("*");
-	})
 	
 	global.table = $('#templateTable').DataTable({
 		"paging": true,
@@ -36,10 +33,54 @@ $(function() {
 		"ordering": true,
 		"info": true
 	});
+	function setUpEvents(){
+		$(".vulnControl-delete").off('click');
+		$(".vulnControl-delete").on('click', async (event) =>{
+			const row = event.currentTarget.parentElement.parentElement
+			const rowData = table.row(row).data()
+			
+			$.confirm({
+				title: "Confirm?",
+				content: "Are you sure you want to delete these templates?<br><b>"+rowData[1]+"</b>",
+				buttons: {
+					confirm: async function() {
+						let messages=[]
+						$.post(`tempDelete`, `tmpId=${rowData[0]}`).done(function(resp) {
+							_token=resp.token;
+							table.row(row).remove().draw()		
+							alertMessage(messages[0], "Templates Deleted.");
+						});
+					},
+					cancel: function() { }
+				}
+			});
+		});
+		$(".activeCheckBox").off('change');
+		$(".activeCheckBox").on('change', function(event){
+			const row = event.currentTarget.parentElement.parentElement
+			const rowData = table.row(row).data()
+			const active = this.checked
+			
+				$.post(`tempActive`, `tmpId=${rowData[0]}&active=${active}`).done(function(resp) {
+					_token=resp.token;
+				});
+			
+		})
+		
+	}
+	setUpEvents();
+	global.table.on('draw', function(){
+		setUpEvents();
+	});
 	function ShowSummary(templateId){
+		editor.off( 'change');
+		$("#editorContainer").removeClass("disabled")
 		$.get('tempSearchDetail?tmpId=' + templateId).done(function(data) {
 			const text = data.templates[0].text;
 			editor.setHTML(text);
+			editor.on( 'change', function(t, e){
+				$("#edits").html("*");
+			})
 		});
 	}
 	$("#templateTable").on('click', 'tbody tr',function(event){
@@ -103,34 +144,4 @@ $(function() {
 		
 	}
 	
-	$(".vulnControl-delete").on('click', async (event) =>{
-		const row = event.currentTarget.parentElement.parentElement
-		const rowData = table.row(row).data()
-		
-		$.confirm({
-			title: "Confirm?",
-			content: "Are you sure you want to delete these templates?<br><b>"+rowData[1]+"</b>",
-			buttons: {
-				confirm: async function() {
-					let messages=[]
-					$.post(`tempDelete`, `tmpId=${rowData[0]}`).done(function(resp) {
-						_token=resp.token;
-						table.row(row).remove().draw()		
-						alertMessage(messages[0], "Templates Deleted.");
-					});
-				},
-				cancel: function() { }
-			}
-		});
-	});
-	$(".activeCheckBox").on('change', function(event){
-		const row = event.currentTarget.parentElement.parentElement
-		const rowData = table.row(row).data()
-		const active = this.checked
-		
-			$.post(`tempActive`, `tmpId=${rowData[0]}&active=${active}`).done(function(resp) {
-				_token=resp.token;
-			});
-		
-	})
 });
