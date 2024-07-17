@@ -4,7 +4,6 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 <jsp:include page="../header.jsp" />
-<link href="../fileupload/css/fileinput.min.css" media="all" rel="stylesheet" type="text/css" />
 <link href="../dist/css/jquery.autocomplete.css" media="all" rel="stylesheet" type="text/css" />
 <link href="../dist/css/throbber.css" media="all" rel="stylesheet" type="text/css" />
 <link href="../plugins/jquery-confirm/css/jquery-confirm.css" media="all" rel="stylesheet" type="text/css" />
