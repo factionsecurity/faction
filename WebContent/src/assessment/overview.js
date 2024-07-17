@@ -641,7 +641,7 @@ $(function() {
 		} else if (selectedText.length == 0) {
 			contentMessage = "Enter a Template name: <input id='tempName' class='form-control'></input>";
 		} else {
-			contentMessage = "Do you want to save the template <b>" + selectedText + "</b> or create a new template?<input id='updateTemplateName' type='hidden' value=" + selectedText + "'/>";
+			contentMessage = "Do you want to save the template <b>" + selectedText + "</b> or create a new template?<input id='updateTemplateName' type='hidden' value='" + selectedText + "'/>";
 			buttons["new"] = function() {
 				$(`#${type}Templates`).val(null).trigger('change');
 				let saveButtons = $(".saveTemplate")
