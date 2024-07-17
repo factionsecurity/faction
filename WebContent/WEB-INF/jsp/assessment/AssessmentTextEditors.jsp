@@ -247,14 +247,14 @@
 					<select id="summaryTemplates" multiple="false"
 						class="form-control templates">
 						<s:iterator value="summaryTemplates">
-							<option value="${id}" title="${user.fname } ${user.lname}"
-								global="${global}"
+							<option value="<s:property value='id'/>" title="<s:property value='user.fname'/> <s:property value='user.lname'/>"
+								global="<s:property value="global"/>"
 								<s:if test="global == true">
 								class='globalTemplate'>
-							</s:if><s:else>
+								</s:if><s:else>
 								class='userTemplate'>
-							</s:else>
-							${title}
+								</s:else>
+							<s:property value="title"/>
 							</option>
 						</s:iterator>
 					</select>
@@ -335,14 +335,14 @@
 					<select id="riskTemplates" multiple="false"
 						class="form-control templates">
 						<s:iterator value="riskTemplates">
-							<option value="${id}" title="${user.fname } ${user.lname}"
-								global="${global}"
+							<option value="<s:property value='id'/>" title="<s:property value='user.fname'/> <s:property value='user.lname'/>"
+								global="<s:property value='global'/>"
 								<s:if test="global == true">
 								class='globalTemplate'>
 							</s:if><s:else>
 								class='userTemplate'>
 							</s:else>
-							${title}
+							<s:property value='title'/>
 							</option>
 						</s:iterator>
 					</select>
