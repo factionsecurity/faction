@@ -264,22 +264,17 @@
 		<dependency>
 			<groupId>org.docx4j</groupId>
 			<artifactId>docx4j-core</artifactId>
-			<version>11.4.8</version>
+			<version>11.4.11</version>
 		</dependency>
 		<dependency>
 			<groupId>org.docx4j</groupId>
-			<artifactId>docx4j-ImportXHTML</artifactId>
-			<version>11.4.8</version>
+			<artifactId>docx4j-ImportXHTML-core</artifactId>
+			<version>11.4.10</version>
 		</dependency>
 		<dependency>
 			<groupId>org.docx4j</groupId>
 			<artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
-			<version>11.4.8</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi</artifactId>
-			<version>5.2.4</version>
+			<version>11.4.11</version>
 		</dependency>
 		<dependency>
 			<groupId>com.openhtmltopdf</groupId>
@@ -295,11 +290,6 @@
 			<groupId>com.openhtmltopdf</groupId>
 			<artifactId>openhtmltopdf-objects</artifactId>
 			<version>1.0.10</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi-ooxml</artifactId>
-			<version>5.2.4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.docx4j</groupId>
