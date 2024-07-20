@@ -5051,7 +5051,7 @@ button {
 	padding-bottom: 0;
 	margin-top: -9px;
 	margin-right: 8px;
-	z-index: 99999;
+//	z-index: 99999;
 }
 .dashboardButton {
 	margin-top: -40px !important;
@@ -5137,4 +5137,17 @@ code {
 	color: #666 !important;
 	padding: 5px;
 	
+}
+.daterangepicker {
+	z-index: 1151 !important;
+	background-color: #030D1C ;
+}
+
+.daterangepicker td.off{
+	background-color: #192339 !important;
+}
+.daterangepicker .calendar-table{
+	border:none;
+	background-color: #030D1C ;
+
 }

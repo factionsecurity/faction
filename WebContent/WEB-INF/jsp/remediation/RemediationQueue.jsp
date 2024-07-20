@@ -38,7 +38,26 @@ tr:hover {
 	<!-- Main content -->
 	<section class="content">
 		<bs:box type="info"
-			title="Your Queue<br/><small><input type='checkbox' id='showall' ${checked}/>&nbsp;&nbsp;Show All</input></small>">
+			title="Your Queue<br/><small></small>">
+			<bs:row>
+				<bs:mco colsize="1">
+				</bs:mco>
+				<bs:mco colsize="2">
+					<input type='checkbox' id='showAll' ${allAssignedChecked}/>&nbsp;&nbsp;Show All Assigned</input>
+				</bs:mco>
+				<bs:mco colsize="2">
+					<input type='checkbox' id='showAlmostDue' ${almostDueChecked}/>&nbsp;&nbsp;Show Past Due</input>
+				</bs:mco>
+				<bs:mco colsize="2">
+					<input type='checkbox' id='showPastDue' ${pastDueChecked}/>&nbsp;&nbsp;Show Past Due</input>
+				</bs:mco>
+				<bs:mco colsize="2">
+					<input type='checkbox' id='showInRetest' ${inRetestChecked}/>&nbsp;&nbsp;Show In Retest Due</input>
+				</bs:mco>
+				<bs:mco colsize="2">
+					<input type='checkbox' id='showCompletedRetest' ${completedRetesthecked}/>&nbsp;&nbsp;Show Completed Retest</input>
+				</bs:mco>
+			</bs:row>
 			<bs:row>
 				<bs:mco colsize="12">
 					<bs:datatable id="queue"

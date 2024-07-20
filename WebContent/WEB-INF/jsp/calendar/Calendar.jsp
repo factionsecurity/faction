@@ -4,14 +4,7 @@
 <%@ taglib prefix="s" uri="/struts-tags"%>
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 <jsp:include page="../header.jsp" />
-<link rel="stylesheet"
-	href="../plugins/fullcalendar/fullcalendar.min.css">
-<link rel="stylesheet"
-	href="../plugins/fullcalendar/fullcalendar.print.css" media="print">
-<link rel="stylesheet"
-	href="../plugins/daterangepicker/daterangepicker-bs3.css">
-	<link rel="stylesheet"
-	href="../plugins/gantt/css/style.css">
+<link rel="stylesheet" href="../dist/css/Fuse.css">
 	
 
 <!-- Content Wrapper. Contains page content -->

@@ -21,7 +21,7 @@
     "bootstrap": "^3.4.1",
     "bootstrap-switch": "^3.4.0",
     "chart.js": "^4.4.1",
-    "codemirror": "file:codemirror",
+    "codemirror": "^5.49.0",
     "css-loader": "^6.7.1",
     "datatables.net": "^1.13.1",
     "datatables.net-bs": "^1.13.1",

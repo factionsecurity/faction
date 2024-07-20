@@ -1,5 +1,7 @@
 require('../scripts/fileupload/css/fileinput.css');
 require('./scheduling.css');
+require('select2/dist/css/select2.min.css')
+require('daterangepicker/daterangepicker.css');
 import '../loading/js/jquery-loading';
 import Editor from '@toast-ui/editor'
 import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
@@ -17,7 +19,7 @@ import 'jquery-ui';
 import 'jquery-confirm';
 import '../scripts/jquery.autocomplete.min';
 import * as moment from 'moment';
-import 'bootstrap-daterangepicker';
+import 'daterangepicker';
 import 'select2';
 import 'jquery.gantt';
 import { marked } from 'marked';

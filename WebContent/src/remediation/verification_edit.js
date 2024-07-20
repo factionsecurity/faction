@@ -16,9 +16,11 @@ import '../scripts/fileupload/js/fileinput.min';
 import 'bootstrap'
 import 'jquery-ui';
 import 'jquery-confirm';
+require('select2/dist/css/select2.min.css')
+require('daterangepicker/daterangepicker.css');
 import 'select2';
 import * as moment from 'moment';
-import 'bootstrap-daterangepicker';
+import 'daterangepicker';
 import '../scripts/jquery.autocomplete.min';
 
 $(function() {

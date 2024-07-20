@@ -1,6 +1,8 @@
 require('suneditor/dist/css/suneditor.min.css');
 require('../scripts/fileupload/css/fileinput.css');
 require('../loading/css/jquery-loading.css');
+require('daterangepicker/daterangepicker.css');
+require('select2/dist/css/select2.min.css');
 import Editor from '@toast-ui/editor'
 import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
 import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
@@ -18,9 +20,8 @@ import 'jquery-ui';
 import 'jquery-confirm';
 import 'select2';
 import * as moment from 'moment';
-import 'bootstrap-daterangepicker';
+import 'daterangepicker';
 import '../scripts/jquery.autocomplete.min';
-import { marked } from 'marked';
 
 	
 function createEditor(id){

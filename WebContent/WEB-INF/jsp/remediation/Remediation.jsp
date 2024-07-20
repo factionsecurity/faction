@@ -8,9 +8,6 @@
 	href="../plugins/fullcalendar/fullcalendar.min.css">
 <link rel="stylesheet"
 	href="../plugins/fullcalendar/fullcalendar.print.css" media="print">
-<link rel="stylesheet"
-	href="../plugins/daterangepicker/daterangepicker-bs3.css">
-<link rel="stylesheet" href="../plugins/datepicker/datepicker3.css">
 <link rel="stylesheet" href="../plugins/iCheck/all.css">
 <link href="../fileupload/css/fileinput.min.css" media="all"
 	rel="stylesheet" type="text/css" />
@@ -35,6 +32,15 @@
 .daterangepicker {
 	z-index: 1151 !important;
 	background-color: #030D1C !important;
+}
+
+.daterangepicker td.off{
+	background-color: #192339 !important;
+}
+.daterangepicker .calendar-table{
+	border:none;
+	background-color: #030D1C !important;
+
 }
 
 .nav-tabs-custom .form-control {
