@@ -4,30 +4,23 @@
 <%@ taglib prefix="s" uri="/struts-tags"%>
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 <jsp:include page="../header.jsp" />
+	href="../dist/css/Fuse.css">
 <link rel="stylesheet"
 	href="../plugins/fullcalendar/fullcalendar.min.css">
 <link rel="stylesheet"
 	href="../plugins/fullcalendar/fullcalendar.print.css" media="print">
-<link rel="stylesheet"
-	href="../plugins/daterangepicker/daterangepicker-bs3.css">
 <link rel="stylesheet" href="../plugins/iCheck/all.css">
 <link href="../fileupload/css/fileinput.min.css" media="all"
-	rel="stylesheet" />
-<link
-	href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css'
-	rel='stylesheet' />
+	rel="stylesheet" type="text/css" />
+<link href="../dist/css/Fuse.css" media="all" rel="stylesheet"
+	type="text/css" />
 <style>
-#notes,#RemNotes,#chSevNotes,#nprodNotes,#prodNotes,#verNotes{
-	background-color: white;
-}
-
 .chSevTable td {
 	padding: 10px;
 }
 
-.daterangepicker {
-	z-index: 1151 !important;
-	background-color: #030D1C !important;
+#notes, #RemNotes{
+background-color: white;
 }
 
 .nav-tabs-custom .form-control {
@@ -144,7 +137,7 @@
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<div id="chSevNotes" name="chSevNotes"></div>
+					<textarea id="chSevNotes" name="chSevNotes"></textarea>
 				</bs:mco>
 			</bs:row>
 
@@ -170,7 +163,7 @@
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<div id="nprodNotes" name="nprodNotes"></div>
+					<textarea id="nprodNotes" name="nprodNotes"></textarea>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>
@@ -194,7 +187,7 @@
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<div id="prodNotes" name="nprodNotes"></div>
+					<textarea id="prodNotes" name="nprodNotes"></textarea>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>
@@ -215,7 +208,7 @@
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<div id="verNotes" name="verNotes"></div>
+					<textarea id="verNotes" name="verNotes"></textarea>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>
@@ -263,5 +256,10 @@
 	
 		</script>
 		<script src="../dist/js/verification_edit.js"></script>
+		<link
+			href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css'
+			rel='stylesheet' />
+		<script
+			src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
 		</body>
 		</html>

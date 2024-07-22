@@ -5151,3 +5151,18 @@ code {
 	background-color: #030D1C ;
 
 }
+.badge{
+	margin-right: 5px;
+}
+.badge i{
+	margin-right: 4px;
+}
+.badge-red {
+	background-color: #dd4b39;
+}
+.badge-green {
+	background-color: #00a65a;
+}
+.badge-yellow {
+	background-color: #f39c12;
+}
