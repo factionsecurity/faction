@@ -1,7 +1,9 @@
 package com.fuse.actions.remediation;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
@@ -9,7 +11,6 @@ import org.apache.struts2.convention.annotation.Result;
 
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.Assessment;
-import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.VulnerabilityQueries;
@@ -38,6 +39,26 @@ public class OpenVulns extends FSActionSupport {
 	private Integer start = 0;
 	private Integer length = 10;
 	private Long count;
+	
+	private String sortRule(String colNum, String dir) {
+		String direction = "1";
+		String param = "vuln.opened";
+		if(dir.equals("desc")) {
+			direction = "-1";
+		}
+		switch(colNum) {
+			case "1" : param = "vuln.name";break;
+			case "2" : param = "name";break;
+			case "3" : param = "assessor[0].fname";break;
+			case "4" : param = "vuln.tracking";break;
+			case "6" : param = "vuln.overall";break;
+			case "7" : param = "vuln.opened";break;
+			case "8" : param = "vuln.devClosed";break;
+			case "9" : param = "vuln.closed";break;
+			default: param ="vuln.opened";
+		}
+		return String.format("{ '$sort': { '%s': %s} },",param, direction);
+	}
 
 	@Action(value = "OpenVulns", results = {
 			@Result(name = "vulnsJson", location = "/WEB-INF/jsp/remediation/vulnsJson.jsp") })
@@ -46,9 +67,10 @@ public class OpenVulns extends FSActionSupport {
 		if (!(this.isAcassessor() || this.isAcmanager() || this.isAcremediation())) {
 			return LOGIN;
 		}
-		User user = this.getSessionUser();
+		Map<String, String[]> map= this.request.getParameterMap();
+		String sortCol = map.get("order[0][column]")[0];
+		String sortDir = map.get("order[0][dir]")[0];
 
-		// EntityManager em = HibHelper.getEM();
 		if (action.equals("get")) {
 			this.vulnName = FSUtils.sanitizeMongo(this.vulnName);
 			this.appname = FSUtils.sanitizeMongo(this.appname);
@@ -112,8 +134,11 @@ public class OpenVulns extends FSActionSupport {
 				newMongo += "}}";
 
 				String CountQuery = newMongo + ", { '$group': { '_id': '', 'count': { '$sum': 1 } }} ])";
-				newMongo += "," + "{'$limit' : NumberLong('" + (this.start + this.length) + "')},"
-						+ "{'$skip' : NumberLong('" + this.start + "')}" + "])";
+				newMongo += "," 
+						+ this.sortRule(sortCol, sortDir)
+						+ "{'$limit' : NumberLong('" + (this.start + this.length) + "')},"
+						+ "{'$skip' : NumberLong('" + this.start + "')}"
+						+ "])";
 
 				List query = em.createNativeQuery(CountQuery).getResultList();
 				if (query.size() == 0) {
@@ -354,5 +379,8 @@ public class OpenVulns extends FSActionSupport {
 	public void setCount(Long count) {
 		this.count = count;
 	}
+	
+
+	
 
 }

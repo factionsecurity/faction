@@ -44,17 +44,14 @@ public class VerificationEdit extends FSActionSupport {
 	private Vulnerability vuln;
 	private Long verOption;
 	private List<RiskLevel> levels = new ArrayList();
+	private Boolean isPass;
 
 	@Action(value = "VerificationEdit")
 	public String execute() {
 		if (!this.isAcremediation())
 			return AuditLog.notAuthorized(this, "User is not on the Remdiation Team", true);
 
-		// Session session = HibHelper.getSessionFactory().openSession();
-		// Verification v = (Verification) session.createQuery("from Verification where
-		// id = :id").setLong("id", searchId).uniqueResult();
 		Verification v = em.find(Verification.class, searchId);
-		// v.getVerificationItems().get(0).getVulnerability().updateRiskLevels();
 		this.appId = v.getAssessment().getAppId();
 		this.appName = v.getAssessment().getName();
 		this.start = v.getStart() == null ? new Date(0) : v.getStart();
@@ -71,6 +68,7 @@ public class VerificationEdit extends FSActionSupport {
 		this.levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 		this.files = (List<Files>) em.createQuery("from Files where entityId = :eid and type = :type")
 				.setParameter("eid", this.vulnId).setParameter("type", Files.VERIFICATION).getResultList();
+		this.isPass = v.getCompleted().getTime() != 0? v.getVerificationItems().get(0).isPass(): null;
 
 		List<User> users = em.createQuery("from User").getResultList();
 		for (User u : users) {
@@ -86,8 +84,6 @@ public class VerificationEdit extends FSActionSupport {
 			this.verOption = ss.getVerificationOption();
 		else
 			this.verOption = 0l;
-
-		// session.close();
 
 		return SUCCESS;
 	}
@@ -178,6 +174,10 @@ public class VerificationEdit extends FSActionSupport {
 
 	public List<RiskLevel> getLevels() {
 		return levels;
+	}
+	
+	public Boolean isPass() {
+		return this.isPass;
 	}
 
 }
