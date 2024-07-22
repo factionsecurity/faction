@@ -25,7 +25,7 @@ services:
         - 'FACTION_MONGO_PASSWORD=faction_mongo_pass'
         - 'FACTION_SECRET_KEY=faction_encryption_key'
         - 'FACTION_OAUTH_CALLBACK=http://localhost:8080'
-        - 'FACTION_APPSTORE_ENABLED=http://localhost:8080'
+        - 'FACTION_APPSTORE_ENABLED=true'
     links:
       - faction-mongo
     command: ["/usr/local/tomcat/bin/catalina.sh", "run"]
