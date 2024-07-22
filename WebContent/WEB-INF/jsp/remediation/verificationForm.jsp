@@ -5,14 +5,14 @@
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 
 <bs:row>
-<bs:mco colsize="6">
+<bs:mco colsize="8">
 	<bs:row>
-		 <bs:select name="Remediation Contact:" colsize="4" id="remUser">
+		 <bs:select name="Remediation Contact:" colsize="6" id="remUser">
 		 	<s:iterator value="remusers">
                       <option value="<s:property value="id"/>"><s:property value="fname"/> <s:property value="lname"/></option>
             </s:iterator>
 		 </bs:select>
-		 <bs:dt name="Start and End Date:" colsize="4" id="reservation"><s:property value="startStr"/> - <s:property value="endStr"/></bs:dt>
+		 <bs:dt name="Start and End Date:" colsize="6" id="reservation"><s:property value="startStr"/> - <s:property value="endStr"/></bs:dt>
 		
 		 
 	  </bs:row><!--  End of Top Row -->

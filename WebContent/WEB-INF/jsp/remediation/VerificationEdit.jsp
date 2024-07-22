@@ -4,7 +4,6 @@
 <%@ taglib prefix="s" uri="/struts-tags"%>
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 <jsp:include page="../header.jsp" />
-	href="../dist/css/Fuse.css">
 <link rel="stylesheet"
 	href="../plugins/fullcalendar/fullcalendar.min.css">
 <link rel="stylesheet"

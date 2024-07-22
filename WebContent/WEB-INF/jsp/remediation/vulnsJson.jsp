@@ -23,6 +23,8 @@
 	"dist" : "<s:property value="assessment.DistributionList"/>", 
 	"notes" : "<s:property value="assessment.AccessNotes"/>",
 	"name" : "<s:property value="assessment.name"/>",
+	"vulnName" : "<s:property value="vuln.name"/>",
+	"tracking" : "<s:property value="vuln.tracking"/>",
 	"isVer" : ${isVer},
 	"severity" : {
 		"overall" :  "${vuln.overall}",

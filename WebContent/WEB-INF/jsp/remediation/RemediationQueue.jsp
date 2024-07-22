@@ -43,7 +43,7 @@ tr:hover {
 				<bs:mco colsize="1">
 				</bs:mco>
 				<bs:mco colsize="2">
-					<input type='checkbox' id='showAll' ${allAssignedChecked}/>&nbsp;&nbsp;Show All Assigned</input>
+					<input type='checkbox' id='showAll' ${checked}/>&nbsp;&nbsp;Show All Assigned</input>
 				</bs:mco>
 				<bs:mco colsize="2">
 					<input type='checkbox' id='showAlmostDue' ${almostDueChecked}/>&nbsp;&nbsp;Show Almost Due</input>
@@ -52,7 +52,7 @@ tr:hover {
 					<input type='checkbox' id='showPastDue' ${pastDueChecked}/>&nbsp;&nbsp;Show Past Due</input>
 				</bs:mco>
 				<bs:mco colsize="2">
-					<input type='checkbox' id='showInRetest' ${inRetestChecked}/>&nbsp;&nbsp;Show Retests</input>
+					<input type='checkbox' id='showInRetest' ${inRetestChecked}/>&nbsp;&nbsp;Show Incomplete Retests</input>
 				</bs:mco>
 				<bs:mco colsize="2">
 					<input type='checkbox' id='showCompletedRetest' ${completedRetesthecked}/>&nbsp;&nbsp;Show Completed Retests</input>

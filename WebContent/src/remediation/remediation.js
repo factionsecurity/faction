@@ -85,17 +85,6 @@ global.genCal = function genCal() {
 	return cal;
 }
 $(function() {
-	if (vulnName != "") {
-		setTimeout(function() {
-			$($("#vulntable").DataTable().rows().data()).each(function(a, b) {
-				if (searchId != -1 && b[11].vid == searchId) {
-					$($("#vulntable").find("tbody").find("tr")[a]).trigger("click");
-
-				}
-			});
-		}, 1000);
-
-	}
 	$(".col-md-1").css("min-width", "100px").css("text-overflow", "ellipsis").css("white-space", "nowrap").css("overflow", "hidden");
 
 	$(".select2").select2();
@@ -321,22 +310,52 @@ $(function() {
 
 	$('#vulntable').dataTable({
 		"destroy": true,
-
 		"paging": true,
-		"pageLength": 15,
 		"lengthChange": false,
 		"searching": false,
-		"ordering": true,
 		"info": true,
 		"autoWidth": true,
-		"order": [[4, "desc"]]
+		columnDefs: [
+			{
+				targets: [6],
+				render: function(data, type, row) {
+					return updateColor(data);
+				},
+				orderable: true
+			},
+			{
+				targets: [6,7,8,9],
+				width: "60px",
+				orderable: true
+				
+			},
+			{
+				targets: [0],
+				width: "10px",
+				orderable: false
+				
+			},
+			{
+				targets: [5],
+				orderable: false
+			},
+			{
+				targets: [2,3,4],
+				orderable: true
+			}
+		]
 
 
 	});
 
 	$('#vulntable').DataTable().on('draw', function() {
 		clearLoading(".content");
-		clearLoading(".content");
+		$($("#vulntable").DataTable().rows().data()).each(function(a, b) {
+			if (searchId != -1 && b[11].vid == searchId) {
+				$($("#vulntable").find("tbody").find("tr")[a]).trigger("click");
+
+			}
+		});
 	});
 
 	function updateCheckbox(theParent, isChecked) {
@@ -359,11 +378,9 @@ $(function() {
 			return;
 		if (evt.type == "keypress" && evt.which != 13)
 			return;
-		//showLoading(".content");
-		console.log(evt);
 
 		$("#controls").hide();
-		let qs = `OpenVulns?action=get&appId=${$("#appid").val()}&appname=${$("#appname").val()}&tracking=${$("#tracking").val()}&vulnName=${$("#vulnName").val()}`
+		let qs = `OpenVulns?action=get&appId=${$("#appid").val()}&appname=${$("#appname").val()}&tracking=${$("#tracking").val()}&vulnName=${$("#vulnName").val()}&junk%5B0%5D=help`
 		for (let riskId of levels) {
 			if ($(`#levelbx${riskId}`).is(":checked"))
 				qs += `&risk%5B${riskId}%5D=true`
@@ -377,7 +394,6 @@ $(function() {
 		if ($("#opencbx").is(":checked")) {
 			qs += "&open=true"
 		}
-
 		$('#vulntable').dataTable({
 			"destroy": true,
 
@@ -385,42 +401,42 @@ $(function() {
 			"pageLength": 10,
 			"lengthChange": false,
 			"searching": false,
-			"ordering": true,
 			"info": true,
 			"autoWidth": true,
-			"order": [[1, "desc"]],
+			"order": [[7, "desc"]],
 			serverSide: true,
 			ajax: {
 				"url": qs,
 				"type": "POST"
 			},
 			columnDefs: [
-				/*{
-					targets: [1, 2, 3],
-					render: function(data, type, row) {
-						if(data.length > 30){
-							return data.substr(0, 30) + "...";
-						}else{
-							return data;
-						}
-					}
-				},*/
 				{
 					targets: [6],
 					render: function(data, type, row) {
 						return updateColor(data);
-					}
+					},
+					orderable: true
 					
 				},
 				{
-					targets: [7,8,9],
-					width: "30px"
+					targets: [6,7,8,9],
+					width: "60px",
+					orderable: true
 					
 				},
 				{
 					targets: [0],
-					width: "10px"
+					width: "10px",
+					orderable: false
 					
+				},
+				{
+					targets: [5],
+					orderable: false
+				},
+				{
+					targets: [2,3,4],
+					orderable: true
 				}
 			]
 
@@ -719,7 +735,7 @@ function updateSelects() {
 		$("#vuln_note_select").html("");
 		$("#vuln_history_select").html("");
 		$.each(rows, function(index, obj) {
-			let opt = "<option value='" + obj[11].vid + "'>" + obj[11].name + "</option>";
+			let opt = "<option value='" + obj[11].vid + "'>" + obj[11].tracking +": " + obj[11].vulnName + "</option>";
 			$("#vuln_note_select").append(opt);
 			$("#vuln_history_select").append(opt);
 		});

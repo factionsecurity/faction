@@ -37,9 +37,6 @@
 		                    </label>
 		             </bs:mco>
 		             
-		             
-
-                    
                   </bs:row>
            		 <br>
                   <hr>
@@ -47,15 +44,15 @@
                     <thead class="theader">
                       <tr>
                       	<th></th>
-                        <th>Name</th>
+                        <th>Vulnerability</th>
                       	<th>App Name</th>
                       	<th>Assessor</th>
                       	<th>Tracking</th>
                       	<th>Status</th>
                         <th>Severity</th>
                         <th>Opened</th>
-                        <th>Closed in Dev</th>
-                        <th>Closed in Prod</th>
+                        <th>Closed (Dev)</th>
+                        <th>Closed (Prod)</th>
                       </tr>
                     </thead>
                     <tbody>

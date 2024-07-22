@@ -8,7 +8,7 @@ import 'jquery-confirm';
 $(function() {
 	$("#showAll").change(function() {
 		const checked = $("#showAll").is(":checked");
-		document.location = `RemediationQueue?all=${all}`;
+		document.location = `RemediationQueue?all=${checked}`;
 	});
 	let vulnQueue = $("#queue").DataTable({ 'iDisplayLength': 10 });
 	$("#showAlmostDue,#showPastDue,#showInRetest,#showCompletedRetest").change(function() {
@@ -33,10 +33,10 @@ $(function() {
 			terms.push("Failed")
 		}
 		if(terms.length == 0){
-			vulnQueue.columns([7]).search("").draw();
+			vulnQueue.columns([8]).search("").draw();
 		}else{
 			let regex = terms.join("|");
-			vulnQueue.columns([7]).search(regex, true, false).draw();
+			vulnQueue.columns([8]).search(regex, true, false).draw();
 		}
 		
 	});
