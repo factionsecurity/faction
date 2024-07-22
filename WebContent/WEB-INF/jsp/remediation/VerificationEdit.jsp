@@ -18,7 +18,7 @@
 	padding: 10px;
 }
 
-#notes, #RemNotes{
+#notes, #RemNotes, #nprodNotes, #prodNotes, #verNotes {
 background-color: white;
 }
 
@@ -162,7 +162,7 @@ background-color: white;
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<textarea id="nprodNotes" name="nprodNotes"></textarea>
+					<div id="nprodNotes" name="nprodNotes"></div>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>
@@ -186,7 +186,7 @@ background-color: white;
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<textarea id="prodNotes" name="nprodNotes"></textarea>
+					<div id="prodNotes" name="nprodNotes"></div>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>
@@ -207,7 +207,7 @@ background-color: white;
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<textarea id="verNotes" name="verNotes"></textarea>
+					<div id="verNotes" name="verNotes"></div>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>

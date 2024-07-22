@@ -33,10 +33,13 @@
 						text="Change Start Date" id="chStart"></bs:button>
 					<bs:button color="warning" size="md" colsize="3"
 						text="Change Severity" id="chSev"></bs:button>
-					<bs:button color="primary" size="md" colsize="3" text="Close in Dev"
-						id="closeDev"></bs:button>
-					<bs:button color="success" size="md" colsize="3" text="Close in Prod"
-						id="closeProd"></bs:button>
+						
+					<s:if test="(verForm && pass != null) || !verForm">
+						<bs:button color="primary" size="md" colsize="3" text="Close in Dev"
+							id="closeDev"></bs:button>
+						<bs:button color="success" size="md" colsize="3" text="Close in Prod"
+							id="closeProd"></bs:button>
+					</s:if>
 				</bs:row>
 				<br/>
 				<bs:row>

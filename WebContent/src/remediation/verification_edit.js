@@ -1,4 +1,3 @@
-
 require('../scripts/fileupload/css/fileinput.css');
 require('../loading/css/jquery-loading.css');
 import '../loading/js/jquery-loading';
@@ -56,6 +55,7 @@ $(function() {
 	let remNotes= createEditor("RemNotes")
 	let chSevNotes= createEditor("chSevNotes")
 	let nprodNotes= createEditor("nprodNotes")
+	console.log(nprodNotes)
 	let prodNotes= createEditor("prodNotes")
 	let verNotes= createEditor("verNotes")
 

@@ -8,7 +8,7 @@
 "<s:if test="isVer">Out for Verification</s:if>",
 "<s:property value="vuln.overallStr"/>" ,  
 <s:if test="vuln.closed== null">
-"<s:date name="vuln.opened"  format="MM/dd/yyyy"/> <i class='fa fa-edit' onclick='changeDate(this)'/>", 
+"<s:date name="vuln.opened"  format="MM/dd/yyyy"/>",
 </s:if>
 <s:else>
 "<s:date name="vuln.opened"  format="MM/dd/yyyy"/>", 

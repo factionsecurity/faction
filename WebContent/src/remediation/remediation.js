@@ -1,4 +1,3 @@
-require('suneditor/dist/css/suneditor.min.css');
 require('../scripts/fileupload/css/fileinput.css');
 require('../loading/css/jquery-loading.css');
 require('daterangepicker/daterangepicker.css');
@@ -324,8 +323,14 @@ $(function() {
 				orderable: true
 			},
 			{
-				targets: [6,7,8,9],
+				targets: [6,7],
 				width: "60px",
+				orderable: true
+				
+			},
+			{
+				targets: [8,9],
+				width: "100px",
 				orderable: true
 				
 			},
@@ -419,7 +424,13 @@ $(function() {
 					
 				},
 				{
-					targets: [6,7,8,9],
+					targets: [8,9],
+					width: "100px",
+					orderable: true
+					
+				},
+				{
+					targets: [6,7],
 					width: "60px",
 					orderable: true
 					
