@@ -966,9 +966,12 @@ public class AssessmentView extends FSActionSupport {
 			for (User u : a.getAssessor()) {
 				assessors += u.getFname() + " " + u.getLname() + "; ";
 			}
-
+			v.updateRiskLevels(em);
+			Long currentId = v.getAssessmentId();
+			Assessment currentAssessment = AssessmentQueries.getAssessmentById(em, currentId);
+			String reportId = currentAssessment.getFinalReport() == null? null : currentAssessment.getFinalReport().getFilename();
 			History obj = new History(v.getOpened(), v.getClosed(), v.getName(),
-					a.getFinalReport() == null ? null : a.getFinalReport().getFilename(), v.getOverallStr(), assessors);
+					reportId, v.getOverallStr(), assessors);
 			h.add(obj);
 		}
 		return h;
