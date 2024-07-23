@@ -195,7 +195,8 @@ class VulnerablilityView {
 		this.vulnTable = $('#vulntable').DataTable({
 			"paging": false,
 			"lengthChange": false,
-			"searching": false,
+			"searching": true,
+			language: { search: "" },
 			"ordering": true,
 			"info": false,
 			"autoWidth": false,
@@ -254,6 +255,7 @@ class VulnerablilityView {
 		return null;
 	}
 
+	
 	setUpEventHandlers() {
 		let _this = this;
 		$("#overall").on('change', (event) => {
@@ -402,8 +404,18 @@ class VulnerablilityView {
 				$(`#deleteVuln${vulnId}`).show();
 			}
 		});
-		const activeVulns = Array.from($("#vulntable tbody tr")).map(tr => `${$(tr).data("vulnid")}`).filter(tr => tr != "undefined");
-
+		//const activeVulns = Array.from($("#vulntable tbody tr")).map(tr => `${$(tr).data("vulnid")}`).filter(tr => tr != "undefined");
+		
+		const activeVulns= Array.from(this.vulnTable.data().map(function(value, index){
+			let col = value[0];
+			if(col.indexOf('id="ckl') == -1){
+				return "";
+			}else{
+				return col.split('"')[3].replace("ckl","")
+			}
+		}))
+		console.log(activeVulns);
+		
 		for (let vuln of data.current) {
 			//vuln was added by another user so add it to the table
 			if (activeVulns.indexOf(vuln.id) == -1) {
