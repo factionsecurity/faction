@@ -1,4 +1,5 @@
 require('jquery-fileinput/fileinput.css');
+require('select2/dist/css/select2.min.css')
 require('./overview.css');
 require('../loading/css/jquery-loading.css');
 import Editor from '@toast-ui/editor'
@@ -563,10 +564,12 @@ class VulnerablilityView {
 
 										$(data.cf).each(function(a, b) {
 											let el = $("#type" + b.typeid);
-											if (el.type == 'checkbox' && b.value == 'true') {
+											if(el.length == 0 )
+												return;
+											if (el[0].type == 'checkbox' && b.value == 'true') {
 												$(el).prop('checked', true)
 											}
-											else if (el.type == 'checkbox' && b.value == 'false') {
+											else if (el[0].type == 'checkbox' && b.value == 'false') {
 												$(el).prop('checked', false)
 											}
 											else {
@@ -597,10 +600,10 @@ class VulnerablilityView {
 							_this.updateColors()
 							$(data.cf).each(function(a, b) {
 								let el = $("#type" + b.typeid);
-								if (el.type == 'checkbox' && b.value == 'true') {
+								if (el[0].type == 'checkbox' && b.value == 'true') {
 									$(el).prop('checked', true)
 								}
-								else if (el.type == 'checkbox' && b.value == 'false') {
+								else if (el[0].type == 'checkbox' && b.value == 'false') {
 									$(el).prop('checked', false)
 								}
 								else {
@@ -767,8 +770,21 @@ class VulnerablilityView {
 		$("#title").val("");
 		$("#dcategory").val("").trigger('change')
 		$('[id^="type"]').each((_index, el) => {
+			if(el.id.indexOf("header") != -1)
+				return;
+				
 			let value = $(el).data('default');
-			$(el).val(value);
+			if(el.length == 0 )
+				return;
+			if (el.type == 'checkbox' && value == 'true') {
+				$(el).prop('checked', true)
+			}
+			else if (el.type == 'checkbox') {
+				$(el).prop('checked', false)
+			}
+			else {
+				$(el).val(value).trigger('change');
+			}
 		}
 		);
 
@@ -877,7 +893,9 @@ class VulnerablilityView {
 	}
 	getVuln(id) {
 		this.vulnId = id;
+		
 		this.disableAutoSave()
+		this.deleteVulnForm();
 		$(`#deleteVuln${id}`).show();
 		$("#vulntable tbody tr").each((_a, el) => {
 			if ($(el).data('vulnid') == id) {
@@ -900,17 +918,18 @@ class VulnerablilityView {
 			_this.setIntVal(data.catid, 'dcategory');
 			$(data.cf).each(function(a, b) {
 				let el = $("#type" + b.typeid);
-				console.log(el);
-				/*if (el[0].type == 'checkbox' && b.value == 'true') {
+				if(el.length == 0 )
+					return;
+					
+				if (el[0].type == 'checkbox' && b.value == 'true') {
 					$(el).prop('checked', true);
-
 				}
 				else if (el[0].type == 'checkbox' && b.value == 'false') {
 					$(el).prop('checked', false);
 				}
 				else {
 					$(el).val(b.value).trigger('change');
-				}*/
+				}
 
 			});
 			_this.enableAutoSave()
