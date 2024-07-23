@@ -10,13 +10,17 @@ $(function() {
 		const checked = $("#showAll").is(":checked");
 		document.location = `RemediationQueue?all=${checked}`;
 	});
-	let vulnQueue = $("#queue").DataTable({ 'iDisplayLength': 10 });
-	$("#showAlmostDue,#showPastDue,#showInRetest,#showCompletedRetest").change(function() {
+	
+	let vulnQueue = $("#queue").DataTable({ 
+		'iDisplayLength': 10,
+		'initComplete': ()=>{setTimeout(runSearchOptions, 300);}
+	});
+	
+	function runSearchOptions(){
 		const almostDue = $("#showAlmostDue").is(":checked");
 		const pastDue = $("#showPastDue").is(":checked");
 		const inRetest = $("#showInRetest").is(":checked");
 		const completedRetest = $("#showCompletedRetest").is(":checked");
-		
 		let terms = [];
 		if(pastDue){
 			terms.push("Past Due")
@@ -38,6 +42,10 @@ $(function() {
 			let regex = terms.join("|");
 			vulnQueue.columns([8]).search(regex, true, false).draw();
 		}
+		
+	}
+	$("#showAlmostDue,#showPastDue,#showInRetest,#showCompletedRetest").change(function() {
+		runSearchOptions();
 		
 	});
 	

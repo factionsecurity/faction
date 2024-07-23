@@ -2,8 +2,11 @@ package com.fuse.actions.retests;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+
+import javax.persistence.EntityManager;
 
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
@@ -45,6 +48,7 @@ public class VerificationEdit extends FSActionSupport {
 	private Long verOption;
 	private List<RiskLevel> levels = new ArrayList();
 	private Boolean isPass;
+	private String badges;
 
 	@Action(value = "VerificationEdit")
 	public String execute() {
@@ -84,8 +88,86 @@ public class VerificationEdit extends FSActionSupport {
 			this.verOption = ss.getVerificationOption();
 		else
 			this.verOption = 0l;
+		
+		this.badges = this.createBadges(v);
 
 		return SUCCESS;
+	}
+	
+	private String addBadge(String title, String color, String icon) {
+		return String.format("<small class=\"badge badge-%s\"><i class=\"fa %s\"></i>%s</small>",
+				color,
+				icon,
+				title);
+	}
+	
+	private Date getVerificationWarning(Date end,int days){
+		Calendar dueDate =  Calendar.getInstance();
+		dueDate.setTime(end);
+		dueDate.add(Calendar.DAY_OF_YEAR, - days);
+		return dueDate.getTime();
+	}
+	
+	private Date getWarning(EntityManager em, Date start, int Level){
+		RiskLevel level = (RiskLevel)em.createQuery("from RiskLevel where riskId = :id")
+				.setParameter("id", Level).getResultList()
+				.stream().findFirst().orElse(null);
+		if(level.getDaysTillWarning() == null)
+			return null;
+		Calendar dueDate =  Calendar.getInstance();
+		dueDate.setTime(start);
+		dueDate.add(Calendar.DAY_OF_YEAR, level.getDaysTillWarning());
+		return dueDate.getTime();
+	}
+	private Date getDue(EntityManager em, Date start, int Level){
+		RiskLevel level = (RiskLevel)em.createQuery("from RiskLevel where riskId = :id")
+				.setParameter("id", Level).getResultList()
+				.stream().findFirst().orElse(null);
+		if(level.getDaysTillDue() == null)
+			return null;
+		Calendar dueDate =  Calendar.getInstance();
+		dueDate.setTime(start);
+		dueDate.add(Calendar.DAY_OF_YEAR, level.getDaysTillDue());
+		return dueDate.getTime();
+	}
+	
+	private String createBadges(Verification verification) {
+		String badges = "";
+		if(verification.getWorkflowStatus().equals(Verification.AssessorCancelled)) {
+			badges += this.addBadge("Verification Cancelled", "yellow", "fa-times");
+		}else {
+			
+			if(verification.getEnd().getTime() < (new Date().getTime())) {
+				badges += this.addBadge("Verification Past Due", "red", "fa-calendar");
+			}
+			else if(verification.getEnd().getTime() < (this.getVerificationWarning(new Date(), 2)).getTime() ) {
+				badges += this.addBadge("Verification Almost Due", "yellow", "fa-calendar");
+			}
+			
+			if(verification.getVerificationItems().get(0).isPass()) {
+				badges += this.addBadge("Verification Passed", "green", "fa-check");
+			}else if(verification.getCompleted() != null && verification.getCompleted().getTime() > 0) {
+				badges += this.addBadge("Verification Failed", "red", "fa-times");
+			}else{
+				badges += this.addBadge("In Retest", "green", "fa-calendar");
+			}
+		}
+		Vulnerability tmpVuln = verification.getVerificationItems().get(0).getVulnerability();
+		Date DueDate = this.getDue(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
+		Date WarnDate = this.getWarning(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
+		String pattern = "MM/dd/yyyy";
+		SimpleDateFormat format = new SimpleDateFormat(pattern);
+		
+		String dueDateString = format.format(DueDate);
+		
+		if(DueDate != null && DueDate.getTime() <= (new Date()).getTime()){
+			badges += this.addBadge("Vulnerability Past Due (" + dueDateString +")", "red", "fa-bug");
+		}
+		else if(WarnDate != null && WarnDate.getTime() <= (new Date()).getTime()){
+			badges += this.addBadge("Vulnerability Approaching Due Date (" + dueDateString +")", "yellow", "fa-bug");
+		}
+		return badges;
+		
 	}
 
 	public String getAppId() {
@@ -178,6 +260,10 @@ public class VerificationEdit extends FSActionSupport {
 	
 	public Boolean isPass() {
 		return this.isPass;
+	}
+	
+	public String getBadges() {
+		return this.badges;
 	}
 
 }

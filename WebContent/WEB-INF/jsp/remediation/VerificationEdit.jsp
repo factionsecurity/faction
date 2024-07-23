@@ -65,6 +65,16 @@ background-color: white;
 	<!-- Main content -->
 	<section class="content">
 		<bs:box type="info" title="Edit Verification">
+			<div class="row" >
+				<div class="col-md-12">
+					<s:property value="badges" escapeHtml="false"/>
+				</div>
+			</div>
+			<div class="row" >
+				<div class="col-md-12">
+				<br/>
+				</div>
+			</div>
 			<div class="row" id="controls">
 				<div class="col-md-12">
 					<div class="nav-tabs-custom">
