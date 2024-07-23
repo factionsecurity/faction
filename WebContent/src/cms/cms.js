@@ -1,4 +1,5 @@
 require('../scripts/fileupload/css/fileinput.css');
+require('select2/dist/css/select2.min.css')
 import 'jquery';
 import 'datatables.net';
 import 'datatables.net-bs'   ;

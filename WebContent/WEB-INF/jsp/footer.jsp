@@ -17,3 +17,4 @@
 
 <script src="../dist/js/app.js" ></script>
 <script src="../dist/js/footer.js" ></script>
+<link rel="stylesheet" href="../dist/css/Fuse.css">

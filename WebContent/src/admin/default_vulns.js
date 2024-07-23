@@ -1,4 +1,4 @@
-
+require('select2/dist/css/select2.min.css')
 require('../scripts/fileupload/css/fileinput.css');
 require('../loading/css/jquery-loading.css');
 import Editor from '@toast-ui/editor'
