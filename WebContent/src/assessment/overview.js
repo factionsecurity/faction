@@ -140,12 +140,18 @@ function saveAllEditors(showLoadingScreen = false) {
 
 }
 
-function saveEditor(type) {
+function saveEditor(type, noteId="") {
 
 	let edits = getEditorText(type);
+	let name = "";
+	if(type == "notes"){
+		name = $("#noteName").val();
+	}
 	let data = "";
 	if (type == "notes") {
 		data += "notes=" + encodeURIComponent(edits);
+		data += "&noteId=" + noteId;
+		data += "&noteName=" + encodeURIComponent(name);
 	}
 	else if (type == "risk") {
 		data += "riskAnalysis=" + encodeURIComponent(edits);
@@ -171,14 +177,14 @@ function saveEditor(type) {
 }
 let editorTimeout = {};
 let clearLockTimeout = {};
-function queueSave(type) {
-	$.get(`SetLock?action=${type}`).done((resp) => {
+function queueSave(type,noteId="") {
+	$.get(`SetLock?action=${type}&noteId=${noteId}`).done((resp) => {
 		if (resp.result == "success") {
 			document.getElementById(`${type}_header`).innerHTML = "*"
 			clearTimeout(editorTimeout[type]);
 			clearTimeout(clearLockTimeout[type]);
 			editorTimeout[type] = setTimeout(() => {
-				saveEditor(type);
+				saveEditor(type, noteId);
 			}, 2000);
 		}
 	});
@@ -222,7 +228,12 @@ function createEditor(id){
 	editors[id].show();
 	editors[id].on('change', function() {
 		if (document.getElementById(`${id}_header`).innerHTML == "") {
-			queueSave(id);
+			let noteId = "";
+			if(id == "notes"){
+				const selected = $(`#notebook option:selected`);
+				noteId = selected.val()
+			}
+			queueSave(id, noteId);
 		}
 	});
 	
@@ -406,10 +417,6 @@ $(function() {
 
 
 
-	$(".saveIt").click(function() {
-		saveAllEditors(true);
-
-	});
 });
 
 //<!-- Controls Section -->
@@ -556,7 +563,7 @@ $(function() {
 
 });
 
-//  <!-- Template Search and Save -->
+//  <!-- Template and Notes Search and Save -->
 $(function() {
 	$.ajaxSetup({ cache: false });
 	$(".saveTemp").click(function() {
@@ -659,13 +666,110 @@ $(function() {
 			}
 		}
 		$.confirm({
-			title: "Save Template",
+			title: "Create Template",
 			content: contentMessage,
 			buttons: buttons
 
 		})
 
 	});
+	
+	
+	$("#createNote").on('click', ()=>{
+		let buttons = {
+			save: function() {
+				const name = $("#newNoteName").val();
+				let data = `noteName=${name.trim()}`
+				data += "&note=";
+				data += "&_token=" + global._token;
+				$.post("createNote", data).done(function(resp) {
+					_token = resp.token;
+					const note = resp;
+					if (!Array.from($(`#notebook option`))
+						.some((t) => $(t).val() == note.id)) {
+						let option = document.createElement("option");
+						$(option).addClass("globalTemplate");
+						$(option).val(note.id);
+						$(option).html(note.name);
+						$(`#notebook`).append(option).trigger("change");
+						$(option).on("click", async (event)=>{
+							await getNote(event)
+						})
+					}
+					alertMessage(resp, "Note Created.");
+				});
+
+			},
+			cancel: function() { }
+		}
+		let contentMessage = "Enter a Template name: <input id='newNoteName' class='form-control'></input>";
+		$.confirm({
+			title: "Create New Note",
+			content: contentMessage,
+			buttons: buttons
+		})
+		
+	});
+	$("#deleteNote").on('click', async (event) => {
+		let selected = Array.from($(`#notebook option:selected`));
+		if (selected.length == 0) {
+			alertMessage({ message: "No Valid Templates to Delete" }, null)
+			return;
+		}
+		const name = $("#noteName").val();
+		$.confirm({
+			title: "Confirm?",
+			content: "Are you sure you want to delete these templates?<br><b>" + name + "</b>",
+			buttons: {
+				confirm: async function() {
+					let messages = []
+					for await (const option of selected) {
+						await $.post(`deleteNote`, `noteId=${$(option).val()}`).done(function(resp) {
+							_token = resp.token;
+							messages.push(resp);
+							option.remove();
+						});
+					}
+					alertMessage(messages[0], "Note Deleted");
+				},
+				cancel: function() { }
+			}
+		});
+	});
+	
+	$("#noteName").on('keyup change', () =>{
+		const name = $("#noteName").val();
+		const selected = $(`#notebook option:selected`);
+		const id = selected.val();
+		$(selected).html(name);
+		if (document.getElementById(`notes_header`).innerHTML == "") {
+			queueSave("notes",id);
+		}
+		
+	})
+	$(".globalNote").on("click", async (event)=>{
+		await getNote(event)
+	})
+	async function getNote(event){
+		editors['notes'].off('change');
+		let value = event.target.value;
+		await $.get('getNote?noteId=' + value)
+			.done(function(note) {
+				setEditorContents(entityDecode(note.note), "notes", false);
+				$("#noteName").val(note.name);
+				editors['notes'].on('change', function() {
+					if (document.getElementById(`notes_header`).innerHTML == "") {
+						let noteId = "";
+						if(id == "notes"){
+							const selected = $(`#notebook option:selected`);
+							noteId = selected.val()
+						}
+						queueSave("notes", noteId);
+					}
+				});
+			});
+	}
+	
 	$(".deleteTemplate").on('click', async (event) => {
 		let type = $(event.currentTarget).attr("for")
 		let selected = Array.from($(`#${type}Templates option:selected`)).filter((t) => $(t).attr("global") != "true");

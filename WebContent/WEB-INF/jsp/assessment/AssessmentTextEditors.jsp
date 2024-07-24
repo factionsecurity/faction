@@ -392,7 +392,7 @@
 						<div class="form-group">
 							<label for="campaign" disabled="" class="col-sm-2 control-label">FileName:</label>
 							<div class="col-sm-10">
-								<input type="text" disabled="" class="form-control" id="noteName"
+								<input type="text"  class="form-control" id="noteName"
 									value="<s:property value="assessment.notebook[0].name"/>">
 							</div>
 						</div>
@@ -426,7 +426,7 @@
 						class="form-control templates">
 						<s:iterator value="assessment.notebook" status="stat">
 							<option value="<s:property value='id'/>" title="<s:property value='createdBy.fname'/> <s:property value='createdBy.lname' />"
-								class='userTemplate' <s:if test="#stat.first">selected</s:if>>
+								class='globalNote' <s:if test="#stat.first">selected</s:if>>
 							<s:property value='name'/>
 							</option>
 						</s:iterator>
@@ -436,13 +436,11 @@
 					<div class="row">
 						<div class="col-md-1"></div>
 						<div class="col-md-11" style="padding-top: 8px">
-							<span id="saveNoteSidebar"
-								class="vulnControl vulnControl-add saveNote" for="notebook"
-								title='Save or Create Template'> <i class="fa fa-save"></i>
-							</span> <span id="addNoteSideBar"
-								class="vulnControl vulnControl-add addTemplate" for="notebook"
-								title='Add Templates to Editor'> <i class="fa fa-plus"></i>
-							</span> <span class="vulnControl vulnControl-delete deleteNote"
+							<span id="createNote"
+								class="vulnControl vulnControl-add createNote" for="notebook"
+								title='SCreate a New Note'> <i class="fa fa-save"></i>
+							</span> 
+							</span> <span id="deleteNote" class="vulnControl vulnControl-delete deleteNote"
 								title='Delete Templates' for="notebook"> <i
 								class="fa fa-trash"></i>
 							</span>
@@ -450,7 +448,8 @@
 					</div>
 				</s:if>
 			</div>
-			</div>
+		</div>
+	</div>
 
 </div>
 <div class="row">

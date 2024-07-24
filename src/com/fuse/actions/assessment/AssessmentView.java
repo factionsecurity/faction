@@ -89,6 +89,9 @@ public class AssessmentView extends FSActionSupport {
 	LinkedHashMap<String, Integer> vulnMap = new LinkedHashMap<>();
 	LinkedHashMap<String, Integer> catMap = new LinkedHashMap<>();
 	private List<Note>notebook = new ArrayList<Note>();
+	private Long noteId;
+	private String noteName;
+	private Note note;
 
 	@Action(value = "Assessment", results = { @Result(name = "ics", location = "/WEB-INF/jsp/assessment/ics.jsp"),
 			@Result(name = "finerrorJson", location = "/WEB-INF/jsp/assessment/finerrorJson.jsp") })
@@ -148,6 +151,7 @@ public class AssessmentView extends FSActionSupport {
 				counts.put(v.getOverall().intValue(), counts.get(v.getOverall().intValue()) + 1);
 
 		}
+		
 		files = AssessmentQueries.getFilesByAssessmentId(em, assessment.getId());
 
 		if (this.prEnabled) {
@@ -211,8 +215,17 @@ public class AssessmentView extends FSActionSupport {
 			
 			if (this.riskAnalysis != null)
 				assessment.setRiskAnalysis(this.riskAnalysis);
-			if (this.notes != null)
-				assessment.setNotes(this.notes);
+			if (this.notes != null) {
+				List<Note> notebook = assessment.getNotebook();
+				Note note = notebook.stream().filter( n -> n.getId().equals(noteId)).findFirst().orElse(null);
+				if(note != null) {
+					note.setName(noteName);
+					note.setNote(notes);
+					note.setUpdatedBy(user);
+					note.setUpdated(new Date());
+					
+				}
+			}
 			if (this.summary != null)
 				assessment.setSummary(this.summary);
 			AssessmentQueries.saveAssessment(this, em, assessment, "Assessment Summaries have been updated");
@@ -236,6 +249,127 @@ public class AssessmentView extends FSActionSupport {
 		}
 
 		return SUCCESS;
+	}
+	@Action(value = "createNote", results = {
+			@Result(name = "noteJSON", location = "/WEB-INF/jsp/assessment/noteJSON.jsp") 
+	})
+	public String createNote() throws NotSupportedException, SystemException {
+		if (!(this.isAcassessor() || this.isAcmanager()))
+			return AuditLog.notAuthorized(this, "User is not an Assessor or Manager", true);
+		User user = this.getSessionUser();
+		// Notification links use this to set the app and session.
+		if (this.id != null && !this.id.equals("")) {
+			this.setSession("asmtid", Long.parseLong(this.id));
+		}
+
+		if (this.getSession("asmtid") == null) {
+			this.setSession("asmtid", Long.parseLong(this.id));
+		} else {
+			this.id = "" + this.getSession("asmtid");
+		}
+
+		Long lid = Long.parseLong(this.id);
+		if (this.isAcmanager()) {
+			assessment = AssessmentQueries.getAssessmentById(em, lid);
+			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
+					.orElse(null);
+			if (mgrs == null)
+				this.notowner = true;
+
+		} else {
+			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
+		}
+		if (assessment == null)
+			return SUCCESS;
+		
+		List<Note> notebook = assessment.getNotebook();
+		this.note = new Note();
+		note.setName(noteName);
+		note.setNote("");
+		note.setCreated(new Date());
+		note.setUpdated(new Date());
+		note.setCreatedBy(user);
+		note.setUpdatedBy(user);
+		notebook.add(note);
+		AssessmentQueries.saveAssessment(this, em, assessment, "User has created a new note");
+		
+		return "noteJSON";
+	}
+	
+	@Action(value = "getNote", results = {
+			@Result(name = "noteJSON", location = "/WEB-INF/jsp/assessment/noteJSON.jsp") 
+	})
+	public String getNotebookNote() throws NotSupportedException, SystemException {
+		if (!(this.isAcassessor() || this.isAcmanager()))
+			return AuditLog.notAuthorized(this, "User is not an Assessor or Manager", true);
+		User user = this.getSessionUser();
+		// Notification links use this to set the app and session.
+		if (this.id != null && !this.id.equals("")) {
+			this.setSession("asmtid", Long.parseLong(this.id));
+		}
+
+		if (this.getSession("asmtid") == null) {
+			this.setSession("asmtid", Long.parseLong(this.id));
+		} else {
+			this.id = "" + this.getSession("asmtid");
+		}
+
+		Long lid = Long.parseLong(this.id);
+		if (this.isAcmanager()) {
+			assessment = AssessmentQueries.getAssessmentById(em, lid);
+			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
+					.orElse(null);
+			if (mgrs == null)
+				this.notowner = true;
+
+		} else {
+			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
+		}
+
+		if (assessment == null)
+			return SUCCESS;
+		
+		this.note = assessment.getNoteById(this.noteId);
+		
+		return "noteJSON";
+	}
+	@Action(value = "deleteNote")
+	public String deleteNote() throws NotSupportedException, SystemException {
+		if (!(this.isAcassessor() || this.isAcmanager()))
+			return AuditLog.notAuthorized(this, "User is not an Assessor or Manager", true);
+		User user = this.getSessionUser();
+		// Notification links use this to set the app and session.
+		if (this.id != null && !this.id.equals("")) {
+			this.setSession("asmtid", Long.parseLong(this.id));
+		}
+
+		if (this.getSession("asmtid") == null) {
+			this.setSession("asmtid", Long.parseLong(this.id));
+		} else {
+			this.id = "" + this.getSession("asmtid");
+		}
+
+		Long lid = Long.parseLong(this.id);
+		if (this.isAcmanager()) {
+			assessment = AssessmentQueries.getAssessmentById(em, lid);
+			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
+					.orElse(null);
+			if (mgrs == null)
+				this.notowner = true;
+
+		} else {
+			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
+		}
+
+		if (assessment == null)
+			return SUCCESS;
+		
+		Note note = assessment.getNoteById(this.noteId);
+		assessment.getNotebook().remove(note);
+		
+		AssessmentQueries.saveAssessment(this, em, assessment, "User has created a new note");
+		
+		return this.SUCCESSJSON;
 	}
 	
 
@@ -987,6 +1121,16 @@ public class AssessmentView extends FSActionSupport {
 	
 	public List<String> getColors() {
 		return new ArrayList<String>(Arrays.asList("#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"));
+	}
+	
+	public void setNoteId(Long noteId) {
+		this.noteId = noteId;
+	}
+	public void setNoteName(String noteName) {
+		this.noteName = noteName;
+	}
+	public Note getNote() {
+		return this.note;
 	}
 	
 	   
