@@ -41,6 +41,7 @@ import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.Files;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.Note;
 import com.fuse.dao.Notification;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.RiskLevel;
@@ -87,6 +88,7 @@ public class AssessmentView extends FSActionSupport {
 	private List<BoilerPlate> riskTemplates;
 	LinkedHashMap<String, Integer> vulnMap = new LinkedHashMap<>();
 	LinkedHashMap<String, Integer> catMap = new LinkedHashMap<>();
+	private List<Note>notebook = new ArrayList<Note>();
 
 	@Action(value = "Assessment", results = { @Result(name = "ics", location = "/WEB-INF/jsp/assessment/ics.jsp"),
 			@Result(name = "finerrorJson", location = "/WEB-INF/jsp/assessment/finerrorJson.jsp") })
@@ -120,23 +122,7 @@ public class AssessmentView extends FSActionSupport {
 
 		if (assessment == null)
 			return SUCCESS;
-	
-		//This fixes an image issue
-		String content = assessment.getSummary();
-		if(content != null && content.endsWith("div>")) {
-			content = content + "<p><br/></p>";
-			assessment.setSummary(content);
-		}
-		content = assessment.getRiskAnalysis();
-		if(content != null && content.endsWith("div>")) {
-			content = content + "<p><br/></p>";
-			assessment.setRiskAnalysis(content);
-		}
-		content = assessment.getNotes();
-		if(content != null && content.endsWith("div>")) {
-			content = content + "<p><br/></p>";
-			assessment.setNotes(content);
-		}
+		
 
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 
@@ -167,6 +153,12 @@ public class AssessmentView extends FSActionSupport {
 		if (this.prEnabled) {
 			if (assessment.getPeerReview() != null)
 				comments = assessment.getPeerReview().getComments();
+		}
+		//fix deprecatednotes
+		if(assessment.getNotes() != null && assessment.getNotebook().size() == 0) {
+			assessment.upgradeNotes(em);
+		}else if(assessment.getNotebook() == null || assessment.getNotebook().size() == 0) {
+			assessment.upgradeNotes(em);
 		}
 
 		if (this.action != null && this.action.equals("genreport")) {

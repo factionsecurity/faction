@@ -32,6 +32,7 @@ import com.fuse.dao.CustomType;
 import com.fuse.dao.Files;
 import com.fuse.dao.FinalReport;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.Note;
 import com.fuse.dao.OOO;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.SystemSettings;
@@ -229,6 +230,12 @@ public class Engagement  extends FSActionSupport{
 			am.setDistributionList(this.distro);
 			am.setAccessNotes(this.notes);
 			am.setCampaign(camp);
+			Note defaultNote = new Note();
+			defaultNote.setName("default");
+			defaultNote.setCreated(new Date());
+			defaultNote.setUpdated(new Date());
+			am.addNoteToList(defaultNote);
+			
 			JSONArray cfstuff = new JSONArray();
 			if(this.cf != null){
 				JSONParser parse = new JSONParser();

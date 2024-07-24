@@ -9,6 +9,7 @@ import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.EntityManager;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -44,9 +45,11 @@ public class Assessment {
 	private Date start;
 	private Date end;
 	private Date completed;
-	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<CustomField> CustomFields;
 	private String Notes;
+	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Note> notebook = new ArrayList<>();
 	private String DistributionList;
 	private String AccessNotes;
 	@ManyToOne
@@ -58,10 +61,10 @@ public class Assessment {
 	@ManyToOne
 	private Campaign campaign;
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<CheckListAnswers> answers = new ArrayList();
+	private List<CheckListAnswers> answers = new ArrayList<>();
 
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Vulnerability> vulns = new ArrayList();
+	private List<Vulnerability> vulns = new ArrayList<>();
 
 	private String pr_sum_notes;
 	private String pr_risk_notes;
@@ -202,10 +205,12 @@ public class Assessment {
 		CustomFields = customFields;
 	}
 
+	@Deprecated
 	public String getNotes() {
 		return Notes;
 	}
-
+	
+	@Deprecated
 	public void setNotes(String notes) {
 		notes = FSUtils.sanitizeHTML(notes);
 		Notes = notes;
@@ -425,6 +430,61 @@ public class Assessment {
 	public void setRiskLockAt(Date notes_lock_time) {
 		this.risk_lock_time = notes_lock_time;
 	}
+	
+	public void setNotebook(List<Note> notebook) {
+		this.notebook = notebook;
+	}
+	
+	public List<Note> getNotebook(){
+		return this.notebook;
+	}
+	
+	@Transient
+	public void upgradeNotes(EntityManager em) {
+		Note note = new Note();
+		note.setName("default");
+		if(this.Notes == null)
+			note.setNote("");
+		else
+			note.setNote(this.Notes);
+		note.setCreated(this.start);
+		note.setCreatedBy(this.assessor.get(0));
+		note.setUpdated(new Date());
+		note.setUpdatedBy(this.assessor.get(0));
+		
+		List<Note> notebook = this.getNotebook();
+		notebook.add(note);
+		this.setNotebook(notebook);
+		
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		em.persist(this);
+		HibHelper.getInstance().commit();
+	}
+	
+	@Transient
+	public void addNoteToList(Note note) {
+		this.notebook.add(note);
+	}
+	
+	@Transient
+	public Note getNoteById(Long noteId) {
+		return this.notebook.stream()
+				.filter( note -> note.getId().equals(noteId))
+				.findFirst()
+				.orElse(null);
+	}
+	
+	@Transient
+	public Note updateNoteById(Long noteId, String name, String noteStr, User updatedBy) {
+		Note note = this.getNoteById(noteId);
+		note.setName(name);
+		note.setNote(noteStr);
+		note.setUpdatedBy(updatedBy);
+		note.setUpdated(new Date());
+		return note;
+	}
+	
 	
 	@Transient
 	public void setInPr() {
