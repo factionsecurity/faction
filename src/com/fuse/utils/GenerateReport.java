@@ -251,6 +251,8 @@ public class GenerateReport {
 		v0.setImpact(5l);
 		v0.setLikelyhood(5l);
 		v0.setOverall(5l);
+		v0.setCvssScore("8.3");
+		v0.setCvssString("CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N");
 		v0.setRecommendation("Test Recommendation with table <br> <table><tr><th>Site</th><th>Description</th></tr><tr><td><a href='https://www.factionsecurity.com'>https://www.factionsecurity.com</a></td><td>Something Descriptive</td></tr></table><br>");
 		v0.setDescription("Test Description with table <br> <table><tr><th>Site</th><th>Description</th></tr><tr><td><a href='https://www.factionsecurity.com'>https://www.factionsecurity.com</a></td><td>Something Descriptive</td></tr></table><br>");
 		v0.setDetails(details);
@@ -261,6 +263,8 @@ public class GenerateReport {
 		v1.setImpact(4l);
 		v1.setLikelyhood(4l);
 		v1.setOverall(4l);
+		v1.setCvssScore("8.3");
+		v1.setCvssString("CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N");
 		v1.setRecommendation("Test Recommendation");
 		v1.setDescription("Test Description");
 		v1.setDetails(details);
@@ -271,6 +275,8 @@ public class GenerateReport {
 		v2.setImpact(3l);
 		v2.setLikelyhood(3l);
 		v2.setOverall(3l);
+		v2.setCvssScore("8.3");
+		v2.setCvssString("CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N");
 		v2.setRecommendation("Test Recommendation");
 		v2.setDescription("Test Description");
 		v2.setDetails(details);
