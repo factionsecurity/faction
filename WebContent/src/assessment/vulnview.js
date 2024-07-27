@@ -336,7 +336,7 @@ class VulnerablilityView {
 							$(option).html(note.name);
 							$(`#notebook`).append(option).trigger("change");
 							$(option).on("click", async (event)=>{
-								await getNote(event)
+								await getNoteFromEvent(event)
 							})
 						}
 						alertMessage(resp, "Note Created.");
@@ -389,7 +389,7 @@ class VulnerablilityView {
 			
 		})
 		$(".globalNote").on("click", async (event)=>{
-			this.getNote(event)
+			this.getNoteFromEvent(event)
 		})
 		
 
@@ -403,19 +403,21 @@ class VulnerablilityView {
 		});
 		
 	}
-	
-	getNote(event) {
-		this.editors.notes.off('change');
-		let value = event.target.value;
+	getNote(id){
 		let _this = this;
-		$.get('getNote?noteid=' + value)
+		$.get('getNote?noteid=' + id)
 			.done(function(note) {
 				_this.setEditorContents("notes", entityDecode(note.note), true);
 				$("#noteName").val(note.name);
 				_this.setUpNoteChangeEvent();
+				$("#notes").removeClass("disabled");
 			});
 	}
-
+	getNoteFromEvent(event) {
+		this.editors.notes.off('change');
+		let value = event.target.value;
+		this.getNote(value);
+	}
 	updateIntVal(element, elementName) {
 		var rank = $(element).html();
 		$("#" + elementName).val(rank);
@@ -503,18 +505,38 @@ class VulnerablilityView {
 		}
 
 	}
-	setLockScreen() {
-		this.disableAutoSave()
-		$("#vulnForm").addClass("disabled")
+	setLockScreen(type) {
+		if(type == 'vulnerability'){
+			this.disableAutoSave()
+			$("#vulnForm").addClass("disabled");
+		}else{
+			$("#notes").addClass("disabled");
+		}
 	}
-	clearLockScreen(vulnId) {
-		this.getVuln(vulnId)
+	
+	lockNoteEditor(notes){
+		const selected = $(`#notebook option:selected`);
+		for(let note of notes){
+			if(note.id == selected.val()){
+				this.setLockScreen('note');
+			}
+		}  
+		const notebook = $(`#notebook option`);
+		const lockedIds = notes.map(v => v.id);
+		for(let note of notebook){
+			const id = $(note).val();
+			if( lockedIds.indexOf(id) == -1 && $("#notes").hasClass("disabled") && selected.val() == id){
+				this.getNote(id);
+			}
+		}
 	}
 	updateCallback(type,data) {
 		let lockedVulns = data.vulns;
+		let lockedNotes = data.notes;
+		this.lockNoteEditor(lockedNotes);
 		for (let vuln of lockedVulns) {
 			if (vuln.id == this.vulnId) {
-				this.setLockScreen();
+				this.setLockScreen('vulnerability');
 			}
 			$(`#deleteVuln${vuln.id}`).hide();
 			$("#vulntable tbody tr").each((_a, el) => {
