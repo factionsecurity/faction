@@ -32,17 +32,25 @@ class SaveQueue {
 		this.token = caller._token;
 		this.locks = new EditLocks(this, assessmentId, updateVulnsCallback);
 	}
-	push(id, key, value) {
-		this.locks.setLock(id, key);
-		if (document.getElementById(`${key}_header`)) {
-			document.getElementById(`${key}_header`).innerHTML = "*"
+	push(type, id, key, value) {
+		this.locks.setLock(type, id, key);
+		let headerKey = key;
+		if(type == 'note'){
+			headerKey = 'notes'
+		}
+		if (document.getElementById(`${headerKey}_header`)) {
+			document.getElementById(`${headerKey}_header`).innerHTML = "*"
 		}
 		clearTimeout(this.timer);
-		if (id in this.queue) {
-			this.queue[id][key] = value;
+		if (type in this.queue && id in this.queue[type]) {
+			this.queue[type][id][key] = value;
+		}else if (type in this.queue) {
+			this.queue[type][id] = {};
+			this.queue[type][id][key] = value;
 		} else {
-			this.queue[id] = {};
-			this.queue[id][key] = value;
+			this.queue[type] = {};
+			this.queue[type][id] = {};
+			this.queue[type][id][key] = value;
 		}
 		let _this = this;
 		this.timer = setTimeout(function() {
@@ -51,22 +59,31 @@ class SaveQueue {
 	}
 
 	save() {
-		const keys = Object.keys(this.queue);
+		const types = Object.keys(this.queue);
 		let _this = this;
-		for (let key of keys) {
-			let data = Object.keys(this.queue[key]).map((k) => {
-				if (this.caller.vulnId == key && document.getElementById(`${k}_header`)) {
-					document.getElementById(`${k}_header`).innerHTML = ""
+		for (let type of types) {
+			const ids = Object.keys(this.queue[type])
+			for(let id of ids){
+				let data = Object.keys(this.queue[type][id]).map((k) => {
+					if(type == 'note'){
+						document.getElementById(`notes_header`).innerHTML = ""
+					}
+					else if (this.caller.vulnId == id && document.getElementById(`${k}_header`)) {
+						document.getElementById(`${k}_header`).innerHTML = ""
+					}
+					setTimeout(function() {
+						_this.locks.clearLock(type, id, k);
+					}, 5000)
+					return `${k}=${this.queue[type][id][k]}`
+				})
+				if(type == 'vulnerability'){
+					data = `vulnid=${id}&` + _this.handleCustom(data).join("&");
+				}else if(type == 'note'){
+					data = `noteid=${id}&` + data.join("&");
 				}
-				setTimeout(function() {
-					_this.locks.clearLock(key, k);
-				}, 5000)
-				return `${k}=${this.queue[key][k]}`
-			})
-
-			data = `vulnid=${key}&` + _this.handleCustom(data).join("&")
-			this.saveCallback(data, this.caller);
-			delete this.queue[key];
+				this.saveCallback(type, data, this.caller);
+				delete this.queue[type][id];
+			}
 		}
 	}
 
@@ -89,48 +106,48 @@ class SaveQueue {
 }
 
 class EditLocks {
-	constructor(caller, assessmentId, updateVulnsCallback) {
+	constructor(caller, assessmentId, updateCallback) {
 		this.lockIds = {};
 		this.caller = caller;
 		this.token = caller.token;
 		this.assessmentId = assessmentId;
-		this.updateVulnsCallback = updateVulnsCallback;
+		this.updateCallback = updateCallback;
 		this.checkLocks()
 		this.errorMessageShown = false;
 	}
-	setLock(id, attr) {
+	setLock(type, id, attr) {
 		let _this = this;
-		console.log(this.lockIds)
 		if (typeof this.lockIds[id] == "undefined") {
 			this.lockIds[id] = [attr];
-			$.get(`SetVulnLock?vulnid=${id}&vulnAttr=${attr}&_token=${this.token}`).done((resp) => {
+			$.get(`${type}/set/lock?id=${id}&attr=${attr}&_token=${this.token}`).done((resp) => {
 				if (resp.result == "success") {
 				}
 			});
 		} else {
 			if (!this.lockIds[id].some(i => i == attr)) {
 				this.lockIds[id].push(attr);
-				$.get(`SetVulnLock?vulnid=${id}&vulnAttr=${attr}&_token=${this.token}`).done((resp) => {
+				$.get(`${type}/set/lock?id=${id}&attr=${attr}&_token=${this.token}`).done((resp) => {
 					if (resp.result == "success") {
 					}
 				});
 			}
 
 		}
-
 	}
-	clearLock(id, attr) {
+	
+	clearLock(type, id, attr) {
 		if (this.lockIds[id]) {
 			this.lockIds[id] = this.lockIds[id].filter(l => l != attr)
-			$.get(`ClearVulnLock?vulnid=${id}&vulnAttr=${attr}&_token=${this.token}`).done();
+			$.get(`${type}/clear/lock?type=${type}&id=${id}&attr=${attr}&_token=${this.token}`).done();
 		} else {
-			console.log("no locks found");
+			//console.log("no locks found");
 		}
 	}
+	
 	checkLocks() {
 		let _this = this;
 		setInterval(function() {
-			$.get(`CheckVulnLocks?id=${_this.assessmentId}`).done((resp) => {
+			$.get(`vulnerability/check/locks?id=${_this.assessmentId}`).done((resp) => {
 				if (resp.result && resp.result == "error") {
 					if (!_this.errorMessageShown) {
 						_this.errorMessageShown = true
@@ -155,7 +172,7 @@ class EditLocks {
 					_this.caller.caller.queue._token = resp.token;
 					_this.caller.caller.queue.caller._token = resp.token;
 				}
-				_this.updateVulnsCallback(resp);
+				_this.updateCallback('vulnerability', resp);
 			}).catch(() => {
 				if (!_this.errorMessageShown) {
 					_this.errorMessageShown = true;
@@ -182,7 +199,7 @@ class VulnerablilityView {
 
 	constructor(assessmentId) {
 		this._token = $("#_token")[0].value;
-		this.queue = new SaveQueue(this, assessmentId, this.saveChanges, (vulns) => { this.updateVulnsCallback(vulns) });
+		this.queue = new SaveQueue(this, assessmentId, this.saveChanges, (type, vulns) => { this.updateCallback(type, vulns) });
 		this.vulnId = -1;
 		this.editors = {};
 		this.descUndoCount=0;
@@ -235,6 +252,17 @@ class VulnerablilityView {
 				height: '600px',
 				autofocus: false
 			});
+		const initialHTML = entityDecode($("#notes").html());
+		this.editors.notes = new Editor({
+				el: document.querySelector('#notes'),
+				previewStyle: 'vertical',
+				height: '600px',
+				autofocus: false
+			});
+		this.editors.notes.hide();
+		this.editors.notes.setHTML(initialHTML, false);
+		this.editors.notes.show();
+		this.setUpNoteChangeEvent();
 		this.setUpVulnAutoComplete()
 		this.is40 = $("#isCVSS40").val() == "true"
 		this.cvss = new CVSS("", this.is40);
@@ -288,7 +316,104 @@ class VulnerablilityView {
 		this.setUpAddVulnBtn();
 		this.setUpCVSSScoreEvents();
 		
+		//Note Events
+		
+		$("#createNote").on('click', ()=>{
+			let buttons = {
+				save: function() {
+					const name = $("#newNoteName").val();
+					let data = `noteName=${name.trim()}`
+					data += "&note=";
+					data += "&_token=" + global._token;
+					$.post("createNote", data).done(function(resp) {
+						_token = resp.token;
+						const note = resp;
+						if (!Array.from($(`#notebook option`))
+							.some((t) => $(t).val() == note.id)) {
+							let option = document.createElement("option");
+							$(option).addClass("globalTemplate");
+							$(option).val(note.id);
+							$(option).html(note.name);
+							$(`#notebook`).append(option).trigger("change");
+							$(option).on("click", async (event)=>{
+								await getNote(event)
+							})
+						}
+						alertMessage(resp, "Note Created.");
+					});
 
+				},
+				cancel: function() { }
+			}
+			let contentMessage = "Enter a Template name: <input id='newNoteName' class='form-control'></input>";
+			$.confirm({
+				title: "Create New Note",
+				content: contentMessage,
+				buttons: buttons
+			})
+			
+		});
+		$("#deleteNote").on('click', async (event) => {
+			let selected = Array.from($(`#notebook option:selected`));
+			if (selected.length == 0) {
+				alertMessage({ message: "No Valid Notes to Delete" }, null)
+				return;
+			}
+			const name = $("#noteName").val();
+			$.confirm({
+				title: "Confirm?",
+				content: "Are you sure you want to delete these templates?<br><b>" + name + "</b>",
+				buttons: {
+					confirm: async function() {
+						let messages = []
+						for await (const option of selected) {
+							await $.post(`deleteNote`, `noteid=${$(option).val()}`).done(function(resp) {
+								_token = resp.token;
+								messages.push(resp);
+								option.remove();
+							});
+						}
+						alertMessage(messages[0], "Note Deleted");
+					},
+					cancel: function() { }
+				}
+			});
+		});
+		
+		$("#noteName").on('keyup change', () =>{
+			const name = $("#noteName").val();
+			const selected = $(`#notebook option:selected`);
+			const id = selected.val();
+			$(selected).html(name);
+			this.queue.push('note',id, 'noteName', name);
+			
+		})
+		$(".globalNote").on("click", async (event)=>{
+			this.getNote(event)
+		})
+		
+
+	}
+	setUpNoteChangeEvent(){
+		this.editors.notes.on('change', ()=>{
+			let noteId = "";
+			const selected = $(`#notebook option:selected`);
+			noteId = selected.val()
+			this.queue.push('note',noteId, 'noteText', this.getEditorText('notes'));
+		});
+		
+	}
+	
+	getNote(event) {
+		this.editors.notes.off('change');
+		let value = event.target.value;
+		let _this = this;
+		$.get('getNote?noteid=' + value)
+			.done(function(note) {
+				_this.setEditorContents("notes", entityDecode(note.note), true);
+				$("#noteName").val(note.name);
+				_this.setUpNoteChangeEvent();
+			});
 	}
 
 	updateIntVal(element, elementName) {
@@ -357,17 +482,25 @@ class VulnerablilityView {
 			}
 		});
 	}
-	saveChanges(data, _this) {
-		//data = data.replaceAll("%3Cp%3E", "").replaceAll("%3C%2Fp%3E", "%3Cbr%3E").replaceAll("%3Cbr%3E%3Cbr%3E%3Cbr%3E", "%3Cbr%3E%3Cbr%3E")
+	saveChanges(type, data, _this) {
 		data = data.replaceAll("%3C%2Fp%3E%3Cp%3E%3Cbr%3E%3C%2Fp%3E%3Cp%3E", "%3Cbr%3E%3C%2Fp%3E%3Cp%3E");
-		console.log(data)
 		data = `${data}&_token=${_this._token}`
-		$.post("updateVulnerability", data, function(resp) {
-			if (resp.result != "success") {
-				$.alert(resp.message);
-			}
-			_this._token = resp.token;
-		});
+		if(type == 'vulnerability'){
+			$.post("updateVulnerability", data, function(resp) {
+				if (resp.result != "success") {
+					$.alert(resp.message);
+				}
+				_this._token = resp.token;
+			});
+		}else if (type == 'note'){
+			$.post("updateNote", data, function(resp) {
+				if (resp.result != "success") {
+					$.alert(resp.message);
+				}
+				_this._token = resp.token;
+			});
+			
+		}
 
 	}
 	setLockScreen() {
@@ -377,7 +510,7 @@ class VulnerablilityView {
 	clearLockScreen(vulnId) {
 		this.getVuln(vulnId)
 	}
-	updateVulnsCallback(data) {
+	updateCallback(type,data) {
 		let lockedVulns = data.vulns;
 		for (let vuln of lockedVulns) {
 			if (vuln.id == this.vulnId) {
@@ -414,7 +547,6 @@ class VulnerablilityView {
 				return col.split('"')[3].replace("ckl","")
 			}
 		}))
-		console.log(activeVulns);
 		
 		for (let vuln of data.current) {
 			//vuln was added by another user so add it to the table
@@ -428,7 +560,6 @@ class VulnerablilityView {
 				rowData += `<td><span class="vulnControl vulnControl-delete" id="deleteVuln${vuln.id}">`
 				rowData += `<i class="fa fa-trash" title="Delete Vulnerability"></i></span>`
 				rowData += `</td></tr>`
-				console.log(rowData)
 				const row = this.vulnTable.row.add($(rowData)).draw().node()
 				this.rebindTable();
 				this.updateColors();
@@ -507,9 +638,9 @@ class VulnerablilityView {
 			_this.vulnTable.row($(".selected")).invalidate()
 			_this.vulnTable.order([1, 'desc']).draw();
 			_this.updateColors()
-			_this.queue.push(_this.vulnId, "cvssScore", score);
-			_this.queue.push(_this.vulnId, "cvssString", cvssString);
-			_this.queue.push(_this.vulnId, "overall", overall); 
+			_this.queue.push('vulnerability', _this.vulnId, "cvssScore", score);
+			_this.queue.push('vulnerability', _this.vulnId, "cvssString", cvssString);
+			_this.queue.push('vulnerability', _this.vulnId, "overall", overall); 
 
 		})
 	}
@@ -543,8 +674,8 @@ class VulnerablilityView {
 				_this.setIntVal(val, "dcategory");
 				$("#dcategory").val(val).trigger('change');
 				const vulnid = splits[0];
-				_this.queue.push(_this.vulnId, "dvulnerability", vulnid)
-				_this.queue.push(_this.vulnId, "title", splits[1])
+				_this.queue.push('vulnerability', _this.vulnId, "dvulnerability", vulnid)
+				_this.queue.push('vulnerability', _this.vulnId, "title", splits[1])
 				$("#title").attr("intVal", vulnid);
 				d = d.replace("<p><br></p>", "");
 				r = r.replace("<p><br></p>", "");
@@ -802,7 +933,6 @@ class VulnerablilityView {
 
 	}
 	disableAutoSave() {
-		console.log("disable autosave")
 		$('[id*="header"]').each((_a, h) => h.innerHTML = "");
 
 		this.editors.recommendation.off('change');
@@ -835,19 +965,19 @@ class VulnerablilityView {
 		this.editors.description.on( 'change', function(){
 			_this.descUndoCount++;
 			let contents = _this.editors.description.getHTML()
-			_this.queue.push(_this.vulnId, "description", encodeURIComponent(contents));
+			_this.queue.push('vulnerability', _this.vulnId, "description", encodeURIComponent(contents));
 		});
 		this.editors.recommendation.on( 'change', function() {
 			let contents = _this.editors.recommendation.getHTML()
-			_this.queue.push(_this.vulnId, "recommendation", encodeURIComponent(contents));
+			_this.queue.push('vulnerability', _this.vulnId, "recommendation", encodeURIComponent(contents));
 		});
 		this.editors.details.on( 'change', function() {
 			let contents = _this.editors.details.getHTML()
-			_this.queue.push(_this.vulnId, "details", encodeURIComponent(contents));
+			_this.queue.push('vulnerability', _this.vulnId, "details", encodeURIComponent(contents));
 		});
 		$("#title").on('input', function(event) {
 			$(".selected").find(".vulnName")[0].innerHTML = $(this).val()
-			_this.queue.push(_this.vulnId, "title", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "title", $(this).val());
 		});
 		$("#overall").on('input', function(event) {
 			const severity = $(this).select2('data')[0].text
@@ -857,21 +987,21 @@ class VulnerablilityView {
 			_this.vulnTable.row($(".selected")).invalidate()
 			_this.vulnTable.order([1, 'desc']).draw();
 			_this.updateColors()
-			_this.queue.push(_this.vulnId, "overall", $(this).val());
-			_this.queue.push(_this.vulnId, "likelyhood", $(this).val());
-			_this.queue.push(_this.vulnId, "impact", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "overall", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "likelyhood", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "impact", $(this).val());
 		});
 		$("#impact").on('input', function(event) {
-			_this.queue.push(_this.vulnId, "impact", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "impact", $(this).val());
 		});
 		$("#likelyhood").on('input', function(event) {
-			_this.queue.push(_this.vulnId, "likelyhood", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "likelyhood", $(this).val());
 		});
 		$("#dcategory").on('input', function(event) {
 			const catName = $(this).select2('data')[0].text
 			$(".selected").find(".category")[0].innerHTML = catName
 			window.postMessage({ "type": "updateStats" });
-			_this.queue.push(_this.vulnId, "dcategory", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "dcategory", $(this).val());
 		});
 		$('[id^="type"]').each((_index, el) => $(el).on('input', function(event) {
 			let val = "";
@@ -880,7 +1010,7 @@ class VulnerablilityView {
 			} else {
 				val = $(this).val();
 			}
-			_this.queue.push(_this.vulnId, this.id, `${val}`);
+			_this.queue.push('vulnerability', _this.vulnId, this.id, `${val}`);
 		}));
 		this.setUpCVSSScoreEvents();
 
@@ -897,7 +1027,6 @@ class VulnerablilityView {
 				plugins: [colorSyntax, tableMergedCell]
 			});
 		}
-		console.log(this.editors[type])
 		this.editors[type].hide();	
 		this.editors[type].setHTML(decoded, false);
 		this.initialHTML[type] = this.editors[type].getHTML();
@@ -1004,6 +1133,17 @@ class VulnerablilityView {
 }
 
 $(function() {
+	var url = document.location.toString();
+	if (url.match('#')) {
+		$('.nav-tabs a[href="' + location.hash + '"]').tab('show');
+	}
+	$("a").click(evt => {
+		if (evt.target.href.indexOf("VulnView") != -1) {
+			location.href = "#VulnView"
+		} else if (evt.target.href.indexOf("NoteView") != -1) {
+			location.href = "#NoteView"
+		}
+	})
 	global.vulnView = new VulnerablilityView($("#assessmentId")[0].value);
 })
 

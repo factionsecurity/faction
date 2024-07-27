@@ -550,10 +550,32 @@ $(function() {
 
 	});
 	refreshNotes();
-	/*CKEDITOR.replace("nprodNotes");
-	CKEDITOR.replace("prodNotes");
-	CKEDITOR.replace("chSevNotes");
-	CKEDITOR.replace("verNotes");*/
+	
+	let checkStatus = {};
+	$("#genRetest").click(function() {
+		$("#genRetest").html("<div class='throbber-loader'>Loading…</div>");
+		$(".reportLoading").loading({ overlay: true });
+		$.get("Assessment?action=genreport&retest=true&id=" + defaultAssessmentId, function(resp) {
+			global._token = resp.token;
+			clearInterval(checkStatus);
+			checkStatus = setInterval(function() {
+				$.get("CheckStatus").done(function(resp, _message, http) {
+					if (http.status != 202) {
+						const updatedDate = resp.message;
+						$("#updatedDate").html(updatedDate);
+						clearInterval(checkStatus);
+						clearLoading($(".reportLoading")[0])
+						$("#genreport").html("Generate Report");
+						if (typeof $("#dlreport").attr('id') == 'undefined') {
+							location.reload();
+						}
+					}
+				});
+			}, 2000);
+
+
+		});
+	});
 
 	function refreshNotes() {
 		$.get(`RemVulnData?action=getNotes&vulnId=${defaultVulnId}`).done(function(data) {

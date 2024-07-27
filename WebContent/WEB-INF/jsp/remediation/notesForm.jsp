@@ -43,6 +43,10 @@
 				</bs:row>
 				<br/>
 				<bs:row>
+					<bs:button color="info" size="md" colsize="3"
+						text="Generate Retest Report" id="genRetest"></bs:button>
+					<bs:button color="info" size="md" colsize="3"
+						text="Download Retest Report" id="downloadRetest"></bs:button>
 					<s:if test="VerForm">
 					<bs:button color="danger" size="md" colsize="3"
 						text="Cancel Verification" id="closeVer"></bs:button>

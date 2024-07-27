@@ -82,25 +82,14 @@ color:#00a65a
    <ul class="nav nav-tabs">
      <li><a href="Assessment" >Overview</a></li>
      <li><a href="VulnerabilityView">Vulnerabilities</a></li>
+     <li><a href="VulnerabilityView#NoteView">Notes</a></li>
      <li class="active"><a href="CheckList">Checklists</a></li>
-     <li><a href="Assessment#tab_3" >Finalize</a></li>
-     <li><a href="Assessment#tab_4" >History</a></li>
+     <li><a href="Assessment#Finalize" >Finalize</a></li>
+     <li><a href="Assessment#History" >History</a></li>
      <li><a href="AuditLog" >Audit</a></li>
    </ul>
    <div class="tab-content">
-     <div class="tab-pane active" id="tab_1">
-       
-     </div><!-- /.tab-pane -->
-     <div class="tab-pane" id="tab_2">
-       
-     </div><!-- /.tab-pane -->
-     <div class="tab-pane" id="tab_3">
-       
-     </div><!-- /.tab-pane -->
-     <div class="tab-pane" id="tab_4">
-      
-     </div><!-- /.tab-pane -->
-     <div class="tab-pane active" id="tab_5">
+     <div class="tab-pane active" id="CheckList">
      	<s:if test="!(hideit)">
      	<bs:row>
      	<bs:select name="Select a CheckList to Add to the Assessment" colsize="4" id="selectList">

@@ -4,7 +4,7 @@
     pageEncoding="UTF-8"%>
 { "name" : "<s:property value="note.name"/>",
 "id" : "<s:property value="note.id"/>",
-"note": "<s:property value="note.note"/>",
+"note": "<s:property value="note.encodedNote"/>",
 "first" : "<s:property value="note.createdBy.fname"/>",
 "last" : "<s:property value="note.createdBy.lname"/>",
  "token" : "<s:property value="_token"/>"

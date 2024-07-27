@@ -15,7 +15,7 @@
 			</bs:row>
 		<bs:row>
 			<bs:mco colsize="2">
-				<button id="addVuln" class="btn btn-block btn-primary btn-lg"
+				<button id="addVuln" class="btn btn-primary btn-lg"
 					<s:if test="hideit">disabled</s:if>>
 					<b><i class="glyphicon glyphicon-plus"></i> New Vulnerability</b>
 				</button>
@@ -327,9 +327,8 @@ td:first-child {
 												<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized || readOnly">disabled</s:if> />
 										</s:if>
 										<s:if test="fieldType == 1">
-											<br>
 											<input type="checkbox" class="icheckbox_minimal-blue"
-												style="width: 20px; height: 20px; position: absolute; margin-top: -13px"
+												style="width: 20px; height: 20px; margin-top: -13px"
 												data-default='${defaultValue}'
 												id="type<s:property value="id"/>"
 												<s:if test="defaultValue == 'true'">checked</s:if>

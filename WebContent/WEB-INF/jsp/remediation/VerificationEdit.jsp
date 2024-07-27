@@ -239,6 +239,7 @@ background-color: white;
 			let defaultAppId = "<s:property value="appId"/>";
 			let defaultVerId = "<s:property value="searchId"/>";
 			let defaultAppName = "<s:property value="appName"/>";
+			let defaultAssessmentId = "<s:property value="vuln.assessmentId"/>";
 			let filesPreview = [
 			<s:iterator value="files">
 				<s:if test="contentType.contains('image')">

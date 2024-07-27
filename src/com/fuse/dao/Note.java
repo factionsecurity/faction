@@ -1,5 +1,6 @@
 package com.fuse.dao;
 
+import java.util.Base64;
 import java.util.Date;
 
 import javax.persistence.Entity;
@@ -8,6 +9,7 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.TableGenerator;
+import javax.persistence.Transient;
 
 import com.fuse.utils.FSUtils;
 
@@ -32,6 +34,11 @@ public class Note {
 	private User updatedBy;
 	private Date created;
 	private Date updated;
+	private Boolean noteLocked = false;
+	@ManyToOne
+	private User noteLockedBy;
+	private Date noteLockedAt;
+	
 	public Long getId() {
 		return id;
 	}
@@ -73,6 +80,29 @@ public class Note {
 	}
 	public void setUpdated(Date updated) {
 		this.updated = updated;
+	}
+	public Boolean getNoteLocked() {
+		return noteLocked == null ? false : noteLocked;
+	}
+	public void setNoteLocked(Boolean noteLocked) {
+		this.noteLocked = noteLocked;
+	}
+	public User getNoteLockedBy() {
+		return noteLockedBy;
+	}
+	public void setNoteLockedBy(User noteLockedBy) {
+		this.noteLockedBy = noteLockedBy;
+	}
+	public Date getNoteLockedAt() {
+		return noteLockedAt;
+	}
+	public void setNoteLockedAt(Date noteLockedAt) {
+		this.noteLockedAt = noteLockedAt;
+	}
+	@Transient
+	public String getEncodedNote() {
+		String note = this.note == null? "" : this.note;
+		return Base64.getEncoder().encodeToString(this.note.getBytes());
 	}
 	
 	

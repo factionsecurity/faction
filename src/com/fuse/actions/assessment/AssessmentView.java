@@ -64,7 +64,6 @@ public class AssessmentView extends FSActionSupport {
 	private String id;
 	private String riskAnalysis;
 	private String summary;
-	private String notes;
 	private String update;
 	private String aq;
 	private String action = "";
@@ -83,15 +82,10 @@ public class AssessmentView extends FSActionSupport {
 	private List<RiskLevel> levels = new ArrayList();
 	private List<CustomType> vulntypes = new ArrayList();
 	private Boolean notowner;
-	private User user;
 	private List<BoilerPlate> summaryTemplates;
 	private List<BoilerPlate> riskTemplates;
 	LinkedHashMap<String, Integer> vulnMap = new LinkedHashMap<>();
 	LinkedHashMap<String, Integer> catMap = new LinkedHashMap<>();
-	private List<Note>notebook = new ArrayList<Note>();
-	private Long noteId;
-	private String noteName;
-	private Note note;
 
 	@Action(value = "Assessment", results = { @Result(name = "ics", location = "/WEB-INF/jsp/assessment/ics.jsp"),
 			@Result(name = "finerrorJson", location = "/WEB-INF/jsp/assessment/finerrorJson.jsp") })
@@ -215,17 +209,6 @@ public class AssessmentView extends FSActionSupport {
 			
 			if (this.riskAnalysis != null)
 				assessment.setRiskAnalysis(this.riskAnalysis);
-			if (this.notes != null) {
-				List<Note> notebook = assessment.getNotebook();
-				Note note = notebook.stream().filter( n -> n.getId().equals(noteId)).findFirst().orElse(null);
-				if(note != null) {
-					note.setName(noteName);
-					note.setNote(notes);
-					note.setUpdatedBy(user);
-					note.setUpdated(new Date());
-					
-				}
-			}
 			if (this.summary != null)
 				assessment.setSummary(this.summary);
 			AssessmentQueries.saveAssessment(this, em, assessment, "Assessment Summaries have been updated");
@@ -249,127 +232,6 @@ public class AssessmentView extends FSActionSupport {
 		}
 
 		return SUCCESS;
-	}
-	@Action(value = "createNote", results = {
-			@Result(name = "noteJSON", location = "/WEB-INF/jsp/assessment/noteJSON.jsp") 
-	})
-	public String createNote() throws NotSupportedException, SystemException {
-		if (!(this.isAcassessor() || this.isAcmanager()))
-			return AuditLog.notAuthorized(this, "User is not an Assessor or Manager", true);
-		User user = this.getSessionUser();
-		// Notification links use this to set the app and session.
-		if (this.id != null && !this.id.equals("")) {
-			this.setSession("asmtid", Long.parseLong(this.id));
-		}
-
-		if (this.getSession("asmtid") == null) {
-			this.setSession("asmtid", Long.parseLong(this.id));
-		} else {
-			this.id = "" + this.getSession("asmtid");
-		}
-
-		Long lid = Long.parseLong(this.id);
-		if (this.isAcmanager()) {
-			assessment = AssessmentQueries.getAssessmentById(em, lid);
-			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
-					.orElse(null);
-			if (mgrs == null)
-				this.notowner = true;
-
-		} else {
-			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
-		}
-		if (assessment == null)
-			return SUCCESS;
-		
-		List<Note> notebook = assessment.getNotebook();
-		this.note = new Note();
-		note.setName(noteName);
-		note.setNote("");
-		note.setCreated(new Date());
-		note.setUpdated(new Date());
-		note.setCreatedBy(user);
-		note.setUpdatedBy(user);
-		notebook.add(note);
-		AssessmentQueries.saveAssessment(this, em, assessment, "User has created a new note");
-		
-		return "noteJSON";
-	}
-	
-	@Action(value = "getNote", results = {
-			@Result(name = "noteJSON", location = "/WEB-INF/jsp/assessment/noteJSON.jsp") 
-	})
-	public String getNotebookNote() throws NotSupportedException, SystemException {
-		if (!(this.isAcassessor() || this.isAcmanager()))
-			return AuditLog.notAuthorized(this, "User is not an Assessor or Manager", true);
-		User user = this.getSessionUser();
-		// Notification links use this to set the app and session.
-		if (this.id != null && !this.id.equals("")) {
-			this.setSession("asmtid", Long.parseLong(this.id));
-		}
-
-		if (this.getSession("asmtid") == null) {
-			this.setSession("asmtid", Long.parseLong(this.id));
-		} else {
-			this.id = "" + this.getSession("asmtid");
-		}
-
-		Long lid = Long.parseLong(this.id);
-		if (this.isAcmanager()) {
-			assessment = AssessmentQueries.getAssessmentById(em, lid);
-			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
-					.orElse(null);
-			if (mgrs == null)
-				this.notowner = true;
-
-		} else {
-			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
-		}
-
-		if (assessment == null)
-			return SUCCESS;
-		
-		this.note = assessment.getNoteById(this.noteId);
-		
-		return "noteJSON";
-	}
-	@Action(value = "deleteNote")
-	public String deleteNote() throws NotSupportedException, SystemException {
-		if (!(this.isAcassessor() || this.isAcmanager()))
-			return AuditLog.notAuthorized(this, "User is not an Assessor or Manager", true);
-		User user = this.getSessionUser();
-		// Notification links use this to set the app and session.
-		if (this.id != null && !this.id.equals("")) {
-			this.setSession("asmtid", Long.parseLong(this.id));
-		}
-
-		if (this.getSession("asmtid") == null) {
-			this.setSession("asmtid", Long.parseLong(this.id));
-		} else {
-			this.id = "" + this.getSession("asmtid");
-		}
-
-		Long lid = Long.parseLong(this.id);
-		if (this.isAcmanager()) {
-			assessment = AssessmentQueries.getAssessmentById(em, lid);
-			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
-					.orElse(null);
-			if (mgrs == null)
-				this.notowner = true;
-
-		} else {
-			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
-		}
-
-		if (assessment == null)
-			return SUCCESS;
-		
-		Note note = assessment.getNoteById(this.noteId);
-		assessment.getNotebook().remove(note);
-		
-		AssessmentQueries.saveAssessment(this, em, assessment, "User has created a new note");
-		
-		return this.SUCCESSJSON;
 	}
 	
 
@@ -535,128 +397,6 @@ public class AssessmentView extends FSActionSupport {
 		return this.jsonSuccessMessage;
 	}
 
-	@Action(value = "CheckStatus", results = {
-			@Result(name = "success202", type = "httpheader", params = { "status", "202" }),
-			@Result(name = "success200", location = "/WEB-INF/jsp/assessment/SuccessMessageJSON.jsp")
-
-	})
-	public String checkStatus() {
-		if (!(this.isAcassessor() || this.isAcmanager())) {
-			return LOGIN;
-		}
-		HttpSession session = ServletActionContext.getRequest().getSession();
-		Date lastDate = (Date) session.getAttribute("reportDate");
-		if (lastDate == null)
-			return ERROR;
-
-		Long asmtId = (Long) this.getSession("asmtid");
-		Assessment assessment = em.find(Assessment.class, asmtId);
-		if (assessment.getFinalReport() == null || assessment.getFinalReport().getGentime().equals(lastDate)) {
-			return "success202";
-		}
-		this._message = "" + assessment.getFinalReport().getGentime();
-
-		return "success200";
-
-	}
-
-	private String updatedText = "";
-
-	@Action(value = "CheckLocks", results = {
-			@Result(name = "lockSuccess", location = "/WEB-INF/jsp/assessment/lockSuccess.jsp"),
-			@Result(name = "lockError", location = "/WEB-INF/jsp/assessment/lockError.jsp"),
-			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
-	public String checkLocks() throws UnsupportedEncodingException {
-		if (!(this.isAcassessor() || this.isAcmanager())) {
-			_message="Session Expired";
-			return "lockError";
-		}
-		this.user = this.getSessionUser();
-		Long asmtId = (Long) this.getSession("asmtid");
-		this.assessment = em.find(Assessment.class, asmtId);
-		if (isNotesLockedbyAnotherUser() || isSummaryLockedbyAnotherUser() || isRiskLockedbyAnotherUser()) {
-			this.clearLockType("", this.user);
-			if(this.assessment.getNotes() == null) {
-				this.assessment.setNotes("");
-			}
-			if(this.assessment.getSummary() == null) {
-				this.assessment.setSummary("");
-			}
-			if(this.assessment.getRiskAnalysis() == null) {
-				this.assessment.setRiskAnalysis("");
-			}
-			this.assessment.setNotes(URLEncoder
-					.encode(Base64.getEncoder().encodeToString(this.assessment.getNotes().getBytes()), "UTF-8"));
-			this.assessment.setSummary(URLEncoder
-					.encode(Base64.getEncoder().encodeToString(this.assessment.getSummary().getBytes()), "UTF-8"));
-			this.assessment.setRiskAnalysis(URLEncoder
-					.encode(Base64.getEncoder().encodeToString(this.assessment.getRiskAnalysis().getBytes()), "UTF-8"));
-			return "lockJSON";
-		} else {
-			return "lockSuccess";
-		}
-	}
-
-	@Action(value = "SetLock", results = {
-			@Result(name = "lockSuccess", location = "/WEB-INF/jsp/assessment/lockSuccess.jsp"),
-			@Result(name = "lockError", location = "/WEB-INF/jsp/assessment/lockError.jsp"),
-			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
-	public String setLock() throws UnsupportedEncodingException {
-		if (!(this.isAcassessor() || this.isAcmanager())) {
-			return LOGIN;
-		}
-		User user = this.getSessionUser();
-		Long asmtId = (Long) this.getSession("asmtid");
-		this.assessment = em.find(Assessment.class, asmtId);
-		if (this.action.equals("notes") && !assessment.isNotesLock()) {
-			assessment.setNotesLock(true);
-			assessment.setNotesLockAt(new Date());
-			assessment.setNotesLockBy(user);
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(assessment);
-			HibHelper.getInstance().commit();
-			return "lockSuccess";
-		} else if (this.action.equals("summary") && !assessment.isSummaryLock()) {
-			assessment.setSummaryLock(true);
-			assessment.setSummaryLockAt(new Date());
-			assessment.setSummaryLockBy(user);
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(assessment);
-			HibHelper.getInstance().commit();
-			return "lockSuccess";
-		} else if (this.action.equals("risk") && !assessment.isRiskLock()) {
-			assessment.setRiskLock(true);
-			assessment.setRiskLockAt(new Date());
-			assessment.setRiskLockBy(user);
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(assessment);
-			HibHelper.getInstance().commit();
-			return "lockSuccess";
-		} else {
-			return "lockSuccess";
-		}
-	}
-
-	@Action(value = "ClearLock", results = {
-			@Result(name = "lockSuccess", location = "/WEB-INF/jsp/assessment/lockSuccess.jsp"),
-			@Result(name = "lockError", location = "/WEB-INF/jsp/assessment/lockError.jsp"),
-			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
-	public String clearLock() {
-		if (!(this.isAcassessor() || this.isAcmanager())) {
-			return LOGIN;
-		}
-		User user = this.getSessionUser();
-		Long asmtId = (Long) this.getSession("asmtid");
-		this.assessment = em.find(Assessment.class, asmtId);
-		if (this.clearLockType(action, user)) {
-			return "lockSuccess";
-		} else {
-			return "lockError";
-		}
-	}
 	private boolean blockingPR(Long asmtId) {
 
 		PeerReview prTemp = (PeerReview) em.createNativeQuery("{\"assessment_id\" : " + asmtId + "}", PeerReview.class)
@@ -700,75 +440,6 @@ public class AssessmentView extends FSActionSupport {
 		
 	}
 
-	public boolean isNotesLockedbyAnotherUser() {
-		return assessment.isNotesLock() && assessment.getNotesLockBy() != null
-				&& assessment.getNotesLockBy().getId() != user.getId();
-	}
-
-	public boolean isSummaryLockedbyAnotherUser() {
-		return assessment.isSummaryLock() && assessment.getSummaryLockBy() != null
-				&& assessment.getSummaryLockBy().getId() != user.getId();
-	}
-
-	public boolean isRiskLockedbyAnotherUser() {
-		return assessment.isRiskLock() && assessment.getRiskLockBy() != null
-				&& assessment.getRiskLockBy().getId() != user.getId();
-	}
-
-	private boolean clearLockType(String type, User user) {
-		boolean isUpdated = false;
-		switch (type) {
-		case "notes":
-			if (assessment.isNotesLock() && assessment.getNotesLockBy().getId() == user.getId()) {
-				isUpdated = true;
-				assessment.setNotesLock(false);
-				assessment.setNotesLockAt(null);
-				assessment.setNotesLockBy(null);
-			}
-			break;
-		case "summary":
-			if (assessment.isSummaryLock() && assessment.getSummaryLockBy().getId() == user.getId()) {
-				isUpdated = true;
-				assessment.setSummaryLock(false);
-				assessment.setSummaryLockAt(null);
-				assessment.setSummaryLockBy(null);
-			}
-			break;
-		case "risk":
-			if (assessment.isRiskLock() && assessment.getRiskLockBy().getId() == user.getId()) {
-				isUpdated = true;
-				assessment.setRiskLock(false);
-				assessment.setRiskLockAt(null);
-				assessment.setRiskLockBy(null);
-			}
-			break;
-		default:
-			// Clear outdated locks;
-			Calendar now = Calendar.getInstance();
-			now.add(Calendar.MINUTE, -5);
-			Date FiveMin = now.getTime();
-			if (assessment.getNotesLockAt() != null && assessment.getNotesLockAt().before(FiveMin)) {
-				this.clearLockType("notes", assessment.getNotesLockBy());
-				isUpdated = true;
-			}
-			if (assessment.getSummaryLockAt() != null && assessment.getSummaryLockAt().before(FiveMin)) {
-				this.clearLockType("summary", assessment.getSummaryLockBy());
-				isUpdated = true;
-			}
-			if (assessment.getRiskLockAt() != null && assessment.getRiskLockAt().before(FiveMin)) {
-				this.clearLockType("risk", assessment.getRiskLockBy());
-				isUpdated = true;
-			}
-			break;
-		}
-		if (isUpdated) {
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(assessment);
-			HibHelper.getInstance().commit();
-		}
-		return isUpdated;
-	}
 
 	private Long SessionAsmtId() {
 		if (this.getSession("asmtid") == null) {
@@ -904,14 +575,6 @@ public class AssessmentView extends FSActionSupport {
 
 	public void setSummary(String summary) {
 		this.summary = summary;
-	}
-
-	public String getNotes() {
-		return notes;
-	}
-
-	public void setNotes(String notes) {
-		this.notes = notes;
 	}
 
 	public String getUpdate() {
@@ -1108,9 +771,6 @@ public class AssessmentView extends FSActionSupport {
 		return notowner;
 	}
 
-	public String getUpdatedText() {
-		return this.updatedText;
-	}
 	
 	public LinkedHashMap<String, Integer> getVulnMap(){
 		return vulnMap;
@@ -1123,15 +783,6 @@ public class AssessmentView extends FSActionSupport {
 		return new ArrayList<String>(Arrays.asList("#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"));
 	}
 	
-	public void setNoteId(Long noteId) {
-		this.noteId = noteId;
-	}
-	public void setNoteName(String noteName) {
-		this.noteName = noteName;
-	}
-	public Note getNote() {
-		return this.note;
-	}
 	
 	   
 	
