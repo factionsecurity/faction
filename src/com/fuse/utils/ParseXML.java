@@ -158,7 +158,6 @@ public class ParseXML {
 					String value = n.getNodeValue();
 
 					String attr = cns.item(j).getNodeName();
-					// System.out.println("+++++++++"+cns.item(j).getNodeName());
 					MapItem mi = map.stream().filter(m -> m.getParam().equals(attr)).findFirst().orElse(null);
 					if (mi == null)
 						continue;
