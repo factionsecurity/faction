@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -27,6 +26,7 @@ import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
+import com.fuse.utils.UserRate;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/metrics/Metrics.jsp")
@@ -58,47 +58,12 @@ public class Metrics extends FSActionSupport {
 	private Long id;
 	private Calendar past7days = Calendar.getInstance();
 	private List<Assessment> asmts = new ArrayList<Assessment>();
-	private List<RiskLevel> levels = new ArrayList();
-	private HashMap<Integer, String> data = new HashMap();
-	private String[] defautlColors = new String[] { "#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a",
+	private List<RiskLevel> levels = new ArrayList<>();
+	private HashMap<Integer, String> data = new HashMap<>();
+	private String[] defaultColors = new String[] { "#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a",
 			"#39cccc", "#00c0ef", "#f39c12", "#dd4b39" };
-	private List<String> colors = new ArrayList();
+	private List<String> colors = new ArrayList<>();
 
-	private void plotAssessment(List<Assessment> asmts, List<RiskLevel> levels, boolean isCamp) {
-		for (Assessment a : asmts) {
-			if (a.getCompleted() == null || a.getCompleted().getTime() == (new Date(0)).getTime()) {
-				continue;
-			}
-			SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
-			Date chartDate = a.getCompleted() == null ? a.getEnd() : a.getCompleted();
-			if (isCamp) {
-				dates += ", [\"" + sdf.format(chartDate) + "\",\"" + a.getAppId() + "\",\" " + a.getName() + "\"]";
-			} else {
-				dates += ", \"" + sdf.format(chartDate) + "\"";
-			}
-			HashMap<Integer, Integer> count = new HashMap();
-			for (RiskLevel level : levels) {
-				count.put(level.getRiskId(), 0);
-			}
-			for (Vulnerability v : a.getVulns()) {
-				if (v.getOverall() == null || v.getOverall() == -1l)
-					continue;
-				int c = count.get(v.getOverall().intValue());
-				count.put(v.getOverall().intValue(), c + 1);
-			}
-
-			for (RiskLevel level : levels) {
-
-				String risk = level.getRisk();
-				if (risk == null || risk.equals("") || risk.toLowerCase().startsWith("unassigned"))
-					continue;
-				String array = data.get(level.getRiskId()) == null ? "" : data.get(level.getRiskId());
-				data.put(level.getRiskId(), array + "," + count.get(level.getRiskId()));
-
-			}
-
-		}
-	}
 
 	@Action(value = "Metrics", results = {
 			@Result(name = "lineChartDataJson", location = "/WEB-INF/jsp/metrics/lineChartDataJson.jsp"),
@@ -122,7 +87,7 @@ public class Metrics extends FSActionSupport {
 				String risk = level.getRisk();
 				if (risk == null || risk.equals("") || risk.toLowerCase().startsWith("unassigned"))
 					continue;
-				colors.add(defautlColors[c--]);
+				colors.add(defaultColors[c--]);
 			}
 			plotAssessment(asmts, levels, true);
 			return "lineChartDataJson";
@@ -136,7 +101,7 @@ public class Metrics extends FSActionSupport {
 				String risk = level.getRisk();
 				if (risk == null || risk.equals("") || risk.toLowerCase().startsWith("unassigned"))
 					continue;
-				colors.add(defautlColors[c--]);
+				colors.add(defaultColors[c--]);
 			}
 			plotAssessment(asmts, levels, false);
 
@@ -151,7 +116,7 @@ public class Metrics extends FSActionSupport {
 				String risk = level.getRisk();
 				if (risk == null || risk.equals("") || risk.toLowerCase().startsWith("unassigned"))
 					continue;
-				colors.add(defautlColors[c--]);
+				colors.add(defaultColors[c--]);
 			}
 			plotAssessment(asmts, levels, true);
 
@@ -253,56 +218,6 @@ public class Metrics extends FSActionSupport {
 		}
 	}
 
-	private void getOpenVulns2(List<Assessment> as, EntityManager em) {
-		for (Assessment a : as) {
-
-			// TODO: We need to record the assessor with the vulnerability.
-			//
-			// User hacker = a.getAssessor().get(0);
-			List<User> hackers = a.getAssessor();
-			for (User hacker : hackers) {
-				String name = hacker.getFname() + " " + hacker.getLname();
-				if (!topUsers.containsKey(name)) {
-					UserRate ur = new UserRate();
-					ur.name = name;
-					topUsers.put(name, ur);
-
-				}
-				// added to lis of overdue assessments
-				if ((a.getCompleted() == null || a.getCompleted().getTime() == 0)
-						&& a.getEnd().getTime() < past7days.getTimeInMillis())
-					pditems++;
-
-				if (a.getCompleted() != null) {
-
-					/*
-					 * List<Vulnerability> vulns = (List<Vulnerability>)em
-					 * .createQuery("from Vulnerability where assessmentId = :id")
-					 * .setParameter("id", a.getId()) .getResultList();
-					 */
-
-					for (Vulnerability v : a.getVulns()) {
-						v.updateRiskLevels();
-
-						if (v.getOverall() == 5) {
-							this.criticalN++;
-							topUsers.get(name).findings++;
-							addVulntoList(v);
-
-						} else if (v.getOverall() == 4) {
-							this.highN++;
-							topUsers.get(name).findings++;
-							addVulntoList(v);
-						} else if (v.getOverall() == 3)
-							this.mediumN++;
-						else if (v.getOverall() == 2)
-							this.lowN++;
-					}
-				}
-			}
-		}
-
-	}
 
 	private void addVulntoList(Vulnerability v) {
 		String name = "";
@@ -364,7 +279,7 @@ public class Metrics extends FSActionSupport {
 	public Map<String, Integer> getTopVulns() {
 		int i = 0;
 
-		List<String> delete = new ArrayList();
+		List<String> delete = new ArrayList<>();
 		for (String key : this.topVulns.keySet()) {
 			if (i++ > 10)
 				delete.add(key);
@@ -404,11 +319,6 @@ public class Metrics extends FSActionSupport {
 		return pastDueVulns;
 	}
 
-	public class UserRate {
-		public int findings = 0;
-		public String name;
-
-	}
 
 	public String getAction() {
 		return action;
@@ -478,23 +388,21 @@ public class Metrics extends FSActionSupport {
 		this.campId = campId;
 	}
 
-	private static LinkedHashMap<String, Integer> sortByComparator(Map<String, Integer> unsortMap,
-			final boolean order) {
+	private LinkedHashMap<String, Integer> sortByComparator(Map<String, Integer> unsortMap, boolean order) {
 
-		List<Entry<String, Integer>> list = new ArrayList();
+		List<Entry<String, Integer>> list = new ArrayList<>();
 		list.addAll(unsortMap.entrySet());
 
 		// Sorting the list based on values
-		Collections.sort(list, new Comparator<Entry<String, Integer>>() {
-			public int compare(Entry<String, Integer> o1, Entry<String, Integer> o2) {
-				if (order) {
-					return o1.getValue().compareTo(o2.getValue());
-				} else {
-					return o2.getValue().compareTo(o1.getValue());
-
-				}
-			}
-		});
+		if(order) {
+			Collections.sort(list, 
+				(Entry<String, Integer> o1, Entry<String, Integer> o2) -> o1.getValue().compareTo(o2.getValue())
+			);
+		}else {
+			Collections.sort(list, 
+				(Entry<String, Integer> o1, Entry<String, Integer> o2) -> o2.getValue().compareTo(o1.getValue())
+			);
+		}
 
 		// Maintaining insertion order with the help of LinkedList
 		LinkedHashMap<String, Integer> sortedMap = new LinkedHashMap<String, Integer>();
@@ -507,6 +415,42 @@ public class Metrics extends FSActionSupport {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+	
+	private void plotAssessment(List<Assessment> asmts, List<RiskLevel> levels, boolean isCamp) {
+		for (Assessment a : asmts) {
+			if (a.getCompleted() == null || a.getCompleted().getTime() == (new Date(0)).getTime()) {
+				continue;
+			}
+			SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+			Date chartDate = a.getCompleted() == null ? a.getEnd() : a.getCompleted();
+			if (isCamp) {
+				dates += ", [\"" + sdf.format(chartDate) + "\",\"" + a.getAppId() + "\",\" " + a.getName() + "\"]";
+			} else {
+				dates += ", \"" + sdf.format(chartDate) + "\"";
+			}
+			HashMap<Integer, Integer> count = new HashMap();
+			for (RiskLevel level : levels) {
+				count.put(level.getRiskId(), 0);
+			}
+			for (Vulnerability v : a.getVulns()) {
+				if (v.getOverall() == null || v.getOverall() == -1l)
+					continue;
+				int c = count.get(v.getOverall().intValue());
+				count.put(v.getOverall().intValue(), c + 1);
+			}
+
+			for (RiskLevel level : levels) {
+
+				String risk = level.getRisk();
+				if (risk == null || risk.equals("") || risk.toLowerCase().startsWith("unassigned"))
+					continue;
+				String array = data.get(level.getRiskId()) == null ? "" : data.get(level.getRiskId());
+				data.put(level.getRiskId(), array + "," + count.get(level.getRiskId()));
+
+			}
+
+		}
 	}
 
 }

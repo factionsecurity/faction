@@ -14,11 +14,12 @@ import com.fuse.dao.HibHelper;
 import com.fuse.dao.Verification;
 import com.fuse.dao.VerificationItem;
 import com.fuse.dao.Vulnerability;
+import com.fuse.utils.vItem;
 
 
 @Namespace("/portal")
 @Result(name="success",location="/WEB-INF/jsp/client/Client.jsp")
-public class ClientPortal extends FSActionSupport{
+public class ClientWorkspace extends FSActionSupport{
 	
 	private String accessKey="";
 	private List<Vulnerability>vulns = new ArrayList();
@@ -167,12 +168,6 @@ public class ClientPortal extends FSActionSupport{
 		this.end = end;
 	}
 
-
-
-	public class vItem{
-		public Vulnerability v;
-		public String status;
-	}
 
 	public List<vItem> getVitems() {
 		return vitems;

@@ -1,16 +1,7 @@
 package com.fuse.actions.assessment;
 
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -18,7 +9,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
@@ -40,8 +30,6 @@ import com.fuse.dao.Comment;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.Files;
-import com.fuse.dao.HibHelper;
-import com.fuse.dao.Note;
 import com.fuse.dao.Notification;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.RiskLevel;
@@ -55,7 +43,7 @@ import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
 import com.fuse.utils.FSUtils;
-import com.opensymphony.xwork2.ActionContext;
+import com.fuse.utils.History;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/assessment/Assessment.jsp", params = { "contentType", "text/html" })
@@ -679,73 +667,6 @@ public class AssessmentView extends FSActionSupport {
 		return summaryTemplates;
 	}
 
-	private class History {
-		private Date opened;
-		private Date closed;
-		private String vuln;
-		private String report;
-		private String severity;
-		private String assessor;
-
-		public History(Date opened, Date closed, String vuln, String Report, String severity, String assessor) {
-			this.opened = opened;
-			this.closed = closed;
-			this.vuln = vuln;
-			this.report = Report != null ? Report.replace("/tmp/", "") : null;
-			this.severity = severity;
-			this.assessor = assessor;
-		}
-
-		public Date getOpened() {
-			return opened;
-		}
-
-		public void setOpened(Date opened) {
-			this.opened = opened;
-		}
-
-		public Date getClosed() {
-			return closed;
-		}
-
-		public void setClosed(Date closed) {
-			this.closed = closed;
-		}
-
-		public String getVuln() {
-			return vuln;
-		}
-
-		public void setVuln(String vuln) {
-			this.vuln = vuln;
-		}
-
-		public String getReport() {
-			return report;
-		}
-
-		public void setReport(String report) {
-			this.report = report;
-		}
-
-		public String getSeverity() {
-			return severity;
-		}
-
-		public void setSeverity(String severity) {
-			this.severity = severity;
-		}
-
-		public String getAssessor() {
-			return assessor;
-		}
-
-		public void setAssessor(String assessor) {
-			this.assessor = assessor;
-		}
-		
-
-	}
 
 	private List<History> createHistory(Assessment a, List<RiskLevel> levels) {
 		List<Vulnerability> vulns = VulnerabilityQueries.getVulnerabilitiesByAppId(em, a.getAppId(), levels, true);

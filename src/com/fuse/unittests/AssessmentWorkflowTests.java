@@ -1,4 +1,4 @@
-package com.fuse.actions.unittests;
+package com.fuse.unittests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -411,7 +411,6 @@ public class AssessmentWorkflowTests extends StrutsJUnit4TestCase {
 		av.setUpdate("true");
 		av.setSummary(uuid);
 		av.setRiskAnalysis(uuid);
-		av.setNotes(uuid);
 		result = proxy.execute();
 		assertEquals("Assessment Info was not added Successfully", "successJson", result);
 

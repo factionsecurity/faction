@@ -38,30 +38,6 @@ public class UserEditLocks extends FSActionSupport {
 	 * Summary page user Locks
 	 */
 
-	@Action(value = "/portal/summary/check/status", results = {
-			@Result(name = "success202", type = "httpheader", params = { "status", "202" }),
-			@Result(name = "success200", location = "/WEB-INF/jsp/assessment/SuccessMessageJSON.jsp")
-
-	})
-	public String checkStatus() {
-		if (!(this.isAcassessor() || this.isAcmanager())) {
-			return LOGIN;
-		}
-		HttpSession session = ServletActionContext.getRequest().getSession();
-		Date lastDate = (Date) session.getAttribute("reportDate");
-		if (lastDate == null)
-			return ERROR;
-
-		Long asmtId = (Long) this.getSession("asmtid");
-		Assessment assessment = em.find(Assessment.class, asmtId);
-		if (assessment.getFinalReport() == null || assessment.getFinalReport().getGentime().equals(lastDate)) {
-			return "success202";
-		}
-		this._message = "" + assessment.getFinalReport().getGentime();
-
-		return "success200";
-
-	}
 
 	@Action(value = "/portal/summary/check/locks", results = {
 			@Result(name = "lockSuccess", location = "/WEB-INF/jsp/assessment/lockSuccess.jsp"),

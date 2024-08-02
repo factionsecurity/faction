@@ -14,6 +14,7 @@ import com.fuse.dao.Assessment;
 import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.VulnerabilityQueries;
+import com.fuse.utils.Combo;
 import com.fuse.utils.FSUtils;
 import com.mongodb.BasicDBObject;
 
@@ -267,13 +268,6 @@ public class OpenVulns extends FSActionSupport {
 
 	public List<Combo> getCombos() {
 		return combos;
-	}
-
-	public class Combo {
-		public Assessment assessment;
-		public Vulnerability vuln;
-		public boolean isVer = false;
-
 	}
 
 	public String getCrit() {
