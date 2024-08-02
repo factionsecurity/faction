@@ -5166,3 +5166,7 @@ code {
 .badge-yellow {
 	background-color: #f39c12;
 }
+#noteHistory{
+	background-color: #12101073;
+	padding: 10px;
+}

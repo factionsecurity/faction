@@ -60,7 +60,6 @@ public class ReportGenThread implements Runnable{
 	@Override
 	public void run() {
 		
-		System.out.println("Generating Report");
 		EntityManager em = HibHelper.getInstance().getEM();
 		Long id = this.asmt.getId();
 		try{
@@ -73,8 +72,6 @@ public class ReportGenThread implements Runnable{
 			this.report = docx;
 			em.close();
 			em = HibHelper.getInstance().getEM();
-			System.out.println("Finished Generating Report");
-			System.out.println("Update Notifications");
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
 			Assessment a = em.find(Assessment.class, id);
@@ -120,7 +117,6 @@ public class ReportGenThread implements Runnable{
 				
 			}
 			HibHelper.getInstance().commit();
-			System.out.println("Notifications Sent");
 		}catch(Exception ex){
 			ex.printStackTrace();
 		}finally{

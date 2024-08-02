@@ -264,13 +264,17 @@ public class AssessmentQueries {
 			.setParameter("id",id).getResultList();
 	}
 	public static boolean checkForReportTemplates(EntityManager em, Assessment assessment){
+		this.checkForReportTemplates(em, assessment, false){
+	}
+	public static boolean checkForReportTemplates(EntityManager em, Assessment assessment, Boolean retest){
 		List<ReportTemplates> templates = em.createQuery("from ReportTemplates").getResultList();
 		boolean found=false;
 		for(ReportTemplates template : templates){
 			//TODO: fix lazy loading issue
 			try {
 				if(template.getType().getId() == assessment.getType().getId() &&
-						template.getTeam().getId() == assessment.getAssessor().get(0).getTeam().getId()) {
+						template.getTeam().getId() == assessment.getAssessor().get(0).getTeam().getId() &&
+						template.isRetest() == retest) {
 					found = true;
 				}
 			}catch(Exception ex) {
