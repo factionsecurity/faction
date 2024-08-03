@@ -264,7 +264,7 @@ public class AssessmentQueries {
 			.setParameter("id",id).getResultList();
 	}
 	public static boolean checkForReportTemplates(EntityManager em, Assessment assessment){
-		this.checkForReportTemplates(em, assessment, false){
+		return checkForReportTemplates(em, assessment, false);
 	}
 	public static boolean checkForReportTemplates(EntityManager em, Assessment assessment, Boolean retest){
 		List<ReportTemplates> templates = em.createQuery("from ReportTemplates").getResultList();

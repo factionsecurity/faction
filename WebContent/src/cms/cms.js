@@ -27,7 +27,7 @@ $(function(){
         fetch(`checkReportValues?teamid=${team}&typeid=${type}`).then(resp => {
 			if(resp.status == 202){
         		let qs = "test=test&team="+team + "&type="+type+"&retest=" + retest;
-        		let win = window.open('../service/Report.pdf?'+ qs, '_blank');
+        		let win = window.open('DownloadReport?'+ qs, '_blank');
 			}else{
 				$.alert(
 						{

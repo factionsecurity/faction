@@ -409,11 +409,11 @@ $(function() {
 	$("#genreport").click(function() {
 		$("#genreport").html("<div class='throbber-loader'>Loading…</div>");
 		$(".reportLoading").loading({ overlay: true });
-		$.get("Assessment?action=genreport&id=" + $("#appid")[0].value, function(resp) {
+		$.get("GenReport?aid=" + $("#appid")[0].value, function(resp) {
 			global._token = resp.token;
 			clearInterval(checkStatus);
 			checkStatus = setInterval(function() {
-				$.get("CheckStatus").done(function(resp, _message, http) {
+				$.get(`CheckStatus?aid=${$("#appid")[0].value}`).done(function(resp, _message, http) {
 					if (http.status != 202) {
 						const updatedDate = resp.message;
 						$("#updatedDate").html(updatedDate);
@@ -432,7 +432,7 @@ $(function() {
 	});
 	$("#dlreport").click(function() {
 		var id = $(this).attr("rpt");
-		var win = window.open('../service/Report.pdf?id=' + $("#appid")[0].value.replace("app", ""), '_blank');
+		var win = window.open('DownloadReport?aid=' + $("#appid")[0].value.replace("app", ""), '_blank');
 	});
 	$("#prsubmit").click(function() {
 		$(".content").loading({ overlay: true, base: 0.3 });
