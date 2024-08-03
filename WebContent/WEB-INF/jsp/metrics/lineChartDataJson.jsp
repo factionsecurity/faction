@@ -46,7 +46,7 @@
 		"name" : "${a.name}",
 		"cname" : "${a.campaign.name}",
 		"users" : "<s:iterator value="assessor" status="ustat"><s:if test="#ustat.index != 0">, </s:if>${fname} ${lname}</s:iterator>", 
-		"report" : "<s:if test="#a.finalReport != null"><a href='../service/Report.pdf?guid=${a.finalReport.filename}'>Report</a></s:if>",
+		"report" : "<s:if test="#a.finalReport != null"><a href='DownloadReport?guid=${a.finalReport.filename}'>Report</a></s:if>",
 		"buttons": "<i style='background:#00a65a' class='fa fa-bug circle' onclick='showVulns(this)'></i>&nbsp;<i style='background:#00c0ef' class='glyphicon glyphicon-th-list circle' onclick='showAssessment(this)'></i>",
 		"id": "${a.id}",
 		"vulns" : [
