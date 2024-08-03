@@ -43,18 +43,18 @@
 	<s:if test="#astat.index != 0">,</s:if>{ "start" : "<s:date name="start" format="yyyy-MM-dd"/>", 
 		"end" : "<s:date name="completed" format="yyyy-MM-dd" />",
 		"appid" : "${a.appId}", 
-		"name" : "${a.name}",
-		"cname" : "${a.campaign.name}",
-		"users" : "<s:iterator value="assessor" status="ustat"><s:if test="#ustat.index != 0">, </s:if>${fname} ${lname}</s:iterator>", 
+		"name" : "<s:property value="name"/>",
+		"cname" : "<s:property value="campaign.name"/>",
+		"users" : "<s:iterator value="assessor" status="ustat"><s:if test="#ustat.index != 0">, </s:if><s:property value="fname"/> <s:property value="lname"/></s:iterator>", 
 		"report" : "<s:if test="#a.finalReport != null"><a href='DownloadReport?guid=${a.finalReport.filename}'>Report</a></s:if>",
 		"buttons": "<i style='background:#00a65a' class='fa fa-bug circle' onclick='showVulns(this)'></i>&nbsp;<i style='background:#00c0ef' class='glyphicon glyphicon-th-list circle' onclick='showAssessment(this)'></i>",
 		"id": "${a.id}",
 		"vulns" : [
 		<s:iterator value="vulns" var="v" status="vstat">${v.updateRiskLevels()}
 		<s:if test="#vstat.index != 0">,</s:if>{
-		"name": "${v.name}", 
-		"severity" : "${v.overallStr}",
-		"tracking" : "${tracking}", 
+		"name": "<s:property value="name"/>", 
+		"severity" : "<s:property value="overallStr"/>",
+		"tracking" : "<s:property value="tracking"/>", 
 		"start" : "<s:date name="opened" format="yyyy-MM-dd"/>", 
 		"end" : "<s:date name="closed" format="yyyy-MM-dd"/>"
 		} 

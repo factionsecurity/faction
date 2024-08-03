@@ -58,7 +58,9 @@ public class Reports extends FSActionSupport {
 			aid = vuln.getAssessorId();
 		}
 		assessment = em.find(Assessment.class, aid);
-		if (assessment != null && assessment.getCompleted() != null)
+		
+		// Prevent generating a report on a finalized assessment
+		if (assessment != null && assessment.getCompleted() != null && (retest == null || retest == false))
 			return "errorJson";
 
 		if (!AssessmentQueries.checkForReportTemplates(em, assessment, retest)) {

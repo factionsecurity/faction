@@ -555,11 +555,11 @@ $(function() {
 	$("#genRetest").click(function() {
 		$("#genRetest").html("<div class='throbber-loader'>Loading…</div>");
 		$(".reportLoading").loading({ overlay: true });
-		$.get("Assessment?action=genreport&retest=true&id=" + defaultAssessmentId, function(resp) {
+		$.get("GenReport?retest=true&aid=" + defaultAssessmentId, function(resp) {
 			global._token = resp.token;
 			clearInterval(checkStatus);
 			checkStatus = setInterval(function() {
-				$.get("CheckStatus").done(function(resp, _message, http) {
+				$.get(`CheckStatus?aid=${defaultAssessmentId}&retest=true`).done(function(resp, _message, http) {
 					if (http.status != 202) {
 						const updatedDate = resp.message;
 						$("#updatedDate").html(updatedDate);
@@ -567,7 +567,7 @@ $(function() {
 						clearLoading($(".reportLoading")[0])
 						$("#genreport").html("Generate Report");
 						if (typeof $("#dlreport").attr('id') == 'undefined') {
-							location.reload();
+							//location.reload();
 						}
 					}
 				});
