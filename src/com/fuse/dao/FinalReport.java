@@ -7,6 +7,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.TableGenerator;
+import javax.persistence.Transient;
 
 @Entity
 public class FinalReport{
@@ -25,6 +26,7 @@ public class FinalReport{
 	private String filename;
 	private String base64EncodedPdf;
 	private Date gentime;
+	private Boolean retest;
 	public Long getId() {
 		return id;
 	}
@@ -48,6 +50,14 @@ public class FinalReport{
 	}
 	public void setGentime(Date gentime) {
 		this.gentime = gentime;
+	}
+	@Transient
+	public Boolean getRetest() {
+		return retest;
+	}
+	@Transient
+	public void setRetest(Boolean retest) {
+		this.retest = retest;
 	}
 	
 	

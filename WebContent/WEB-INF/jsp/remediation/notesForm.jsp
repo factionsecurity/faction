@@ -57,6 +57,25 @@
 					<br>
 				<bs:row>
 					<bs:mco colsize="12">
+						<bs:box type="primary" title="Reports">
+						<table class="table table-striped table-hover dataTable no-footer">
+						<tr><th>Report Name</th><th>Type</th><th>Created</th></tr>
+						<s:iterator value="reports" var="r" >
+						<tr>
+							<td><s:property value="appId"/> - <s:property value="appName"/> Report.docx</td>
+							<td><s:property value="appType"/> <s:if test="retest == true">Retest</s:if></td>
+							<td><s:date name="gentime" format="MM-dd-yyyy hh:mm:ss"/></td>
+						</tr>
+						</s:iterator>
+						</table>
+						</bs:box>
+					</bs:mco>
+				</bs:row>
+					<br>
+					<hr>
+					<br>
+				<bs:row>
+					<bs:mco colsize="12">
 						<bs:box type="primary" title="Note history">
 							<div id="noteHistory"></div>
 						</bs:box>

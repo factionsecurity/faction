@@ -15,6 +15,7 @@ import org.apache.struts2.convention.annotation.Result;
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.Files;
+import com.fuse.dao.FinalReport;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
@@ -28,6 +29,7 @@ public class VerificationEdit extends FSActionSupport {
 
 	private String appId;
 	private String appName;
+	private String appType;
 	private Date start;
 	private Date end;
 	private Long remId;
@@ -49,6 +51,7 @@ public class VerificationEdit extends FSActionSupport {
 	private List<RiskLevel> levels = new ArrayList();
 	private Boolean isPass;
 	private String badges;
+	private List<FinalReport>reports = new ArrayList<>(); 
 
 	@Action(value = "VerificationEdit")
 	public String execute() {
@@ -58,6 +61,7 @@ public class VerificationEdit extends FSActionSupport {
 		Verification v = em.find(Verification.class, searchId);
 		this.appId = v.getAssessment().getAppId();
 		this.appName = v.getAssessment().getName();
+		this.appType = v.getAssessment().getType().getType();
 		this.start = v.getStart() == null ? new Date(0) : v.getStart();
 		SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
 		this.startStr = sdf.format(this.start);
@@ -73,6 +77,15 @@ public class VerificationEdit extends FSActionSupport {
 		this.files = (List<Files>) em.createQuery("from Files where entityId = :eid and type = :type")
 				.setParameter("eid", this.vulnId).setParameter("type", Files.VERIFICATION).getResultList();
 		this.isPass = v.getCompleted().getTime() != 0? v.getVerificationItems().get(0).isPass(): null;
+		
+		if(v.getAssessment().getFinalReport() != null) {
+			reports.add(v.getAssessment().getFinalReport());
+		}
+		if(v.getAssessment().getRetestReport() != null) {
+			FinalReport retestReport = v.getAssessment().getRetestReport();
+			retestReport.setRetest(true);
+			reports.add(retestReport);
+		}
 
 		List<User> users = em.createQuery("from User").getResultList();
 		for (User u : users) {
@@ -264,6 +277,12 @@ public class VerificationEdit extends FSActionSupport {
 	
 	public String getBadges() {
 		return this.badges;
+	}
+	public String getAppType() {
+		return this.appType;
+	}
+	public List<FinalReport> getReports(){
+		return this.reports;
 	}
 
 }
