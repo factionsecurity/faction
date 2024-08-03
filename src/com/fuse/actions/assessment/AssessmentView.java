@@ -147,33 +147,7 @@ public class AssessmentView extends FSActionSupport {
 			assessment.upgradeNotes(em);
 		}
 
-		if (this.action != null && this.action.equals("genreport")) {
-
-			if (assessment != null && assessment.getCompleted() != null)
-				return "errorJson";
-
-			if (!AssessmentQueries.checkForReportTemplates(em, assessment)) {
-				this._message = "There are no report templates for this assessment. Contact your administrator.";
-				return this.ERRORJSON;
-			}
-
-			String host = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-			host += request.getContextPath();
-
-			HttpSession session = ServletActionContext.getRequest().getSession();
-			if (assessment.getFinalReport() != null && assessment.getFinalReport().getGentime() != null) {
-				session.setAttribute("reportDate", assessment.getFinalReport().getGentime());
-			} else {
-				Calendar dummy = new GregorianCalendar(1980, 1, 1); // Dummy Data
-				session.setAttribute("reportDate", dummy.getTime());
-			}
-
-			ReportGenThread reportThread = new ReportGenThread(host, assessment, assessment.getAssessor());
-			TaskQueueExecutor.getInstance().execute(reportThread);
-
-			return this.SUCCESSJSON;
-
-		} else if (this.action != null && this.action.equals("finalize")) {
+		if (this.action != null && this.action.equals("finalize")) {
 			if (!this.testToken(false))
 				return this.ERRORJSON;
 			
