@@ -65,10 +65,7 @@ public class ReportGenThread implements Runnable{
 		try{
 			GenerateReport genReport = new GenerateReport();
 			String docx = "";
-			if(isRetest)
-				docx = genReport.generateRetestDocxReport(id, em,"");
-			else
-				docx = genReport.generateDocxReport(id, em);
+			docx = genReport.generateDocxReport(id, em, isRetest);
 			this.report = docx;
 			em.close();
 			em = HibHelper.getInstance().getEM();

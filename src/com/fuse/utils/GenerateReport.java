@@ -115,10 +115,6 @@ public class GenerateReport {
 	public String generateRetestDocxReport(Long id, EntityManager em, String host) {
 		String guid = UUID.randomUUID().toString();
 
-		Properties props = System.getProperties();
-		String debug = (String) props.get("fusevt.debug");
-
-		// String debug = "false";
 
 		ReportOptions RPO = FSUtils.getOrCreateReportOptionsIfNotExist(em);
 
@@ -160,12 +156,12 @@ public class GenerateReport {
 		}
 		return null;
 	}
-
 	public String generateDocxReport(Long id, EntityManager em) {
+		
+		return this.generateDocxReport(id, em, false);
+	}
 
-		Properties props = System.getProperties();
-
-		String debug = (String) props.get("fusevt.debug");
+	public String generateDocxReport(Long id, EntityManager em, Boolean isRetest) {
 
 		ReportOptions RPO = FSUtils.getOrCreateReportOptionsIfNotExist(em);
 
@@ -184,7 +180,7 @@ public class GenerateReport {
 			}
 
 			String mongoQuery = "{ 'type_id' : " + a.getType().getId() + ", 'team_id' : "
-					+ a.getAssessor().get(0).getTeam().getId() + ", 'retest' : false }";
+					+ a.getAssessor().get(0).getTeam().getId() + ", 'retest' : " + isRetest +" }";
 
 			ReportTemplates base = (ReportTemplates) em.createNativeQuery(mongoQuery, ReportTemplates.class)
 					.getSingleResult();
