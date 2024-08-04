@@ -32,7 +32,6 @@ $(function() {
 			previewStyle: 'vertical',
 			height: 'auto',
 			autofocus: false,
-			height: '560px',
 			plugins: [colorSyntax, tableMergedCell]
 		});
 		editor.hide();
@@ -51,13 +50,12 @@ $(function() {
 
 	$("#vuln_note_select").select2({ disabled: 'readonly' });
 	
-	let notes =  createEditor("notes")
-	let remNotes= createEditor("RemNotes")
-	let chSevNotes= createEditor("chSevNotes")
-	let nprodNotes= createEditor("nprodNotes")
-	console.log(nprodNotes)
-	let prodNotes= createEditor("prodNotes")
-	let verNotes= createEditor("verNotes")
+	let notes =  createEditor("notes");
+	let remNotes= createEditor("RemNotes");
+	let chSevNotes= createEditor("chSevNotes");
+	let nprodNotes = createEditor("nprodNotes");
+	let prodNotes = createEditor("prodNotes");
+	let cancelVerNotes= createEditor("cancelVerNotes");
 
 
 	$("#files").fileinput({
@@ -355,11 +353,6 @@ $(function() {
 		});
 	}
 	prepopulateCalendar();
-	/*
-		 vid="<s:property value="vulnId"/>";
-		 vName = "";
-		 appId="<s:property value="appId"/>";
-		 verId="<s:property value="searchId"/>"; */
 	$('#vulntable').DataTable();
 
 
@@ -391,11 +384,6 @@ $(function() {
 			});
 		});
 	});
-	/* TODO: Can Remove if icheck is not required
-		$('input[type="checkbox"].minimal, input[type="radio"].minimal').iCheck({
-			checkboxClass: 'icheckbox_minimal-blue',
-			radioClass: 'iradio_minimal-blue'
-		});*/
 
 	$('#vulntable tbody').on('click', 'tr', function() {
 		if ($(this).hasClass('selected')) {
@@ -436,7 +424,6 @@ $(function() {
 		}
 	});
 	/*** Notes section ***/
-	//CKEDITOR.replace('RemNotes');
 	$("[id^=dl-]").click(function() {
 		let id = $(this).attr("id").replace("dl-", "");
 		document.getElementById('dlFrame').src = "../service/fileUpload?category=verification&id=" + id;
@@ -447,21 +434,17 @@ $(function() {
 	/*** Actions  ***/
 	$("#historyTable").DataTable();
 	
-	$("#chStart").click(function() {
-		//vopen=$(this).attr("id");
-		//vopen=vopen.replace("open","");
-		dtTmp = $('#vulntable').DataTable().cell($(el).parent());
-		let cell = dtTmp.data();
-		cell = cell.split("<")[0];
-		let vdate = cell;
-		$("#openDateCal").val(vdate);
-		$("#changeDateModal").modal('show');
-
-	});
 
 	$("#closeVer").click(function() {
 		$("#closeVerModal").modal('show');
+		cancelVerNotes.reset();
 
+	});
+	$("#closeDev").click(function() {
+		$("#nprodModal").modal('show');
+	});
+	$("#closeProd").click(function() {
+		$("#prodModal").modal('show');
 	});
 	$("#chSev").click(function() {
 		$("#sevModal").modal('show');
@@ -469,21 +452,14 @@ $(function() {
 		$("#newImpact").select2("val", defaultImpact);
 		$("#newLike").select2("val", defaultLikelyhood);
 		$("#vulnName").html(`<b>${defaultAppId} - ${defaultVulnName}</b>`);
+		chSevNotes.reset();
 
 
-	});
-	$("#closeDev").click(function() {
-		$("#nprodModal").modal('show');
-		//CKEDITOR.replace("nprodNotes");
-	});
-	$("#closeProd").click(function() {
-		$("#prodModal").modal('show');
-		//CKEDITOR.replace("nprodNotes");
 	});
 	$("#noteSave").click(function() {
 		let newNote = remNotes.getHTML();
 		let data = "action=insertNote";
-		data += `&note=${newNote}`;
+		data += `&note=${encodeURIComponent(newNote)}`;
 		data += `&vulnId=${defaultVulnId}`;
 		$.post("RemVulnData", data).done(function() {
 			refreshNotes();
@@ -494,7 +470,7 @@ $(function() {
 	$("#saveSev").click(function() {
 		let newNote = chSevNotes.getHTML();
 		let data = "action=changeSev";
-		data += `&note=${newNote}`;
+		data += `&note=${encodeURIComponent(newNote)}`;
 		data += `&vulnId=${defaultVulnId}`;
 		data += "&severity=" + $("#newSev").val();
 		data += "&impact=" + $("#newImpact").val();
@@ -511,7 +487,7 @@ $(function() {
 	$("#saveNprod").click(function() {
 		let newNote = nprodNotes.getHTML();
 		let data = "action=closeInDev";
-		data += `&note=${newNote}`;
+		data += `&note=${encodeURIComponent(newNote)}`;
 		data += `&vulnId=${defaultVulnId}`;
 		data += `&verId=${defaultSearchId}`;
 		$.post("RemVulnData", data).done(function() {
@@ -524,7 +500,7 @@ $(function() {
 	$("#saveProd").click(function() {
 		let newNote = prodNotes.getHTML();
 		let data = "action=closeInProd";
-		data += `&note=${newNote}`;
+		data += `&note=${encodeURIComponent(newNote)}`;
 		data += `&vulnId=${defaultVulnId}`;
 		data += `&verId=${defaultSearchId}`;
 		$.post("RemVulnData", data).done(function() {
@@ -536,9 +512,9 @@ $(function() {
 	});
 	//cancel the verification
 	$("#closeVerBtn").click(function() {
-		let newNote = verNotes.getHTML();
+		let newNote = cancelVerNotes.getHTML();
 		let data = "action=closeVerification";
-		data += `&note=${newNote}`;
+		data += `&note=${encodeURIComponent(newNote)}`;
 		data += `&vulnId=${defaultVulnId}`;
 		data += `&verId=${defaultSearchId}`;
 		$.post("RemVulnData", data).done(function() {
@@ -552,9 +528,8 @@ $(function() {
 	refreshNotes();
 	
 	let checkStatus = {};
-	$("#genRetest").click(function() {
-		$("#genRetest").html("<div class='throbber-loader'>Loading…</div>");
-		$(".reportLoading").loading({ overlay: true });
+	$(".genReport").click(function() {
+		$("#retestRow").html("<td colspan='4'><div class='throbber-loader'>Loading…</div></td>");
 		$.get("GenReport?retest=true&aid=" + defaultAssessmentId, function(resp) {
 			global._token = resp.token;
 			clearInterval(checkStatus);
@@ -564,11 +539,8 @@ $(function() {
 						const updatedDate = resp.message;
 						$("#updatedDate").html(updatedDate);
 						clearInterval(checkStatus);
-						clearLoading($(".reportLoading")[0])
-						$("#genreport").html("Generate Report");
-						if (typeof $("#dlreport").attr('id') == 'undefined') {
-							//location.reload();
-						}
+						window.location.href="#actions";
+						window.location.reload();
 					}
 				});
 			}, 2000);
@@ -603,3 +575,10 @@ $(function() {
 	}
 });
 
+$(function() {
+
+	var url = document.location.toString();
+	if (url.match('#')) {
+		$('.nav-tabs a[href="' + location.hash + '"]').tab('show');
+	}
+	});

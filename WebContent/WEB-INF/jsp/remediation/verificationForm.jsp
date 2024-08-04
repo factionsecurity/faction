@@ -20,8 +20,8 @@
 	  <!--  Add Notes and Actions section -->
 	 <bs:row>
 	 	<bs:mco colsize="12">
-	 		<label>Verification Notes:</label>
-            <div id="notes" name="notes" rows="10" cols="80"> 
+	 		<label>Verification Scope:</label>
+            <div id="notes" name="notes"> 
             	   <s:property value="note"/>            
             </div>
 	 	</bs:mco>

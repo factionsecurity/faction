@@ -13,15 +13,23 @@
 		</bs:row>
 		<bs:row>
 			<bs:mco colsize="12">
-				<label>Vulnerability Notes:</label>
-				<div id="RemNotes" name="RemNotes" rows="10" cols="80">             
+				<label>Comment:</label>
+				<div id="RemNotes" name="RemNotes">             
 		 </div>
 			</bs:mco>
 		</bs:row>
 		<br/>
 		<bs:row>
-			<bs:button color="success" size="md" colsize="3" text="Save"
+			<bs:button color="success" size="md" colsize="3" text="Submit"
 				id="noteSave"></bs:button>
+		</bs:row>
+		<br/>
+		<bs:row>
+			<bs:mco colsize="12">
+				<bs:box type="primary" title="Note history">
+					<div id="noteHistory"></div>
+				</bs:box>
+			</bs:mco>
 		</bs:row>
 	</bs:mco>
 	<bs:mco colsize="6">
@@ -29,8 +37,10 @@
 			<bs:mco colsize="12">
 				<label>Actions:</label>
 				<bs:row>
+					<s:if test="(verForm && pass != null) || !verForm">
 					<bs:button color="warning" size="md" colsize="3"
 						text="Change Start Date" id="chStart"></bs:button>
+					</s:if>
 					<bs:button color="warning" size="md" colsize="3"
 						text="Change Severity" id="chSev"></bs:button>
 						
@@ -40,44 +50,47 @@
 						<bs:button color="success" size="md" colsize="3" text="Close in Prod"
 							id="closeProd"></bs:button>
 					</s:if>
-				</bs:row>
-				<br/>
-				<bs:row>
-					<bs:button color="info" size="md" colsize="3"
-						text="Generate Retest Report" id="genRetest"></bs:button>
-					<bs:button color="info" size="md" colsize="3"
-						text="Download Retest Report" id="downloadRetest"></bs:button>
-					<s:if test="VerForm">
 					<bs:button color="danger" size="md" colsize="3"
 						text="Cancel Verification" id="closeVer"></bs:button>
-					</s:if>
 				</bs:row>
-					<br>
-					<hr>
-					<br>
+				<br/>
 				<bs:row>
 					<bs:mco colsize="12">
 						<bs:box type="primary" title="Reports">
 						<table class="table table-striped table-hover dataTable no-footer">
-						<tr><th>Report Name</th><th>Type</th><th>Created</th></tr>
+						<tr><th>Report Name</th><th>Type</th><th>Created</th><td style="width:60px"></td></tr>
 						<s:iterator value="reports" var="r" >
+						<s:if test="retest == true"><tr id="retestRow"></s:if>
+						<s:else>
 						<tr>
+						</s:else>
 							<td><s:property value="appId"/> - <s:property value="appName"/> Report.docx</td>
 							<td><s:property value="appType"/> <s:if test="retest == true">Retest</s:if></td>
 							<td><s:date name="gentime" format="MM-dd-yyyy hh:mm:ss"/></td>
+							<td>
+								<span class="vulnControl" data-guid="<s:property value="filename"/>">
+									<i class="fa fa-download"></i>
+								</span>
+								<s:if test="retest == true">
+								<span class="vulnControl genReport" >
+									<i class="fa fa-arrows-rotate"></i>
+								</span>
+								</s:if>
+							</td>
 						</tr>
 						</s:iterator>
+						<s:if test="reports.size == 1">
+						<tr id="retestRow" >
+							<td></td>
+							<td><a class="genReport">Generate a Retest Report</a></td>
+							<td></td>
+							<td>
+								<span class="vulnControl genReport" >
+									<i class="fa fa-arrows-rotate"></i>
+								</span>
+							</td>
+						</s:if>
 						</table>
-						</bs:box>
-					</bs:mco>
-				</bs:row>
-					<br>
-					<hr>
-					<br>
-				<bs:row>
-					<bs:mco colsize="12">
-						<bs:box type="primary" title="Note history">
-							<div id="noteHistory"></div>
 						</bs:box>
 					</bs:mco>
 				</bs:row>

@@ -18,7 +18,7 @@
 	padding: 10px;
 }
 
-#notes, #RemNotes, #nprodNotes, #prodNotes, #verNotes {
+#notes, #RemNotes, #nprodNotes, #prodNotes, #cancelVerNotes, #chSevNotes {
 background-color: white;
 }
 
@@ -47,9 +47,10 @@ background-color: white;
 	border-width: 0px 1px 1px 1px;
 }
 
-.sun-editor {
-	width: 100% !important;
+.btn{
+margin-top: 20px;
 }
+
 </style>
 
 <!-- Content Wrapper. Contains page content -->
@@ -67,7 +68,10 @@ background-color: white;
 		<bs:box type="info" title="Edit Verification">
 			<div class="row" >
 				<div class="col-md-12">
-					<s:property value="badges" escapeHtml="false"/>
+					<b>Assessment Id:</b> <s:property value="appId"/><br/>
+					<b>Assessment Name:</b> <s:property value="appName"/><br/>
+					<b>Tracking:</b> <s:property value="vuln.tracking"/><br/>
+					<b>Status: </b> <s:property value="badges" escapeHtml="false"/>
 				</div>
 			</div>
 			<div class="row" >
@@ -79,16 +83,16 @@ background-color: white;
 				<div class="col-md-12">
 					<div class="nav-tabs-custom">
 						<ul class="nav nav-tabs">
-							<li class="active"><a href="#tab_1" data-toggle="tab">Verification
+							<li class="active"><a href="#info" data-toggle="tab">Verification
 									Info</a></li>
-							<li><a href="#tab_2" data-toggle="tab">Notes/Actions</a></li>
+							<li><a href="#actions" data-toggle="tab">Notes/Actions</a></li>
 						</ul>
 						<div class="tab-content">
-							<div class="tab-pane active" id="tab_1">
+							<div class="tab-pane active" id="info">
 								<jsp:include page="verificationForm.jsp" />
 							</div>
 							<!-- /.tab-pane -->
-							<div class="tab-pane" id="tab_2">
+							<div class="tab-pane" id="actions">
 								<jsp:include page="notesForm.jsp" />
 							</div>
 							<!-- /.tab-pane -->
@@ -146,7 +150,7 @@ background-color: white;
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<textarea id="chSevNotes" name="chSevNotes"></textarea>
+					<div id="chSevNotes" name="chSevNotes"></div>
 				</bs:mco>
 			</bs:row>
 
@@ -217,7 +221,7 @@ background-color: white;
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<div id="verNotes" name="verNotes"></div>
+					<div id="cancelVerNotes" name="cancelVerNotes"></div>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>
