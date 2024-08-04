@@ -68,7 +68,7 @@
 							<td><s:property value="appType"/> <s:if test="retest == true">Retest</s:if></td>
 							<td><s:date name="gentime" format="MM-dd-yyyy hh:mm:ss"/></td>
 							<td>
-								<span class="vulnControl" data-guid="<s:property value="filename"/>">
+								<span class="vulnControl downloadReport" data-guid="<s:property value="filename"/>">
 									<i class="fa fa-download"></i>
 								</span>
 								<s:if test="retest == true">
