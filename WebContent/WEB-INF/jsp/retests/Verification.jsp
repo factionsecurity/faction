@@ -38,13 +38,13 @@
 					<div style="height: 140px">
 					<bs:row>
 						<s:if test="verification.assessment.type.cvss40 || verification.assessment.type.cvss31">
-							<bs:mco colsize="1">
+							<bs:mco colsize="1" style="width: 150px">
 								<div class="scoreBody" style="margin-top: 5px">
 									<h3 class="scoreBox <s:property value="verification.verificationItems[0].vulnerability.overallStr"/>" id="score"><s:property value="verification.verificationItems[0].vulnerability.cvssScore"/></h3>
 									<span class="severityBox <s:property value="verification.verificationItems[0].vulnerability.overallStr"/>" id="severity"><s:property value="verification.verificationItems[0].vulnerability.overallStr"/></span>
 								</div>
 							</bs:mco>
-							<bs:mco colsize="2">
+							<bs:mco colsize="10">
 								<span class='meta'><u>Category:</u></span><br/>
 								<span class='meta'><s:property value="verification.verificationItems[0].vulnerability.category.name"/></span><br/>
 								<br/>
@@ -114,7 +114,7 @@
 		</bs:row>
 		<bs:row>
 			<bs:mco colsize="6">
-				<bs:box type="info" title="<i class='fa fa-bug'></i> Retest Notes">
+				<bs:box type="info" title="<i class='fa fa-bug'></i> Scope">
 
 					<bs:row>
 						<bs:mco colsize="12">
