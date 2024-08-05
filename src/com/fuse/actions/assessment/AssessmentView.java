@@ -442,7 +442,7 @@ public class AssessmentView extends FSActionSupport {
 			n.setAssessorId(a.getId());
 			n.setCreated(new Date());
 			n.setMessage(
-					"Assessment <b>" + assessment.getName() + "</b> was finalized: <a href='../service/Report.pdf?guid="
+					"Assessment <b>" + assessment.getName() + "</b> was finalized: <a href='DownloadReport?guid="
 							+ assessment.getFinalReport().getFilename() + "'>Report</a>");
 			notifiers.add(n);
 		}

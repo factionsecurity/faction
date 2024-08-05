@@ -106,10 +106,10 @@ public class ReportGenThread implements Runnable{
 				if(isRetest){
 					notify.setMessage("Retest Report Created for <b>" 
 							+ a.getAppId() + " " + a.getName()
-							+"</b>: <a href='../service/Report.docx?guid=" + a.getRetestReport().getFilename() +"'>Retest Report</a>");
+							+"</b>: <a href='DownloadReport?guid=" + a.getRetestReport().getFilename() +"'>Retest Report</a>");
 				}else{
 					notify.setMessage("Report Generation Completed for <b>" +asmt.getAppId() + " - " 
-							+ asmt.getName() + "</b>: <a href='../service/Report.pdf?guid=" + a.getFinalReport().getFilename() + "'>Report</a>");
+							+ asmt.getName() + "</b>: <a href='DownloadReport?guid=" + a.getFinalReport().getFilename() + "'>Report</a>");
 				}
 				notify.setCreated(new Date());
 				em.persist(notify);
