@@ -29,7 +29,6 @@ function createEditor(id){
 				previewStyle: 'vertical',
 				height: 'auto',
 				autofocus: false,
-				height: '560px',
 				plugins: [colorSyntax, tableMergedCell]
 			});
 }
@@ -753,12 +752,76 @@ function updateSelects() {
 		$("#vuln_note_select").val(rows[0][11].vid).trigger('change.select2');
 		$("#vuln_history_select").val(rows[0][11].vid).trigger('change.select2');
 		refreshNotes(rows[0][11].vid);
-		getFiles(rows[0][11].vid)
+		getFiles(rows[0][11].vid);
+		updateReportTable(rows[0][11].reports);
+		setUpTableEvents(rows[0][11].aid);
 	}
-
-
-
 }
+function updateReportTable(reports){
+	
+	$("#reportTable").html("");
+	for(let report of reports){
+		const row = `<tr><td>${report.name}</td><td>${report.type}</td>
+					<td>${report.updated}</td>
+					<td>${getControls(report.guid, report.isRetest)}</td>
+					</tr>`
+		$("#reportTable").append(row);
+	}
+	
+	if(reports.length < 2){
+		const genReportRow = `<tr id="retestRow"><td></td><td><a class="genReport">Generate a Retest Report</a></td>
+				<td></td>
+				<td>${getControls("", true)}</td>
+				</tr>`;
+		$("#reportTable").append(genReportRow);
+			
+	}
+}
+function setUpTableEvents(assessmentId){
+	$(".downloadReport").off('click');
+	$(".genReport").off('click');
+	$(".downloadReport").on('click', function(event){
+		const guid = $(this).data("guid");
+		window.open(`DownloadReport?guid=${guid}`, "_blank");
+	})
+	
+	let checkStatus = {};
+	$(".genReport").click(function() {
+		$("#retestRow").html("<td colspan='4'><div class='throbber-loader'>Loading…</div></td>");
+		$.get("GenReport?retest=true&aid=" + assessmentId, function(resp) {
+			global._token = resp.token;
+			clearInterval(checkStatus);
+			checkStatus = setInterval(function() {
+				$.get(`CheckStatus?aid=${assessmentId}&retest=true`).done(function(resp, _message, http) {
+					if (http.status != 202) {
+						clearInterval(checkStatus);
+						window.location.href="#actions";
+						window.location.reload();
+					}
+				});
+			}, 2000);
+
+
+		});
+	});
+	
+}
+
+function getControls(guid, isRetest){
+	let controlHTML = ``;
+	if(guid != ""){
+		controlHTML += `<span class="vulnControl downloadReport" data-guid="${guid}">
+		<i class="fa fa-download"></i>
+	</span>`;
+	}
+	if(isRetest){
+		controlHTML += `<span class="vulnControl genReport" >
+			<i class="fa fa-arrows-rotate"></i>
+		</span>`;
+	}
+	return controlHTML;
+}
+
 $(function() {
 	$("#vuln_note_select").change(function(event) {
 

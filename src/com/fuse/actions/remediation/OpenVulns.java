@@ -11,6 +11,7 @@ import org.apache.struts2.convention.annotation.Result;
 
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.Assessment;
+import com.fuse.dao.FinalReport;
 import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.VulnerabilityQueries;
@@ -36,10 +37,11 @@ public class OpenVulns extends FSActionSupport {
 	private String open = "";
 	private String closed = "";
 	private String tracking = "";
-	private List<String> risk = new ArrayList();
+	private List<String> risk = new ArrayList<>();
 	private Integer start = 0;
 	private Integer length = 10;
 	private Long count;
+	private List<FinalReport>reports = new ArrayList<>();
 	
 	private String sortRule(String colNum, String dir) {
 		String direction = "1";
@@ -172,6 +174,12 @@ public class OpenVulns extends FSActionSupport {
 							break;
 						}
 					}
+					if(asmt.getFinalReport() != null) {
+						combo.getReports().add(asmt.getFinalReport());
+					}
+					if(asmt.getRetestReport() != null) {
+						combo.getReports().add(asmt.getRetestReport());
+					}
 
 					combos.add(combo);
 
@@ -205,7 +213,6 @@ public class OpenVulns extends FSActionSupport {
 			}
 		}
 
-		// em.close();
 
 		return SUCCESS;
 	}

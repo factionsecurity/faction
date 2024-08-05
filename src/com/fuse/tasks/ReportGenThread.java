@@ -75,6 +75,7 @@ public class ReportGenThread implements Runnable{
 			if(a.getFinalReport() == null && !isRetest){
 				String guid = UUID.randomUUID().toString();
 				FinalReport fr = new FinalReport();
+				fr.setRetest(false);
 				fr.setFilename(guid);
 				fr.setBase64EncodedPdf(docx);
 				fr.setGentime(new Date());
@@ -86,6 +87,7 @@ public class ReportGenThread implements Runnable{
 			}else if(isRetest && a.getRetestReport() == null){
 				String guid = UUID.randomUUID().toString();
 				FinalReport fr = new FinalReport();
+				fr.setRetest(true);
 				fr.setFilename(guid);
 				fr.setBase64EncodedPdf(docx);
 				fr.setGentime(new Date());

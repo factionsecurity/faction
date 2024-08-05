@@ -82,9 +82,7 @@ public class VerificationEdit extends FSActionSupport {
 			reports.add(v.getAssessment().getFinalReport());
 		}
 		if(v.getAssessment().getRetestReport() != null) {
-			FinalReport retestReport = v.getAssessment().getRetestReport();
-			retestReport.setRetest(true);
-			reports.add(retestReport);
+			reports.add(v.getAssessment().getRetestReport());
 		}
 
 		List<User> users = em.createQuery("from User").getResultList();

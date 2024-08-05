@@ -30,7 +30,16 @@
 		"overall" :  "${vuln.overall}",
 		"likelyhood" : "${vuln.likelyhood}",
 		"impact" : "${vuln.impact}"
-	}
+	},
+	"reports": [<s:iterator value="reports" status="stat">
+	<s:if test="!#stat.first">,</s:if>
+	{	
+		"name": "<s:property value="assessment.name"/> - <s:property value="assessment.type.type"/> <s:if test="retest == true">Retest </s:if>Report.docx", 
+		"type": "<s:property value="assessment.type.type"/> <s:if test="retest == true">Retest</s:if>", 
+		"updated": "<s:date name="gentime" format="MM-dd-yyyy hh:mm:ss"/>", 
+		"guid" : "<s:property value="filename"/>",
+		"isRetest": <s:property value="retest"/>
+	}</s:iterator>]
 }]
 </s:iterator>], 
 "recordsTotal" : ${count}, 

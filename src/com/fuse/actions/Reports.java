@@ -202,7 +202,7 @@ public class Reports extends FSActionSupport {
 
 				report = Base64.getDecoder().decode(b64Rpt.getBytes());
 
-				if (request.getParameter("retest") != null && request.getParameter("retest") != "true")
+				if (finalreport.getRetest())
 					filename = "Retest " + filename;
 				if (assessment != null)
 					filename = assessment.getName() + " - " + assessment.getType().getType() + " " + filename;

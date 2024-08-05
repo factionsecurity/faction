@@ -58,13 +58,16 @@
 					<bs:mco colsize="12">
 						<bs:box type="primary" title="Reports">
 						<table class="table table-striped table-hover dataTable no-footer">
+						<thead>
 						<tr><th>Report Name</th><th>Type</th><th>Created</th><td style="width:60px"></td></tr>
+						</thead>
+						<tbody id="reportTable">
 						<s:iterator value="reports" var="r" >
 						<s:if test="retest == true"><tr id="retestRow"></s:if>
 						<s:else>
 						<tr>
 						</s:else>
-							<td><s:property value="appId"/> - <s:property value="appName"/> Report.docx</td>
+							<td><s:property value="appName"/> - <s:property value="appType"/> <s:if test="retest == true">Retest</s:if> Report.docx</td>
 							<td><s:property value="appType"/> <s:if test="retest == true">Retest</s:if></td>
 							<td><s:date name="gentime" format="MM-dd-yyyy hh:mm:ss"/></td>
 							<td>
@@ -90,6 +93,7 @@
 								</span>
 							</td>
 						</s:if>
+						</tbody>
 						</table>
 						</bs:box>
 					</bs:mco>
