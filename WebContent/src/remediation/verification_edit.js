@@ -566,6 +566,9 @@ $(function() {
 				$("#noteHistory").append("<br><hr>");
 
 			});
+			if(notes.length == 0){
+				$("#noteHistory").html("<i>No Comments</i>");
+			}
 			$(".delete").click(function(event) {
 				event.preventDefault();
 				let gid = $(this).attr("href");

@@ -150,14 +150,42 @@
 				</bs:box>
 			</bs:mco>
 			<bs:mco colsize="3">
-				<bs:box type="info"
-					title="<i class='glyphicon glyphicon-download'></i> Supporting Files">
-					<bs:row>
-						<bs:mco colsize="12">
-							<input id="files" type="file" multiple name="file_data" />
-						</bs:mco>
-					</bs:row>
-				</bs:box>
+				<bs:row>
+					<bs:box type="info"
+						title="<i class='glyphicon glyphicon-download'></i> Supporting Files">
+						<bs:row>
+							<bs:mco colsize="12">
+								<input id="files" type="file" multiple name="file_data" />
+							</bs:mco>
+						</bs:row>
+					</bs:box>
+				</bs:row>
+				<bs:row>
+					<bs:box type="primary" title="Reports">
+					<table class="table table-striped table-hover dataTable no-footer">
+					<thead>
+					<tr><th>Report Name</th><th>Created</th><td style="width:60px"></td></tr>
+					</thead>
+					<tbody id="reportTable">
+					<s:iterator value="reports" var="r" >
+					<s:if test="retest == true"><tr id="retestRow">
+					<td>Retest Report</td>	
+					</s:if>
+					<s:else>
+					<tr><td>Assessment Report</td>
+					</s:else>
+						<td><s:date name="gentime" format="MM-dd-yyyy hh:mm:ss"/></td>
+						<td>
+							<span class="vulnControl downloadReport" data-guid="<s:property value="filename"/>">
+								<i class="fa fa-download"></i>
+							</span>
+						</td>
+					</tr>
+					</s:iterator>
+					</tbody>
+					</table>
+					</bs:box>
+				</bs:row>
 			</bs:mco>
 		</bs:row>
 

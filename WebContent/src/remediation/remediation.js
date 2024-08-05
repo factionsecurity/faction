@@ -56,7 +56,6 @@ global.genCal = function genCal() {
 		}, editable: true,
 		droppable: true, // this allows things to be dropped onto the calendar !!!
 		eventDrop: function(_event, delta) { // this function is called when something is dropped
-			console.log("dropped");
 			thedelta = delta;
 			let range = $("#reservation").val();
 			let start = new Date(range.split(" to ")[0]);
@@ -139,12 +138,9 @@ $(function() {
 		}
 		let vids = "";
 		let checkAID = $('#vulntable').DataTable().rows('.selected').data()[0][11].aid;
-		console.log("AID:" + checkAID);
 		let canContinue = true;
 		$.each($('#vulntable').DataTable().rows('.selected').data(), function(index, obj) {
-			console.log(obj);
 			vids += "&vulnids[" + index + "]=" + obj[11].vid;
-			console.log(checkAID);
 			if (obj[11].aid != checkAID) {
 				$.alert({ title: "Error", content: "All Verifications must have the same application id." });
 				canContinue = false;
@@ -153,7 +149,6 @@ $(function() {
 
 
 		});
-		console.log(canContinue)
 		if (!canContinue) {
 			return;
 		}
@@ -171,7 +166,6 @@ $(function() {
 		data += "&assessorId=" + $("#assessors").val();
 		data += "&distro=" + $("#distlist").val();
 		data += "&notes=" + encodeURIComponent(notes);
-		console.log(data);
 		$.post("Remediation", data).done(function(resp) {
 			clearLoading(".content");
 			if (resp.result == "success")
@@ -197,12 +191,10 @@ $(function() {
 		calendar.gotoDate(new Date(sdate));
 
 		$.post("Remediation", data).done(function(resp) {
-			console.log(resp);
 			$("#assessors").html("");
 			$("#assessors").append("<option class='asopt' value='-1'> - </option>");
 			let ocText = "";
 			for (let N in resp.users) {
-				console.log(N);
 				let d = resp.users[N];
 				if (d.ocount != 0)
 					ocText = " <span>[ OOO ]</span>";
@@ -221,7 +213,6 @@ $(function() {
 
 	});
 	$("#assessors").change(function() {
-		//$('#calendar').fullCalendar('removeEvents');
 		calendar.removeAllEvents();
 		//TODO:get assessments first and put on calendar
 
@@ -242,9 +233,7 @@ $(function() {
 		//$('#calendar').fullCalendar('renderEvent', copiedEventObject, true);
 		calendar.addEvent(copiedEventObject, true);
 		$.post('../services/getVerifications', 'id=' + $(this).val()).done(function(adata) {
-			//console.log(adata);
 			let json = adata;
-			console.log(json);
 			let N = json.count;
 			for (let i = 0; i < N; i++) {
 				let s = json.verifications[i][2];
@@ -253,7 +242,6 @@ $(function() {
 				let aaid = json.verifications[i][3].replace('app');
 
 				if (s != 'null' && e != 'null') {
-					console.log(s + " " + e);
 					let originalEventObject = $(this).data('eventObject');
 					let copiedEventObject = $.extend({}, originalEventObject);
 					copiedEventObject.allDay = true;
@@ -484,13 +472,11 @@ $(function() {
 				$(this).toggleClass('selected');
 				updateSelects();
 				if ($(this).hasClass('selected')) {
-					console.log("selected")
 					updateCheckbox(this, true);
 					//let cb = $(this).find("input[type='checkbox']");
 					//$(cb).attr("checked", "true");
 				} else {
 					updateCheckbox(this, false);
-					console.log("un-selected");
 					//let cb = $(this).find("input[type='checkbox']");
 					//$(cb).removeAttr("checked");
 				}
@@ -498,13 +484,11 @@ $(function() {
 		} else {
 			$(this).toggleClass('selected');
 			if ($(this).hasClass('selected')) {
-				console.log("selected")
 				updateCheckbox(this, true);
 				//let cb = $(this).find("input[type='checkbox']");
 				//$(cb).attr("checked", "true");
 			} else {
 				updateCheckbox(this, false);
-				console.log("un-selected");
 				//let cb = $(this).find("input[type='checkbox']");
 				//$(cb).removeAttr("checked");
 			}
@@ -540,7 +524,6 @@ $(function() {
 //notes
 function downloadFile(id) {
 	$("#dl-" + id).click(function() {
-		console.log("clicked");
 		let id = $(this).attr("id").replace("dl-", "");
 		document.getElementById('dlFrame').src = "../service/fileUpload?id=" + id;
 
@@ -585,7 +568,7 @@ $(function() {
 
 	});
 	$("#saveSev").click(function() {
-		let newNote = editors["chSevNotes"].getHTML();
+		let newNote = encodeURIComponent(editors["chSevNotes"].getHTML());
 		let data = "action=changeSev";
 		data += "&note=" + newNote;
 		data += "&vulnId=" + $("#vuln_note_select").val();
@@ -602,7 +585,7 @@ $(function() {
 
 	});
 	$("#saveNprod").click(function() {
-		let newNote = editors['nprodNotes'].getHTML();
+		let newNote = encodeURIComponent(editors['nprodNotes'].getHTML());
 		let data = "action=closeInDev";
 		data += "&note=" + newNote;
 		data += "&vulnId=" + $("#vuln_note_select").val();
@@ -613,7 +596,7 @@ $(function() {
 		});
 	});
 	$("#saveProd").click(function() {
-		let newNote = editors['prodNotes'].getHTML();
+		let newNote = encodeURIComponent(editors['prodNotes'].getHTML());
 		let data = "action=closeInProd";
 		data += "&note=" + newNote;
 		data += "&vulnId=" + $("#vuln_note_select").val();
@@ -633,7 +616,6 @@ function refreshNotes(thevid) {
 		editors['remNotes'].show(false);
 		notes.forEach(function(note) {
 			let decodedNote = $("<div/>").html(note.note).text();
-			console.log(decodedNote);
 			$("#noteHistory").append("<b><i class='fa fa-clock-o'></i> " + note.date + " - <i>" + note.creator + "</i></b>");
 			if (note.gid != "nodelete")
 				$("#noteHistory").append("&nbsp;&nbsp;<a class='delete' href='" + note.gid + "'>delete</a>");
@@ -641,6 +623,9 @@ function refreshNotes(thevid) {
 			$("#noteHistory").append("<br><hr>");
 
 		});
+		if(notes.length == 0){
+			$("#noteHistory").html("<i>No Comments</i>");
+		}
 		$(".delete").click(function(event) {
 			event.preventDefault();
 			let gid = $(this).attr("href");

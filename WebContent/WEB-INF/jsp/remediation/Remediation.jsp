@@ -121,19 +121,13 @@ margin-top: 20px;
 							<div class="tab-pane active" id="tab_1">
 								<jsp:include page="verificationForm.jsp" />
 							</div>
-							<!-- /.tab-pane -->
 							<div class="tab-pane" id="tab_2">
 								<jsp:include page="notesForm.jsp" />
 							</div>
-							<!-- /.tab-pane -->
 						</div>
-						<!-- /.tab-pane -->
 					</div>
-					<!-- /.tab-content -->
 				</div>
-				<!-- nav-tabs-custom -->
 			</div>
-			<!-- /.col -->
 		</bs:box>
 	</section>
 </div>

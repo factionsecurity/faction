@@ -15,7 +15,7 @@
 			<bs:mco colsize="12">
 				<label>Comment:</label>
 				<div id="RemNotes" name="RemNotes">             
-		 </div>
+		 		</div>
 			</bs:mco>
 		</bs:row>
 		<br/>

@@ -73,11 +73,11 @@ function downloadFile(id) {
 $(function() {
 	getFiles()
 
-	$("#open").click(function() {
-		const url = `../service/Report.pdf?guid=${reportName}`;
-		window.open(url, '_blank');
-	});
-
+	$(".downloadReport").on('click', function(event){
+		const guid = $(this).data("guid");
+		window.open(`DownloadReport?guid=${guid}`, "_blank");
+	})
+	
 	$("#save").click(function() {
 		let pass = $('input:radio[name=r3]:checked').val();
 		let msgText = pass == '1'? "<span style='color:green'>PASS</span>": "<span style='color:red' >FAIL</span>";
@@ -94,8 +94,7 @@ $(function() {
 					data += `&notes=${encodeURIComponent(editors["failNotes"].getHTML())}`;
 					data += `&vid=${vulnId}`;
 					data += `&ver=${verificationId}`;
-					data += "&action=submit";
-					$.post("Verifications", data).done( () => {
+					$.post("CompleteVerification", data).done( () => {
 
 						document.location = "Verifications";
 
@@ -135,69 +134,6 @@ $(function() {
 			}
 		});
 	});
-
-	$("#saved").click(function() {
-		$.confirm({
-			title: "Are you sure?",
-			content: "This will set the vulnerability state to <b>fixed</b> in the development environment. <br> <br><b>Are you sure?</b>",
-			buttons: {
-				confirm: function() {
-					let pass = $('input:radio[name=r3]:checked').val();
-
-					let data = "pass=" + pass;
-					data += `&notes=${editors["failNotes"].getHTML()}`;
-					data += `&vid=${vulnId}`;
-					data += `&ver=${verificationId}`;
-					data += "&action=submitDev"
-					$.post("Verifications", data).done( () => {
-						//document.location = "Verifications";
-						$.alert({
-							title: "Success",
-							content: "Issue is marked closed in the development environment.",
-							close: function() {
-								document.location = "Verifications";
-							}
-						});
-
-					});
-				},
-				cancel: function() { }
-			}
-		});
-	});
-	$("#savep").click(function() {
-		$.confirm({
-			title: "Are you sure?",
-			content: "This will set the vulnerability state to  <b>fixed</b> in the production environment and it will no longer be tracked. <br> <br><b>Are you sure?</b>",
-			buttons: {
-				confirm: function() {
-					let pass = $('input:radio[name=r3]:checked').val();
-
-					let data = "pass=" + pass;
-					data += `&notes=${editors["failNotes"].getHTML()}`;
-					data += `&vid=${vulnId}`;
-					data += `&ver=${verificationId}`;
-					data += "&action=submitProd"
-					$.post("Verifications", data).done( () => {
-						//document.location = "Verifications";
-						$.alert({
-							title: "Success",
-							content: "Issue is marked closed in the production environment.",
-							close: function() {
-								document.location = "Verifications";
-							}
-						});
-
-					});
-				},
-				cancel: function() { }
-			}
-
-
-		});
-
-	});
-
 
 });
 function entityDecode(encoded){
