@@ -36,6 +36,7 @@
 		<bs:row>
 			<bs:mco colsize="12">
 				<label>Actions:</label>
+				<div class="btn-actions">
 				<bs:row>
 					<s:if test="(verForm && pass != null) || !verForm">
 					<bs:button color="warning" size="md" colsize="3"
@@ -52,7 +53,8 @@
 					</s:if>
 					<bs:button color="danger" size="md" colsize="3"
 						text="Cancel Verification" id="closeVer"></bs:button>
-				</bs:row>
+				</bs:row> 
+				</div>
 				<br/>
 				<bs:row>
 					<bs:mco colsize="12">

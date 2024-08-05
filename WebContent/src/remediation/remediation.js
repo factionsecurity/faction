@@ -104,6 +104,10 @@ $(function() {
 		"startDate": new Date()
 
 	});
+	
+	
+	
+	
 	$('#openDateCal').daterangepicker({ singleDatePicker: true});
 
 

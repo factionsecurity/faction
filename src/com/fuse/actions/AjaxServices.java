@@ -194,7 +194,8 @@ public class AjaxServices extends FSActionSupport {
 				// String query = "{ 'name' : { $regex : '.*"+FSUtils.sanitizeMongo(appname) +
 				// ".*', $options : 'i'}, "
 				// + "$where: '/^"+FSUtils.sanitizeMongo(appid)+".*/.test(this.appId)'}";
-				as = FSUtils.sortUniqueAssessment(em.createNativeQuery(query, Assessment.class).getResultList());
+				as = FSUtils.sortUniqueAssessment(em.createNativeQuery(query, Assessment.class)
+						.getResultList());
 
 			} else if (!this.isNullStirng(appid)) {
 				// String query = "{ $where:
@@ -242,28 +243,30 @@ public class AjaxServices extends FSActionSupport {
 			}
 
 			JSONArray array = new JSONArray();
-			for (Assessment a : as) {
-				JSONObject json = new JSONObject();
-				json.put("appid", a.getAppId());
-				json.put("appname", a.getName());
-				json.put("type", a.getType().getId());
-				json.put("distro", a.getDistributionList());
-				json.put("remediationId", a.getRemediation().getId());
-				json.put("engId", a.getEngagement().getId());
-				json.put("remediationName", a.getRemediation().getFname() + " " + a.getRemediation().getLname());
-				json.put("campName", a.getCampaign().getName());
-				json.put("cid", a.getCampaign().getId());
-				JSONArray fields = new JSONArray();
-				if (a.getCustomFields() != null) {
-					for (CustomField cf : a.getCustomFields()) {
-						JSONObject field = new JSONObject();
-						field.put("fid", cf.getType().getId());
-						field.put("value", cf.getValue());
-						fields.add(field);
+			if(as != null) {
+				for (Assessment a : as) {
+					JSONObject json = new JSONObject();
+					json.put("appid", a.getAppId());
+					json.put("appname", a.getName());
+					json.put("type", a.getType().getId());
+					json.put("distro", a.getDistributionList());
+					json.put("remediationId", a.getRemediation().getId());
+					json.put("engId", a.getEngagement().getId());
+					json.put("remediationName", a.getRemediation().getFname() + " " + a.getRemediation().getLname());
+					json.put("campName", a.getCampaign().getName());
+					json.put("cid", a.getCampaign().getId());
+					JSONArray fields = new JSONArray();
+					if (a.getCustomFields() != null) {
+						for (CustomField cf : a.getCustomFields()) {
+							JSONObject field = new JSONObject();
+							field.put("fid", cf.getType().getId());
+							field.put("value", cf.getValue());
+							fields.add(field);
+						}
+						json.put("fields", fields);
 					}
-					json.put("fields", fields);
+					array.add(json);
 				}
-				array.add(json);
 			}
 
 			return this.jsonOutput(array.toJSONString());

@@ -498,7 +498,6 @@ $(function() {
 			});
 		},
 		onSelect: function(e, term, item) {
-				console.log("RUnning this");
 			let appid = term.split("<a> </a>")[0];
 			let appName = term.split("<a> </a>")[1];
 			let others = term.split("<a> </a>")[2];
@@ -519,7 +518,6 @@ $(function() {
 			$("#remName").val(json.remediationId).trigger("change");
 			$("[id^=cust]").val("");
 			$(json.fields).each(function(a, b) {
-				console.log("RUnning this");
 				let el = $("#cust" + b.fid)
 				if(el.type == 'checkbox' && b.value == "true"){
 					$(el).prop('checked', true);
