@@ -209,14 +209,14 @@ class VulnerablilityView {
 		this.clearLockTimeout = {};
 		$(".select2").select2();
 
-		this.vulnTable = $('#vulntable').DataTable({
+		this.vulntable = $('#vulntable').datatable({
 			"paging": false,
-			"lengthChange": false,
+			"lengthchange": false,
 			"searching": true,
 			language: { search: "" },
 			"ordering": true,
 			"info": false,
-			"autoWidth": false,
+			"autowidth": false,
 			"order": [[1, "desc"]],
 			"columns": [
 				{ width: "10px" }, //checkbox
@@ -224,12 +224,12 @@ class VulnerablilityView {
 				{ width: "10px" } //controls
 
 			],
-			columnDefs: [
+			columndefs: [
 				{ orderable: false, targets: '_all' }
 			]
 		});
 		$(window).on('resize', () => {
-			this.vulnTable.columns.adjust();
+			this.vulntable.columns.adjust();
 		});
 		this.setUpEventHandlers()
 		this.updateColors();

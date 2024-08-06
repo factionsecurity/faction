@@ -24,6 +24,7 @@ module.exports = {
 		verification_edit: path.resolve(__dirname, './src/remediation/verification_edit.js'),
 		remediation: path.resolve(__dirname, './src/remediation/remediation.js'),
 		remediation_queue: path.resolve(__dirname, './src/remediation/remediation_queue.js'),
+		remediation_schedule: path.resolve(__dirname, './src/remediation/remediation_schedule.js'),
 		verification: path.resolve(__dirname, './src/retests/verification.js'),
 		verification_queue: path.resolve(__dirname, './src/retests/verification_queue.js'),
 		ice: path.resolve(__dirname, './src/ice_patched.js'),

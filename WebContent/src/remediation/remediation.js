@@ -512,6 +512,7 @@ $(function() {
 			//$("#appname1").val(data[1]);
 			$("#distlist").val(data[11].dist);
 			vid = data[11].vid;
+			window.location = `RemediationSchedule?vulnId=${vid}`
 			aid = data[11].aid;
 			vName = data[11].name;
 			appId = data[11].appId;
