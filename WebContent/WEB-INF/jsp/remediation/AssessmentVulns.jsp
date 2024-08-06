@@ -29,7 +29,7 @@
 					</thead>
 					<tbody>
 						<s:iterator value="vulns">
-							<tr data-vulnid="${id}" data-opened="<s:date name="opened"  format="MM/dd/yyy"/>" data-severity="${overall}", class="<s:if test="vuln.id == id">selected</s:if>">
+							<tr data-vulnid="${id}" data-verid="<s:property value="controls['verId|'+id]"/>" data-opened="<s:date name="opened"  format="MM/dd/yyy"/>" data-severity="${overall}", class="<s:if test="vuln.id == id">selected</s:if>">
 								<td class="sev${overallStr}"><input type="checkbox"
 									id="ckl<s:property value="id"/>" <s:if test="vuln.id == id">checked</s:if>/></td>
 								<s:if test="assessment.type.cvss31 || assessment.type.cvss40">
@@ -39,15 +39,19 @@
 									<td data-sort="${overall}">
 								</s:else>
 								<span class="vulnName"><s:property value="name" /></span>
-								<br>
+								<br/>
 								<span class="category"> <s:property value="category.name" /></span>
-								<BR>
+								<BR/>
 								<span class="tracking"> <s:property value="tracking" /></span>
-								<BR>
+								<BR/>
 								<span class="severity"><s:property value="overallStr" /></span>
-								<BR>
+								<BR/>
 								Opened: <span><s:date name="opened"  format="MM/dd/yyy"/></span>  
 								<s:if test="closed">Closed: <span><s:date name="closed" format="MM/dd/yyyy"/></s:if></span>
+								<br/>
+								<s:iterator value="status[id]" var="msg">
+									<s:property value="msg" escapeHtml="false"/>
+								</s:iterator>
 								</td>
 							</tr>
 						</s:iterator>

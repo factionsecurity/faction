@@ -525,6 +525,28 @@ $(function() {
 		});
 
 	});
+	
+	$('#openDateCal').daterangepicker({ singleDatePicker: true});
+	
+	$("#chStart").click(function() {
+		let dtTmp = $("#opened").html();
+		$("#openDateCal").val(dtTmp);
+		$("#changeDateModal").modal('show');
+
+	});
+	
+	$("#saveOpen").click(function() {
+		const newStartDate = $("#openDateCal").val();
+		let data = "action=updateOpenDate";
+		data += `&start=${newStartDate}`;
+		data += `&vulnId=${defaultVulnId}`;
+		$.post("Remediation", data).done(function(resp) {
+			$("#opened").html(newStartDate);
+			$("#changeDateModal").modal('hide');
+		});
+
+
+	});
 	refreshNotes();
 	
 	$(".downloadReport").on('click', function(event){

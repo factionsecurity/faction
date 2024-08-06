@@ -55,7 +55,7 @@
 </bs:row>
 <bs:row>
 <bs:mco colsize="12">
-	<label>Upload Files:</label>
+	<label>Assessment Files:</label>
 	<input id="files" type="file" multiple name="file_data"/>
 </bs:mco>
 </bs:row>

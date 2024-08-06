@@ -7,11 +7,6 @@
 <bs:row>
 	<bs:mco colsize="6">
 		<bs:row>
-			<bs:select name="Select Vulnerability" colsize="12"
-				id="vuln_note_select">
-			</bs:select>
-		</bs:row>
-		<bs:row>
 			<bs:mco colsize="12">
 				<label>Comment:</label>
 				<div id="RemNotes" name="RemNotes">             
@@ -52,7 +47,7 @@
 							id="closeProd"></bs:button>
 					</s:if>
 					<bs:button color="danger" size="md" colsize="3"
-						text="Cancel" id="closeVer"></bs:button>
+						text="Close Verification" id="closeVer"></bs:button>
 				</bs:row> 
 				</div>
 				<br/>

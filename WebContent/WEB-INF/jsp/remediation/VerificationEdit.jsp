@@ -46,6 +46,10 @@ background-color: white;
 .btn{
 margin-top: 20px;
 }
+.infoTable td{
+	padding-left: 10px;
+	padding-right: 10px;
+}
 
 </style>
 
@@ -64,10 +68,18 @@ margin-top: 20px;
 		<bs:box type="info" title="Edit Verification">
 			<div class="row" >
 				<div class="col-md-12">
-					<b>Assessment Id:</b> <s:property value="appId"/><br/>
-					<b>Assessment Name:</b> <s:property value="appName"/><br/>
-					<b>Tracking:</b> <s:property value="vuln.tracking"/><br/>
-					<b>Status: </b> <s:property value="badges" escapeHtml="false"/>
+					<table class="infoTable">
+				<tr><td>	<b>Vulnerability Name:</b></td><td> <s:property value="vuln.name"/></td></tr>
+				<tr><td>	<b>Assessment Id:</b></td><td> <s:property value="appId"/></td></tr>
+				<tr><td>	<b>Assessment Name:</b></td><td> <s:property value="appName"/></td></tr>
+				<tr><td>	<b>Tracking:</b></td><td> <s:property value="vuln.tracking"/></td></tr>
+				<tr><td>	<b>Opened:</b></td><td> <span id="opened"><s:date name="vuln.opened" format="MM/dd/yyyy"/></span></td></tr>
+				<tr><td>	<b>Severity:</b> </td><td><s:property value="vuln.getOverallStr()"/></td></tr>
+				<tr><td>	<b>Status: </b></td><td> <s:property value="badges" escapeHtml="false"/></td></tr>
+					</table>
+					<br/>
+					<br/>
+					<a href="RemediationSchedule?vulnId=${vuln.id}">Show All In Assessment</a>
 				</div>
 			</div>
 			<div class="row" >
@@ -105,7 +117,32 @@ margin-top: 20px;
 
 
 		<!-- Modals -->
-		<!-- Modals -->
+<!-- Begin Change Date Modal -->
+
+<div id="changeDateModal" class="modal fade" tabindex="-1" role="dialog">
+	<div class="modal-dialog">
+		<div class="modal-content bg-red">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"
+					aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title">Change The Start Date</h4>
+			</div>
+			<div class="modal-body">
+				<bs:row>
+					<bs:dt name="Opened Date" colsize="12" id="openDateCal"></bs:dt>
+				</bs:row>
+
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary" id="saveOpen">Save
+					changes</button>
+			</div>
+		</div>
+	</div>
+</div>
 		<bs:modal modalId="sevModal" saveId="saveSev" title="Change Severity"
 			color="red" closeText="Cancel" saveText="Save Severity">
 			<bs:row>

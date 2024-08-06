@@ -2,6 +2,7 @@ package com.fuse.servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -49,8 +50,8 @@ public class getVerifications extends HttpServlet {
 			
 			EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 			try{
-				String query = "{\"assessor_Id\" : "+user.getId() +", \"completed\" : ISODate(\"1970-01-01T00:00:00Z\"), $orderby: { \"start\" : -1 }}";
-				List<Verification>verifications = (List<Verification>)em.createNativeQuery(query, Verification.class).getResultList();
+				List<Verification> verifications = em.createQuery("from Verifications where workflowStatus != 'Remediation Complete' and assessor_Id = :id")
+						.setParameter("id", user.getId()).getResultList();
 				
 				
 				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
@@ -63,11 +64,11 @@ public class getVerifications extends HttpServlet {
 						json += ",";
 					}
 					v.getVerificationItems().get(0).getVulnerability().updateRiskLevels(em);
-					json += "[ '"+v.getAssessment().getName() + "',"
-							+ "'" +v.getAssessment().getAppId() + "',"
+					json += "[ '"+URLEncoder.encode(v.getAssessment().getName()) + "',"
+							+ "'" +URLEncoder.encode(v.getAssessment().getAppId()) + "',"
 							+ "'" + format.format(v.getStart()) + "',"
 							+ "'" + v.getId()+ "',"
-							+ "'" + v.getVerificationItems().get(0).getVulnerability().getName() +"',"
+							+ "'" + URLEncoder.encode(v.getVerificationItems().get(0).getVulnerability().getName()) +"',"
 							+ "'" + v.getVerificationItems().get(0).getVulnerability().getOverallStr() + "']\n";
 					isFirst=false;
 					

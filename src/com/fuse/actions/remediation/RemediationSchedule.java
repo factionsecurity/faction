@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
@@ -56,6 +58,8 @@ public class RemediationSchedule extends FSActionSupport{
 	private List<Vulnerability> vulns;
 	private Vulnerability vuln;
 	private List<FinalReport> reports = new ArrayList<>();
+	private Map<Long,List<String>> status = new HashMap<>();
+	private Map<String,String> controls = new HashMap<>();
 	
 	
 	@Before
@@ -74,7 +78,8 @@ public class RemediationSchedule extends FSActionSupport{
 		})
 	public String execute(){
 		
-		verifications = em.createQuery("from Verification where completed != :completed").setParameter("completed", new Date(0)).getResultList();
+		verifications = em
+				.createQuery("from Verification where workflowStatus not in ('Remediation Completed', 'Remediation Cancelled')").getResultList();
 		List<User>users = em.createQuery("from User").getResultList();
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 		for(User u : users){
@@ -95,179 +100,57 @@ public class RemediationSchedule extends FSActionSupport{
 		for(Vulnerability v : vulns) {
 			v.updateRiskLevels(em);
 		}
+		
+		
+		
+		vulns.stream().forEach( v -> {
+			if(status.get(v.getId()) == null) {
+				status.put(v.getId(), new ArrayList<String>());
+			}
+			if(vuln.getDevClosed()!= null) {
+				status.get(v.getId()).add("<small class=\"badge badge-blue\"><i class=\"fa fa-check\"></i>Closed Dev</small>");
+				controls.put("closed|"+v.getId(), "true");
+			}
+			if(vuln.getClosed()!= null) {
+				status.get(v.getId()).add("<small class=\"badge badge-green\"><i class=\"fa fa-check\"></i>Closed Prod</small>");
+				controls.put("closed|"+v.getId(), "true");
+			}
+			Verification verification = verifications
+					.stream()
+					.filter( ver -> ver
+							.getVerificationItems()
+							.get(0)
+							.getVulnerability()
+							.getId() == v.getId())
+					.findFirst()
+					.orElse(null);
+			if(verification !=null) {
+				controls.put("cancel|"+v.getId(), "true");
+				controls.put("verId|"+v.getId(), ""+verification.getId());
+				status.get(v.getId()).add("<small class=\"badge badge-green\"><i class=\"fa fa-calendar\"></i>In Retest</small>");
+			}
+			if(verification != null && verification.getWorkflowStatus().equals(Verification.AssessorCompleted)) {
+				if(verification.getVerificationItems().get(0).isPass()) {
+					status.get(v.getId()).add("<small class=\"badge badge-green\"><i class=\"fa fa-check\"></i>Retest Passed</small>");
+				}
+				if(!verification.getVerificationItems().get(0).isPass()) {
+					status.get(v.getId()).add("<small class=\"badge badge-red\"><i class=\"fa fa-times\"></i>Retest Failed</small>");
+				}
+			}
+			if(verification != null && verification.getWorkflowStatus().equals(Verification.AssessorCancelled)) {
+				status.get(v.getId()).add("<small class=\"badge badge-yellow\"><i class=\"fa fa-times\"></i>Assessor Canceled</small>");
+			}
+			
+			
+		});
+		
+		
 		if(assessment.getFinalReport() != null) {
 			reports.add(assessment.getFinalReport());
 		}
 		if(assessment.getRetestReport() != null) {
 			reports.add(assessment.getRetestReport());
 		}
-		
-		
-		
-		if(action.equals("create")){
-			Assessment a = AssessmentQueries.getAssessmentById(em, asmtId);
-			
-			String vulnidStr = "";
-			boolean first = true;
-			List<Long> vids = new ArrayList();
-			for(Long vulnid : this.vulnids.values()){
-				
-				for(Vulnerability v : a.getVulns()){
-					if(v.getId() == vulnid && v.getClosed() != null && v.getClosed().getTime() != 0l){
-						this.message = v.getName() + " is marked closed in prod and cannot be rescheduled";
-						return this.ERRORJSON;
-					}
-				}
-				vids.add(vulnid);
-			}
-			
-			if(VulnerabilityQueries.isVulnInVerification(em, vids)){
-				this.message = "Verification Already Scheduled.";
-				return ERRORJSON;
-			}
-			
-			
-			
-			User asr = getUser(users, assessorId);
-			User rem = getUser(users, remId);
-			a.setDistributionList(this.distro);
-			//System.out.println(this.vulnids.get("0"));
-			boolean errors = false;
-			for(Long vulnid : this.vulnids.values()){
-				Verification ver = new Verification();
-				
-				ver.setStart(start);
-				ver.setEnd(end);
-				ver.setAssessment(a);
-				ver.setAssessor(asr);
-				ver.setAssignedRemediation(rem);
-				
-				ver.setCompleted(new Date(0));
-				ver.setNotes(notes);
-				ver.setWorkflowStatus(Verification.InAssessorQueue);
-				VerificationItem vi = new VerificationItem();
-				for(Vulnerability v : a.getVulns()){
-					if(v.getId() == vulnid){
-						if(v.getClosed() != null && v.getClosed().getTime() == 0l){
-							this.message += "Vulnerability Has been Closed (" + v.getName() + ").<br/>";
-							errors=true;
-							break;
-						}else{
-							vi.setVulnerability(v);
-							break;
-						}
-					}
-				}
-				if(!errors){
-					ver.getVerificationItems().add(vi);
-					VulnerabilityQueries.saveAll(this, ver.getVerificationItems().get(0).getVulnerability(), em, "Create Verification", a, ver, vi);
-					//HibHelper.getInstance().preJoin();
-					//em.joinTransaction();
-					//em.persist(a);
-					//em.persist(ver);
-					//em.persist(vi);
-					//HibHelper.getInstance().commit();
-				}
-			}
-			String appName = a.getAppId() + " - " + a.getName();
-			String HTML = "A new Verification has been assigned for <b>" + appName + "</b>.<br>"
-					+ "The following issue(s) require verification:<br><br><ul>";
-			for(Long vulnid : this.vulnids.values()){
-				for(Vulnerability v : a.getVulns()){
-					if(v.getId() == vulnid){
-						HTML += "<li>" + v.getName() +"</li>";
-						break;
-					}
-				}
-			}
-			HTML+= "</ul><br><br>";
-			EmailThread emailThread = new EmailThread(a, "Verification assigned for " +appName, HTML);
-			TaskQueueExecutor.getInstance().execute(emailThread);
-			if(errors){
-				return this.ERRORJSON;
-			}else{
-				return SUCCESSJSON;
-			}
-		}else if (action.equals("update")){
-			//HibHelper.getInstance().preJoin();
-			//em.joinTransaction();
-			Verification ver = VulnerabilityQueries.getVerificationById(em, verId);
-			Assessment a = ver.getAssessment();
-			User asr = getUser(users, assessorId);
-			User rem = getUser(users, remId);
-			ver.setStart(start);
-			ver.setEnd(end);
-			ver.setAssessor(asr);
-			ver.setAssignedRemediation(rem);
-			ver.setNotes(notes);
-			a.setDistributionList(distro);
-			//em.persist(ver);
-			//em.persist(a);
-			VulnerabilityQueries.saveAll(this, ver.getVerificationItems().get(0).getVulnerability(), em, "Update Verification", ver, a);
-			//HibHelper.getInstance().commit();
-			
-			String appName = ver.getAssessment().getAppId() + " - " + ver.getAssessment().getName();
-			String HTML = "A Verificaiton has been updated for <b>" + appName + "</b>.<br>"
-					+ "The following issue has been updated:<br><br><h2>" + ver.getVerificationItems().get(0).getVulnerability().getName() + "</h2><br><br>";
-			EmailThread emailThread = new EmailThread(ver, "Verification updated for " +appName, HTML);
-			TaskQueueExecutor.getInstance().execute(emailThread);
-			
-		}else if(action.equals("addVuln")){
-			//HibHelper.getInstance().preJoin();
-			//em.joinTransaction();
-			
-			Verification ver = VulnerabilityQueries.getVerificationById(em, verId);
-			Assessment a = ver.getAssessment();
-			VerificationItem vi = new VerificationItem();
-			for(Vulnerability v : a.getVulns()){
-				if(v.getId() == vulnId){
-					vi.setVulnerability(v);
-					break;
-				}
-			}
-			ver.getVerificationItems().add(vi);
-			VulnerabilityQueries.saveAll(this, vi.getVulnerability(), em, "Adding Vulns to Verification", vi, ver);
-			//em.persist(vi);
-			//em.persist(ver);
-			//HibHelper.getInstance().commit();
-			return SUCCESSJSON;
-					
-		}else if (action.equals("dateSearch")){
-			List<Verification> dv = em
-					.createQuery("from Verification as a where (a.start <= :start and a.end > :start) or (a.start <= :end and a.end > :end)")
-					.setParameter("start", sdate)
-					.setParameter("end", edate)
-					.getResultList();
-			List<OOO> ooo = em.createQuery("from OOO as a where (a.start <= :start and a.end > :start) or (a.start <= :end and a.end > :end)")
-					.setParameter("start", sdate)
-					.setParameter("end", edate)
-					.getResultList();
-			for(User u : users){
-				for(Verification v : dv){
-					if(u.getId() == v.getAssessor().getId()){
-						u.setVerificationCount(u.getVerificationCount()+1);
-					}
-				}
-			}
-			for(User u : users){
-				for(OOO o : ooo){
-					if(u.getId() == o.getUser().getId()){
-						u.setOOOCount(u.getOOOCount()+1);
-					}
-				}
-			}
-			//session.close();
-			return "verificationJson";
-	
-		}else if(action.equals("updateOpenDate")){
-			Vulnerability v = em.find(Vulnerability.class, vulnId);
-			Date opened = v.getOpened();
-			v.setOpened(this.start);
-			VulnerabilityQueries.saveVulnerability(this, em, v, "Verification Open Date Moved. Was " + opened);
-			return SUCCESSJSON;
-			
-		}/*else
-			session.close();*/
 		
 		return SUCCESS;
 	}
@@ -405,6 +288,12 @@ public class RemediationSchedule extends FSActionSupport{
 	}
 	public String getAppType() {
 		return this.appType;
+	}
+	public Map<Long,List<String>> getStatus(){
+		return this.status;
+	}
+	public Map<String,String> getControls(){
+		return this.controls;
 	}
 	
 	

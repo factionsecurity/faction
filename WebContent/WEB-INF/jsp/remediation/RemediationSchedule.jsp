@@ -10,7 +10,7 @@
 <link href="../dist/css/Fuse.css" media="all" rel="stylesheet"
 	type="text/css" />
 <style>
-#notes,#RemNotes,#chSevNotes,#nprodNotes,#prodNotes{
+#notes,#RemNotes,#chSevNotes,#nprodNotes,#prodNotes,#cancelVerNotes{
 	background-color: white;
 }
 .chSevTable td {
@@ -257,12 +257,28 @@ td:first-child {
 					changes</button>
 			</div>
 		</div>
-		<!-- /.modal-content -->
 	</div>
-	<!-- /.modal-dialog -->
 </div>
-<!-- /.modal -->
-<!-- End Change Date modal -->
+<!--  close Verification -->
+<bs:modal modalId="closeVerModal" saveId="closeVerBtn"
+	title="Close/Cancel the Verification" color="red">
+	<bs:row>
+		<bs:mco colsize="12">
+			<h3>Are you sure you want to cancel the verification?</h3>
+			<br>
+			<i>This will remove the verification from the both the
+				assessor's queue and the remediation queue.</i>
+			<br>
+			<br>
+		</bs:mco>
+	</bs:row>
+	<bs:row>
+		<bs:mco colsize="12">
+			<b>Add Notes:</b>
+			<div id="cancelVerNotes" name="cancelVerNotes"></div>
+		</bs:mco>
+	</bs:row>
+</bs:modal>
 <script>
 let levels=[];
 <s:iterator value="levels" begin="9" end="0" step="-1" status="stat">

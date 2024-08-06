@@ -73,6 +73,7 @@ public class VerificationEdit extends FSActionSupport {
 		this.vulnId = v.getVerificationItems().get(0).getVulnerability().getId();
 		this.asId = v.getAssessor().getId();
 		this.vuln = v.getVerificationItems().get(0).getVulnerability();
+		this.vuln.updateRiskLevels(em);
 		this.levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 		this.files = (List<Files>) em.createQuery("from Files where entityId = :eid and type = :type")
 				.setParameter("eid", this.vulnId).setParameter("type", Files.VERIFICATION).getResultList();
@@ -145,7 +146,7 @@ public class VerificationEdit extends FSActionSupport {
 	private String createBadges(Verification verification) {
 		String badges = "";
 		if(verification.getWorkflowStatus().equals(Verification.AssessorCancelled)) {
-			badges += this.addBadge("Verification Cancelled", "yellow", "fa-times");
+			badges += this.addBadge("Assessor Cancelled", "yellow", "fa-times");
 		}else {
 			
 			if(verification.getEnd().getTime() < (new Date().getTime())) {
@@ -168,14 +169,14 @@ public class VerificationEdit extends FSActionSupport {
 		Date WarnDate = this.getWarning(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
 		String pattern = "MM/dd/yyyy";
 		SimpleDateFormat format = new SimpleDateFormat(pattern);
-		
+		if(DueDate != null) {
 		String dueDateString = format.format(DueDate);
-		
-		if(DueDate != null && DueDate.getTime() <= (new Date()).getTime()){
-			badges += this.addBadge("Vulnerability Past Due (" + dueDateString +")", "red", "fa-bug");
-		}
-		else if(WarnDate != null && WarnDate.getTime() <= (new Date()).getTime()){
-			badges += this.addBadge("Vulnerability Approaching Due Date (" + dueDateString +")", "yellow", "fa-bug");
+			if(DueDate != null && DueDate.getTime() <= (new Date()).getTime()){
+				badges += this.addBadge("Vulnerability Past Due (" + dueDateString +")", "red", "fa-bug");
+			}
+			else if(WarnDate != null && WarnDate.getTime() <= (new Date()).getTime()){
+				badges += this.addBadge("Vulnerability Approaching Due Date (" + dueDateString +")", "yellow", "fa-bug");
+			}
 		}
 		return badges;
 		

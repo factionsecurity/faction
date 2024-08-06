@@ -134,12 +134,6 @@ public class Remediation extends FSActionSupport{
 				if(!errors){
 					ver.getVerificationItems().add(vi);
 					VulnerabilityQueries.saveAll(this, ver.getVerificationItems().get(0).getVulnerability(), em, "Create Verification", a, ver, vi);
-					//HibHelper.getInstance().preJoin();
-					//em.joinTransaction();
-					//em.persist(a);
-					//em.persist(ver);
-					//em.persist(vi);
-					//HibHelper.getInstance().commit();
 				}
 			}
 			String appName = a.getAppId() + " - " + a.getName();

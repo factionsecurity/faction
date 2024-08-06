@@ -37,7 +37,8 @@ let editors = {
 	remNotes: createEditor("RemNotes"),
 	chSevNotes: createEditor("chSevNotes"),
 	nprodNotes:createEditor("nprodNotes"),
-	prodNotes: createEditor("prodNotes")
+	prodNotes: createEditor("prodNotes"),
+	cancelVerNotes: createEditor("cancelVerNotes")
 }
 let calendar = null;
 global.genCal = function genCal() {
@@ -85,11 +86,20 @@ global.calendar = global.genCal();
 function getSelectedVulnIds(){
 	return Array.from($('[id^="ckl"]:checked').map( (x,y) => y.id.replace("ckl","")));
 }
+function getVuln(vid){
+	//used for later
+}
 
 function setUpEventHandlers() {
 
 	$("#vulntable tbody tr").on('click', function(event) {
 		vulnId = $(this).data("vulnid");
+		let verId = $(this).data("verid")
+		if(verId == ""){
+			$("#closeVer").hide();
+		}else{
+			$("#closeVer").show();
+		}
 		$(".selected").each((_a, s) => $(s).removeClass("selected"))
 		$(this).addClass("selected");
 		refreshNotes(vulnId);
@@ -459,9 +469,35 @@ $(function() {
 
 		});
 	});
+	
+	$("#closeVer").click(function() {
+		editors.cancelVerNotes.reset()
+		$("#closeVerModal").modal('show');
+
+	});
+	
+	$("#closeVerBtn").click(function() {
+		let newNote = editors.cancelVerNotes.getHTML();
+		let verId = $(".selected").data("verid");
+		let data = "action=closeVerification";
+		data += `&note=${encodeURIComponent(newNote)}`;
+		data += `&vulnId=${vulnId}`;
+		data += `&verId=${verId}`;
+		$.post("RemVulnData", data).done(function() {
+			refreshNotes(vulnId);
+			$("#closeVerModal").modal('hide');
+			document.location.reload()
+
+		});
+
+	});
 });
 function refreshNotes(thevid) {
-	$.get("RemVulnData?action=getNotes&vulnId=" + thevid).done(function(data) {
+	let verId = $(".selected").data("verid");
+	if(verId == ""){
+		verId = -1
+	}
+	$.get("RemVulnData?action=getNotes&vulnId=" + thevid+"&verId="+verId).done(function(data) {
 		let notes = data.notes;
 		$("#noteHistory").html("");
 		editors['remNotes'].hide();
@@ -489,6 +525,9 @@ function refreshNotes(thevid) {
 			});
 
 		});
+		let scope = data.scope;
+			editors.notes.reset();	
+			editors.notes.setHTML($("<div />").html(scope).text());
 	});
 
 

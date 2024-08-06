@@ -1,5 +1,6 @@
 package com.fuse.actions;
 
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -158,9 +159,9 @@ public class AjaxServices extends FSActionSupport {
 						json += ",";
 					}
 					v.getVerificationItems().get(0).getVulnerability().updateRiskLevels(em);
-					json += "[ '" + v.getAssessment().getName() + "'," + "'" + v.getAssessment().getAppId() + "'," + "'"
+					json += "[ '" + URLEncoder.encode(v.getAssessment().getName()) + "'," + "'" + v.getAssessment().getAppId() + "'," + "'"
 							+ format.format(v.getStart()) + "'," + "'" + v.getId() + "'," + "'"
-							+ v.getVerificationItems().get(0).getVulnerability().getName() + "'," + "'"
+							+ URLEncoder.encode( v.getVerificationItems().get(0).getVulnerability().getName()) + "'," + "'"
 							+ v.getVerificationItems().get(0).getVulnerability().getOverallStr() + "']\n";
 					isFirst = false;
 
@@ -191,15 +192,10 @@ public class AjaxServices extends FSActionSupport {
 				String query = "{ '$query' : {$or : [{'appId' : { $regex : '.*" + FSUtils.sanitizeMongo(appid)
 						+ ".*', $options : 'i'}}, { 'name' : { $regex : '.*" + FSUtils.sanitizeMongo(appname)
 						+ ".*', $options : 'i'}}]}, '$orderby' : {'appId':1}}";
-				// String query = "{ 'name' : { $regex : '.*"+FSUtils.sanitizeMongo(appname) +
-				// ".*', $options : 'i'}, "
-				// + "$where: '/^"+FSUtils.sanitizeMongo(appid)+".*/.test(this.appId)'}";
 				as = FSUtils.sortUniqueAssessment(em.createNativeQuery(query, Assessment.class)
 						.getResultList());
 
 			} else if (!this.isNullStirng(appid)) {
-				// String query = "{ $where:
-				// '/^"+FSUtils.sanitizeMongo(appid)+".*/.test(this.appId)'}";
 				String query = "{ '$query' : { 'appId' : { $regex : '.*" + FSUtils.sanitizeMongo(appid)
 						+ ".*', $options : 'i'}}, '$orderby' : {'appId':1}}";
 				as = FSUtils.sortUniqueAssessment(em.createNativeQuery(query, Assessment.class).getResultList());

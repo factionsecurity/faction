@@ -141,17 +141,17 @@ public class RemediationQueue extends FSActionSupport{
 			Vulnerability tmpVuln = verification.getVerificationItems().get(0).getVulnerability();
 			Date DueDate = getDue(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
 			Date WarnDate = getWarning(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
-			
 			String pattern = "MM/dd/yyyy";
 			SimpleDateFormat format = new SimpleDateFormat(pattern);
-			
-			String dueDateString = format.format(DueDate);
-			
-			if(DueDate != null && DueDate.getTime() <= (new Date()).getTime()){
-				badges += this.addBadge("Vulnerability Past Due (" + dueDateString +")", "red", "fa-bug");
-			}
-			else if(WarnDate != null && WarnDate.getTime() <= (new Date()).getTime()){
-				badges += this.addBadge("Vulnerability Approaching Due Date (" + dueDateString +")", "yellow", "fa-bug");
+			if(DueDate != null ) {
+				String dueDateString = format.format(DueDate);
+				
+				if(DueDate != null && DueDate.getTime() <= (new Date()).getTime()){
+					badges += this.addBadge("Vulnerability Past Due (" + dueDateString +")", "red", "fa-bug");
+				}
+				else if(WarnDate != null && WarnDate.getTime() <= (new Date()).getTime()){
+					badges += this.addBadge("Vulnerability Approaching Due Date (" + dueDateString +")", "yellow", "fa-bug");
+				}
 			}
 			i.setInfo(badges);
 			
