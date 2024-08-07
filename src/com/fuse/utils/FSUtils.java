@@ -19,6 +19,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.KeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
@@ -55,6 +57,7 @@ import com.fuse.dao.Category;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.ReportOptions;
+import com.fuse.dao.RiskLevel;
 import com.fuse.dao.Vulnerability;
 
 import org.commonmark.Extension;
@@ -670,6 +673,43 @@ public class FSUtils {
 			ex.printStackTrace();
 			return text;
 		}
+	}
+	public static Date getDue(EntityManager em, Date start, int Level){
+		RiskLevel level = (RiskLevel)em.createQuery("from RiskLevel where riskId = :id")
+				.setParameter("id", Level).getResultList()
+				.stream().findFirst().orElse(null);
+		if(level.getDaysTillDue() == null)
+			return null;
+		Calendar dueDate =  Calendar.getInstance();
+		dueDate.setTime(start);
+		dueDate.add(Calendar.DAY_OF_YEAR, level.getDaysTillDue());
+		return dueDate.getTime();
+	}
+	
+	public static Date getWarn(Date end,int days){
+		Calendar dueDate =  Calendar.getInstance();
+		dueDate.setTime(end);
+		dueDate.add(Calendar.DAY_OF_YEAR, - days);
+		return dueDate.getTime();
+	}
+	
+	public static Date getWarning(EntityManager em, Date start, int Level){
+		RiskLevel level = (RiskLevel)em.createQuery("from RiskLevel where riskId = :id")
+				.setParameter("id", Level).getResultList()
+				.stream().findFirst().orElse(null);
+		if(level.getDaysTillWarning() == null)
+			return null;
+		Calendar dueDate =  Calendar.getInstance();
+		dueDate.setTime(start);
+		dueDate.add(Calendar.DAY_OF_YEAR, level.getDaysTillWarning());
+		return dueDate.getTime();
+	}
+	
+	public static String addBadge(String title, String color, String icon) {
+		return String.format("<small class=\"badge badge-%s\"><i class=\"fa %s\"></i>%s</small>",
+				color,
+				icon,
+				title);
 	}
 
 }

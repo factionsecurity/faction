@@ -1,5 +1,6 @@
 package com.fuse.actions.remediation;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.dao.query.VulnerabilityQueries;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.TaskQueueExecutor;
+import com.fuse.utils.FSUtils;
 import com.opensymphony.xwork2.interceptor.annotations.Before;
 
 
@@ -107,14 +109,16 @@ public class RemediationSchedule extends FSActionSupport{
 			if(status.get(v.getId()) == null) {
 				status.put(v.getId(), new ArrayList<String>());
 			}
-			if(vuln.getDevClosed()!= null) {
-				status.get(v.getId()).add("<small class=\"badge badge-blue\"><i class=\"fa fa-check\"></i>Closed Dev</small>");
+			if(v.getDevClosed()!= null) {
+				status.get(v.getId()).add(FSUtils.addBadge("Closed Dev", "blue", "fa-check"));
 				controls.put("closed|"+v.getId(), "true");
 			}
-			if(vuln.getClosed()!= null) {
-				status.get(v.getId()).add("<small class=\"badge badge-green\"><i class=\"fa fa-check\"></i>Closed Prod</small>");
+			if(v.getClosed()!= null) {
+				status.get(v.getId()).add(FSUtils.addBadge("Closed Prod", "green", "fa-check"));
 				controls.put("closed|"+v.getId(), "true");
 			}
+			String pattern = "MM/dd/yyyy";
+			SimpleDateFormat format = new SimpleDateFormat(pattern);
 			Verification verification = verifications
 					.stream()
 					.filter( ver -> ver
@@ -127,20 +131,42 @@ public class RemediationSchedule extends FSActionSupport{
 			if(verification !=null) {
 				controls.put("cancel|"+v.getId(), "true");
 				controls.put("verId|"+v.getId(), ""+verification.getId());
-				status.get(v.getId()).add("<small class=\"badge badge-green\"><i class=\"fa fa-calendar\"></i>In Retest</small>");
-			}
-			if(verification != null && verification.getWorkflowStatus().equals(Verification.AssessorCompleted)) {
-				if(verification.getVerificationItems().get(0).isPass()) {
-					status.get(v.getId()).add("<small class=\"badge badge-green\"><i class=\"fa fa-check\"></i>Retest Passed</small>");
+				controls.put("verStart|"+v.getId(), format.format(verification.getStart()));
+				controls.put("verEnd|"+v.getId(), format.format(verification.getEnd()));
+				controls.put("verAssessor|"+v.getId(), ""+verification.getAssessor().getId());
+				controls.put("verRemdedition|"+v.getId(), ""+verification.getAssignedRemediation().getId());
+				controls.put("verDistro|"+v.getId(), ""+assessment.getDistributionList());
+				status.get(v.getId()).add(FSUtils.addBadge("In Retest", "green", "fa-calendar"));
+				if(verification.getEnd().getTime() < (new Date().getTime())) {
+					status.get(v.getId()).add( FSUtils.addBadge("Verification Past Due", "red", "fa-calendar"));
 				}
-				if(!verification.getVerificationItems().get(0).isPass()) {
-					status.get(v.getId()).add("<small class=\"badge badge-red\"><i class=\"fa fa-times\"></i>Retest Failed</small>");
+				else if(verification.getEnd().getTime() < (FSUtils.getWarn(new Date(), 2)).getTime() ) {
+					status.get(v.getId()).add(FSUtils.addBadge("Verification Almost Due", "yellow", "fa-calendar"));
+				}
+				if(verification.getWorkflowStatus().equals(Verification.AssessorCompleted)) {
+					if(verification.getVerificationItems().get(0).isPass()) {
+						status.get(v.getId()).add(FSUtils.addBadge("Retest Passed", "green", "fa-check"));
+					}
+					if(!verification.getVerificationItems().get(0).isPass()) {
+						status.get(v.getId()).add(FSUtils.addBadge("Retest Failed", "red", "fa-times"));
+					}
+				}
+				if(verification.getWorkflowStatus().equals(Verification.AssessorCancelled)) {
+						status.get(v.getId()).add(FSUtils.addBadge("Assessor Canceled", "yellow", "fa-times"));
 				}
 			}
-			if(verification != null && verification.getWorkflowStatus().equals(Verification.AssessorCancelled)) {
-				status.get(v.getId()).add("<small class=\"badge badge-yellow\"><i class=\"fa fa-times\"></i>Assessor Canceled</small>");
+			Date DueDate = FSUtils.getDue(em, v.getOpened(), v.getOverall().intValue());
+			Date WarnDate = FSUtils.getWarning(em, v.getOpened(), v.getOverall().intValue());
+			if(DueDate != null ) {
+				String dueDateString = format.format(DueDate);
+				
+				if(DueDate != null && DueDate.getTime() <= (new Date()).getTime()){
+					status.get(v.getId()).add(FSUtils.addBadge("Vulnerability Past Due (" + dueDateString +")", "red", "fa-bug"));
+				}
+				else if(WarnDate != null && WarnDate.getTime() <= (new Date()).getTime()){
+					status.get(v.getId()).add(FSUtils.addBadge("Vulnerability Approaching Due Date (" + dueDateString +")", "yellow", "fa-bug"));
+				}
 			}
-			
 			
 		});
 		

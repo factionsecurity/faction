@@ -29,7 +29,16 @@
 					</thead>
 					<tbody>
 						<s:iterator value="vulns">
-							<tr data-vulnid="${id}" data-verid="<s:property value="controls['verId|'+id]"/>" data-opened="<s:date name="opened"  format="MM/dd/yyy"/>" data-severity="${overall}", class="<s:if test="vuln.id == id">selected</s:if>">
+							<tr data-vulnid="${id}" 
+									data-verid="<s:property value="controls['verId|'+id]"/>" 
+									data-opened="<s:date name="opened"  format="MM/dd/yyy"/>" 
+									data-severity="${overall}"
+									data-assessor="<s:property value="controls['verAssessor|'+id]"/>"
+									data-disto="<s:property value="controls['verDisto|'+id]"/>"
+									data-remediation="<s:property value="controls['verRemediation|'+id]"/>"
+									data-start="<s:property value="controls['verStart|'+id]"/>"
+									data-end="<s:property value="controls['verEnd|'+id]"/>"
+									class="<s:if test="vuln.id == id">selected</s:if>">
 								<td class="sev${overallStr}"><input type="checkbox"
 									id="ckl<s:property value="id"/>" <s:if test="vuln.id == id">checked</s:if>/></td>
 								<s:if test="assessment.type.cvss31 || assessment.type.cvss40">

@@ -98,6 +98,15 @@ function setUpEventHandlers() {
 		if(verId == ""){
 			$("#closeVer").hide();
 		}else{
+			const start = $(this).data("start");
+			const end = $(this).data("end");
+			const assessor = $(this).data("assessor");
+			const remediation = $(this).data("remediation");
+			const distro = $(this).data("distro");
+			$("#reservation").val(`${start} to ${end}`);
+			$("#remUser").val(remediation);
+			$("#assessors").val(assessor).change();
+			$("#distlist").val(distro);
 			$("#closeVer").show();
 		}
 		$(".selected").each((_a, s) => $(s).removeClass("selected"))
@@ -296,14 +305,12 @@ $(function() {
 		end = end.setDate(end.getDate() + 1);
 		copiedEventObject.end = end;
 		global.calendar.addEvent(copiedEventObject, true);
-		$.post('../services/getVerifications', 'id=' + $(this).val()).done(function(adata) {
-			let json = adata;
-			let N = json.count;
-			for (let i = 0; i < N; i++) {
-				let s = json.verifications[i][2];
-				let e = json.verifications[i][4];
-				let t = json.verifications[i][1] + " - " + json.verifications[i][0] + " - " + json.verifications[i][5];
-				let aaid = json.verifications[i][3].replace('app');
+		$.post('Calendar', 'userid=' + $(this).val()).done(function(json) {
+			for (let verification of json.verifications) {
+				let s = verification.start;
+				let e = verification.end;
+				let t = verification.appid + " - " + verification.appname + " - " + verification.vuln;
+				let aaid = verification.appid;
 
 				if (s != 'null' && e != 'null') {
 					let originalEventObject = $(this).data('eventObject');
@@ -318,17 +325,15 @@ $(function() {
 
 					copiedEventObject.end = end;
 					copiedEventObject.editable = false;
-					//$('#calendar').fullCalendar('renderEvent', copiedEventObject, true);
 					global.calendar.addEvent(copiedEventObject, true);
 
 				}
 			}
-			N = json.ocount;
-			for (let i = 0; i < N; i++) {
-				let s = json.ooo[i][2];
-				let e = json.ooo[i][3];
-				let t = json.ooo[i][0];
-				let oid = "ooo" + json.ooo[i][0];
+			for (let ooo of json.ooo) {
+				let s = ooo.start;
+				let e = ooo.end;
+				let t = ooo.title;
+				let oid = "ooo" + ooo.id;
 				if (s != 'null' && e != 'null') {
 					let originalEventObject = $(this).data('eventObject');
 					let copiedEventObject = $.extend({}, originalEventObject);
@@ -342,7 +347,6 @@ $(function() {
 
 					copiedEventObject.end = end;
 					copiedEventObject.editable = false;
-					//$('#calendar').fullCalendar('renderEvent', copiedEventObject, true);
 					global.calendar.addEvent(copiedEventObject, true);
 
 				}

@@ -19,6 +19,7 @@ import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.VulnerabilityQueries;
+import com.fuse.utils.FSUtils;
 import com.fuse.utils.Item;
 
 import java.util.Calendar;
@@ -32,43 +33,6 @@ public class RemediationQueue extends FSActionSupport{
 	private String checked="";
 	private boolean all=false;
 	
-	private Date getDue(EntityManager em, Date start, int Level){
-		RiskLevel level = (RiskLevel)em.createQuery("from RiskLevel where riskId = :id")
-				.setParameter("id", Level).getResultList()
-				.stream().findFirst().orElse(null);
-		if(level.getDaysTillDue() == null)
-			return null;
-		Calendar dueDate =  Calendar.getInstance();
-		dueDate.setTime(start);
-		dueDate.add(Calendar.DAY_OF_YEAR, level.getDaysTillDue());
-		return dueDate.getTime();
-	}
-	
-	private Date getWarn(Date end,int days){
-		Calendar dueDate =  Calendar.getInstance();
-		dueDate.setTime(end);
-		dueDate.add(Calendar.DAY_OF_YEAR, - days);
-		return dueDate.getTime();
-	}
-	
-	private Date getWarning(EntityManager em, Date start, int Level){
-		RiskLevel level = (RiskLevel)em.createQuery("from RiskLevel where riskId = :id")
-				.setParameter("id", Level).getResultList()
-				.stream().findFirst().orElse(null);
-		if(level.getDaysTillWarning() == null)
-			return null;
-		Calendar dueDate =  Calendar.getInstance();
-		dueDate.setTime(start);
-		dueDate.add(Calendar.DAY_OF_YEAR, level.getDaysTillWarning());
-		return dueDate.getTime();
-	}
-	
-	private String addBadge(String title, String color, String icon) {
-		return String.format("<small class=\"badge badge-%s\"><i class=\"fa %s\"></i>%s</small>",
-				color,
-				icon,
-				title);
-	}
 	
 	@Action(value="RemediationQueue")
 	public String execute()
@@ -119,38 +83,40 @@ public class RemediationQueue extends FSActionSupport{
 			i.setVulnid(-1l * verification.getId());
 			String badges = "";
 			if(verification.getWorkflowStatus().equals(Verification.AssessorCancelled)) {
-				badges += this.addBadge("Verification Cancelled", "yellow", "fa-times");
+				badges += FSUtils.addBadge("Verification Cancelled", "yellow", "fa-times");
 			}else {
 				
 				if(verification.getEnd().getTime() < (new Date().getTime())) {
-					badges += this.addBadge("Verification Past Due", "red", "fa-calendar");
+					badges += FSUtils.addBadge("Verification Past Due", "red", "fa-calendar");
 				}
-				else if(verification.getEnd().getTime() < (this.getWarn(new Date(), 2)).getTime() ) {
-					badges += this.addBadge("Verification Almost Due", "yellow", "fa-calendar");
+				else if(verification.getEnd().getTime() < (FSUtils.getWarn(new Date(), 2)).getTime() ) {
+					badges += FSUtils.addBadge("Verification Almost Due", "yellow", "fa-calendar");
 				}
 				
-				if(verification.getVerificationItems().get(0).isPass()) {
-					badges += this.addBadge("Verification Passed", "green", "fa-check");
-				}else if(verification.getCompleted() != null && verification.getCompleted().getTime() > 0) {
-					badges += this.addBadge("Verification Failed", "red", "fa-times");
-				}else{
-					badges += this.addBadge("In Retest", "green", "fa-calendar");
+				if(verification.getWorkflowStatus().equals(Verification.AssessorCompleted)) {
+					if(verification.getVerificationItems().get(0).isPass()) {
+						badges += FSUtils.addBadge("Verification Passed", "green", "fa-check");
+					}else if(verification.getCompleted() != null && verification.getCompleted().getTime() > 0) {
+						badges += FSUtils.addBadge("Verification Failed", "red", "fa-times");
+					}else{
+						badges += FSUtils.addBadge("In Retest", "green", "fa-calendar");
+					}
 				}
 			}
 			
 			Vulnerability tmpVuln = verification.getVerificationItems().get(0).getVulnerability();
-			Date DueDate = getDue(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
-			Date WarnDate = getWarning(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
+			Date DueDate = FSUtils.getDue(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
+			Date WarnDate = FSUtils.getWarning(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
 			String pattern = "MM/dd/yyyy";
 			SimpleDateFormat format = new SimpleDateFormat(pattern);
 			if(DueDate != null ) {
 				String dueDateString = format.format(DueDate);
 				
 				if(DueDate != null && DueDate.getTime() <= (new Date()).getTime()){
-					badges += this.addBadge("Vulnerability Past Due (" + dueDateString +")", "red", "fa-bug");
+					badges += FSUtils.addBadge("Vulnerability Past Due (" + dueDateString +")", "red", "fa-bug");
 				}
 				else if(WarnDate != null && WarnDate.getTime() <= (new Date()).getTime()){
-					badges += this.addBadge("Vulnerability Approaching Due Date (" + dueDateString +")", "yellow", "fa-bug");
+					badges += FSUtils.addBadge("Vulnerability Approaching Due Date (" + dueDateString +")", "yellow", "fa-bug");
 				}
 			}
 			i.setInfo(badges);
@@ -166,8 +132,8 @@ public class RemediationQueue extends FSActionSupport{
 		
 		for(Vulnerability v : vulns){
 	
-			Date DueDate = getDue(em, v.getOpened(), v.getOverall().intValue());
-			Date WarnDate = getWarning(em, v.getOpened(), v.getOverall().intValue());
+			Date DueDate = FSUtils.getDue(em, v.getOpened(), v.getOverall().intValue());
+			Date WarnDate = FSUtils.getWarning(em, v.getOpened(), v.getOverall().intValue());
 			if( DueDate!= null && DueDate.getTime() <= (new Date()).getTime()){
 					if(itemList.contains(v.getId()))
 						continue;
@@ -185,7 +151,7 @@ public class RemediationQueue extends FSActionSupport{
 					Long sev = v.getOverall();
 					i.setSeverity(em, sev, levels);
 					i.setVulnid(v.getId());
-					i.setInfo(this.addBadge("Vulnerability Past Due", "red", "fa-bug"));
+					i.setInfo(FSUtils.addBadge("Vulnerability Past Due", "red", "fa-bug"));
 					i.setType("Vulnerability");
 					i.setOpened(v.getOpened());
 					items.add(i);	
@@ -211,7 +177,7 @@ public class RemediationQueue extends FSActionSupport{
 				i.setSeverity(em, sev, levels);
 				i.setOpened(v.getOpened());
 				i.setVulnid(v.getId());
-				i.setInfo(this.addBadge("Vulnerability Approaching Due Date", "yellow", "fa-bug"));
+				i.setInfo(FSUtils.addBadge("Vulnerability Approaching Due Date", "yellow", "fa-bug"));
 				i.setType("Vulnerability");
 				items.add(i);
 			}
