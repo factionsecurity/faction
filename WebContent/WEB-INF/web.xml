@@ -11,7 +11,7 @@
 	</filter-mapping>
 	<filter>
 		<filter-name>callbackFilter</filter-name>
-		<filter-class>org.pac4j.j2e.filter.CallbackFilter</filter-class>
+		<filter-class>org.pac4j.jee.filter.CallbackFilter</filter-class>
 		<init-param>
 			<param-name>defaultUrl</param-name>
 			<param-value>/oauth</param-value>
@@ -43,7 +43,7 @@
 		</init-param>
 		<init-param>
 			<param-name>authorizers</param-name>
-			<param-value>securityHeaders</param-value>
+			<param-value>isAuthenticated</param-value>
 		</init-param>
 	</filter>
 	<filter-mapping>

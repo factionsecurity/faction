@@ -68,7 +68,7 @@ public class AccessControl {
 		
 		//Check oAuth Stuff
 	
-		if( profiles != null && profiles.size() > 0 && (user==null || user.equals(""))) {
+		if( profiles != null && profiles.size() > 0) {
 			for(UserProfile profile : profiles) {
 				String email = (String) profile.getAttribute("email");
 				if(email != null) {
@@ -116,7 +116,7 @@ public class AccessControl {
 		
 		// redirect to OAUTH
 		if(tmp.getAuthMethod().equals("OAUTH2.0")) {
-				return AuthResult.REDIRECT_OAUTH;
+			return AuthResult.REDIRECT_OAUTH;
 		// Validate LDAP
 		}else if (tmp.getAuthMethod().equals("LDAP")) {
 			LDAPValidator ldapValidator = new LDAPValidator(ems.getLdapURL(), ems.getLdapBaseDn(),

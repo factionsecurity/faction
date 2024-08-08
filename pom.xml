@@ -179,21 +179,6 @@
 			<version>1.0.b2</version>
 		</dependency>
 		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-core-asl</artifactId>
-			<version>1.9.13</version>
-		</dependency>
-		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-mapper-asl</artifactId>
-			<version>1.9.13</version>
-		</dependency>
-		<dependency>
-			<groupId>org.python</groupId>
-			<artifactId>jython-standalone</artifactId>
-			<version>2.7.2b3</version>
-		</dependency>
-		<dependency>
 			<groupId>net.sf.json-lib</groupId>
 			<artifactId>json-lib</artifactId>
 			<version>2.3</version>
@@ -375,34 +360,28 @@
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
-			<artifactId>j2e-pac4j</artifactId>
-			<version>4.1.0</version>
+			<artifactId>jee-pac4j</artifactId>
+			<version>5.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
 			<artifactId>pac4j-oidc</artifactId>
-			<version>3.0.0</version>
-			<exclusions>
-				<exclusion>
-					<groupId>javax.activation</groupId>
-					<artifactId>activation</artifactId>
-				</exclusion>
-			</exclusions>
+			<version>4.5.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
 			<artifactId>pac4j-http</artifactId>
-			<version>3.0.0</version>
+			<version>4.5.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
 			<artifactId>pac4j-jwt</artifactId>
-			<version>3.0.0</version>
+			<version>4.5.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
 			<artifactId>pac4j-core</artifactId>
-			<version>3.0.0</version>
+			<version>4.5.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.commonmark</groupId>

@@ -1,12 +1,12 @@
 package com.fuse.actions;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.struts2.ServletActionContext;
@@ -14,14 +14,12 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 import org.apache.struts2.convention.annotation.ResultPath;
-
-import org.pac4j.core.context.J2EContext;
+import org.pac4j.core.context.JEEContext;
 import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.J2ESessionStore;
+import org.pac4j.core.context.session.JEESessionStore;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.UserProfile;
-import org.python.icu.text.SimpleDateFormat;
 
 import com.fuse.dao.AssessmentType;
 import com.fuse.dao.AuditLog;
@@ -41,6 +39,7 @@ import com.fuse.utils.AccessControl.AuthResult;
 import com.fuse.utils.FSUtils;
 import com.fuse.utils.reporttemplate.ReportTemplate;
 import com.fuse.utils.reporttemplate.ReportTemplateFactory;
+import com.opensymphony.xwork2.ActionContext;
 
 @Namespace("/")
 @ResultPath(value = "/")
@@ -69,8 +68,8 @@ public class Login extends FSActionSupport {
 	
 	private List<UserProfile>getProfiles(){
 		
-		WebContext context = new J2EContext(request,response);
-		SessionStore sessionStore = new J2ESessionStore();
+		WebContext context = new JEEContext(request,response);
+		SessionStore sessionStore = new JEESessionStore();
 		ProfileManager pm = new ProfileManager(context, sessionStore);
 		return pm.getAll(true);
 	}
@@ -144,6 +143,7 @@ public class Login extends FSActionSupport {
 				message = "Your account has been locked due to inactivity. Please contact your administrator";
 				return "failedAuth";
 			} else if (result == AuthResult.REDIRECT_OAUTH) {
+				Map<String,String[]> map = request.getParameterMap();
 				return "redirect_to_oauth";
 			}else if (result == AuthResult.NOT_VALID_OAUTH_ACCOUNT) {
 				failed = true;

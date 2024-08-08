@@ -111,9 +111,7 @@ public class ParseXML {
 			return this.parseXML(data, asmtId, map.getListname(), map.getMapping(), map.getMapRating(), map.getVulnMap(),
 					map.getDefaultVuln(), map.getCustomFields(), customTypes, removeDups);
 		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			return null;
+			return new ArrayList<Vulnerability>();
 		}
 	}
 
@@ -160,7 +158,6 @@ public class ParseXML {
 					String value = n.getNodeValue();
 
 					String attr = cns.item(j).getNodeName();
-					// System.out.println("+++++++++"+cns.item(j).getNodeName());
 					MapItem mi = map.stream().filter(m -> m.getParam().equals(attr)).findFirst().orElse(null);
 					if (mi == null)
 						continue;

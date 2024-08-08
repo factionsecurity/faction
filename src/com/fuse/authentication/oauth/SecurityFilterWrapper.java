@@ -2,8 +2,7 @@ package com.fuse.authentication.oauth;
 
 import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
-
-import org.pac4j.j2e.filter.SecurityFilter;
+import org.pac4j.jee.filter.SecurityFilter;
  
 public class SecurityFilterWrapper extends SecurityFilter{
 	

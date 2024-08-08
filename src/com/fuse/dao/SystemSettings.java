@@ -3,6 +3,7 @@ package com.fuse.dao;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -528,6 +529,7 @@ public class SystemSettings {
         config.setMaxAge(0);
         config.addCustomParam("display", "popup");
         config.addCustomParam("prompt", "select_account");
+				
         
         return config;
 	}
@@ -539,11 +541,11 @@ public class SystemSettings {
         oidcClient.setConfiguration(getOdicConfig());
         oidcClient.setAuthorizationGenerator((ctx, profile) -> {
             profile.addRole("ROLE_USER");
-            return profile;
+            return Optional.ofNullable(profile);
         });
         Clients clients = new Clients(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback",
                 oidcClient, new AnonymousClient());
-		SecurityFilterWrapper.getInstance().setConfig(new Config(clients));
+		SecurityFilterWrapper.getInstance().setConfigOnly(new Config(clients));
 	}
 	
 	@Transient
