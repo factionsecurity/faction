@@ -5051,7 +5051,7 @@ button {
 	padding-bottom: 0;
 	margin-top: -9px;
 	margin-right: 8px;
-	z-index: 99999;
+//	z-index: 99999;
 }
 .dashboardButton {
 	margin-top: -40px !important;
@@ -5137,4 +5137,36 @@ code {
 	color: #666 !important;
 	padding: 5px;
 	
+}
+.daterangepicker {
+	z-index: 1151 !important;
+	background-color: #030D1C ;
+}
+
+.daterangepicker td.off{
+	background-color: #192339 !important;
+}
+.daterangepicker .calendar-table{
+	border:none;
+	background-color: #030D1C ;
+
+}
+.badge{
+	margin-right: 5px;
+}
+.badge i{
+	margin-right: 4px;
+}
+.badge-red {
+	background-color: #dd4b39;
+}
+.badge-green {
+	background-color: #00a65a;
+}
+.badge-yellow {
+	background-color: #f39c12;
+}
+#noteHistory{
+	background-color: #12101073;
+	padding: 10px;
 }

@@ -4,8 +4,6 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 <jsp:include page="../header.jsp" />
-   <link rel="stylesheet" href="../plugins/fullcalendar/fullcalendar.min.css">
-   <link rel="stylesheet" href="../plugins/fullcalendar/fullcalendar.print.css" media="print">
    <link rel="stylesheet" href="../plugins/daterangepicker/daterangepicker-bs3.css">
    <link href="../fileupload/css/fileinput.min.css" media="all" rel="stylesheet" type="text/css" />
    <link href="../dist/css/jquery.autocomplete.css" media="all" rel="stylesheet" type="text/css" />

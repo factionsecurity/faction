@@ -60,27 +60,22 @@ public class ReportGenThread implements Runnable{
 	@Override
 	public void run() {
 		
-		System.out.println("Generating Report");
 		EntityManager em = HibHelper.getInstance().getEM();
 		Long id = this.asmt.getId();
 		try{
 			GenerateReport genReport = new GenerateReport();
 			String docx = "";
-			if(isRetest)
-				docx = genReport.generateRetestDocxReport(id, em,"");
-			else
-				docx = genReport.generateDocxReport(id, em);
+			docx = genReport.generateDocxReport(id, em, isRetest);
 			this.report = docx;
 			em.close();
 			em = HibHelper.getInstance().getEM();
-			System.out.println("Finished Generating Report");
-			System.out.println("Update Notifications");
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
 			Assessment a = em.find(Assessment.class, id);
 			if(a.getFinalReport() == null && !isRetest){
 				String guid = UUID.randomUUID().toString();
 				FinalReport fr = new FinalReport();
+				fr.setRetest(false);
 				fr.setFilename(guid);
 				fr.setBase64EncodedPdf(docx);
 				fr.setGentime(new Date());
@@ -92,6 +87,7 @@ public class ReportGenThread implements Runnable{
 			}else if(isRetest && a.getRetestReport() == null){
 				String guid = UUID.randomUUID().toString();
 				FinalReport fr = new FinalReport();
+				fr.setRetest(true);
 				fr.setFilename(guid);
 				fr.setBase64EncodedPdf(docx);
 				fr.setGentime(new Date());
@@ -110,17 +106,16 @@ public class ReportGenThread implements Runnable{
 				if(isRetest){
 					notify.setMessage("Retest Report Created for <b>" 
 							+ a.getAppId() + " " + a.getName()
-							+"</b>: <a href='../service/Report.docx?guid=" + a.getRetestReport().getFilename() +"'>Retest Report</a>");
+							+"</b>: <a href='DownloadReport?guid=" + a.getRetestReport().getFilename() +"'>Retest Report</a>");
 				}else{
 					notify.setMessage("Report Generation Completed for <b>" +asmt.getAppId() + " - " 
-							+ asmt.getName() + "</b>: <a href='../service/Report.pdf?guid=" + a.getFinalReport().getFilename() + "'>Report</a>");
+							+ asmt.getName() + "</b>: <a href='DownloadReport?guid=" + a.getFinalReport().getFilename() + "'>Report</a>");
 				}
 				notify.setCreated(new Date());
 				em.persist(notify);
 				
 			}
 			HibHelper.getInstance().commit();
-			System.out.println("Notifications Sent");
 		}catch(Exception ex){
 			ex.printStackTrace();
 		}finally{

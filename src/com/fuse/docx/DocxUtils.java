@@ -9,7 +9,9 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import javax.persistence.EntityManagerFactory;
 
 import org.docx4j.TextUtils;
 import org.docx4j.TraversalUtil;
@@ -35,9 +37,11 @@ import org.docx4j.wml.STTabTlc;
 import org.docx4j.wml.Tbl;
 import org.docx4j.wml.Tc;
 import org.docx4j.wml.Tr;
+import org.docx4j.wml.CTTxbxContent;
 
 import com.fuse.dao.Assessment;
 import com.fuse.dao.CustomField;
+import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.extenderapi.Extensions;
@@ -53,19 +57,25 @@ public class DocxUtils {
 	private String CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml";
 	private String[] keywords = { "asmtName", "asmtId", "asmtAppid", "asmtAssessor", "asmtAssessor_Email",
 			"asmtAssessor_Lines", "asmtAssessor_Comma", "asmtAssessor_Bullets", "remediation", "asmtTeam", "asmtType",
-			"today", "asmtStart", "asmtEnd", "asmtAccessKey" };
+			"today", "asmtStart", "asmtEnd", "asmtAccessKey", "totalOpenVulns", "totalClosedVulns"};
 	private Extensions reportExtension;
 	private Assessment assessment;
 	private List<Vulnerability> vulns;
 	private final WordprocessingMLPackage mlp;
 	
-	public DocxUtils(WordprocessingMLPackage mlp, Assessment assessment) {
+	public DocxUtils(EntityManagerFactory entityManagerFactory, WordprocessingMLPackage mlp, Assessment assessment) {
 		this.mlp = mlp;
-		this.reportExtension = new Extensions(Extensions.EventType.REPORT_MANAGER);
+		this.reportExtension = new Extensions(entityManagerFactory, Extensions.EventType.REPORT_MANAGER);
 		this.assessment = assessment;
 		this.vulns = assessment.getVulns();
 	}
 
+	public DocxUtils(WordprocessingMLPackage mlp, Assessment assessment) {
+		this.mlp = mlp;
+		this.reportExtension = new Extensions(HibHelper.getInstance().getEMF(), Extensions.EventType.REPORT_MANAGER);
+		this.assessment = assessment;
+		this.vulns = assessment.getVulns();
+	}
 	
 	private boolean cellContains(Tc cell, String variable) {
 		for (Object obj : cell.getContent()) {
@@ -165,6 +175,8 @@ public class DocxUtils {
 
 			// now we have a row.. we need to iterate through all issues
 			// and replace variables
+			SimpleDateFormat formatter;
+			formatter = new SimpleDateFormat("MM/dd/yyyy");
 			int count = 1;
 			for (Vulnerability v : this.vulns) {
 				// Change Colors if need be
@@ -175,6 +187,21 @@ public class DocxUtils {
 					nxml = nxml.replaceAll("\\$\\{cvssScore\\}", v.getCvssScore());
 					nxml = nxml.replaceAll("\\$\\{cvssString\\}", v.getCvssString());
 					nxml = nxml.replaceAll("\\$\\{tracking\\}", v.getTracking());
+					if(v.getOpened() != null) {
+						nxml = nxml.replaceAll("\\$\\{openedAt\\}", formatter.format(v.getOpened()));
+					}else {
+						nxml = nxml.replaceAll("\\$\\{openedAt\\}", "");
+					}
+					if(v.getClosed() != null) {
+						nxml = nxml.replaceAll("\\$\\{closedAt\\}", formatter.format(v.getClosed()));
+					}else {
+						nxml = nxml.replaceAll("\\$\\{closedAt\\}", "");
+					}
+					if(v.getDevClosed() != null) {
+						nxml = nxml.replaceAll("\\$\\{closedInDevAt\\}", formatter.format(v.getDevClosed()));
+					}else {
+						nxml = nxml.replaceAll("\\$\\{closedInDevAt\\}", "");
+					}
 					try {
 						nxml = nxml.replaceAll("\\$\\{vid\\}", "" + v.getId());
 					} catch (Exception ex) {
@@ -183,9 +210,9 @@ public class DocxUtils {
 					nxml = nxml.replaceAll("\\$\\{category\\}",
 							v.getCategory() == null ? "UnCategorized" : v.getCategory().getName());
 					if (v.getClosed() == null)
-						nxml = nxml.replaceAll("\\$\\{status\\}", "Open");
+						nxml = nxml.replaceAll("\\$\\{remediationStatus\\}", "Open");
 					else
-						nxml = nxml.replaceAll("\\$\\{status\\}", "Closed");
+						nxml = nxml.replaceAll("\\$\\{remediationStatus\\}", "Closed");
 					nxml = nxml.replaceAll("\\$\\{count\\}", "" + count);
 					nxml = nxml.replaceAll("\\$\\{loop\\}", "");
 					nxml = nxml.replaceAll("\\$\\{loop\\-[0-9]+\\}", "");
@@ -487,6 +514,8 @@ public class DocxUtils {
 		map.put(getKey("asmtstart"), formatter.format(this.assessment.getStart()));
 		map.put(getKey("asmtend"), formatter.format(this.assessment.getEnd()));
 		map.put(getKey("asmtaccesskey"), this.assessment.getGuid());
+		map.put(getKey("totalopenvulns"), this.getTotalOpenVulns(this.assessment.getVulns()));
+		map.put(getKey("totalclosedvulns"), this.getTotalClosedVulns(this.assessment.getVulns()));
 
 		// replavce all cusotm varables
 		if (this.assessment.getCustomFields() != null) {
@@ -681,6 +710,14 @@ public class DocxUtils {
 		mlp.getMainDocumentPart().setContents((org.docx4j.wml.Document) XmlUtils.unmarshalString(xml));
 
 	}
+	
+	private String getTotalOpenVulns(List<Vulnerability> vulns) {
+		return ""+vulns.stream().filter(v -> v.getClosed() == null).collect(Collectors.toList()).size();
+	}
+	
+	private String getTotalClosedVulns(List<Vulnerability> vulns) {
+		return ""+vulns.stream().filter(v -> v.getClosed() != null).collect(Collectors.toList()).size();
+	}
 
 	// replace text/html content
 	private String replacement(String content) {
@@ -723,6 +760,8 @@ public class DocxUtils {
 		content = content.replaceAll("\\$\\{today\\}", formatter.format(new Date()));
 		content = content.replaceAll("\\$\\{asmtStandND\\}", formatter.format(this.assessment.getEnd()));
 		content = content.replaceAll("\\$\\{asmtAccessKey\\}", this.assessment.getGuid());
+		content = content.replaceAll("\\$\\{totalOpenVulns\\}", this.getTotalOpenVulns(this.assessment.getVulns()));
+		content = content.replaceAll("\\$\\{totalClosedVulns\\}", this.getTotalClosedVulns(this.assessment.getVulns()));
 		
 		//Run extensions
 		if(this.reportExtension.isExtended()) {
@@ -784,6 +823,8 @@ public class DocxUtils {
 		for (int i = end; i >= begin; i--) {
 			mlp.getMainDocumentPart().getContent().remove(i);
 		}
+		SimpleDateFormat formatter;
+		formatter = new SimpleDateFormat("MM/dd/yyyy");
 
 		for (Vulnerability v : this.vulns) {
 			for (Object obj : findingTemplate) {
@@ -795,6 +836,21 @@ public class DocxUtils {
 				nxml = nxml.replaceAll("\\$\\{cvssString\\}", v.getCvssScore());
 				nxml = nxml.replaceAll("\\$\\{cvssScore\\}", v.getCvssScore());
 				nxml = nxml.replaceAll("\\$\\{tracking\\}", v.getTracking());
+				if(v.getOpened() != null) {
+					nxml = nxml.replaceAll("\\$\\{openedAt\\}", formatter.format(v.getOpened()));
+				}else {
+					nxml = nxml.replaceAll("\\$\\{openedAt\\}", "");
+				}
+				if(v.getClosed() != null) {
+					nxml = nxml.replaceAll("\\$\\{closedAt\\}", formatter.format(v.getClosed()));
+				}else {
+					nxml = nxml.replaceAll("\\$\\{closedAt\\}", "");
+				}
+				if(v.getDevClosed() != null) {
+					nxml = nxml.replaceAll("\\$\\{closedInDevAt\\}", formatter.format(v.getDevClosed()));
+				}else {
+					nxml = nxml.replaceAll("\\$\\{closedInDevAt\\}", "");
+				}
 				try {
 					nxml = nxml.replaceAll("\\$\\{vid\\}", "" + v.getId());
 				} catch (Exception ex) {
@@ -803,9 +859,9 @@ public class DocxUtils {
 				nxml = nxml.replaceAll("\\$\\{category\\}",
 						v.getCategory() == null ? "UnCategorized" : v.getCategory().getName());
 				if (v.getClosed() == null) {
-					nxml = nxml.replaceAll("\\$\\{status\\}", "Open");
+					nxml = nxml.replaceAll("\\$\\{remediationStatus\\}", "Open");
 				} else {
-					nxml = nxml.replaceAll("\\$\\{status\\}", "Closed");
+					nxml = nxml.replaceAll("\\$\\{remediationStatus\\}", "Closed");
 				}
 				// remove color loops
 				if(nxml.contains("${color") || nxml.contains("${fill"))
@@ -1101,6 +1157,9 @@ public class DocxUtils {
 		} else if (paragraph.getParent() instanceof Hdr) {
 			// located in a header element
 			final Hdr parent = (Hdr) paragraph.getParent();
+			return parent.getContent();
+		} else if (paragraph.getParent() instanceof CTTxbxContent) {
+			final CTTxbxContent parent = (CTTxbxContent) paragraph.getParent();
 			return parent.getContent();
 		} else {
 			// paragraph located in main document part

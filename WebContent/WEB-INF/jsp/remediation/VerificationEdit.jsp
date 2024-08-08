@@ -4,26 +4,18 @@
 <%@ taglib prefix="s" uri="/struts-tags"%>
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 <jsp:include page="../header.jsp" />
-<link rel="stylesheet"
-	href="../plugins/fullcalendar/fullcalendar.min.css">
-<link rel="stylesheet"
-	href="../plugins/fullcalendar/fullcalendar.print.css" media="print">
-<link rel="stylesheet"
-	href="../plugins/daterangepicker/daterangepicker-bs3.css">
 <link rel="stylesheet" href="../plugins/iCheck/all.css">
 <link href="../fileupload/css/fileinput.min.css" media="all"
-	rel="stylesheet" />
-<link
-	href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css'
-	rel='stylesheet' />
+	rel="stylesheet" type="text/css" />
+<link href="../dist/css/Fuse.css" media="all" rel="stylesheet"
+	type="text/css" />
 <style>
 .chSevTable td {
 	padding: 10px;
 }
 
-.daterangepicker {
-	z-index: 1151 !important;
-	background-color: #030D1C !important;
+#notes, #RemNotes, #nprodNotes, #prodNotes, #cancelVerNotes, #chSevNotes {
+background-color: white;
 }
 
 .nav-tabs-custom .form-control {
@@ -51,8 +43,24 @@
 	border-width: 0px 1px 1px 1px;
 }
 
-.sun-editor {
-	width: 100% !important;
+.btn{
+margin-top: 20px;
+}
+.infoTable td{
+	padding-left: 10px;
+	padding-right: 10px;
+}
+
+.controlTable{
+	border:0px !important;
+	margin-left: 20px;
+}
+.controlTable a{
+	color: #b8c7ce;
+}
+.controlTable td:first-child {
+	border-left-width: 0px;
+	border-left-style: solid;
 }
 </style>
 
@@ -69,20 +77,41 @@
 	<!-- Main content -->
 	<section class="content">
 		<bs:box type="info" title="Edit Verification">
+			<div class="row" >
+				<div class="col-md-12">
+					<table class="infoTable">
+				<tr><td>	<b>Vulnerability Name:</b></td><td> <s:property value="vuln.name"/></td></tr>
+				<tr><td>	<b>Assessment Id:</b></td><td> <s:property value="appId"/></td></tr>
+				<tr><td>	<b>Assessment Name:</b></td><td> <s:property value="appName"/></td></tr>
+				<tr><td>	<b>Tracking:</b></td><td> <s:property value="vuln.tracking"/></td></tr>
+				<tr><td>	<b>Opened:</b></td><td> <span id="opened"><s:date name="vuln.opened" format="MM/dd/yyyy"/></span></td></tr>
+				<tr><td>	<b>Severity:</b> </td><td><s:property value="vuln.getOverallStr()"/></td></tr>
+				<tr><td>	<b>Status: </b></td><td> <s:property value="badges" escapeHtml="false"/></td></tr>
+					</table>
+					<br/>
+					<br/>
+					<a href="RemediationSchedule?vulnId=${vuln.id}">Show All In Assessment</a>
+				</div>
+			</div>
+			<div class="row" >
+				<div class="col-md-12">
+				<br/>
+				</div>
+			</div>
 			<div class="row" id="controls">
 				<div class="col-md-12">
 					<div class="nav-tabs-custom">
 						<ul class="nav nav-tabs">
-							<li class="active"><a href="#tab_1" data-toggle="tab">Verification
+							<li class="active"><a href="#info" data-toggle="tab">Verification
 									Info</a></li>
-							<li><a href="#tab_2" data-toggle="tab">Notes/Actions</a></li>
+							<li><a href="#actions" data-toggle="tab">Notes/Actions</a></li>
 						</ul>
 						<div class="tab-content">
-							<div class="tab-pane active" id="tab_1">
+							<div class="tab-pane active" id="info">
 								<jsp:include page="verificationForm.jsp" />
 							</div>
 							<!-- /.tab-pane -->
-							<div class="tab-pane" id="tab_2">
+							<div class="tab-pane" id="actions">
 								<jsp:include page="notesForm.jsp" />
 							</div>
 							<!-- /.tab-pane -->
@@ -99,7 +128,32 @@
 
 
 		<!-- Modals -->
-		<!-- Modals -->
+<!-- Begin Change Date Modal -->
+
+<div id="changeDateModal" class="modal fade" tabindex="-1" role="dialog">
+	<div class="modal-dialog">
+		<div class="modal-content bg-red">
+			<div class="modal-header">
+				<button type="button" class="close" data-dismiss="modal"
+					aria-label="Close">
+					<span aria-hidden="true">&times;</span>
+				</button>
+				<h4 class="modal-title">Change The Start Date</h4>
+			</div>
+			<div class="modal-body">
+				<bs:row>
+					<bs:dt name="Opened Date" colsize="12" id="openDateCal"></bs:dt>
+				</bs:row>
+
+			</div>
+			<div class="modal-footer">
+				<button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary" id="saveOpen">Save
+					changes</button>
+			</div>
+		</div>
+	</div>
+</div>
 		<bs:modal modalId="sevModal" saveId="saveSev" title="Change Severity"
 			color="red" closeText="Cancel" saveText="Save Severity">
 			<bs:row>
@@ -140,7 +194,7 @@
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<textarea id="chSevNotes" name="chSevNotes"></textarea>
+					<div id="chSevNotes" name="chSevNotes"></div>
 				</bs:mco>
 			</bs:row>
 
@@ -166,7 +220,7 @@
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<textarea id="nprodNotes" name="nprodNotes"></textarea>
+					<div id="nprodNotes" name="nprodNotes"></div>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>
@@ -190,7 +244,7 @@
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<textarea id="prodNotes" name="nprodNotes"></textarea>
+					<div id="prodNotes" name="nprodNotes"></div>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>
@@ -211,7 +265,7 @@
 			<bs:row>
 				<bs:mco colsize="12">
 					<b>Add Notes:</b>
-					<textarea id="verNotes" name="verNotes"></textarea>
+					<div id="cancelVerNotes" name="cancelVerNotes"></div>
 				</bs:mco>
 			</bs:row>
 		</bs:modal>
@@ -233,6 +287,7 @@
 			let defaultAppId = "<s:property value="appId"/>";
 			let defaultVerId = "<s:property value="searchId"/>";
 			let defaultAppName = "<s:property value="appName"/>";
+			let defaultAssessmentId = "<s:property value="vuln.assessmentId"/>";
 			let filesPreview = [
 			<s:iterator value="files">
 				<s:if test="contentType.contains('image')">
@@ -259,5 +314,10 @@
 	
 		</script>
 		<script src="../dist/js/verification_edit.js"></script>
+		<link
+			href='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.css'
+			rel='stylesheet' />
+		<script
+			src='https://cdn.jsdelivr.net/npm/fullcalendar@5.10.1/main.min.js'></script>
 		</body>
 		</html>

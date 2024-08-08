@@ -1,16 +1,7 @@
 package com.fuse.actions.assessment;
 
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -18,7 +9,6 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
@@ -40,7 +30,6 @@ import com.fuse.dao.Comment;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.Files;
-import com.fuse.dao.HibHelper;
 import com.fuse.dao.Notification;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.RiskLevel;
@@ -54,7 +43,7 @@ import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
 import com.fuse.utils.FSUtils;
-import com.opensymphony.xwork2.ActionContext;
+import com.fuse.utils.History;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/assessment/Assessment.jsp", params = { "contentType", "text/html" })
@@ -63,7 +52,6 @@ public class AssessmentView extends FSActionSupport {
 	private String id;
 	private String riskAnalysis;
 	private String summary;
-	private String notes;
 	private String update;
 	private String aq;
 	private String action = "";
@@ -82,7 +70,6 @@ public class AssessmentView extends FSActionSupport {
 	private List<RiskLevel> levels = new ArrayList();
 	private List<CustomType> vulntypes = new ArrayList();
 	private Boolean notowner;
-	private User user;
 	private List<BoilerPlate> summaryTemplates;
 	private List<BoilerPlate> riskTemplates;
 	LinkedHashMap<String, Integer> vulnMap = new LinkedHashMap<>();
@@ -120,23 +107,7 @@ public class AssessmentView extends FSActionSupport {
 
 		if (assessment == null)
 			return SUCCESS;
-	
-		//This fixes an image issue
-		String content = assessment.getSummary();
-		if(content != null && content.endsWith("div>")) {
-			content = content + "<p><br/></p>";
-			assessment.setSummary(content);
-		}
-		content = assessment.getRiskAnalysis();
-		if(content != null && content.endsWith("div>")) {
-			content = content + "<p><br/></p>";
-			assessment.setRiskAnalysis(content);
-		}
-		content = assessment.getNotes();
-		if(content != null && content.endsWith("div>")) {
-			content = content + "<p><br/></p>";
-			assessment.setNotes(content);
-		}
+		
 
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 
@@ -162,40 +133,21 @@ public class AssessmentView extends FSActionSupport {
 				counts.put(v.getOverall().intValue(), counts.get(v.getOverall().intValue()) + 1);
 
 		}
+		
 		files = AssessmentQueries.getFilesByAssessmentId(em, assessment.getId());
 
 		if (this.prEnabled) {
 			if (assessment.getPeerReview() != null)
 				comments = assessment.getPeerReview().getComments();
 		}
+		//fix deprecatednotes
+		if(assessment.getNotes() != null && assessment.getNotebook().size() == 0) {
+			assessment.upgradeNotes(em);
+		}else if(assessment.getNotebook() == null || assessment.getNotebook().size() == 0) {
+			assessment.upgradeNotes(em);
+		}
 
-		if (this.action != null && this.action.equals("genreport")) {
-
-			if (assessment != null && assessment.getCompleted() != null)
-				return "errorJson";
-
-			if (!AssessmentQueries.checkForReportTemplates(em, assessment)) {
-				this._message = "There are no report templates for this assessment. Contact your administrator.";
-				return this.ERRORJSON;
-			}
-
-			String host = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-			host += request.getContextPath();
-
-			HttpSession session = ServletActionContext.getRequest().getSession();
-			if (assessment.getFinalReport() != null && assessment.getFinalReport().getGentime() != null) {
-				session.setAttribute("reportDate", assessment.getFinalReport().getGentime());
-			} else {
-				Calendar dummy = new GregorianCalendar(1980, 1, 1); // Dummy Data
-				session.setAttribute("reportDate", dummy.getTime());
-			}
-
-			ReportGenThread reportThread = new ReportGenThread(host, assessment, assessment.getAssessor());
-			TaskQueueExecutor.getInstance().execute(reportThread);
-
-			return this.SUCCESSJSON;
-
-		} else if (this.action != null && this.action.equals("finalize")) {
+		if (this.action != null && this.action.equals("finalize")) {
 			if (!this.testToken(false))
 				return this.ERRORJSON;
 			
@@ -219,8 +171,6 @@ public class AssessmentView extends FSActionSupport {
 			
 			if (this.riskAnalysis != null)
 				assessment.setRiskAnalysis(this.riskAnalysis);
-			if (this.notes != null)
-				assessment.setNotes(this.notes);
 			if (this.summary != null)
 				assessment.setSummary(this.summary);
 			AssessmentQueries.saveAssessment(this, em, assessment, "Assessment Summaries have been updated");
@@ -409,128 +359,6 @@ public class AssessmentView extends FSActionSupport {
 		return this.jsonSuccessMessage;
 	}
 
-	@Action(value = "CheckStatus", results = {
-			@Result(name = "success202", type = "httpheader", params = { "status", "202" }),
-			@Result(name = "success200", location = "/WEB-INF/jsp/assessment/SuccessMessageJSON.jsp")
-
-	})
-	public String checkStatus() {
-		if (!(this.isAcassessor() || this.isAcmanager())) {
-			return LOGIN;
-		}
-		HttpSession session = ServletActionContext.getRequest().getSession();
-		Date lastDate = (Date) session.getAttribute("reportDate");
-		if (lastDate == null)
-			return ERROR;
-
-		Long asmtId = (Long) this.getSession("asmtid");
-		Assessment assessment = em.find(Assessment.class, asmtId);
-		if (assessment.getFinalReport() == null || assessment.getFinalReport().getGentime().equals(lastDate)) {
-			return "success202";
-		}
-		this._message = "" + assessment.getFinalReport().getGentime();
-
-		return "success200";
-
-	}
-
-	private String updatedText = "";
-
-	@Action(value = "CheckLocks", results = {
-			@Result(name = "lockSuccess", location = "/WEB-INF/jsp/assessment/lockSuccess.jsp"),
-			@Result(name = "lockError", location = "/WEB-INF/jsp/assessment/lockError.jsp"),
-			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
-	public String checkLocks() throws UnsupportedEncodingException {
-		if (!(this.isAcassessor() || this.isAcmanager())) {
-			_message="Session Expired";
-			return "lockError";
-		}
-		this.user = this.getSessionUser();
-		Long asmtId = (Long) this.getSession("asmtid");
-		this.assessment = em.find(Assessment.class, asmtId);
-		if (isNotesLockedbyAnotherUser() || isSummaryLockedbyAnotherUser() || isRiskLockedbyAnotherUser()) {
-			this.clearLockType("", this.user);
-			if(this.assessment.getNotes() == null) {
-				this.assessment.setNotes("");
-			}
-			if(this.assessment.getSummary() == null) {
-				this.assessment.setSummary("");
-			}
-			if(this.assessment.getRiskAnalysis() == null) {
-				this.assessment.setRiskAnalysis("");
-			}
-			this.assessment.setNotes(URLEncoder
-					.encode(Base64.getEncoder().encodeToString(this.assessment.getNotes().getBytes()), "UTF-8"));
-			this.assessment.setSummary(URLEncoder
-					.encode(Base64.getEncoder().encodeToString(this.assessment.getSummary().getBytes()), "UTF-8"));
-			this.assessment.setRiskAnalysis(URLEncoder
-					.encode(Base64.getEncoder().encodeToString(this.assessment.getRiskAnalysis().getBytes()), "UTF-8"));
-			return "lockJSON";
-		} else {
-			return "lockSuccess";
-		}
-	}
-
-	@Action(value = "SetLock", results = {
-			@Result(name = "lockSuccess", location = "/WEB-INF/jsp/assessment/lockSuccess.jsp"),
-			@Result(name = "lockError", location = "/WEB-INF/jsp/assessment/lockError.jsp"),
-			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
-	public String setLock() throws UnsupportedEncodingException {
-		if (!(this.isAcassessor() || this.isAcmanager())) {
-			return LOGIN;
-		}
-		User user = this.getSessionUser();
-		Long asmtId = (Long) this.getSession("asmtid");
-		this.assessment = em.find(Assessment.class, asmtId);
-		if (this.action.equals("notes") && !assessment.isNotesLock()) {
-			assessment.setNotesLock(true);
-			assessment.setNotesLockAt(new Date());
-			assessment.setNotesLockBy(user);
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(assessment);
-			HibHelper.getInstance().commit();
-			return "lockSuccess";
-		} else if (this.action.equals("summary") && !assessment.isSummaryLock()) {
-			assessment.setSummaryLock(true);
-			assessment.setSummaryLockAt(new Date());
-			assessment.setSummaryLockBy(user);
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(assessment);
-			HibHelper.getInstance().commit();
-			return "lockSuccess";
-		} else if (this.action.equals("risk") && !assessment.isRiskLock()) {
-			assessment.setRiskLock(true);
-			assessment.setRiskLockAt(new Date());
-			assessment.setRiskLockBy(user);
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(assessment);
-			HibHelper.getInstance().commit();
-			return "lockSuccess";
-		} else {
-			return "lockSuccess";
-		}
-	}
-
-	@Action(value = "ClearLock", results = {
-			@Result(name = "lockSuccess", location = "/WEB-INF/jsp/assessment/lockSuccess.jsp"),
-			@Result(name = "lockError", location = "/WEB-INF/jsp/assessment/lockError.jsp"),
-			@Result(name = "lockJSON", location = "/WEB-INF/jsp/assessment/lockJSON.jsp"), })
-	public String clearLock() {
-		if (!(this.isAcassessor() || this.isAcmanager())) {
-			return LOGIN;
-		}
-		User user = this.getSessionUser();
-		Long asmtId = (Long) this.getSession("asmtid");
-		this.assessment = em.find(Assessment.class, asmtId);
-		if (this.clearLockType(action, user)) {
-			return "lockSuccess";
-		} else {
-			return "lockError";
-		}
-	}
 	private boolean blockingPR(Long asmtId) {
 
 		PeerReview prTemp = (PeerReview) em.createNativeQuery("{\"assessment_id\" : " + asmtId + "}", PeerReview.class)
@@ -574,75 +402,6 @@ public class AssessmentView extends FSActionSupport {
 		
 	}
 
-	public boolean isNotesLockedbyAnotherUser() {
-		return assessment.isNotesLock() && assessment.getNotesLockBy() != null
-				&& assessment.getNotesLockBy().getId() != user.getId();
-	}
-
-	public boolean isSummaryLockedbyAnotherUser() {
-		return assessment.isSummaryLock() && assessment.getSummaryLockBy() != null
-				&& assessment.getSummaryLockBy().getId() != user.getId();
-	}
-
-	public boolean isRiskLockedbyAnotherUser() {
-		return assessment.isRiskLock() && assessment.getRiskLockBy() != null
-				&& assessment.getRiskLockBy().getId() != user.getId();
-	}
-
-	private boolean clearLockType(String type, User user) {
-		boolean isUpdated = false;
-		switch (type) {
-		case "notes":
-			if (assessment.isNotesLock() && assessment.getNotesLockBy().getId() == user.getId()) {
-				isUpdated = true;
-				assessment.setNotesLock(false);
-				assessment.setNotesLockAt(null);
-				assessment.setNotesLockBy(null);
-			}
-			break;
-		case "summary":
-			if (assessment.isSummaryLock() && assessment.getSummaryLockBy().getId() == user.getId()) {
-				isUpdated = true;
-				assessment.setSummaryLock(false);
-				assessment.setSummaryLockAt(null);
-				assessment.setSummaryLockBy(null);
-			}
-			break;
-		case "risk":
-			if (assessment.isRiskLock() && assessment.getRiskLockBy().getId() == user.getId()) {
-				isUpdated = true;
-				assessment.setRiskLock(false);
-				assessment.setRiskLockAt(null);
-				assessment.setRiskLockBy(null);
-			}
-			break;
-		default:
-			// Clear outdated locks;
-			Calendar now = Calendar.getInstance();
-			now.add(Calendar.MINUTE, -5);
-			Date FiveMin = now.getTime();
-			if (assessment.getNotesLockAt() != null && assessment.getNotesLockAt().before(FiveMin)) {
-				this.clearLockType("notes", assessment.getNotesLockBy());
-				isUpdated = true;
-			}
-			if (assessment.getSummaryLockAt() != null && assessment.getSummaryLockAt().before(FiveMin)) {
-				this.clearLockType("summary", assessment.getSummaryLockBy());
-				isUpdated = true;
-			}
-			if (assessment.getRiskLockAt() != null && assessment.getRiskLockAt().before(FiveMin)) {
-				this.clearLockType("risk", assessment.getRiskLockBy());
-				isUpdated = true;
-			}
-			break;
-		}
-		if (isUpdated) {
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(assessment);
-			HibHelper.getInstance().commit();
-		}
-		return isUpdated;
-	}
 
 	private Long SessionAsmtId() {
 		if (this.getSession("asmtid") == null) {
@@ -683,7 +442,7 @@ public class AssessmentView extends FSActionSupport {
 			n.setAssessorId(a.getId());
 			n.setCreated(new Date());
 			n.setMessage(
-					"Assessment <b>" + assessment.getName() + "</b> was finalized: <a href='../service/Report.pdf?guid="
+					"Assessment <b>" + assessment.getName() + "</b> was finalized: <a href='DownloadReport?guid="
 							+ assessment.getFinalReport().getFilename() + "'>Report</a>");
 			notifiers.add(n);
 		}
@@ -778,14 +537,6 @@ public class AssessmentView extends FSActionSupport {
 
 	public void setSummary(String summary) {
 		this.summary = summary;
-	}
-
-	public String getNotes() {
-		return notes;
-	}
-
-	public void setNotes(String notes) {
-		this.notes = notes;
 	}
 
 	public String getUpdate() {
@@ -890,73 +641,6 @@ public class AssessmentView extends FSActionSupport {
 		return summaryTemplates;
 	}
 
-	private class History {
-		private Date opened;
-		private Date closed;
-		private String vuln;
-		private String report;
-		private String severity;
-		private String assessor;
-
-		public History(Date opened, Date closed, String vuln, String Report, String severity, String assessor) {
-			this.opened = opened;
-			this.closed = closed;
-			this.vuln = vuln;
-			this.report = Report != null ? Report.replace("/tmp/", "") : null;
-			this.severity = severity;
-			this.assessor = assessor;
-		}
-
-		public Date getOpened() {
-			return opened;
-		}
-
-		public void setOpened(Date opened) {
-			this.opened = opened;
-		}
-
-		public Date getClosed() {
-			return closed;
-		}
-
-		public void setClosed(Date closed) {
-			this.closed = closed;
-		}
-
-		public String getVuln() {
-			return vuln;
-		}
-
-		public void setVuln(String vuln) {
-			this.vuln = vuln;
-		}
-
-		public String getReport() {
-			return report;
-		}
-
-		public void setReport(String report) {
-			this.report = report;
-		}
-
-		public String getSeverity() {
-			return severity;
-		}
-
-		public void setSeverity(String severity) {
-			this.severity = severity;
-		}
-
-		public String getAssessor() {
-			return assessor;
-		}
-
-		public void setAssessor(String assessor) {
-			this.assessor = assessor;
-		}
-		
-
-	}
 
 	private List<History> createHistory(Assessment a, List<RiskLevel> levels) {
 		List<Vulnerability> vulns = VulnerabilityQueries.getVulnerabilitiesByAppId(em, a.getAppId(), levels, true);
@@ -966,9 +650,12 @@ public class AssessmentView extends FSActionSupport {
 			for (User u : a.getAssessor()) {
 				assessors += u.getFname() + " " + u.getLname() + "; ";
 			}
-
+			v.updateRiskLevels(em);
+			Long currentId = v.getAssessmentId();
+			Assessment currentAssessment = AssessmentQueries.getAssessmentById(em, currentId);
+			String reportId = currentAssessment.getFinalReport() == null? null : currentAssessment.getFinalReport().getFilename();
 			History obj = new History(v.getOpened(), v.getClosed(), v.getName(),
-					a.getFinalReport() == null ? null : a.getFinalReport().getFilename(), v.getOverallStr(), assessors);
+					reportId, v.getOverallStr(), assessors);
 			h.add(obj);
 		}
 		return h;
@@ -979,9 +666,6 @@ public class AssessmentView extends FSActionSupport {
 		return notowner;
 	}
 
-	public String getUpdatedText() {
-		return this.updatedText;
-	}
 	
 	public LinkedHashMap<String, Integer> getVulnMap(){
 		return vulnMap;
@@ -993,6 +677,7 @@ public class AssessmentView extends FSActionSupport {
 	public List<String> getColors() {
 		return new ArrayList<String>(Arrays.asList("#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"));
 	}
+	
 	
 	   
 	

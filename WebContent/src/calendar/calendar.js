@@ -1,5 +1,7 @@
 import '../loading/js/jquery-loading';
 require('./calendar.css');
+require('select2/dist/css/select2.min.css')
+require('daterangepicker/daterangepicker.css');
 import 'jquery';
 import 'datatables.net';
 import 'datatables.net-bs'   ;
@@ -9,7 +11,7 @@ import 'jquery-ui';
 import 'jquery-confirm';
 import '../scripts/jquery.autocomplete.min';
 import * as moment from 'moment';
-import 'bootstrap-daterangepicker';
+import 'daterangepicker';
 import 'select2';
 
 global.calendar = {};

@@ -1,12 +1,14 @@
-require('suneditor/dist/css/suneditor.min.css');
 require('jquery-fileinput/fileinput.css');
+require('select2/dist/css/select2.min.css')
 require('./overview.css');
 require('../loading/css/jquery-loading.css');
-import suneditor from 'suneditor';
-import plugins from 'suneditor/src/plugins';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/htmlmixed/htmlmixed';
-import 'codemirror/lib/codemirror.css';
+import Editor from '@toast-ui/editor'
+import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
+import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
+import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
+import '@toast-ui/editor/dist/toastui-editor.css';
+import 'tui-color-picker/dist/tui-color-picker.css';
+import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
 import '../loading/js/jquery-loading';
 import 'jquery';
 import 'datatables.net';
@@ -30,17 +32,25 @@ class SaveQueue {
 		this.token = caller._token;
 		this.locks = new EditLocks(this, assessmentId, updateVulnsCallback);
 	}
-	push(id, key, value) {
-		this.locks.setLock(id, key);
-		if (document.getElementById(`${key}_header`)) {
-			document.getElementById(`${key}_header`).innerHTML = "*"
+	push(type, id, key, value) {
+		this.locks.setLock(type, id, key);
+		let headerKey = key;
+		if(type == 'note'){
+			headerKey = 'notes'
+		}
+		if (document.getElementById(`${headerKey}_header`)) {
+			document.getElementById(`${headerKey}_header`).innerHTML = "*"
 		}
 		clearTimeout(this.timer);
-		if (id in this.queue) {
-			this.queue[id][key] = value;
+		if (type in this.queue && id in this.queue[type]) {
+			this.queue[type][id][key] = value;
+		}else if (type in this.queue) {
+			this.queue[type][id] = {};
+			this.queue[type][id][key] = value;
 		} else {
-			this.queue[id] = {};
-			this.queue[id][key] = value;
+			this.queue[type] = {};
+			this.queue[type][id] = {};
+			this.queue[type][id][key] = value;
 		}
 		let _this = this;
 		this.timer = setTimeout(function() {
@@ -49,22 +59,31 @@ class SaveQueue {
 	}
 
 	save() {
-		const keys = Object.keys(this.queue);
+		const types = Object.keys(this.queue);
 		let _this = this;
-		for (let key of keys) {
-			let data = Object.keys(this.queue[key]).map((k) => {
-				if (this.caller.vulnId == key && document.getElementById(`${k}_header`)) {
-					document.getElementById(`${k}_header`).innerHTML = ""
+		for (let type of types) {
+			const ids = Object.keys(this.queue[type])
+			for(let id of ids){
+				let data = Object.keys(this.queue[type][id]).map((k) => {
+					if(type == 'note'){
+						document.getElementById(`notes_header`).innerHTML = ""
+					}
+					else if (this.caller.vulnId == id && document.getElementById(`${k}_header`)) {
+						document.getElementById(`${k}_header`).innerHTML = ""
+					}
+					setTimeout(function() {
+						_this.locks.clearLock(type, id, k);
+					}, 5000)
+					return `${k}=${this.queue[type][id][k]}`
+				})
+				if(type == 'vulnerability'){
+					data = `vulnid=${id}&` + _this.handleCustom(data).join("&");
+				}else if(type == 'note'){
+					data = `noteid=${id}&` + data.join("&");
 				}
-				setTimeout(function() {
-					_this.locks.clearLock(key, k);
-				}, 5000)
-				return `${k}=${this.queue[key][k]}`
-			})
-
-			data = `vulnid=${key}&` + _this.handleCustom(data).join("&")
-			this.saveCallback(data, this.caller);
-			delete this.queue[key];
+				this.saveCallback(type, data, this.caller);
+				delete this.queue[type][id];
+			}
 		}
 	}
 
@@ -87,48 +106,48 @@ class SaveQueue {
 }
 
 class EditLocks {
-	constructor(caller, assessmentId, updateVulnsCallback) {
+	constructor(caller, assessmentId, updateCallback) {
 		this.lockIds = {};
 		this.caller = caller;
 		this.token = caller.token;
 		this.assessmentId = assessmentId;
-		this.updateVulnsCallback = updateVulnsCallback;
+		this.updateCallback = updateCallback;
 		this.checkLocks()
 		this.errorMessageShown = false;
 	}
-	setLock(id, attr) {
+	setLock(type, id, attr) {
 		let _this = this;
-		console.log(this.lockIds)
 		if (typeof this.lockIds[id] == "undefined") {
 			this.lockIds[id] = [attr];
-			$.get(`SetVulnLock?vulnid=${id}&vulnAttr=${attr}&_token=${this.token}`).done((resp) => {
+			$.get(`${type}/set/lock?id=${id}&attr=${attr}&_token=${this.token}`).done((resp) => {
 				if (resp.result == "success") {
 				}
 			});
 		} else {
 			if (!this.lockIds[id].some(i => i == attr)) {
 				this.lockIds[id].push(attr);
-				$.get(`SetVulnLock?vulnid=${id}&vulnAttr=${attr}&_token=${this.token}`).done((resp) => {
+				$.get(`${type}/set/lock?id=${id}&attr=${attr}&_token=${this.token}`).done((resp) => {
 					if (resp.result == "success") {
 					}
 				});
 			}
 
 		}
-
 	}
-	clearLock(id, attr) {
+	
+	clearLock(type, id, attr) {
 		if (this.lockIds[id]) {
 			this.lockIds[id] = this.lockIds[id].filter(l => l != attr)
-			$.get(`ClearVulnLock?vulnid=${id}&vulnAttr=${attr}&_token=${this.token}`).done();
+			$.get(`${type}/clear/lock?type=${type}&id=${id}&attr=${attr}&_token=${this.token}`).done();
 		} else {
-			console.log("no locks found");
+			//console.log("no locks found");
 		}
 	}
+	
 	checkLocks() {
 		let _this = this;
 		setInterval(function() {
-			$.get(`CheckVulnLocks?id=${_this.assessmentId}`).done((resp) => {
+			$.get(`vulnerability/check/locks?id=${_this.assessmentId}`).done((resp) => {
 				if (resp.result && resp.result == "error") {
 					if (!_this.errorMessageShown) {
 						_this.errorMessageShown = true
@@ -153,7 +172,7 @@ class EditLocks {
 					_this.caller.caller.queue._token = resp.token;
 					_this.caller.caller.queue.caller._token = resp.token;
 				}
-				_this.updateVulnsCallback(resp);
+				_this.updateCallback('vulnerability', resp);
 			}).catch(() => {
 				if (!_this.errorMessageShown) {
 					_this.errorMessageShown = true;
@@ -180,74 +199,24 @@ class VulnerablilityView {
 
 	constructor(assessmentId) {
 		this._token = $("#_token")[0].value;
-		this.queue = new SaveQueue(this, assessmentId, this.saveChanges, (vulns) => { this.updateVulnsCallback(vulns) });
+		this.queue = new SaveQueue(this, assessmentId, this.saveChanges, (type, vulns) => { this.updateCallback(type, vulns) });
 		this.vulnId = -1;
 		this.editors = {};
+		this.descUndoCount=0;
+		this.initialHTML={};
 		this.assesssmentId = assessmentId //$("#assessmentId")[0].value;
-		let fromMarkdown = {
-			name: 'fromMarkdown',
-			display: 'command',
-			title: 'Convert Markdown',
-			buttonClass: '',
-			innerHTML: '<i class="fa-brands fa-markdown" style="color:lightgray"></i>',
-			add: function(core, targetElement) {
-				core.context.fromMarkdown = {
-					targetButton: targetElement,
-					preElement: null
-				}
-			},
-			active: function(element) {
-				if (element) {
-					this.util.addClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
-					this.context.fromMarkdown.preElement = element;
-					return true;
-				} else {
-					this.util.removeClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
-					this.context.fromMarkdown.preElement = null;
-				}
-				return false;
-			},
-			action: function() {
-				let selected = this.getSelectedElements();
-				const md = selected.reduce((acc, item) => acc + item.innerText + "<br/>", "");
-				const html = marked.parse(md);
-				const div = document.createElement("p");
-				div.innerHTML = html;
-				const parent = selected[0].parentNode;
-				parent.insertBefore(div, selected[0]);
-				for (let i = 0; i < selected.length; i++) {
-					selected[i].remove();
-				}
-				this.history.push(true)
-				console.log(this);
-			}
-		}
-		plugins['fromMarkdown'] = fromMarkdown;
-		this.editorOptions = {
-			codeMirror: CodeMirror,
-			plugins: plugins,
-			buttonList: [
-				['undo', 'redo', 'fontSize', 'formatBlock', 'textStyle'],
-				['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
-				['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-				['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown', 'codeView'],
-
-			],
-			defaultStyle: 'font-family: arial; font-size: 18px',
-			minHeight: 500,
-			height: 'auto'
-		};
 		this.editorTimeout = {};
 		this.clearLockTimeout = {};
 		$(".select2").select2();
 
-		this.vulnTable = $('#vulntable').DataTable({
+		this.vulntable = $('#vulntable').DataTable({
 			"paging": false,
-			"lengthChange": false,
-			"searching": false,
+			"lengthchange": false,
+			"searching": true,
+			language: { search: "" },
 			"ordering": true,
 			"info": false,
-			"autoWidth": false,
+			"autowidth": false,
 			"order": [[1, "desc"]],
 			"columns": [
 				{ width: "10px" }, //checkbox
@@ -255,18 +224,45 @@ class VulnerablilityView {
 				{ width: "10px" } //controls
 
 			],
-			columnDefs: [
+			columndefs: [
 				{ orderable: false, targets: '_all' }
 			]
 		});
 		$(window).on('resize', () => {
-			this.vulnTable.columns.adjust();
+			this.vulntable.columns.adjust();
 		});
 		this.setUpEventHandlers()
 		this.updateColors();
-		this.editors.description = suneditor.create("description", {...this.editorOptions});
-		this.editors.recommendation = suneditor.create("recommendation", {...this.editorOptions});
-		this.editors.details = suneditor.create("details", {...this.editorOptions});
+		this.editors.description = new Editor({
+				el: document.querySelector('#description'),
+				previewStyle: 'vertical',
+				height: '600px',
+				autofocus: false
+			});
+			
+		this.editors.recommendation =  new Editor({
+				el: document.querySelector('#recommendation'),
+				previewStyle: 'vertical',
+				height: '600px',
+				autofocus: false
+			});
+		this.editors.details = new Editor({
+				el: document.querySelector('#details'),
+				previewStyle: 'vertical',
+				height: '600px',
+				autofocus: false
+			});
+		const initialHTML = entityDecode($("#notes").html());
+		this.editors.notes = new Editor({
+				el: document.querySelector('#notes'),
+				previewStyle: 'vertical',
+				height: '600px',
+				autofocus: false
+			});
+		this.editors.notes.hide();
+		this.editors.notes.setHTML(initialHTML, false);
+		this.editors.notes.show();
+		this.setUpNoteChangeEvent();
 		this.setUpVulnAutoComplete()
 		this.is40 = $("#isCVSS40").val() == "true"
 		this.cvss = new CVSS("", this.is40);
@@ -287,6 +283,7 @@ class VulnerablilityView {
 		return null;
 	}
 
+	
 	setUpEventHandlers() {
 		let _this = this;
 		$("#overall").on('change', (event) => {
@@ -319,9 +316,111 @@ class VulnerablilityView {
 		this.setUpAddVulnBtn();
 		this.setUpCVSSScoreEvents();
 		
+		//Note Events
+		
+		$("#createNote").on('click', ()=>{
+			let buttons = {
+				save: function() {
+					const name = $("#newNoteName").val();
+					let data = `noteName=${name.trim()}`
+					data += "&note=";
+					data += "&_token=" + global._token;
+					$.post("createNote", data).done(function(resp) {
+						_token = resp.token;
+						const note = resp;
+						if (!Array.from($(`#notebook option`))
+							.some((t) => $(t).val() == note.id)) {
+							let option = document.createElement("option");
+							$(option).addClass("globalTemplate");
+							$(option).val(note.id);
+							$(option).html(note.name);
+							$(`#notebook`).append(option).trigger("change");
+							$(option).on("click", async (event)=>{
+								await getNoteFromEvent(event)
+							})
+						}
+						alertMessage(resp, "Note Created.");
+					});
+
+				},
+				cancel: function() { }
+			}
+			let contentMessage = "Enter a Template name: <input id='newNoteName' class='form-control'></input>";
+			$.confirm({
+				title: "Create New Note",
+				content: contentMessage,
+				buttons: buttons
+			})
+			
+		});
+		$("#deleteNote").on('click', async (event) => {
+			let selected = Array.from($(`#notebook option:selected`));
+			if (selected.length == 0) {
+				alertMessage({ message: "No Valid Notes to Delete" }, null)
+				return;
+			}
+			const name = $("#noteName").val();
+			$.confirm({
+				title: "Confirm?",
+				content: "Are you sure you want to delete these templates?<br><b>" + name + "</b>",
+				buttons: {
+					confirm: async function() {
+						let messages = []
+						for await (const option of selected) {
+							await $.post(`deleteNote`, `noteid=${$(option).val()}`).done(function(resp) {
+								_token = resp.token;
+								messages.push(resp);
+								option.remove();
+							});
+						}
+						alertMessage(messages[0], "Note Deleted");
+					},
+					cancel: function() { }
+				}
+			});
+		});
+		
+		$("#noteName").on('keyup change', () =>{
+			const name = $("#noteName").val();
+			const selected = $(`#notebook option:selected`);
+			const id = selected.val();
+			$(selected).html(name);
+			this.queue.push('note',id, 'noteName', name);
+			
+		})
+		$(".globalNote").on("click", async (event)=>{
+			this.getNoteFromEvent(event)
+		})
+		
 
 	}
-
+	setUpNoteChangeEvent(){
+		this.editors.notes.on('change', ()=>{
+			let noteId = "";
+			const selected = $(`#notebook option:selected`);
+			noteId = selected.val()
+			this.queue.push('note',noteId, 'noteText', this.getEditorText('notes'));
+		});
+	}
+	getNote(id){
+		let _this = this;
+		$.get('getNote?noteid=' + id)
+			.done(function(note) {
+				$("#createdBy").html(note.createdBy);
+				$("#createdAt").html(note.createdAt);
+				$("#updatedBy").html(note.updatedBy);
+				$("#updatedAt").html(note.updatedAt);
+				_this.setEditorContents("notes", entityDecode(note.note), true);
+				$("#noteName").val(note.name);
+				_this.setUpNoteChangeEvent();
+				$("#notes").removeClass("disabled");
+			});
+	}
+	getNoteFromEvent(event) {
+		this.editors.notes.off('change');
+		let value = event.target.value;
+		this.getNote(value);
+	}
 	updateIntVal(element, elementName) {
 		var rank = $(element).html();
 		$("#" + elementName).val(rank);
@@ -332,7 +431,7 @@ class VulnerablilityView {
 		$("#" + el).val(value).trigger("change");
 	};
 	getEditorText(name) {
-		const html = this.editors[name].getContents();
+		const html = this.editors[name].getHTML();
 		return Array.from($(html)).filter(a => a.innerHTML != "<br>").map(a => a.outerHTML).join("")
 	}
 	updateColors() {
@@ -374,7 +473,7 @@ class VulnerablilityView {
 						const row = $(element).parents("tr");
 						const id = $(element).attr("id").replace("ckl", "");
 						rows.push("vulns[" + index + "]=" + id);
-						_this.vulnTable.row(row).remove().draw();
+						_this.vulntable.row(row).remove().draw();
 					});
 					rows.push("_token=" + _this._token);
 					$.post('reassignVulns', rows.join("&")).done(function(resp) {
@@ -388,28 +487,59 @@ class VulnerablilityView {
 			}
 		});
 	}
-	saveChanges(data, _this) {
+	saveChanges(type, data, _this) {
+		data = data.replaceAll("%3C%2Fp%3E%3Cp%3E%3Cbr%3E%3C%2Fp%3E%3Cp%3E", "%3Cbr%3E%3C%2Fp%3E%3Cp%3E");
 		data = `${data}&_token=${_this._token}`
-		$.post("updateVulnerability", data, function(resp) {
-			if (resp.result != "success") {
-				$.alert(resp.message);
-			}
-			_this._token = resp.token;
-		});
+		if(type == 'vulnerability'){
+			$.post("updateVulnerability", data, function(resp) {
+				if (resp.result != "success") {
+					$.alert(resp.message);
+				}
+				_this._token = resp.token;
+			});
+		}else if (type == 'note'){
+			$.post("updateNote", data, function(resp) {
+				if (resp.result != "success") {
+					$.alert(resp.message);
+				}
+				_this._token = resp.token;
+			});
+			
+		}
 
 	}
-	setLockScreen() {
-		this.disableAutoSave()
-		$("#vulnForm").addClass("disabled")
+	setLockScreen(type) {
+		if(type == 'vulnerability'){
+			this.disableAutoSave()
+			$("#vulnForm").addClass("disabled");
+		}else{
+			$("#notes").addClass("disabled");
+		}
 	}
-	clearLockScreen(vulnId) {
-		this.getVuln(vulnId)
+	
+	lockNoteEditor(notes){
+		const selected = $(`#notebook option:selected`);
+		for(let note of notes){
+			if(note.id == selected.val()){
+				this.setLockScreen('note');
+			}
+		}  
+		const notebook = $(`#notebook option`);
+		const lockedIds = notes.map(v => v.id);
+		for(let note of notebook){
+			const id = $(note).val();
+			if( lockedIds.indexOf(id) == -1 && $("#notes").hasClass("disabled") && selected.val() == id){
+				this.getNote(id);
+			}
+		}
 	}
-	updateVulnsCallback(data) {
+	updateCallback(type,data) {
 		let lockedVulns = data.vulns;
+		let lockedNotes = data.notes;
+		this.lockNoteEditor(lockedNotes);
 		for (let vuln of lockedVulns) {
 			if (vuln.id == this.vulnId) {
-				this.setLockScreen();
+				this.setLockScreen('vulnerability');
 			}
 			$(`#deleteVuln${vuln.id}`).hide();
 			$("#vulntable tbody tr").each((_a, el) => {
@@ -432,8 +562,17 @@ class VulnerablilityView {
 				$(`#deleteVuln${vulnId}`).show();
 			}
 		});
-		const activeVulns = Array.from($("#vulntable tbody tr")).map(tr => `${$(tr).data("vulnid")}`).filter(tr => tr != "undefined");
-
+		//const activeVulns = Array.from($("#vulntable tbody tr")).map(tr => `${$(tr).data("vulnid")}`).filter(tr => tr != "undefined");
+		
+		const activeVulns= Array.from(this.vulntable.data().map(function(value, index){
+			let col = value[0];
+			if(col.indexOf('id="ckl') == -1){
+				return "";
+			}else{
+				return col.split('"')[3].replace("ckl","")
+			}
+		}))
+		
 		for (let vuln of data.current) {
 			//vuln was added by another user so add it to the table
 			if (activeVulns.indexOf(vuln.id) == -1) {
@@ -446,8 +585,7 @@ class VulnerablilityView {
 				rowData += `<td><span class="vulnControl vulnControl-delete" id="deleteVuln${vuln.id}">`
 				rowData += `<i class="fa fa-trash" title="Delete Vulnerability"></i></span>`
 				rowData += `</td></tr>`
-				console.log(rowData)
-				const row = this.vulnTable.row.add($(rowData)).draw().node()
+				const row = this.vulntable.row.add($(rowData)).draw().node()
 				this.rebindTable();
 				this.updateColors();
 			} else {
@@ -469,8 +607,8 @@ class VulnerablilityView {
 						$(row[0]).find(".severity")[0].innerHTML = vuln.severityName;
 						$(row[0]).children()[0].className = `sev${vuln.severityName}`
 						$($(row[0]).children()[1]).attr('data-sort', vuln.severity)
-						this.vulnTable.row(row[0]).invalidate()
-						this.vulnTable.order([1, 'desc']).draw();
+						this.vulntable.row(row[0]).invalidate()
+						this.vulntable.order([1, 'desc']).draw();
 						this.updateColors();
 
 					}
@@ -484,7 +622,7 @@ class VulnerablilityView {
 		for (let vuln of activeVulns) {
 			if (serverVulns.indexOf(vuln) == -1) {
 				let row = Array.from($("#vulntable tbody tr")).filter((el) => $(el).data('vulnid') == vuln);
-				this.vulnTable.row($(row[0])).remove().draw();
+				this.vulntable.row($(row[0])).remove().draw();
 				window.postMessage({ "type": "updateStats" })
 				if (this.vulnId == vuln) {
 					this.vulnId = -1;
@@ -522,12 +660,12 @@ class VulnerablilityView {
 			$(".selected").find(".severity")[0].innerHTML = severity == "None"? "Recommended" : severity;
 			$(".selected").children()[0].className = `sev${severity== "None"? "Recommended" : severity}`
 			$($(".selected").children()[1]).attr('data-sort', score)
-			_this.vulnTable.row($(".selected")).invalidate()
-			_this.vulnTable.order([1, 'desc']).draw();
+			_this.vulntable.row($(".selected")).invalidate()
+			_this.vulntable.order([1, 'desc']).draw();
 			_this.updateColors()
-			_this.queue.push(_this.vulnId, "cvssScore", score);
-			_this.queue.push(_this.vulnId, "cvssString", cvssString);
-			_this.queue.push(_this.vulnId, "overall", overall); 
+			_this.queue.push('vulnerability', _this.vulnId, "cvssScore", score);
+			_this.queue.push('vulnerability', _this.vulnId, "cvssString", cvssString);
+			_this.queue.push('vulnerability', _this.vulnId, "overall", overall); 
 
 		})
 	}
@@ -561,8 +699,8 @@ class VulnerablilityView {
 				_this.setIntVal(val, "dcategory");
 				$("#dcategory").val(val).trigger('change');
 				const vulnid = splits[0];
-				_this.queue.push(_this.vulnId, "dvulnerability", vulnid)
-				_this.queue.push(_this.vulnId, "title", splits[1])
+				_this.queue.push('vulnerability', _this.vulnId, "dvulnerability", vulnid)
+				_this.queue.push('vulnerability', _this.vulnId, "title", splits[1])
 				$("#title").attr("intVal", vulnid);
 				d = d.replace("<p><br></p>", "");
 				r = r.replace("<p><br></p>", "");
@@ -577,8 +715,8 @@ class VulnerablilityView {
 							"yes": function() {
 								$.get('DefaultVulns?action=getvuln&vulnId=' + vulnid)
 									.done(function(data) {
-										_this.editors.description.setContents(marked.parse(_this.b64DecodeUnicode(data.desc)));
-										_this.editors.recommendation.setContents(marked.parse(_this.b64DecodeUnicode(data.rec)));
+										_this.setEditorContents("description", data.desc)
+										_this.setEditorContents("recommendation", data.rec)
 										_this.setIntVal(data.likelyhood, 'likelyhood');
 										_this.setIntVal(data.impact, 'impact');
 										_this.setIntVal(data.overall, 'overall');
@@ -587,17 +725,19 @@ class VulnerablilityView {
 										$(".selected").find(".severity")[0].innerHTML = severity;
 										$(".selected").children()[0].className = `sev${severity}`
 										$($(".selected").children()[1]).attr('data-sort', data.overall)
-										_this.vulnTable.row($(".selected")).invalidate()
-										_this.vulnTable.order([1, 'desc']).draw();
+										_this.vulntable.row($(".selected")).invalidate()
+										_this.vulntable.order([1, 'desc']).draw();
 										_this.updateColors()
 										postMessage({ "type": "updateStats" })
 
 										$(data.cf).each(function(a, b) {
 											let el = $("#type" + b.typeid);
-											if (el.type == 'checkbox' && b.value == 'true') {
+											if(el.length == 0 )
+												return;
+											if (el[0].type == 'checkbox' && b.value == 'true') {
 												$(el).prop('checked', true)
 											}
-											else if (el.type == 'checkbox' && b.value == 'false') {
+											else if (el[0].type == 'checkbox' && b.value == 'false') {
 												$(el).prop('checked', false)
 											}
 											else {
@@ -614,8 +754,8 @@ class VulnerablilityView {
 				} else {
 					$.get('DefaultVulns?action=getvuln&vulnId=' + vulnid)
 						.done(function(data) {
-							_this.editors.description.setContents(marked.parse(_this.b64DecodeUnicode(data.desc)).replace(/\n/g, " "));
-							_this.editors.recommendation.setContents(marked.parse(_this.b64DecodeUnicode(data.rec)).replace(/\n/g, " "));
+							_this.setEditorContents("description", data.desc)
+							_this.setEditorContents("recommendation", data.rec)
 							_this.setIntVal(data.likelyhood, 'likelyhood');
 							_this.setIntVal(data.impact, 'impact');
 							_this.setIntVal(data.overall, 'overall');
@@ -623,15 +763,15 @@ class VulnerablilityView {
 							$(".selected").find(".severity")[0].innerHTML = severity;
 							$(".selected").children()[0].className = `sev${severity}`
 							$($(".selected").children()[1]).attr('data-sort', data.overall)
-							_this.vulnTable.row($(".selected")).invalidate()
-							_this.vulnTable.order([1, 'desc']).draw();
+							_this.vulntable.row($(".selected")).invalidate()
+							_this.vulntable.order([1, 'desc']).draw();
 							_this.updateColors()
 							$(data.cf).each(function(a, b) {
 								let el = $("#type" + b.typeid);
-								if (el.type == 'checkbox' && b.value == 'true') {
+								if (el[0].type == 'checkbox' && b.value == 'true') {
 									$(el).prop('checked', true)
 								}
-								else if (el.type == 'checkbox' && b.value == 'false') {
+								else if (el[0].type == 'checkbox' && b.value == 'false') {
 									$(el).prop('checked', false)
 								}
 								else {
@@ -649,8 +789,8 @@ class VulnerablilityView {
 		let _this = this;
 		$("#addVuln").click(function() {
 			_this.disableAutoSave();
-			const desc = _this.getEditorText("description");
-			const rec = _this.getEditorText("recommendation");
+			const desc = "";
+			const rec = "";
 			let data = "id=" + _this.assesssmentId;
 			data += "&description=" + encodeURIComponent(desc);
 			data += "&recommendation=" + encodeURIComponent(rec);
@@ -679,7 +819,7 @@ class VulnerablilityView {
 				if (respData != "error") {
 					_this.deleteVulnForm();
 					$("#vulnForm").removeClass("disabled");
-					const row = _this.vulnTable.row.add($(respData[0])).draw().node()
+					const row = _this.vulntable.row.add($(respData[0])).draw().node()
 					_this.vulnId = resp.vulnId;
 					const vulnId = resp.vulnId;
 					$(".selected").each((_a, s) => $(s).removeClass("selected"));
@@ -706,8 +846,6 @@ class VulnerablilityView {
 			$(".selected").each((_a, s) => $(s).removeClass("selected"))
 			$(this).addClass("selected");
 			_this.getVuln(_this.vulnId);
-
-
 		});
 		$("#vulntable span[id^=deleteVuln]").each((_index, element) => {
 			$(element).on('click', event => {
@@ -740,7 +878,7 @@ class VulnerablilityView {
 						const row = $(element).parents("tr");
 						const id = $(element).attr("id").replace("ckl", "");
 						rows.push("vulns[" + index + "]=" + id);
-						_this.vulnTable.row(row).remove().draw();
+						_this.vulntable.row(row).remove().draw();
 					});
 
 					rows.push("_token=" + _this._token);
@@ -784,9 +922,9 @@ class VulnerablilityView {
 	deleteVulnForm() {
 		this.disableAutoSave()
 		$("#vulnForm").addClass("disabled")
-		this.editors.description.setContents("")
-		this.editors.recommendation.setContents("");
-		this.editors.details.setContents("");
+		this.setEditorContents("recommendation", "", true);
+		this.setEditorContents("details", "", true);
+		this.setEditorContents("description", "", true);
 		$('[id*="header"]').each((_a, h) => h.innerHTML = "");
 		$("#title").val("");
 		$("#cvssString").val("")
@@ -800,22 +938,31 @@ class VulnerablilityView {
 		$("#title").val("");
 		$("#dcategory").val("").trigger('change')
 		$('[id^="type"]').each((_index, el) => {
+			if(el.id.indexOf("header") != -1)
+				return;
+				
 			let value = $(el).data('default');
-			$(el).val(value);
+			if(el.length == 0 )
+				return;
+			if (el.type == 'checkbox' && value == 'true') {
+				$(el).prop('checked', true)
+			}
+			else if (el.type == 'checkbox') {
+				$(el).prop('checked', false)
+			}
+			else {
+				$(el).val(value).trigger('change');
+			}
 		}
 		);
 
 	}
 	disableAutoSave() {
-		console.log("disable autosave")
 		$('[id*="header"]').each((_a, h) => h.innerHTML = "");
 
-		this.editors.recommendation.onChange = function() { };
-		this.editors.recommendation.onChange = function() { };
-		this.editors.description.onChange = function() { };
-		this.editors.description.onInput = function() { };
-		this.editors.details.onChange = function() { };
-		this.editors.details.onInput = function() { };
+		this.editors.recommendation.off('change');
+		this.editors.description.off('change')
+		this.editors.details.off('change')
 		$("#title").unbind('input');
 		$("#overall").unbind('input');
 		$("#impact").unbind('input');
@@ -828,61 +975,58 @@ class VulnerablilityView {
 
 	enableAutoSave() {
 		let _this = this;
-		this.editors.description.onInput = function(contents, core) {
-			_this.queue.push(_this.vulnId, "description", encodeURIComponent(contents));
-		}
-		this.editors.description.onChange = function(contents, core) {
-			if (!contents.endsWith("</p>")) {
-				_this.editors.description.setContents(contents + "<p><br></p>");
-			}
-			contents = marked.parse(contents)
-			_this.queue.push(_this.vulnId, "description", encodeURIComponent(contents));
-		}
-		this.editors.recommendation.onInput = function(contents, core) {
-			_this.queue.push(_this.vulnId, "recommendation", encodeURIComponent(contents));
-		}
-		this.editors.recommendation.onChange = function(contents, core) {
-			if (!contents.endsWith("</p>")) {
-				_this.editors.recommendation.setContents(contents + "<p><br></p>");
-			}
-			_this.queue.push(_this.vulnId, "recommendation", encodeURIComponent(contents));
-		}
-		this.editors.details.onInput = function(contents, core) {
-			_this.queue.push(_this.vulnId, "details", encodeURIComponent(contents));
-		}
-		this.editors.details.onChange = function(contents, core) {
-			if (!contents.endsWith("</p>")) {
-				_this.editors.details.setContents(contents + "<p><br></p>");
-			}
-			_this.queue.push(_this.vulnId, "details", encodeURIComponent(contents));
-		}
+		this.descUndoCount=0;
+		/// This is a hack becuase toastui does not have inital undo history set correctly
+		/// https://github.com/nhn/tui.editor/issues/3195
+		
+		this.editors.description.on( 'keydown', function(a,e){
+			const html = _this.editors.description.getHTML()
+			if ((e.ctrlKey || e.metaKey) && e.key == 'z' && html == _this.initialHTML.description) {
+				e.preventDefault();
+				throw new Error("Prevent Undo");
+			 }
+		})
+		
+		this.editors.description.on( 'change', function(){
+			_this.descUndoCount++;
+			let contents = _this.editors.description.getHTML()
+			_this.queue.push('vulnerability', _this.vulnId, "description", encodeURIComponent(contents));
+		});
+		this.editors.recommendation.on( 'change', function() {
+			let contents = _this.editors.recommendation.getHTML()
+			_this.queue.push('vulnerability', _this.vulnId, "recommendation", encodeURIComponent(contents));
+		});
+		this.editors.details.on( 'change', function() {
+			let contents = _this.editors.details.getHTML()
+			_this.queue.push('vulnerability', _this.vulnId, "details", encodeURIComponent(contents));
+		});
 		$("#title").on('input', function(event) {
 			$(".selected").find(".vulnName")[0].innerHTML = $(this).val()
-			_this.queue.push(_this.vulnId, "title", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "title", $(this).val());
 		});
 		$("#overall").on('input', function(event) {
 			const severity = $(this).select2('data')[0].text
 			$(".selected").find(".severity")[0].innerHTML = severity
 			$(".selected").children()[0].className = `sev${severity}`
 			$($(".selected").children()[1]).attr('data-sort', $(this).val())
-			_this.vulnTable.row($(".selected")).invalidate()
-			_this.vulnTable.order([1, 'desc']).draw();
+			_this.vulntable.row($(".selected")).invalidate()
+			_this.vulntable.order([1, 'desc']).draw();
 			_this.updateColors()
-			_this.queue.push(_this.vulnId, "overall", $(this).val());
-			_this.queue.push(_this.vulnId, "likelyhood", $(this).val());
-			_this.queue.push(_this.vulnId, "impact", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "overall", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "likelyhood", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "impact", $(this).val());
 		});
 		$("#impact").on('input', function(event) {
-			_this.queue.push(_this.vulnId, "impact", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "impact", $(this).val());
 		});
 		$("#likelyhood").on('input', function(event) {
-			_this.queue.push(_this.vulnId, "likelyhood", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "likelyhood", $(this).val());
 		});
 		$("#dcategory").on('input', function(event) {
 			const catName = $(this).select2('data')[0].text
 			$(".selected").find(".category")[0].innerHTML = catName
 			window.postMessage({ "type": "updateStats" });
-			_this.queue.push(_this.vulnId, "dcategory", $(this).val());
+			_this.queue.push('vulnerability', _this.vulnId, "dcategory", $(this).val());
 		});
 		$('[id^="type"]').each((_index, el) => $(el).on('input', function(event) {
 			let val = "";
@@ -891,24 +1035,33 @@ class VulnerablilityView {
 			} else {
 				val = $(this).val();
 			}
-			_this.queue.push(_this.vulnId, this.id, `${val}`);
+			_this.queue.push('vulnerability', _this.vulnId, this.id, `${val}`);
 		}));
 		this.setUpCVSSScoreEvents();
 
 	}
-	setEditorContents(type, data) {
+	setEditorContents(type, data, createNew=false) {
 		let decoded = this.b64DecodeUnicode(data);
-		if (decoded.endsWith("</div>")) {
-			decoded = decoded + "<p><br></p>";
+		if(createNew){
+			this.editors[type].destroy();
+			this.editors[type] = new Editor({
+				el: document.querySelector('#' + type),
+				previewStyle: 'vertical',
+				height: '600px',
+				autofocus: false,
+				plugins: [colorSyntax, tableMergedCell]
+			});
 		}
-		this.editors[type].setContents(marked.parse(decoded));
-		console.log(this.editors[type])
-		this.editors[type].core.history.reset();
-		this.editors[type].core.history.push(true);
+		this.editors[type].hide();	
+		this.editors[type].setHTML(decoded, false);
+		this.initialHTML[type] = this.editors[type].getHTML();
+		this.editors[type].show();	
 	}
 	getVuln(id) {
 		this.vulnId = id;
+		
 		this.disableAutoSave()
+		this.deleteVulnForm();
 		$(`#deleteVuln${id}`).show();
 		$("#vulntable tbody tr").each((_a, el) => {
 			if ($(el).data('vulnid') == id) {
@@ -922,18 +1075,20 @@ class VulnerablilityView {
 			$("#cvssString").val($("<div/>").html(data.cvssString).text())
 			let vector = _this.cvss.updateCVSSString(data.cvssString);
 			_this.cvss.updateCVSSScore(vector);
-			_this.setEditorContents("description", data.description);
-			_this.setEditorContents("recommendation", data.recommendation);
-			_this.setEditorContents("details", data.details);
+			_this.setEditorContents("recommendation", data.recommendation, true);
+			_this.setEditorContents("details", data.details, true);
+			_this.setEditorContents("description", data.description, true);
 			_this.setIntVal(data.overall, 'overall');
 			_this.setIntVal(data.likelyhood, 'likelyhood');
 			_this.setIntVal(data.impact, 'impact');
 			_this.setIntVal(data.catid, 'dcategory');
 			$(data.cf).each(function(a, b) {
 				let el = $("#type" + b.typeid);
+				if(el.length == 0 )
+					return;
+					
 				if (el[0].type == 'checkbox' && b.value == 'true') {
 					$(el).prop('checked', true);
-
 				}
 				else if (el[0].type == 'checkbox' && b.value == 'false') {
 					$(el).prop('checked', false);
@@ -955,7 +1110,7 @@ class VulnerablilityView {
 		$.confirm({
 			type: "red",
 			title: "Are you sure?",
-			content: "Do you want to delete " + _this.vulnTable.row(row).data()[3],
+			content: "Do you want to delete " + _this.vulntable.row(row).data()[3],
 			buttons: {
 				"yes, delete it": function() {
 					let data = 'vulnid=' + id + '&action=delete';
@@ -964,7 +1119,7 @@ class VulnerablilityView {
 						const isError = getData(resp);
 						window.postMessage({ "type": "updateStats" })
 						if (isError != "error") {
-							_this.vulnTable.row(row).remove().draw();
+							_this.vulntable.row(row).remove().draw();
 							_this.deleteVulnForm();
 						}
 					});
@@ -1003,6 +1158,17 @@ class VulnerablilityView {
 }
 
 $(function() {
+	var url = document.location.toString();
+	if (url.match('#')) {
+		$('.nav-tabs a[href="' + location.hash + '"]').tab('show');
+	}
+	$("a").click(evt => {
+		if (evt.target.href.indexOf("VulnView") != -1) {
+			location.href = "#VulnView"
+		} else if (evt.target.href.indexOf("NoteView") != -1) {
+			location.href = "#NoteView"
+		}
+	})
 	global.vulnView = new VulnerablilityView($("#assessmentId")[0].value);
 })
 

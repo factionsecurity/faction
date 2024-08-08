@@ -310,6 +310,7 @@ public class assessments {
 				/// Assessment should be locked and not editable when PR is enabled.
 				PeerReview prTemp = null;
 				try {
+					
 					prTemp = (PeerReview) em
 							.createNativeQuery("{\"assessment_id\" : " + a.getId() + "}", PeerReview.class)
 							.getResultList().stream().findFirst().orElse(null);

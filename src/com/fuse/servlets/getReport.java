@@ -54,12 +54,9 @@ public class getReport extends HttpServlet {
 		String type = request.getParameter("type");
 		
 		
-		//Session session = HibHelper.getSessionFactory().openSession();
 		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
 		response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
 		response.setDateHeader("Expires", 0); // Proxies.
-		//response.setContentType("application/pdf");
-		//response.setContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		
 		if(test == null){

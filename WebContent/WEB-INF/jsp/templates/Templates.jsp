@@ -14,6 +14,13 @@
 <link href="../plugins/jquery-confirm/css/jquery-confirm.css"
 	media="all" rel="stylesheet" type="text/css" />
 <style>
+#templateEditor{
+	background-color: white;
+}
+.disabled {
+	opacity: 0.3;
+	pointer-events: none;
+}
 </style>
 <div class="content-wrapper">
 	<!-- Content Header (Page header) -->
@@ -28,13 +35,13 @@
 
 
 		<div class="row">
-			<div class="col-md-6">
+			<div class="col-md-4">
 
 				<div class="box box-primary">
 					<div class="box-body">
 
 						<div class="row">
-							<div class="col-sm-3" style="margin-bottom: -30px; z-index: 1">
+							<div class="col-sm-4" style="margin-bottom: -30px; z-index: 1">
 								<button class="btn btn-block btn-primary btn-sm"
 									id="createTemplate">New Template</button>
 							</div>
@@ -43,11 +50,8 @@
 							class="table table-striped table-hover dataTable">
 							<thead class="theader">
 								<tr>
-									<th>id</th>
-									<th>Title</th>
-									<th>Type</th>
-									<th>Created</th>
-									<th>Created By</th>
+									<th></th>
+									<th>Description</th>
 									<th>Active</th>
 									<th></th>
 								</tr>
@@ -56,11 +60,12 @@
 								<s:iterator value="templates">
 									<tr id="template${id}">
 										<td><s:property value="id" /></td>
-										<td><s:property value="title" /></td>
-										<td><s:property value="type" />
-										<td><s:date name="created" format="MM/dd/yyyy"/>
-										<td><s:property value="user.fname" /> <s:property
-												value="user.lname" /></td>
+										<td><b><s:property value="title" /></b><br/>
+										<small><span><b>Type:</b> <s:property value="type" /></span>
+										<span><b>By:</b> <s:property value="user.fname" /> <s:property
+												value="user.lname" /></span>
+										<span><b>On:</b> <s:date name="created" format="MM/dd/yyyy"/> </span></small>
+										</td>
 										<td><input type="checkbox" class="activeCheckBox" <s:if test="active">checked</s:if> /></td>
 										<td>
 						<span class="vulnControl vulnControl-delete"><i class="fa fa-trash" title="Delete Template"></i></span></td>
@@ -75,19 +80,19 @@
 				</div>
 				<!-- /.box -->
 			</div>
-			<div class="col-md-6">
+			<div class="col-md-8">
 				<div class="col-md-12">
 
-					<div class="box box-primary">
+					<div id="editorContainer" class="box box-primary disabled">
 						<div class="box-header">
 						<h2><span id="templateName">&nbsp;</span><span id="edits"></span></h2> 
 						<span id="saveTemplate" class="vulnControl pull-right" style="margin-top: -40px"><i class="fa fa-save" title="Save Template"></i></span>
 						</div>
 						<div class="box-body">
 							<form>
-							<bs:editor name="templateEditor" toolbar="Full" id="templateEditor"
+							<div name="templateEditor" toolbar="Full" id="templateEditor"
 								clickToEnable="false" >
-							</bs:editor>
+							</div>
 							</form>
 						</div>
 						<!-- /.box-body -->

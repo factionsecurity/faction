@@ -9,6 +9,7 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 
+import com.fuse.dao.Assessment;
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.Files;
 import com.fuse.dao.HibHelper;
@@ -32,6 +33,7 @@ public class RemVulnData extends FSActionSupport {
 	private Long verId = -1l;
 	private List<Files> files;
 	private String fileJSON;
+	private String scope="";
 
 	@Action(value = "RemVulnData", results = {
 			@Result(name = "notesJson", location = "/WEB-INF/jsp/remediation/notesJson.jsp"),
@@ -58,6 +60,15 @@ public class RemVulnData extends FSActionSupport {
 		} else if (action.equals("getNotes") && vulnId != -1l) {
 			notes = (List<VulnNotes>) em.createQuery("from VulnNotes where vulnId = :vid order by created desc")
 					.setParameter("vid", vulnId).getResultList();
+			scope="";
+			if(verId != -1l) {
+				Verification verification = em.find(Verification.class, verId);
+				scope = verification.getNotes();
+			}else {
+				Vulnerability vuln = em.find(Vulnerability.class, vulnId);
+				Assessment assessment = em.find(Assessment.class, vuln.getAssessmentId());
+				scope = assessment.getAccessNotes();
+			}
 			// session.close();
 			return "notesJson";
 		} else if (action.equals("changeSev") && vulnId != -1l) {
@@ -243,6 +254,23 @@ public class RemVulnData extends FSActionSupport {
 		return SUCCESS;
 
 	}
+	
+	@Action( value="Reopen")
+	public String reopen() {
+		if (!this.isAcremediation()) {
+			return LOGIN;
+		}
+		Vulnerability vuln = em.find(Vulnerability.class, vulnId);
+		if(vuln!=null) {
+			vuln.setClosed(null);
+			vuln.setDevClosed(null);
+			HibHelper.getInstance().preJoin();
+			em.joinTransaction();
+			em.persist(vuln);
+			HibHelper.getInstance().commit();
+		}
+		return this.SUCCESSJSON;
+	}
 
 	public String getAction() {
 		return action;
@@ -322,6 +350,9 @@ public class RemVulnData extends FSActionSupport {
 
 	public String getFileJSON() {
 		return fileJSON;
+	}
+	public String getScope() {
+		return scope;
 	}
 
 }

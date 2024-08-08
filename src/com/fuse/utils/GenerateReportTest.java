@@ -13,7 +13,6 @@ import java.io.InputStream;
 
 import javax.persistence.EntityManager;
 
-import org.apache.poi.util.IOUtils;
 import org.docx4j.org.apache.xml.security.exceptions.Base64DecodingException;
 import org.docx4j.org.apache.xml.security.utils.Base64;
 import org.junit.Test;

@@ -292,31 +292,30 @@ export default class CVSS {
 								$("#modalCVSSString").val(vectorString);
 								
 							}else{
-								let at = $("input[name='at']:checked").val() || "X"
-								let vc = $("input[name='vc']:checked").val() || "X"
-								let vi = $("input[name='vi']:checked").val() || "X"
-								let va = $("input[name='va']:checked").val() || "X"
-								let sc = $("input[name='sc']:checked").val() || "X"
-								let si = $("input[name='si']:checked").val() || "X"
-								let sa = $("input[name='sa']:checked").val() || "X"
+								let at = $("input[name='at']:checked").val() || "X";
+								let vc = $("input[name='vc']:checked").val() || "X";
+								let vi = $("input[name='vi']:checked").val() || "X";
+								let va = $("input[name='va']:checked").val() || "X";
+								let sc = $("input[name='sc']:checked").val() || "X";
+								let si = $("input[name='si']:checked").val() || "X";
+								let sa = $("input[name='sa']:checked").val() || "X";
 								
-								let s = $("input[name='s']:checked").val() || "X"
-								let au = $("input[name='au']:checked").val() || "X"
-								let r = $("input[name='r']:checked").val() || "X"
-								let v = $("input[name='v']:checked").val() || "X"
-								let re = $("input[name='re']:checked").val() || "X"
-								let u = $("input[name='u']:checked").val() || "X"
+								let s = $("input[name='s']:checked").val() || "X";
+								let au = $("input[name='au']:checked").val() || "X";
+								let r = $("input[name='r']:checked").val() || "X";
+								let v = $("input[name='v']:checked").val() || "X";
+								let re = $("input[name='re']:checked").val() || "X";
+								let u = $("input[name='u']:checked").val() || "X";
 								
-								let mvc = $("input[name='mvc']:checked").val() || "X"
-								let mvi = $("input[name='mvi']:checked").val() || "X"
-								let mva = $("input[name='mva']:checked").val() || "X"
+								let mvc = $("input[name='mvc']:checked").val() || "X";
+								let mvi = $("input[name='mvi']:checked").val() || "X";
+								let mva = $("input[name='mva']:checked").val() || "X";
 								
 								
-								let msc = $("input[name='msc']:checked").val() || "X"
-								let msi = $("input[name='msi']:checked").val() || "X"
-								let msa = $("input[name='msa']:checked").val() || "X"
-								
-								let mat = $("input[name='mat']:checked").val() || "X"
+								let msc = $("input[name='msc']:checked").val() || "X";
+								let msi = $("input[name='msi']:checked").val() || "X";
+								let msa = $("input[name='msa']:checked").val() || "X";
+								let mat = $("input[name='mat']:checked").val() || "X";
 								let cvss40Vector = {
 									AT: at, 
 									VC: vc, 
@@ -338,11 +337,11 @@ export default class CVSS {
 									MSI: msi, 
 									MSA: msa, 
 									MAT: mat
-								}
+								};
 								cvssVector = {
 									...cvss40Vector, 
 									...commonVector
-								}
+								};
 								Object.keys(cvssVector).forEach( (a, _i) =>{
 										_this.vector.Set(a,cvssVector[a]);
 								});

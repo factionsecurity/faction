@@ -9,10 +9,11 @@
               <div class="box box-primary">
                 <div class="box-body">
                   <bs:row>      
-                  <bs:inputgroup name="" id="appid" colsize="3" placeholder="Application Id (Exact Match)"></bs:inputgroup>
-		 		  <bs:inputgroup name="" id="appname" colsize="3" placeholder="Application Name (Partial Match)"></bs:inputgroup>
-		 		  <bs:inputgroup name="" id="tracking" colsize="3" placeholder="Tracking ID"></bs:inputgroup>      
-           		  <bs:button color="info" size="md" colsize="3" text="Search" id="search"></bs:button>
+                  <bs:inputgroup name="" id="vulnName" colsize="2" placeholder="Vulnerability Name (Partial Match)"></bs:inputgroup>
+                  <bs:inputgroup name="" id="appid" colsize="2" placeholder="Application Id (Exact Match)"></bs:inputgroup>
+		 		  <bs:inputgroup name="" id="appname" colsize="2" placeholder="Application Name (Partial Match)"></bs:inputgroup>
+		 		  <bs:inputgroup name="" id="tracking" colsize="2" placeholder="Tracking ID"></bs:inputgroup>      
+           		  <bs:button color="info" size="md" colsize="2" text="Search" id="search"></bs:button>
            		 </bs:row>
            		 <br>
            		 <bs:row>
@@ -36,9 +37,6 @@
 		                    </label>
 		             </bs:mco>
 		             
-		             
-
-                    
                   </bs:row>
            		 <br>
                   <hr>
@@ -46,15 +44,15 @@
                     <thead class="theader">
                       <tr>
                       	<th></th>
+                        <th>Vulnerability</th>
                       	<th>App Name</th>
                       	<th>Assessor</th>
                       	<th>Tracking</th>
                       	<th>Status</th>
-                        <th>Name</th>
                         <th>Severity</th>
                         <th>Opened</th>
-                        <th>Closed in Dev</th>
-                        <th>Closed in Prod</th>
+                        <th>Closed (Dev)</th>
+                        <th>Closed (Prod)</th>
                       </tr>
                     </thead>
                     <tbody>

@@ -15,7 +15,7 @@
 			</bs:row>
 		<bs:row>
 			<bs:mco colsize="2">
-				<button id="addVuln" class="btn btn-block btn-primary btn-lg"
+				<button id="addVuln" class="btn btn-primary btn-lg"
 					<s:if test="hideit">disabled</s:if>>
 					<b><i class="glyphicon glyphicon-plus"></i> New Vulnerability</b>
 				</button>
@@ -168,6 +168,16 @@ td:first-child {
 .cvssfalse {
 	display: none;
 }
+
+#description {
+	background-color: white
+}
+#recommendation {
+	background-color: white
+}
+#details {
+	background-color: white
+}
 </style>
 
 <div class="row">
@@ -317,9 +327,8 @@ td:first-child {
 												<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized || readOnly">disabled</s:if> />
 										</s:if>
 										<s:if test="fieldType == 1">
-											<br>
 											<input type="checkbox" class="icheckbox_minimal-blue"
-												style="width: 20px; height: 20px; position: absolute; margin-top: -13px"
+												style="width: 20px; height: 20px; margin-top: -13px"
 												data-default='${defaultValue}'
 												id="type<s:property value="id"/>"
 												<s:if test="defaultValue == 'true'">checked</s:if>
@@ -358,10 +367,10 @@ td:first-child {
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="description" toolbar="Full" id="description"
+										<div name="description" toolbar="Full" id="description"
 											clickToEnable="false">
 
-										</bs:editor>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -381,10 +390,10 @@ td:first-child {
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="recommendation" toolbar="Full"
+										<div name="recommendation" toolbar="Full"
 											id="recommendation" clickToEnable="false">
 
-										</bs:editor>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -404,10 +413,10 @@ td:first-child {
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="details" toolbar="Full" id="details"
+										<div name="details" toolbar="Full" id="details"
 											clickToEnable="false">
 
-										</bs:editor>
+										</div>
 									</div>
 								</div>
 							</div>

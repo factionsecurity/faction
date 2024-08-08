@@ -4,7 +4,6 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 <jsp:include page="../header.jsp" />
-<link href="../fileupload/css/fileinput.min.css" media="all" rel="stylesheet" type="text/css" />
 <link href="../dist/css/jquery.autocomplete.css" media="all" rel="stylesheet" type="text/css" />
 <link href="../dist/css/throbber.css" media="all" rel="stylesheet" type="text/css" />
 <link href="../plugins/jquery-confirm/css/jquery-confirm.css" media="all" rel="stylesheet" type="text/css" />
@@ -69,11 +68,12 @@ color:#00a65a
 <div class="col-md-12">
  <div class="nav-tabs-custom">
    <ul class="nav nav-tabs">
-     <li><a href="Assessment#tab_1" >Overview</a></li>
+     <li><a href="Assessment#Summary" >Overview</a></li>
      <li><a href="VulnerabilityView">Vulnerabilities</a></li>
+     <li><a href="VulnerabilityView#NoteView">Notes</a></li>
      <li><a href="CheckList">Checklists</a></li>
-     <li><a href="Assessment#tab_3" >Finalize</a></li>
-     <li><a href="Assessment#tab_4" >History</a></li>
+     <li><a href="Assessment#Finalize" >Finalize</a></li>
+     <li><a href="Assessment#History" >History</a></li>
      <li class="active"><a href="AuditLog" >Audit</a></li>
    </ul>
    <div class="tab-content">

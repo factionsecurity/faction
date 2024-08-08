@@ -4,19 +4,15 @@
 <%@taglib prefix="s" uri="/struts-tags"%>
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 <jsp:include page="../header.jsp" />
-<link rel="stylesheet"
-	href="../plugins/fullcalendar/fullcalendar.min.css">
-<link rel="stylesheet"
-	href="../plugins/fullcalendar/fullcalendar.print.css" media="print">
-<link rel="stylesheet"
-	href="../plugins/daterangepicker/daterangepicker-bs3.css">
-<link rel="stylesheet" href="../plugins/datepicker/datepicker3.css">
 <link rel="stylesheet" href="../plugins/iCheck/all.css">
 <link href="../fileupload/css/fileinput.min.css" media="all"
 	rel="stylesheet" type="text/css" />
 <link href="../dist/css/Fuse.css" media="all" rel="stylesheet"
 	type="text/css" />
 <style>
+#notes,#RemNotes,#chSevNotes,#nprodNotes,#prodNotes{
+	background-color: white;
+}
 .chSevTable td {
 	padding: 10px;
 }
@@ -32,6 +28,15 @@
 .daterangepicker {
 	z-index: 1151 !important;
 	background-color: #030D1C !important;
+}
+
+.daterangepicker td.off{
+	background-color: #192339 !important;
+}
+.daterangepicker .calendar-table{
+	border:none;
+	background-color: #030D1C !important;
+
 }
 
 .nav-tabs-custom .form-control {
@@ -58,6 +63,32 @@
 	border: 1px solid #030D1C;
 	border-width: 0px 1px 1px 1px;
 }
+
+#noteHistory table {
+    font-family: Arial, Helvetica, sans-serif;
+    border-collapse: collapse;
+    width: 100%;
+}
+#noteHistory td, #noteHistory th {
+    border: 0.3px solid #acb9ca;
+    padding: 2px;
+  	padding-left: 8px;
+}
+#noteHistory td div {
+   word-break: break-all !important;
+}
+#noteHistory th {
+  white-space: nowrap !important;
+  background-color: #afbfcf;
+  display: table-cell;
+  vertical-align: inherit;
+  font-weight: normal;
+  color: #030d1c;
+}
+
+.btn-actions .btn{
+margin-top: 20px;
+}
 </style>
 
 <!-- Content Wrapper. Contains page content -->
@@ -74,130 +105,11 @@
 		<bs:box type="info"
 			title="Search Vulnerabilities and Add them to a Verification">
 			<jsp:include page="OpenVulns.jsp"></jsp:include>
-			<div class="row" id="controls" style="display: none">
-				<div class="col-md-12">
-					<div class="nav-tabs-custom">
-						<ul class="nav nav-tabs">
-							<li class="active"><a href="#tab_1" data-toggle="tab">Submit
-									for Verification</a></li>
-							<li><a href="#tab_2" data-toggle="tab">Notes/Actions</a></li>
-						</ul>
-						<div class="tab-content">
-							<div class="tab-pane active" id="tab_1">
-								<jsp:include page="verificationForm.jsp" />
-							</div>
-							<!-- /.tab-pane -->
-							<div class="tab-pane" id="tab_2">
-								<jsp:include page="notesForm.jsp" />
-							</div>
-							<!-- /.tab-pane -->
-						</div>
-						<!-- /.tab-pane -->
-					</div>
-					<!-- /.tab-content -->
-				</div>
-				<!-- nav-tabs-custom -->
-			</div>
-			<!-- /.col -->
 		</bs:box>
 	</section>
 </div>
 
 
-
-<!-- Modals -->
-<bs:modal modalId="sevModal" saveId="saveSev" title="Change Severity"
-	color="red" closeText="Cancel" saveText="Save Severity">
-	<bs:row>
-		<bs:mco colsize="12">
-			<span style="font-size: large">Change Severity of <i
-				id="vulnName"></i> to :</i></span>
-		</bs:mco>
-	</bs:row>
-	<bs:row>
-		<bs:select name="Severity:" colsize="4" id="newSev"
-			cssClass="remediationSelect">
-			<s:iterator value="levels" begin="9" end="0" step="-1" status="stat">
-				<s:if test="risk != null && risk != 'Unassigned' && risk != ''">
-					<option value="${riskId }">${risk}</option>
-				</s:if>
-			</s:iterator>
-		</bs:select>
-
-		<bs:select name="Impact:" colsize="4" id="newImpact">
-			<s:iterator value="levels" begin="9" end="0" step="-1" status="stat">
-				<s:if test="risk != null && risk != 'Unassigned' && risk != ''">
-					<option value="${riskId }">${risk}</option>
-				</s:if>
-			</s:iterator>
-		</bs:select>
-
-		<bs:select name="Likelyhood:" colsize="4" id="newLike">
-			<s:iterator value="levels" begin="9" end="0" step="-1" status="stat">
-				<s:if test="risk != null && risk != 'Unassigned' && risk != ''">
-					<option value="${riskId }">${risk}</option>
-				</s:if>
-			</s:iterator>
-		</bs:select>
-
-	</bs:row>
-	<bs:row>
-		<bs:mco colsize="12">
-			<b>Add Notes:</b>
-			<textarea id="chSevNotes" name="chSevNotes"></textarea>
-		</bs:mco>
-	</bs:row>
-
-</bs:modal>
-
-
-<bs:modal modalId="nprodModal" saveId="saveNprod"
-	title="Close in Development" color="red" closeText="Cancel"
-	saveText="Close in Development">
-	<bs:row>
-		<bs:mco colsize="12">
-			<h3>
-				Are you sure you want to close this finding in the <b
-					style="color: #F39C12">Development Environment</b>?
-			</h3>
-			<br>
-			<i>This will <b>not</b> fully mark the item as remediated until
-				it is closed in the production environment.
-			</i>
-			<br>
-		</bs:mco>
-	</bs:row>
-	<bs:row>
-		<bs:mco colsize="12">
-			<b>Add Notes:</b>
-			<textarea id="nprodNotes" name="nprodNotes"></textarea>
-		</bs:mco>
-	</bs:row>
-</bs:modal>
-
-
-<bs:modal modalId="prodModal" saveId="saveProd" title="Close in Prod"
-	color="red">
-	<bs:row>
-		<bs:mco colsize="12">
-			<h3>
-				Are you sure you want to close this finding in the <b
-					style="color: red">Production Environment</b>?
-			</h3>
-			<br>
-			<i>This will fully close the item and record the item as fully
-				remediated.</i>
-			<br>
-			<br>
-		</bs:mco>
-	</bs:row>
-	<bs:row>
-		<bs:mco colsize="12">
-			<b>Add Notes:</b>
-			<textarea id="prodNotes" name="nprodNotes"></textarea>
-		</bs:mco>
-	</bs:row>
-</bs:modal>
 
 <jsp:include page="../footer.jsp" />
 

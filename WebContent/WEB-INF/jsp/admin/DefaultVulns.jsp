@@ -5,6 +5,12 @@
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 <jsp:include page="../header.jsp" />
 <style>
+#description{
+	background-color: white;
+}
+#recommendation{
+	background-color: white;
+}
 .jconfirm-content input {
 	background: #030D1C;
 }

@@ -4,6 +4,12 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 
+<style>
+#notes{
+	background-color: white;
+}
+</style>
+
  
 <bs:row>
 <bs:mco colsize="6">
@@ -153,9 +159,9 @@
 	 <bs:row>
 	 	<bs:mco colsize="12">
 	 		<label>Notes:</label>
-            <textarea id="notes" name="notes" rows="10" cols="80" <s:if test="currentAssessment.finalized">disabled</s:if> > 
+            <div id="notes" name="notes" rows="10" cols="80" <s:if test="currentAssessment.finalized">disabled</s:if> > 
             	<s:property value="currentAssessment.AccessNotes"/>                
-            </textarea>
+            </div>
 	 	</bs:mco>
 	 </bs:row>
 	  

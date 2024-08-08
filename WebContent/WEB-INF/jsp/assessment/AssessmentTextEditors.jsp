@@ -12,6 +12,18 @@
 	min-height: 570px;
 	max-height: 570px;
 }
+#summary{
+	background-color:white;
+}
+#risk{
+	background-color:white;
+}
+#notes{
+	background-color:white;
+}
+#engagmentnotes{
+	background-color:white;
+}
 </style>
 
 
@@ -198,10 +210,10 @@
 			<!-- /.box-header -->
 			<div class="box-body pad">
 				<form>
-					<bs:editor name="editor1" toolbar="Full" id="summary"
+					<div name="editor1" toolbar="Full" id="summary"
 						clickToEnable="false" readonly="${hideit}">
 						<s:property value="assessment.summary" />
-					</bs:editor>
+					</div>
 				</form>
 				<s:if test="!(hideit)">
 					<br>
@@ -235,24 +247,20 @@
 					<select id="summaryTemplates" multiple="false"
 						class="form-control templates">
 						<s:iterator value="summaryTemplates">
-							<option value="${id}" title="${user.fname } ${user.lname}"
-								global="${global}"
+							<option value="<s:property value='id'/>" title="<s:property value='user.fname'/> <s:property value='user.lname'/>"
+								global="<s:property value="global"/>"
 								<s:if test="global == true">
 								class='globalTemplate'>
-							</s:if><s:else>
+								</s:if><s:else>
 								class='userTemplate'>
-							</s:else>
-							${title}
+								</s:else>
+							<s:property value="title"/>
 							</option>
 						</s:iterator>
 					</select>
 				</div>
 				<s:if test="!(hideit)">
 					<div class="row">
-						<!-- <div class="col-md-8">
-							<input class="form-control searchTemplate"
-								for="summary" placeholder="Search for Template" />
-						</div>-->
 						<div class="col-md-1"></div>
 						<div class="col-md-11" style="padding-top: 8px">
 							<span id="saveTemplateSideBar"
@@ -293,10 +301,10 @@
 			<!-- /.box-header -->
 			<div class="box-body pad">
 				<form>
-					<bs:editor name="editor2" toolbar="Full" id="riskAnalysis"
+					<div name="editor2" toolbar="Full" id="risk"
 						clickToEnable="false" readonly="${hideit}">
-						<s:property value="assessment.riskAnalysis" />
-					</bs:editor>
+						<s:property value="assessment.riskAnalysis"/>
+					</div>
 				</form>
 				<s:if test="!(hideit)">
 					<br>
@@ -327,14 +335,14 @@
 					<select id="riskTemplates" multiple="false"
 						class="form-control templates">
 						<s:iterator value="riskTemplates">
-							<option value="${id}" title="${user.fname } ${user.lname}"
-								global="${global}"
+							<option value="<s:property value='id'/>" title="<s:property value='user.fname'/> <s:property value='user.lname'/>"
+								global="<s:property value='global'/>"
 								<s:if test="global == true">
 								class='globalTemplate'>
 							</s:if><s:else>
 								class='userTemplate'>
 							</s:else>
-							${title}
+							<s:property value='title'/>
 							</option>
 						</s:iterator>
 					</select>
@@ -369,33 +377,6 @@
 
 <div class="row">
 
-	<!-- Notes Analysis Section -->
-	<div class="col-md-12">
-		<div class="box box-success">
-			<div class="box-header">
-				<h3 class="box-title">
-					<i class="glyphicon glyphicon-pencil"></i> Notes <span
-						id="notes_header" class="edited"></span> <small>Not
-						included in report</small>
-				</h3>
-				<div class="box-tools pull-right"></div>
-			</div>
-			<!-- /.box-header -->
-			<div class="box-body pad">
-				<form>
-					<bs:editor name="editor3" toolbar="Full" id="notes"
-						clickToEnable="false" readonly="${hideit}">
-						<s:property value="assessment.Notes" />
-					</bs:editor>
-				</form>
-			</div>
-		</div>
-		<!-- /.box -->
-	</div>
-
-</div>
-<div class="row">
-
 	<!-- Engagement Notes Section -->
 	<div class="col-md-12">
 		<div class="box box-primary">
@@ -411,10 +392,10 @@
 			<div class="box-body pad">
 				<div class="col-md-6">
 					<form>
-						<bs:editor name="engagmentnotes" toolbar="None"
+						<div name="engagmentnotes" toolbar="None"
 							id="engagmentnotes" readonly="true" clickToEnable="false">
 							<s:property value="assessment.accessNotes" />
-						</bs:editor>
+						</div>
 					</form>
 				</div>
 				<div class="col-md-6">

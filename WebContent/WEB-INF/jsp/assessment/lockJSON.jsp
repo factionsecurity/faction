@@ -8,7 +8,7 @@
   "updatedText" : "<s:property value="assessment.getSummary()"/>"
 }
 </s:if>
-<s:if test="isSummaryLockedbyAnotherUser() && (isRiskLockedbyAnotherUser() || isRiskLockedbyAnotherUser())">
+<s:if test="isSummaryLockedbyAnotherUser() && isRiskLockedbyAnotherUser()">
 ,
 </s:if>
 <s:if test="isRiskLockedbyAnotherUser()">
@@ -16,17 +16,6 @@
   "lockBy" : "<s:property value="assessment.getRiskLockBy().fname"/> <s:property value="assessment.getRiskLockBy().lname"/>",
   "lockAt" : "<s:date name="assessment.getRiskLockAt()" format="MM/dd/yyyy HH:mm:ss"/>",
   "updatedText" : "<s:property value="assessment.getRiskAnalysis()"/>"
-}
-</s:if>
-
-<s:if test="isNotesLockedbyAnotherUser() && isRiskLockedbyAnotherUser())">
-,
-</s:if>
-<s:if test="isNotesLockedbyAnotherUser()">
-"notes": { "isLock" : <s:property value="assessment.isNotesLock()" />,
-  "lockBy" : "<s:property value="assessment.getNotesLockBy().fname"/> <s:property value="assessment.getNotesLockBy().lname"/>",
-  "lockAt" : "<s:date name="assessment.getNotesLockAt()" format="MM/dd/yyyy HH:mm:ss"/>",
-  "updatedText" : "<s:property value="assessment.getNotes()"/>"
 }
 </s:if>
 <s:if test="lockedVulns">
@@ -46,6 +35,15 @@
 	  "category" : "<s:property value="getCategory().getName()"/>",
 	  "severityName" : "<s:property value="overallStr"/>",
 	  "severity" : <s:if test="assessment.type.cvss31 || assessment.type.cvss40">"<s:property value="cvssScore"/>" </s:if><s:else><s:property value="overall"/></s:else>
+	}<s:if test="!#stats.last">,</s:if>
+	</s:iterator>
+],
+"notes": [
+	<s:iterator value="lockedNotes" status="stats">
+	{ "id": "<s:property value="id"/>", 
+	  "islock" : <s:property value="noteLocked" />,
+	  "lockby" : "<s:property value="noteLockedBy.fname"/> <s:property value="noteLockedBy.lname"/>",
+	  "lockat" : "<s:date name="noteLockedAt" format="mm/dd/yyyy hh:mm:ss"/>"
 	}<s:if test="!#stats.last">,</s:if>
 	</s:iterator>
 ]
