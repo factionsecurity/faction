@@ -5,7 +5,9 @@
 { "name" : "<s:property value="note.name"/>",
 "id" : "<s:property value="note.id"/>",
 "note": "<s:property value="note.encodedNote"/>",
-"first" : "<s:property value="note.createdBy.fname"/>",
-"last" : "<s:property value="note.createdBy.lname"/>",
+"createdBy" : "<s:property value="note.createdBy.fname"/> <s:property value="note.createdby.lname"/>",
+"updatedBy" : "<s:property value="note.updatedBy.fname"/> <s:property value="note.updatedBy.lname"/>",
+"createdAt" : "<s:date name="note.created" format="MM/dd/yyyy hh:mm:ss"/>",
+"updatedAt" : "<s:date name="note.updated" format="MM/dd/yyyy hh:mm:ss"/>",
  "token" : "<s:property value="_token"/>"
 }

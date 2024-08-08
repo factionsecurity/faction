@@ -401,12 +401,15 @@ class VulnerablilityView {
 			noteId = selected.val()
 			this.queue.push('note',noteId, 'noteText', this.getEditorText('notes'));
 		});
-		
 	}
 	getNote(id){
 		let _this = this;
 		$.get('getNote?noteid=' + id)
 			.done(function(note) {
+				$("#createdBy").html(note.createdBy);
+				$("#createdAt").html(note.createdAt);
+				$("#updatedBy").html(note.updatedBy);
+				$("#updatedAt").html(note.updatedAt);
 				_this.setEditorContents("notes", entityDecode(note.note), true);
 				$("#noteName").val(note.name);
 				_this.setUpNoteChangeEvent();

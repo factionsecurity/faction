@@ -62,11 +62,26 @@ background-color: white;
 				<div class="form-horizontal">
 					<div class="form-group">
 						<div class="col-sm-4">
+							<br>
 							<input type="text"  class="form-control" id="noteName"
 								value="<s:property value="assessment.notebook[0].name"/>">
 						</div>
 						<div class="col-sm-4">
 							<span id="notes_header" class="edited"></span> 
+						</div>
+						<div class="col-sm-4">
+							<table class="userTable">
+							<tr><td><b>Created: </b></td><td id="createdBy">
+								<s:property value="assessment.notebook[0].createdBy.fname"/>
+								<s:property value="assessment.notebook[0].createdBy.lname"/></td><td id="createdAt">
+								<s:date name="assessment.notebook[0].created" format="MM/dd/yyyy hh:mm:ss"/>
+								</td></tr>
+							<tr><td><b>Updated: </b></td><td id="updatedBy">
+								<s:property value="assessment.notebook[0].updatedBy.fname"/>
+								<s:property value="assessment.notebook[0].updatedBy.lname"/></td><td id="updatedAt">
+								<s:date name="assessment.notebook[0].updated" format="MM/dd/yyyy hh:mm:ss"/>
+							</td></tr>
+							</table>
 						</div>
 					</div>
 				</div>
