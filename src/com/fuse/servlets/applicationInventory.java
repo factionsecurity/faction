@@ -13,13 +13,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.hibernate.Session;
-import org.hibernate.criterion.Projections;
-import org.hibernate.criterion.Restrictions;
-import org.hibernate.ogm.OgmSession;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
-import org.python.bouncycastle.asn1.isismtt.x509.Restriction;
 
 import com.faction.elements.results.InventoryResult;
 import com.fuse.dao.Assessment;
@@ -27,7 +22,6 @@ import com.fuse.dao.Campaign;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.HibHelper;
-import com.fuse.dao.Integrations;
 import com.fuse.dao.User;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.utils.FSUtils;
