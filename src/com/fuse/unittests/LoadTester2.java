@@ -14,7 +14,6 @@ import java.util.UUID;
 import javax.persistence.EntityManager;
 
 import org.junit.Test;
-import org.python.icu.util.Calendar;
 
 import com.fuse.dao.Assessment;
 import com.fuse.dao.ExploitStep;

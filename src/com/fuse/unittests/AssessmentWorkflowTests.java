@@ -16,7 +16,6 @@ import javax.persistence.EntityManager;
 
 import org.apache.struts2.StrutsJUnit4TestCase;
 import org.junit.Test;
-import org.python.icu.util.Calendar;
 
 import com.fuse.actions.Login;
 import com.fuse.actions.admin.DefaultVulns;
