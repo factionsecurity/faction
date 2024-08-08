@@ -97,6 +97,18 @@ td:first-child {
 .selected td:first-child {
 	border-left-style: dotted;
 }
+
+.controlTable{
+	border:0px !important;
+	margin-left: 20px;
+}
+.controlTable a{
+	color: #b8c7ce;
+}
+.controlTable td:first-child {
+	border-left-width: 0px;
+	border-left-style: solid;
+}
 </style>
 
 <!-- Content Wrapper. Contains page content -->

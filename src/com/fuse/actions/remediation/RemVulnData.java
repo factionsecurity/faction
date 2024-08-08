@@ -254,6 +254,23 @@ public class RemVulnData extends FSActionSupport {
 		return SUCCESS;
 
 	}
+	
+	@Action( value="Reopen")
+	public String reopen() {
+		if (!this.isAcremediation()) {
+			return LOGIN;
+		}
+		Vulnerability vuln = em.find(Vulnerability.class, vulnId);
+		if(vuln!=null) {
+			vuln.setClosed(null);
+			vuln.setDevClosed(null);
+			HibHelper.getInstance().preJoin();
+			em.joinTransaction();
+			em.persist(vuln);
+			HibHelper.getInstance().commit();
+		}
+		return this.SUCCESSJSON;
+	}
 
 	public String getAction() {
 		return action;

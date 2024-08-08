@@ -134,7 +134,7 @@ public class RemediationSchedule extends FSActionSupport{
 				controls.put("verStart|"+v.getId(), format.format(verification.getStart()));
 				controls.put("verEnd|"+v.getId(), format.format(verification.getEnd()));
 				controls.put("verAssessor|"+v.getId(), ""+verification.getAssessor().getId());
-				controls.put("verRemdedition|"+v.getId(), ""+verification.getAssignedRemediation().getId());
+				controls.put("verRemediation|"+v.getId(), ""+verification.getAssignedRemediation().getId());
 				controls.put("verDistro|"+v.getId(), ""+assessment.getDistributionList());
 				status.get(v.getId()).add(FSUtils.addBadge("In Retest", "green", "fa-calendar"));
 				if(verification.getEnd().getTime() < (new Date().getTime())) {

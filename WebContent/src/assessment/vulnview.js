@@ -209,7 +209,7 @@ class VulnerablilityView {
 		this.clearLockTimeout = {};
 		$(".select2").select2();
 
-		this.vulntable = $('#vulntable').datatable({
+		this.vulntable = $('#vulntable').DataTable({
 			"paging": false,
 			"lengthchange": false,
 			"searching": true,
@@ -470,7 +470,7 @@ class VulnerablilityView {
 						const row = $(element).parents("tr");
 						const id = $(element).attr("id").replace("ckl", "");
 						rows.push("vulns[" + index + "]=" + id);
-						_this.vulnTable.row(row).remove().draw();
+						_this.vulntable.row(row).remove().draw();
 					});
 					rows.push("_token=" + _this._token);
 					$.post('reassignVulns', rows.join("&")).done(function(resp) {
@@ -561,7 +561,7 @@ class VulnerablilityView {
 		});
 		//const activeVulns = Array.from($("#vulntable tbody tr")).map(tr => `${$(tr).data("vulnid")}`).filter(tr => tr != "undefined");
 		
-		const activeVulns= Array.from(this.vulnTable.data().map(function(value, index){
+		const activeVulns= Array.from(this.vulntable.data().map(function(value, index){
 			let col = value[0];
 			if(col.indexOf('id="ckl') == -1){
 				return "";
@@ -582,7 +582,7 @@ class VulnerablilityView {
 				rowData += `<td><span class="vulnControl vulnControl-delete" id="deleteVuln${vuln.id}">`
 				rowData += `<i class="fa fa-trash" title="Delete Vulnerability"></i></span>`
 				rowData += `</td></tr>`
-				const row = this.vulnTable.row.add($(rowData)).draw().node()
+				const row = this.vulntable.row.add($(rowData)).draw().node()
 				this.rebindTable();
 				this.updateColors();
 			} else {
@@ -604,8 +604,8 @@ class VulnerablilityView {
 						$(row[0]).find(".severity")[0].innerHTML = vuln.severityName;
 						$(row[0]).children()[0].className = `sev${vuln.severityName}`
 						$($(row[0]).children()[1]).attr('data-sort', vuln.severity)
-						this.vulnTable.row(row[0]).invalidate()
-						this.vulnTable.order([1, 'desc']).draw();
+						this.vulntable.row(row[0]).invalidate()
+						this.vulntable.order([1, 'desc']).draw();
 						this.updateColors();
 
 					}
@@ -619,7 +619,7 @@ class VulnerablilityView {
 		for (let vuln of activeVulns) {
 			if (serverVulns.indexOf(vuln) == -1) {
 				let row = Array.from($("#vulntable tbody tr")).filter((el) => $(el).data('vulnid') == vuln);
-				this.vulnTable.row($(row[0])).remove().draw();
+				this.vulntable.row($(row[0])).remove().draw();
 				window.postMessage({ "type": "updateStats" })
 				if (this.vulnId == vuln) {
 					this.vulnId = -1;
@@ -657,8 +657,8 @@ class VulnerablilityView {
 			$(".selected").find(".severity")[0].innerHTML = severity == "None"? "Recommended" : severity;
 			$(".selected").children()[0].className = `sev${severity== "None"? "Recommended" : severity}`
 			$($(".selected").children()[1]).attr('data-sort', score)
-			_this.vulnTable.row($(".selected")).invalidate()
-			_this.vulnTable.order([1, 'desc']).draw();
+			_this.vulntable.row($(".selected")).invalidate()
+			_this.vulntable.order([1, 'desc']).draw();
 			_this.updateColors()
 			_this.queue.push('vulnerability', _this.vulnId, "cvssScore", score);
 			_this.queue.push('vulnerability', _this.vulnId, "cvssString", cvssString);
@@ -722,8 +722,8 @@ class VulnerablilityView {
 										$(".selected").find(".severity")[0].innerHTML = severity;
 										$(".selected").children()[0].className = `sev${severity}`
 										$($(".selected").children()[1]).attr('data-sort', data.overall)
-										_this.vulnTable.row($(".selected")).invalidate()
-										_this.vulnTable.order([1, 'desc']).draw();
+										_this.vulntable.row($(".selected")).invalidate()
+										_this.vulntable.order([1, 'desc']).draw();
 										_this.updateColors()
 										postMessage({ "type": "updateStats" })
 
@@ -760,8 +760,8 @@ class VulnerablilityView {
 							$(".selected").find(".severity")[0].innerHTML = severity;
 							$(".selected").children()[0].className = `sev${severity}`
 							$($(".selected").children()[1]).attr('data-sort', data.overall)
-							_this.vulnTable.row($(".selected")).invalidate()
-							_this.vulnTable.order([1, 'desc']).draw();
+							_this.vulntable.row($(".selected")).invalidate()
+							_this.vulntable.order([1, 'desc']).draw();
 							_this.updateColors()
 							$(data.cf).each(function(a, b) {
 								let el = $("#type" + b.typeid);
@@ -816,7 +816,7 @@ class VulnerablilityView {
 				if (respData != "error") {
 					_this.deleteVulnForm();
 					$("#vulnForm").removeClass("disabled");
-					const row = _this.vulnTable.row.add($(respData[0])).draw().node()
+					const row = _this.vulntable.row.add($(respData[0])).draw().node()
 					_this.vulnId = resp.vulnId;
 					const vulnId = resp.vulnId;
 					$(".selected").each((_a, s) => $(s).removeClass("selected"));
@@ -875,7 +875,7 @@ class VulnerablilityView {
 						const row = $(element).parents("tr");
 						const id = $(element).attr("id").replace("ckl", "");
 						rows.push("vulns[" + index + "]=" + id);
-						_this.vulnTable.row(row).remove().draw();
+						_this.vulntable.row(row).remove().draw();
 					});
 
 					rows.push("_token=" + _this._token);
@@ -1006,8 +1006,8 @@ class VulnerablilityView {
 			$(".selected").find(".severity")[0].innerHTML = severity
 			$(".selected").children()[0].className = `sev${severity}`
 			$($(".selected").children()[1]).attr('data-sort', $(this).val())
-			_this.vulnTable.row($(".selected")).invalidate()
-			_this.vulnTable.order([1, 'desc']).draw();
+			_this.vulntable.row($(".selected")).invalidate()
+			_this.vulntable.order([1, 'desc']).draw();
 			_this.updateColors()
 			_this.queue.push('vulnerability', _this.vulnId, "overall", $(this).val());
 			_this.queue.push('vulnerability', _this.vulnId, "likelyhood", $(this).val());
@@ -1107,7 +1107,7 @@ class VulnerablilityView {
 		$.confirm({
 			type: "red",
 			title: "Are you sure?",
-			content: "Do you want to delete " + _this.vulnTable.row(row).data()[3],
+			content: "Do you want to delete " + _this.vulntable.row(row).data()[3],
 			buttons: {
 				"yes, delete it": function() {
 					let data = 'vulnid=' + id + '&action=delete';
@@ -1116,7 +1116,7 @@ class VulnerablilityView {
 						const isError = getData(resp);
 						window.postMessage({ "type": "updateStats" })
 						if (isError != "error") {
-							_this.vulnTable.row(row).remove().draw();
+							_this.vulntable.row(row).remove().draw();
 							_this.deleteVulnForm();
 						}
 					});

@@ -33,21 +33,20 @@
 				<label>Actions:</label>
 				<div class="btn-actions">
 				<bs:row>
+					<table class="controlTable">
 					<s:if test="(verForm && pass != null) || !verForm">
-					<bs:button color="warning" size="md" colsize="3"
-						text="Start" id="chStart"></bs:button>
+					<tr id="changeStartControl"><td> <a id="chStart"><i class="fa fa-calendar"></i> Change Start Date</a></td></tr>
 					</s:if>
-					<bs:button color="warning" size="md" colsize="3"
-						text="Severity" id="chSev"></bs:button>
-						
+					<tr><td> <a id="chSev"><i class="fa fa-bolt"></i> Change Severity</a></td></tr>
+					<s:if test="!verForm">
+					<tr id="reopenVulnControl"><td> <a id="reOpen"><i class="fa fa-bug"></i> Reopen Vulnerability </a></td></tr>
+					</s:if>
 					<s:if test="(verForm && pass != null) || !verForm">
-						<bs:button color="primary" size="md" colsize="3" text="Close Dev"
-							id="closeDev"></bs:button>
-						<bs:button color="success" size="md" colsize="3" text="Close Prod"
-							id="closeProd"></bs:button>
+					<tr><td> <a id="closeDev"><i class="fa fa-code"></i> Close in Development</a></td></tr>
+					<tr><td> <a id="closeProd"><i class="fa fa-server"></i> Close in Production</a></td></tr>
 					</s:if>
-					<bs:button color="danger" size="md" colsize="3"
-						text="Close Verification" id="closeVer"></bs:button>
+					<tr id="closeVerControl"><td> <a id="closeVer"><i class="fa fa-circle-xmark"></i> Cancel or Close Retest</a></td></tr>
+					</table>
 				</bs:row> 
 				</div>
 				<br/>

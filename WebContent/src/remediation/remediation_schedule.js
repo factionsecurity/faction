@@ -90,29 +90,45 @@ function getVuln(vid){
 	//used for later
 }
 
+function updateForms(){
+	const selected = $(".selected")
+	vulnId = selected.data("vulnid");
+	let verId = selected.data("verid")
+	if(verId == ""){
+		$("#closeVerControl").hide();
+	}else{
+		const start = selected.data("start");
+		const end = selected.data("end");
+		const assessor = selected.data("assessor");
+		const remediation = selected.data("remediation");
+		const distro = selected.data("distro");
+		$("#reservation").val(`${start} to ${end}`);
+		$("#remUser").val(remediation).change();
+		$("#assessors").val(assessor).change();
+		$("#distlist").val(distro);
+		
+		$("#closeVerControl").show();
+		
+		
+	}
+	const devclosed = selected.data("devclosed");
+	const prodclosed = selected.data("prodclosed");
+	if(devclosed != "" || prodclosed != ""){
+		$("#reopenVulnControl").show();	
+	}else{
+		$("#reopenVulnControl").hide();	
+		
+	}
+	refreshNotes(vulnId);
+	getVuln(vulnId);
+}
+
 function setUpEventHandlers() {
 
 	$("#vulntable tbody tr").on('click', function(event) {
-		vulnId = $(this).data("vulnid");
-		let verId = $(this).data("verid")
-		if(verId == ""){
-			$("#closeVer").hide();
-		}else{
-			const start = $(this).data("start");
-			const end = $(this).data("end");
-			const assessor = $(this).data("assessor");
-			const remediation = $(this).data("remediation");
-			const distro = $(this).data("distro");
-			$("#reservation").val(`${start} to ${end}`);
-			$("#remUser").val(remediation);
-			$("#assessors").val(assessor).change();
-			$("#distlist").val(distro);
-			$("#closeVer").show();
-		}
 		$(".selected").each((_a, s) => $(s).removeClass("selected"))
 		$(this).addClass("selected");
-		refreshNotes(vulnId);
-		getVuln(vulnId);
+		updateForms();
 	});
 }
 
@@ -163,6 +179,7 @@ $(function() {
 	setUpEventHandlers();
 	refreshNotes(vulnId);
 	getFiles(vulnId);
+	updateForms();
 	global.genCal = function genCal() {
 	global.cal = new FullCalendar.Calendar(document.getElementById("calendar"), {
 		header: {
@@ -297,15 +314,23 @@ $(function() {
 		let copiedEventObject = $.extend({}, originalEventObject);
 		copiedEventObject.allDay = true;
 		copiedEventObject.title = appId + " - " + appName;
-		copiedEventObject.start = new Date(($("#reservation").val().split("to")[0].trim()));
+		let start = new Date($("#reservation").val().split(" to ")[0].trim());
+		copiedEventObject.start = start;
 		copiedEventObject.color = edit_color;
 		copiedEventObject.id = "-1";
-		let endTmp = $("#reservation").val().split(" to ")[1];
-		let end = new Date(endTmp);
-		end = end.setDate(end.getDate() + 1);
+		let end = new Date($("#reservation").val().split(" to ")[1].trim());
+		end = new Date(end.setDate(end.getDate() + 1));
 		copiedEventObject.end = end;
 		global.calendar.addEvent(copiedEventObject, true);
-		$.post('Calendar', 'userid=' + $(this).val()).done(function(json) {
+		let userid = $(this).val();
+		if(userid == null){
+			userid=-1;
+		}
+		//increase range
+		start = new Date(start.setDate(start.getDate() - 30));
+		end = new Date(end.setDate(end.getDate() + 30));
+		
+		$.post('Calendar', `userid=${userid}&team=-1&start=${start.toLocaleDateString("en-US")}&end=${end.toLocaleDateString("en-US")}&action=search`).done(function(json) {
 			for (let verification of json.verifications) {
 				let s = verification.start;
 				let e = verification.end;
@@ -408,15 +433,30 @@ $(function() {
 		$("#changeDateModal").modal('show');
 
 	});
+	$("#reOpen").click(function() {
+		let vulnName =$(".selected").data("vulnname");
+		let vid = $(".selected").data("vulnid");
+		let data = `vulnId=${vid}`;
+		$.confirm({
+			title: "Reopen vulnerability?",
+			content: `Are you sure you want to reopen the vulnerability ${vulnName}`,
+			buttons: {
+				"reopen": ()=>{
+					$.post("Reopen", data).done( (response) => {
+						location.reload();
+					});
+				},
+				"close": ()=>{}
+			}
+		})
 
+	});
 	$("#chSev").click(function() {
 		let sevMap = getSelectedSeverity();
 		$("#sevModal").modal('show');
 		$("#newSev").select2("val", `${sevMap.overall}`);
 		$("#newImpact").select2("val", `${sevMap.impact}`);
 		$("#newLike").select2("val", `${sevMap.likelyhood}`);
-
-
 	});
 	$("#closeDev").click(function() {
 		$("#nprodModal").modal('show');
