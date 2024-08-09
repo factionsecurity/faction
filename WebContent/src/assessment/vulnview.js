@@ -488,7 +488,7 @@ class VulnerablilityView {
 		});
 	}
 	saveChanges(type, data, _this) {
-		data = data.replaceAll("%3C%2Fp%3E%3Cp%3E%3Cbr%3E%3C%2Fp%3E%3Cp%3E", "%3Cbr%3E%3C%2Fp%3E%3Cp%3E");
+		//data = data.replaceAll("%3C%2Fp%3E%3Cp%3E%3Cbr%3E%3C%2Fp%3E%3Cp%3E", "%3Cbr%3E%3C%2Fp%3E%3Cp%3E");
 		data = `${data}&_token=${_this._token}`
 		if(type == 'vulnerability'){
 			$.post("updateVulnerability", data, function(resp) {
@@ -1042,6 +1042,7 @@ class VulnerablilityView {
 	}
 	setEditorContents(type, data, createNew=false) {
 		let decoded = this.b64DecodeUnicode(data);
+		decoded = decoded.replaceAll("<br />", "\n");
 		if(createNew){
 			this.editors[type].destroy();
 			this.editors[type] = new Editor({

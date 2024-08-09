@@ -325,6 +325,7 @@ public class DocxUtils {
 									}
 								}
 							}
+							details = details.replaceAll("\n", "<br />");
 							map2.put("${details}", wrapHTML(details, customCSS, "details", widths.get("details")));
 						} else {
 							map2.put("${details}", wrapHTML("", customCSS, "details"));
@@ -938,6 +939,7 @@ public class DocxUtils {
 						details = details.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
+				details = details.replaceAll("\n", "<br />");
 				map2.put("${details}", wrapHTML(details, customCSS, "details"));
 			} else {
 				map2.put("${details}", wrapHTML("", customCSS, "details"));

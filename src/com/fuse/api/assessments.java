@@ -252,6 +252,8 @@ public class assessments {
 				}
 				if (v.getDetails() == null) {
 					v.setDetails("");
+				}else {
+					v.setDetails(v.getDetails().replaceAll("\n", "\r\n"));
 				}
 				if (v == null)
 					return Response.status(400).entity(String.format(Support.ERROR, "Vulnerability Does Not Exist."))
