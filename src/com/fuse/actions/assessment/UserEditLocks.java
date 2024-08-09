@@ -51,6 +51,7 @@ public class UserEditLocks extends FSActionSupport {
 		this.user = this.getSessionUser();
 		Long asmtId = (Long) this.getSession("asmtid");
 		this.assessment = em.find(Assessment.class, asmtId);
+		clearOutdatedLocks(assessment);
 		if (isNotesLockedbyAnotherUser() || isSummaryLockedbyAnotherUser() || isRiskLockedbyAnotherUser()) {
 			this.clearLockType("", this.user);
 			if(this.assessment.getSummary() == null) {
@@ -224,7 +225,9 @@ public class UserEditLocks extends FSActionSupport {
 		}
 		User user = this.getSessionUser();
 		
+		
 		assessment = em.find(Assessment.class, id);
+		clearOutdatedLocks(assessment);
 		currentVulns = assessment.getVulns();
 		currentVulns.stream().forEach( v -> v.updateRiskLevels(em));
 		lockedVulns= currentVulns
@@ -304,7 +307,7 @@ public class UserEditLocks extends FSActionSupport {
 		}
 		User user = this.getSessionUser();
 		
-		//TODO: Security Check that the user is editing a note associated to their assessment
+		//TODO: Check that the user is editing a note associated to their assessment
 		Note note = em.find(Note.class, id);
 		if (note == null) {
 			this._message = "Not a valid Note";
@@ -331,6 +334,45 @@ public class UserEditLocks extends FSActionSupport {
 	 * Supporting Functions
 	 */
 	
+	private void clearOutdatedLocks(Assessment assessment) {
+		
+		boolean isUpdated = false;
+		Calendar now = Calendar.getInstance();
+		now.add(Calendar.MINUTE, -5);
+		Date FiveMin = now.getTime();
+		if (assessment.getSummaryLockAt() != null && assessment.getSummaryLockAt().before(FiveMin)) {
+			this.clearLockType("summary", assessment.getSummaryLockBy());
+			isUpdated = true;
+		}
+		if (assessment.getRiskLockAt() != null && assessment.getRiskLockAt().before(FiveMin)) {
+			this.clearLockType("risk", assessment.getRiskLockBy());
+			isUpdated = true;
+		}
+		if (assessment.getRiskLockAt() != null && assessment.getRiskLockAt().before(FiveMin)) {
+			this.clearLockType("risk", assessment.getRiskLockBy());
+			isUpdated = true;
+		}
+		for(Vulnerability vuln : assessment.getVulns()) {
+			if(vuln.getDesc_lock_time() !=null && vuln.getDesc_lock_time().before(FiveMin) ) {
+				vuln.setDesc_lock(false);
+				vuln.setDesc_lock_time(null);
+				vuln.setDesc_locked_by(null);
+			}
+		}
+		for(Note note : assessment.getNotebook()) {
+			if(note.getNoteLockedAt() !=  null && note.getNoteLockedAt().before(FiveMin)) {
+				note.setNoteLocked(false);
+				note.setNoteLockedAt(null);
+				note.setNoteLockedBy(null);
+			}
+		}
+		if(isUpdated) {
+			HibHelper.getInstance().preJoin();
+			em.joinTransaction();
+			em.persist(assessment);
+			HibHelper.getInstance().commit();
+		}
+	}
 	
 	public boolean isNotesLockedbyAnotherUser() {
 		return assessment.isNotesLock() && assessment.getNotesLockBy() != null
