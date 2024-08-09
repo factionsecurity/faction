@@ -399,7 +399,7 @@ class VulnerablilityView {
 			let noteId = "";
 			const selected = $(`#notebook option:selected`);
 			noteId = selected.val()
-			this.queue.push('note',noteId, 'noteText', this.getEditorText('notes'));
+			this.queue.push('note',noteId, 'noteText', encodeURIComponent(this.getEditorText('notes')));
 		});
 	}
 	getNote(id){
