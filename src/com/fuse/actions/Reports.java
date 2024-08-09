@@ -182,7 +182,8 @@ public class Reports extends FSActionSupport {
 					b64Rpt = reportThread.getReport();
 
 				} else {
-					b64Rpt = assessment.getFinalReport().getBase64EncodedPdf();
+					finalreport = assessment.getFinalReport();
+					b64Rpt = finalreport.getBase64EncodedPdf();
 				}
 			} else if (guid != null) {
 
