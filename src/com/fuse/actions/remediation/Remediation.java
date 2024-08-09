@@ -201,7 +201,7 @@ public class Remediation extends FSActionSupport{
 					
 		}else if (action.equals("dateSearch")){
 			List<Verification> dv = em
-					.createQuery("from Verification as a where (a.start <= :start and a.end > :start) or (a.start <= :end and a.end > :end)")
+					.createQuery("from Verification as a where ((a.start <= :start and a.end > :start) or (a.start <= :end and a.end > :end)) and workflowStatus = 'In Queue'")
 					.setParameter("start", sdate)
 					.setParameter("end", edate)
 					.getResultList();

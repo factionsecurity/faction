@@ -335,9 +335,10 @@ $(function() {
 				let s = verification.start;
 				let e = verification.end;
 				let t = verification.appid + " - " + verification.appname + " - " + verification.vuln;
+				let status = verification.status;
 				let aaid = verification.appid;
 
-				if (s != 'null' && e != 'null') {
+				if (s != 'null' && e != 'null' && status == "In Queue") {
 					let originalEventObject = $(this).data('eventObject');
 					let copiedEventObject = $.extend({}, originalEventObject);
 					copiedEventObject.allDay = true;
