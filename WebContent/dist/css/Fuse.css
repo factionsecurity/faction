@@ -5151,6 +5151,12 @@ code {
 	background-color: #030D1C ;
 
 }
+.daterangepicker .next{
+	background-color: white !important;
+}
+.daterangepicker .prev{
+	background-color: white !important;
+}
 .badge{
 	margin-right: 5px;
 }

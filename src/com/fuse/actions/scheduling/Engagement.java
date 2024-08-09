@@ -38,6 +38,7 @@ import com.fuse.dao.PeerReview;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
+import com.fuse.dao.Verification;
 import com.faction.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
@@ -136,6 +137,12 @@ public class Engagement  extends FSActionSupport{
 					.setParameter("start", this.sdate)
 					.setParameter("end", this.edate)
 					.getResultList();
+			List<Verification> verifications = em
+					.createQuery("from Verification as a where (a.start >= :start and a.start <= :start) or (a.end >= :start and a.end <= :end)")
+					.setParameter("start", this.sdate)
+					.setParameter("end", this.edate)
+					.getResultList();
+					
 			for(User u : users){
 				for(Assessment a : asmts){
 					for(User hacker : a.getAssessor()){
@@ -147,6 +154,11 @@ public class Engagement  extends FSActionSupport{
 				for(OOO o : ooos){
 					if(u.getId() == o.getUser().getId()){
 						u.setAssessmentCount(u.getAssessmentCount()+1);
+					}
+				}
+				for(Verification v : verifications) {
+					if(u.getId() == v.getAssessor().getId()) {
+						u.setAssessmentCount(u.getAssessmentCount() +1);
 					}
 				}
 				if(u.getTeam() != null && u.getTeam().getId().longValue() == this.selectedTeam.longValue() && u.getPermissions() != null && u.getPermissions().isAssessor())

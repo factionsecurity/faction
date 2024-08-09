@@ -596,25 +596,70 @@ function updateCalendar(user, userid) {
 	let copiedEventObject = $.extend({}, originalEventObject);
 	copiedEventObject.allDay = true;
 	copiedEventObject.title = $("#appId").val() + " - " + $("#appName").val() + " - " + user;
-	copiedEventObject.start = new Date(($("#reservation").val().split("to")[0].trim()));
+	let start = new Date(($("#reservation").val().split("to")[0].trim()));
+	copiedEventObject.start = start;
 	copiedEventObject.color = edit_color;
 	copiedEventObject.id = "-1";
 	let endTmp = $("#reservation").val().split("to")[1];
 	let end = new Date(endTmp);
-	end = end.setDate(end.getDate() + 1);
+	end = new Date(end.setDate(end.getDate() + 1));
 	copiedEventObject.end = end;
 	calendar.addEvent(copiedEventObject, true);
-	$.post('../service/getAssessments', 'id=' + userid).done((adata) => {
-		let json = JSON.parse(adata);
-		let N = json.count;
+	start = new Date(start.setDate(start.getDate() - 30));
+	end = new Date(end.setDate(end.getDate() + 30));
+	
+	$.post('Calendar', `userid=${userid}&team=-1&start=${start.toLocaleDateString("en-US")}&end=${end.toLocaleDateString("en-US")}&action=search`).done(function(json) {
+		for (let verification of json.verifications) {
+			let s = verification.start;
+			let e = verification.end;
+			let t = verification.appid + " - " + verification.appname + " - " + verification.vuln;
+			let aaid = verification.appid;
 
-		for (let i = 0; i < N; i++) {
-			let s = json.assessments[i][2];
-			let e = json.assessments[i][4];
-			let fullname = json.assessments[i][5];
-			let t = json.assessments[i][1] + " - " + json.assessments[i][0] + " - " + fullname;
-			let aid = json.assessments[i][3].replace('app', '');
+			if (s != 'null' && e != 'null') {
+				let originalEventObject = $(this).data('eventObject');
+				let copiedEventObject = $.extend({}, originalEventObject);
+				copiedEventObject.allDay = true;
+				copiedEventObject.title = t;
+				copiedEventObject.start = new Date(s);
+				copiedEventObject.color = ver_color;
+				copiedEventObject.id = aaid;
+				let end = new Date(e);
+				end = end.setDate(end.getDate() + 1);
 
+				copiedEventObject.end = end;
+				copiedEventObject.editable = false;
+				global.calendar.addEvent(copiedEventObject, true);
+
+			}
+		}
+		for (let ooo of json.ooo) {
+			let s = ooo.start;
+			let e = ooo.end;
+			let t = ooo.title;
+			let oid = "ooo" + ooo.id;
+			if (s != 'null' && e != 'null') {
+				let originalEventObject = $(this).data('eventObject');
+				let copiedEventObject = $.extend({}, originalEventObject);
+				copiedEventObject.allDay = true;
+				copiedEventObject.title = t;
+				copiedEventObject.start = new Date(s);
+				copiedEventObject.color = ooo_color;
+				copiedEventObject.id = oid;
+				let end = new Date(e);
+				end = end.setDate(end.getDate() + 1);
+
+				copiedEventObject.end = end;
+				copiedEventObject.editable = false;
+				global.calendar.addEvent(copiedEventObject, true);
+
+			}
+		}
+		for(let assessment of json.assessments){
+			let s = assessment.start; 
+			let e = assessment.end; 
+			let fullname = assessment.username; 
+			let t = assessment.appid + " - " + assessment.name + " - " + fullname;
+			let aid = assessment.id;
 			if (s != 'null' && e != 'null') {
 				originalEventObject = $(this).data('eventObject');
 				copiedEventObject = $.extend({}, originalEventObject);
@@ -630,31 +675,8 @@ function updateCalendar(user, userid) {
 				calendar.addEvent(copiedEventObject, true);
 
 			}
+			
 		}
-		let first = 0;
-		N = json.ocount;
-		for (let i = 0; i < N; i++) {
-			let s = json.ooo[i][2];
-			let e = json.ooo[i][3];
-			let t = json.ooo[i][0];
-			let oid = "ooo" + json.ooo[i][0];
-			if (s != 'null' && e != 'null') {
-				originalEventObject = $(this).data('eventObject');
-				copiedEventObject = $.extend({}, originalEventObject);
-				copiedEventObject.allDay = true;
-				copiedEventObject.title = t;
-				copiedEventObject.start = new Date(s);
-				copiedEventObject.color = ooo_color;
-				copiedEventObject.id = oid;
-				let tmpdate = new Date(e);
-				tmpdate = tmpdate.setDate(tmpdate.getDate() + 1);
-				copiedEventObject.end = tmpdate;
-				copiedEventObject.editable = false;
-				calendar.addEvent(copiedEventObject, true);
-
-			}
-		}
-
 	});
 }
 
