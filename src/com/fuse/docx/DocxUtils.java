@@ -418,6 +418,8 @@ public class DocxUtils {
 		rfonts.setAscii(this.FONT);
 
 		content = replacement(content);
+		content = content.replaceAll("\n", "<br />");
+		content = content.replaceAll("</p><p><br /></p><p>", "<br /></p><p>");
 		return xhtml.convert(
 				"<!DOCTYPE html><html><head>"
 						+ "<style>html{padding:0;margin:0;margin-right:0px;}\r\nbody{padding:0;margin:0;font-family:"
@@ -437,6 +439,8 @@ public class DocxUtils {
 		// Fix bad html
 		value = FSUtils.jtidy(value);
 		try {
+			value = value.replaceAll("\n", "<br />");
+			value = value.replaceAll("</p><p><br /></p><p>", "<br /></p><p>");
 
 			List<Object> converted = xhtml.convert(
 							"<!DOCTYPE html><html><head>"
@@ -753,7 +757,7 @@ public class DocxUtils {
 				: (this.assessment.getRemediation().getFname() + " " + this.assessment.getRemediation().getLname()));
 		content = getVulnCount(content);
 
-		content = content.replaceAll("\\$\\{asmteam\\}",
+		content = content.replaceAll("\\$\\{asmtTeam\\}",
 				this.assessment.getAssessor() == null ? ""
 						: this.assessment.getAssessor().get(0).getTeam() == null ? ""
 								: this.assessment.getAssessor().get(0).getTeam().getTeamName().trim());
@@ -939,7 +943,6 @@ public class DocxUtils {
 						details = details.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
-				details = details.replaceAll("\n", "<br />");
 				map2.put("${details}", wrapHTML(details, customCSS, "details"));
 			} else {
 				map2.put("${details}", wrapHTML("", customCSS, "details"));

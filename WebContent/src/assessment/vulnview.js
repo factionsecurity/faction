@@ -489,6 +489,7 @@ class VulnerablilityView {
 	}
 	saveChanges(type, data, _this) {
 		//data = data.replaceAll("%3C%2Fp%3E%3Cp%3E%3Cbr%3E%3C%2Fp%3E%3Cp%3E", "%3Cbr%3E%3C%2Fp%3E%3Cp%3E");
+		//data = data.replaceAll("%3C%2Fp%3E%3Cp%3E%3Cbr%3E%3C%2Fp%3E%3Cp%3E", "%3C%2Fp%3E%3Cbr%3E%3Cp%3E");
 		data = `${data}&_token=${_this._token}`
 		if(type == 'vulnerability'){
 			$.post("updateVulnerability", data, function(resp) {
