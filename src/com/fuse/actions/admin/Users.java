@@ -15,6 +15,7 @@ import com.fuse.dao.APIKeys;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.PasswordReset;
 import com.fuse.dao.Permissions;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
@@ -190,7 +191,7 @@ public class Users extends FSActionSupport {
 			} else if(this.credential != null && !this.credential.trim().equals("")){
 				String passErrorMessage = AccessControl.checkPassword(this.credential, this.credential);
 				if(passErrorMessage.equals("")) {
-					u.setPasshash(AccessControl.HashPass(u.getUsername(), this.credential));
+					u.setPasshash(AccessControl.HashPass(this.credential));
 					message += "Your account has been created. Please access the link below and click to access the portal. You will need to ask your Administrator for the credentials.<br><br>";
 					String url = request.getRequestURL().toString();
 					url = url.replace(request.getRequestURI(), "");
@@ -202,15 +203,16 @@ public class Users extends FSActionSupport {
 				}
 				
 			}else {
-				String pass = UUID.randomUUID().toString();
-				u.setPasshash(AccessControl.HashPass("", pass));
-				// Setting username to an empty string prevents logins with GUID.
-				// You must register first and create a password to login.
-
+				String key = UUID.randomUUID().toString();
+				u.setPasshash(AccessControl.HashPass(UUID.randomUUID().toString()));
+				PasswordReset reset = new PasswordReset();
+				reset.setKey(key);
+				reset.setUser(u);
+				reset.setCreated(new Date());
 				message += "Click the link below to update your password:<br><br>";
 				String url = request.getRequestURL().toString();
 				url = url.replace(request.getRequestURI(), "");
-				url = url + request.getContextPath() + "/portal/Register?uid=" + pass;
+				url = url + request.getContextPath() + "/portal/Register?uid=" + key;
 				message += "<a href='" + url + "'>Click here to Register</a><br>";
 			}
 
@@ -327,7 +329,7 @@ public class Users extends FSActionSupport {
 					this._message = passErrorMessage;
 					return this.ERRORJSON;
 			}else {
-				this.selectedUser.setPasshash(AccessControl.HashPass(this.selectedUser.getUsername(), this.credential));
+				this.selectedUser.setPasshash(AccessControl.HashPass(this.credential));
 			}
 			this.selectedUser.setEmail(this.email.trim());
 		}else if(this.authMethod.equals("LDAP")) {

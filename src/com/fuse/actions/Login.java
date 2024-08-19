@@ -27,6 +27,7 @@ import com.fuse.dao.Campaign;
 import com.fuse.dao.Category;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.PasswordReset;
 import com.fuse.dao.ReportTemplates;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.SystemSettings;
@@ -342,19 +343,21 @@ public class Login extends FSActionSupport {
 				}
 			}
 
-			String pass = UUID.randomUUID().toString();
-			u.setPasshash(AccessControl.HashPass("", pass));
-			// Setting username to an empty string prevents logins with GUID.
+			String key = UUID.randomUUID().toString();
+			PasswordReset reset = new PasswordReset();
+			reset.setKey(key);
+			reset.setUser(u);
+			reset.setCreated(new Date());
 			// You must register first and create a password to login.
 			String message = "Hello " + u.getFname() + " " + u.getLname() + "<br><br>";
 			message += "Click the link below to reset your password:<br><br>";
 			String url = request.getRequestURL().toString();
 			url = url.replace(request.getRequestURI(), "");
-			url = url + request.getContextPath() + "/portal/Register?uid=" + pass;
+			url = url + request.getContextPath() + "/portal/Register?uid=" + key;
 			message += "<a href='" + url + "'>Click here to Reset</a><br>";
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
-			em.persist(u);
+			em.persist(reset);
 			HibHelper.getInstance().commit();
 			EmailThread emailThread = new EmailThread(u.getEmail(), "Password Reset", message);
 			TaskQueueExecutor.getInstance().execute(emailThread);

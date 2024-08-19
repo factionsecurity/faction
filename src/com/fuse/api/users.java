@@ -17,6 +17,7 @@ import javax.ws.rs.core.Response;
 
 import com.fuse.api.util.Support;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.PasswordReset;
 import com.fuse.dao.Permissions;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
@@ -88,15 +89,23 @@ public class users {
 				}
 				newUser.setTeam(t);
 				if (verify != null && verify == true) {
-					String pass = UUID.randomUUID().toString();
-					newUser.setPasshash(AccessControl.HashPass("", pass));
+					String key = UUID.randomUUID().toString();
+					newUser.setPasshash(AccessControl.HashPass(UUID.randomUUID().toString()));
 					// Setting username to an empty string prevents logins with GUID.
 					// You must register first and create a password to login.
+					PasswordReset reset = new PasswordReset();
+					reset.setKey(key);
+					reset.setUser(u);
+					reset.setCreated(new Date());
+					HibHelper.getInstance().preJoin();
+					em.joinTransaction();
+					em.persist(reset);
+					HibHelper.getInstance().commit();
 					String message = "Hello " + fname + " " + lname + "<br><br>";
 					message += "Click the link below to update your password:<br><br>";
 					String url = req.getRequestURL().toString();
 					url = url.replace(req.getRequestURI(), "");
-					url = url + req.getContextPath() + "/portal/Register?uid=" + pass;
+					url = url + req.getContextPath() + "/portal/Register?uid=" + key;
 					message += "<a href='" + url + "'>Click here to Register</a><br>";
 					EmailThread emailThread = new EmailThread(email, "New Account Created", message);
 					TaskQueueExecutor.getInstance().execute(emailThread);
