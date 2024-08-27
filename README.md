@@ -8,7 +8,15 @@
 
 ![image](https://github.com/factionsecurity/faction/assets/2343831/d9237bed-302f-4e6a-9716-22ae88d0dc36)
 
-___News: Faction 1.2 Release in March: [More Info](https://github.com/orgs/factionsecurity/discussions/40)___
+## Sponsors
+### Premium Sponsors 
+<table>
+ <tr><td>
+ <a href="https://www.otto-js.com"><img src="https://www.otto-js.com/hs-fs/hubfs/my-lovely-purple-ottot-alternate-palate-1-purple.png?width=200&height=200&name=my-lovely-purple-ottot-alternate-palate-1-purple.png"/></a><br/><a href="https://www.otto-js.com">otto-js - PCI and Client Side Security</a> 
+ </td></tr>
+</table>
+
+## Introduction
 
 FACTION is your entire assessment workflow in a box. With FACTION you can:
 1. Automate pen testing and security assessment Reports
