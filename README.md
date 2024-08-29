@@ -16,6 +16,9 @@
  </td></tr>
 </table>
 
+### Become a Sponsor ❤️
+If you like the project and would like to see it advance then consider being a sponser. All sponsers get access to the Faction discord server and will have bug reports priotirized. Just click the sponsor links at the top of this repo. 
+
 ## Introduction
 
 FACTION is your entire assessment workflow in a box. With FACTION you can:
@@ -70,8 +73,6 @@ You can find out more information about creating your own custom report template
 ## Don't want to host it yourself?
 We can provide hosting for your instance. All instances are single tenants so you don't have to worry about sharing infrastructure with untrusted parties. Navigate to [https://www.factionsecurity.com to learn more](https://www.factionsecurity.com). 
 
-## Become a Sponsor ❤️
-If you like the project and would like to see it advance then consider being a sponser. All sponsers get access to the Faction discord server and will have bug reports priotirized. Just click the sponsor links at the top of this repo. 
 
 ## Screenshots
 __Vulnerability Templates__
