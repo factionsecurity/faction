@@ -1,0 +1,50 @@
+from tomcat:9-jre11 as base_app
+RUN apt-get update
+RUN apt-get upgrade -y
+RUN apt-get install curl
+RUN mkdir /opt/faction
+#Fix issue with sending emails
+RUN sed -i 's/^jdk.tls.disabledAlgorithms/# jdk.tls.disabledAlgorithms/' /opt/java/openjdk/conf/security/java.security
+
+RUN mkdir /certs
+ARG mydir=/certs
+ARG truststore=${mydir}/rds-truststore.jks
+ARG storepassword=changeit
+
+RUN curl -sS "https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem" > ${mydir}/global-bundle.pem
+RUN awk 'split_after == 1 {n++;split_after=0} /-----END CERTIFICATE-----/ {split_after=1}{print > "rds-ca-" n ".pem"}' < ${mydir}/global-bundle.pem
+
+RUN echo "Importing Cert"
+
+RUN for CERT in rds-ca-*; do \
+  alias=$(openssl x509 -noout -text -in $CERT | perl -ne 'next unless /Subject:/; s/.*(CN=|CN = )//; print'); \
+  echo "Importing $alias"; \
+  keytool -import -file ${CERT} -alias "${alias}" -storepass ${storepassword} -keystore ${truststore} -noprompt; \
+  rm $CERT; \
+done 
+
+RUN rm ${mydir}/global-bundle.pem
+
+RUN echo "Trust store content is: "
+
+RUN keytool -list -v -keystore "$truststore" -storepass ${storepassword} | grep Alias | cut -d " " -f3- | while read alias; \
+do \
+   expiry=`keytool -list -v -keystore "$truststore" -storepass ${storepassword} -alias "${alias}" | grep Valid | perl -ne 'if(/until: (.*?)\n/) { print "$1\n"; }'`; \
+   echo " Certificate ${alias} expires in '$expiry'";  \
+done 
+
+ENV JAVA_OPTS="-Djavax.net.ssl.trustStore=${truststore} -Djavax.net.ssl.trustStorePassword=${storepassword}"
+              
+
+#Remove this kruft
+RUN rm -rf /usr/local/tomcat/webapps/manager
+RUN rm -rf /usr/local/tomcat/webapps/host-manager
+RUN rm -rf /usr/local/tomcat/webapps/docs
+RUN rm -rf /usr/local/tomcat/webapps/examples
+RUN rm -rf /usr/local/tomcat/webapps/ROOT
+
+RUN wget https://github.com/factionsecurity/faction/releases/latest/download/faction.war -O /usr/local/tomcat/webapps/ROOT.war
+
+#COPY ./target/faction.war /usr/local/tomcat/webapps/ROOT.war
+EXPOSE 8080/tcp
+CMD ["/usr/local/tomcat/bin/catalina.sh", "run"]
