@@ -38,13 +38,12 @@ public class HibHelper {
 				Map<String, String> properties = new HashMap<String, String>();
 				
 			
-				properties.put("hibernate.ogm.datastore.uri", System.getenv("FACTION_MONGO_CONNECTION_URI"));
-				//properties.put("hibernate.ogm.datastore.username", FSUtils.getEnv("FACTION_MONGO_USER"));
-				//properties.put("hibernate.ogm.datastore.password", FSUtils.getEnv("FACTION_MONGO_PASSWORD"));
+				properties.put("hibernate.ogm.datastore.username", FSUtils.getEnv("FACTION_MONGO_USER"));
+				properties.put("hibernate.ogm.datastore.password", FSUtils.getEnv("FACTION_MONGO_PASSWORD"));
 
-				//properties.put("hibernate.ogm.datastore.host", FSUtils.getEnv("FACTION_MONGO_HOST"));
-				//properties.put("hibernate.ogm.datastore.database", System.getenv("FACTION_MONGO_DATABASE"));
-				//properties.put("hibernate.ogm.datastore.port", System.getenv("FACTION_MONGO_PORT"));
+				properties.put("hibernate.ogm.datastore.host", FSUtils.getEnv("FACTION_MONGO_HOST"));
+				properties.put("hibernate.ogm.datastore.database", System.getenv("FACTION_MONGO_DATABASE"));
+				properties.put("hibernate.ogm.datastore.port", System.getenv("FACTION_MONGO_PORT"));
 				//if(!System.getenv("FACTION_MONGO_AUTH_DATABASE").equals(""))
 				properties.put("hibernate.ogm.mongodb.retryWrites", "false");
 				properties.put("hibernate.ogm.mongodb.connectTimeoutMS", "3000");
