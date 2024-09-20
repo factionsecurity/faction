@@ -44,7 +44,9 @@ public class HibHelper {
 				properties.put("hibernate.ogm.datastore.port", System.getenv("FACTION_MONGO_PORT"));
 				//if(!System.getenv("FACTION_MONGO_AUTH_DATABASE").equals(""))
 				properties.put("hibernate.ogm.mongodb.authentication_database", System.getenv("FACTION_MONGO_AUTH_DATABASE"));
-				properties.put("hibernate.ogm.mongodb.driver.ssl.enabled", "true");
+				if(System.getenv("FACTION_MONGO_SSL").equals("true")) {
+					properties.put("hibernate.ogm.mongodb.driver.ssl.enabled", "true");
+				}
 				
 				emf = Persistence.createEntityManagerFactory("Faction", properties);
 			}
