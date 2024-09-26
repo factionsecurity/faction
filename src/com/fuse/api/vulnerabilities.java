@@ -533,25 +533,25 @@ public class vulnerabilities {
 						if(gv.getCategoryId() == null && (gv.getCategoryName() == null || gv.getCategoryName().trim().equals("")) ) {
 							return Response.status(400).entity(String.format(this.ERROR,"Must Specifiy a Category Id or Category Name")).build();
 						}
-						DefaultVulnerability dv = new DefaultVulnerability();
+						DefaultVulnerability newVuln = new DefaultVulnerability();
 						if(gv.getId() != null) {
-							dv = em.find(DefaultVulnerability.class, gv.getId());
+							newVuln = em.find(DefaultVulnerability.class, gv.getId());
 						}
-						dv.setName(gv.getName());
-						String description = FSUtils.convertFromMarkDown(dv.getDescription());
+						newVuln.setName(gv.getName());
+						String description = FSUtils.convertFromMarkDown(gv.getDescription());
 						description = FSUtils.sanitizeHTML(description);
-						dv.setDescription(description);
-						String recommendation = FSUtils.convertFromMarkDown(dv.getRecommendation());
+						newVuln.setDescription(description);
+						String recommendation = FSUtils.convertFromMarkDown(gv.getRecommendation());
 						recommendation = FSUtils.sanitizeHTML(recommendation);
-						dv.setRecommendation(recommendation);
-						dv.setOverall(gv.getSeverityId());
-						dv.setLikelyhood(gv.getLikelihoodId());
-						dv.setImpact(gv.getImpactId());
-						dv.setActive(gv.getActive());
-						dv.setCvss31Score(gv.getCvss31Score());
-						dv.setCvss31String(gv.getCvss31String());
-						dv.setCvss40Score(gv.getCvss40Score());
-						dv.setCvss40String(gv.getCvss40String());
+						newVuln.setRecommendation(recommendation);
+						newVuln.setOverall(gv.getSeverityId());
+						newVuln.setLikelyhood(gv.getLikelihoodId());
+						newVuln.setImpact(gv.getImpactId());
+						newVuln.setActive(gv.getActive());
+						newVuln.setCvss31Score(gv.getCvss31Score());
+						newVuln.setCvss31String(gv.getCvss31String());
+						newVuln.setCvss40Score(gv.getCvss40Score());
+						newVuln.setCvss40String(gv.getCvss40String());
 						if(gv.getCategoryId() == null) {
 							Category cat = (Category) em.createQuery("from Category where name = :name ")
 									.setParameter("name", gv.getCategoryName())
@@ -567,11 +567,11 @@ public class vulnerabilities {
 								em.persist(cat);
 								HibHelper.getInstance().commit();
 							}
-							dv.setCategory(cat);
+							newVuln.setCategory(cat);
 						}else {
 							Category cat = em.find(Category.class, gv.getCategoryId());
 							if(cat != null) {
-								dv.setCategory(cat);
+								newVuln.setCategory(cat);
 							}else {
 								return Response.status(400).entity(String.format(this.ERROR,"Category ID does not exist")).build();
 							}
@@ -579,7 +579,7 @@ public class vulnerabilities {
 						}
 						HibHelper.getInstance().preJoin();
 						em.joinTransaction();
-						em.persist(dv);
+						em.persist(newVuln);
 						HibHelper.getInstance().commit();
 						
 					}
