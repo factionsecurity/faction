@@ -124,6 +124,7 @@ public class FSUtils {
 	public static String sanitizeHTML(String html) {
 		PolicyFactory policyBuilder = new HtmlPolicyBuilder().allowAttributes("src").onElements("img")
 				.allowUrlProtocols("data", "http", "https").allowAttributes("href").onElements("a")
+				.allowAttributes("src", "width", "height", "controls").onElements("video")
 				.allowAttributes("style", "class")
 				.onElements("a", "label", "h1", "h2", "h3", "h4", "h5", "h6", "p", "i", "b", "u", "strong", "em",
 						"small", "big", "pre", "code", "cite", "samp", "sub", "sup", "strike", "center", "blockquote",

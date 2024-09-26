@@ -81,7 +81,7 @@ color:#00a65a
      </div><!-- /.tab-pane -->
      <bs:datatable columns="Timestamp,Description,User" classname="" id="auditlog">
      <s:iterator value="logs">
-     <tr><td>${timestamp }</td><td>${description }</td><td>${user.fname } ${user.lname }</td></tr>
+     <tr><td>${timestamp }</td><td><s:property value="description"/></td><td><s:property value="user.fname"/> <s:property value="user.lname"/></td></tr>
      </s:iterator>
      </bs:datatable>
  

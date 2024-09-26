@@ -17,6 +17,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.struts2.dispatcher.SessionMap;
 import org.pac4j.core.profile.UserProfile;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.fuse.authentication.LDAPValidator;
 import com.fuse.dao.Permissions;
@@ -65,6 +66,7 @@ public class AccessControl {
 	public static AuthResult Authenticate(String user, String pass, HttpServletRequest request, EntityManager em, List<UserProfile> profiles) {
 		
 		HttpSession jsession = request.getSession(true);
+		BCryptPasswordEncoder encoder =new BCryptPasswordEncoder();
 		
 		//Check oAuth Stuff
 	
@@ -128,7 +130,7 @@ public class AccessControl {
 			}
 
 		// Validate Native
-		} else if (!tmp.getPasshash().equals(AccessControl.HashPass(user, pass))) {
+		} else if (!encoder.matches(pass, tmp.getPasshash())) {
 			tmp.setFailedAuth(tmp.getFailedAuth() == null ? 1 : tmp.getFailedAuth() + 1);
 			em.persist(tmp);
 			return AuthResult.FAILED_AUTH;
@@ -177,25 +179,16 @@ public class AccessControl {
 		u.setFname(first.trim());
 		u.setLname(last.trim());
 		u.setInActive(false);
-		u.setPasshash(HashPass(username, pass));
+		u.setPasshash(HashPass(pass));
 		u.setPermissions(p);
 		u.setUsername(username);
 		em.persist(u);
 
 	}
 
-	public static String HashPass(String user, String pass) {
-		String random = "akdsjhkjnviuafdb9876qwrhfn9801236098hgcb99tbciuewiufgikbfciu7g32rpfebkjlclk";
-		String StringPass = user + "|" + random + "|" + pass;
-		try {
-			MessageDigest digest = MessageDigest.getInstance("SHA-256");
-			byte[] hash = digest.digest(StringPass.getBytes(StandardCharsets.UTF_8));
-			return Base64.encodeBase64String(hash);
-		} catch (NoSuchAlgorithmException e) {
-
-			e.printStackTrace();
-			return null;
-		}
+	public static String HashPass(String pass) {
+		BCryptPasswordEncoder encoder =new BCryptPasswordEncoder();
+		return encoder.encode(pass);
 	}
 
 	/**

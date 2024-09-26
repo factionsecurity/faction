@@ -33,7 +33,7 @@ public class AuthenticationTests extends StrutsTestCase {
 		em = HibHelper.getInstance().getEMF().createEntityManager();
 		user = new User();
 		user.setUsername("admin");
-		user.setPasshash(AccessControl.HashPass("admin", "password"));
+		user.setPasshash(AccessControl.HashPass("password"));
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		em.persist(user);

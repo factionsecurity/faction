@@ -210,3 +210,10 @@ global.entityDecode = function entityDecode(encoded){
 	
 }
 
+global.entityEncode = function entityEncode(data){
+	let textArea = document.createElement("textarea");
+	textArea.innerText = data;
+	return textArea.innerHTML
+	
+}
+

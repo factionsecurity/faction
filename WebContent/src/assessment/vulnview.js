@@ -579,9 +579,9 @@ class VulnerablilityView {
 			if (activeVulns.indexOf(vuln.id) == -1) {
 				let rowData = `<tr data-vulnid="${vuln.id}"><td class="sev${vuln.severity}">`
 				rowData += `<input type="checkbox" id="ckl${vuln.id}"/></td><td data-sort="${vuln.severity}">`
-				rowData += `<span class="vulnName">${vuln.title}</span><br>`
-				rowData += `<span class="category">${vuln.category}</span><br>`
-				rowData += `<span class="severity">${vuln.severityName}</span>`
+				rowData += `<span class="vulnName">${entityEncode(vuln.title)}</span><br>`
+				rowData += `<span class="category">${entityEncode(vuln.category)}</span><br>`
+				rowData += `<span class="severity">${entityEncode(vuln.severityName)}</span>`
 				rowData += `</td>`
 				rowData += `<td><span class="vulnControl vulnControl-delete" id="deleteVuln${vuln.id}">`
 				rowData += `<i class="fa fa-trash" title="Delete Vulnerability"></i></span>`
@@ -1002,7 +1002,7 @@ class VulnerablilityView {
 			_this.queue.push('vulnerability', _this.vulnId, "details", encodeURIComponent(contents));
 		});
 		$("#title").on('input', function(event) {
-			$(".selected").find(".vulnName")[0].innerHTML = $(this).val()
+			$(".selected").find(".vulnName")[0].innerHTML = entityEncode($(this).val())
 			_this.queue.push('vulnerability', _this.vulnId, "title", $(this).val());
 		});
 		$("#overall").on('input', function(event) {
