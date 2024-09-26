@@ -50,7 +50,7 @@ public class HibHelper {
 				properties.put("hibernate.ogm.mongodb.connectTimeoutMS", "3000");
 				properties.put("hibernate.ogm.mongodb.readPreference", "secondaryPreferred");
 				properties.put("hibernate.ogm.mongodb.replicaSet", "rs0");
-				if(System.getenv("FACTION_MONGO_SSL").equals("true")) {
+				if(FSUtils.getEnv("FACTION_MONGO_SSL").equals("true")) {
 					properties.put("hibernate.ogm.mongodb.driver.sslenabled", "true");
 				}
 				
