@@ -4141,11 +4141,21 @@ table.text-center th {
 }
 .select2-results{
 	background-color:#192338;
+	background-color: #192338;
+	border-color: #030d1c;
+	border-style: solid;
+	border-width: 1px;
 }
 .select2-search--dropdown{
 	background-color:#192338;
   border: 1px solid #030D1C;
   border-width: 0px 1px 1px 1px;
+}
+.select2-container--default .select2-results__option--selected {
+	background-color: #030d1c;
+}
+.select2-container--default .select2-results__option[aria-selected=true]{
+	background-color: #607D8B;
 }
 /*
  * General: Miscellaneous

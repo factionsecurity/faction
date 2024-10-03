@@ -141,7 +141,6 @@ assessmentStats.createCharts();
 window.addEventListener(
   "message",
   (event) => {
-	  console.log(event)
 	if(event.data.type == "updateVuln"){
 		  let sevId = event.data.sevId;
 		  let count = event.data.count;
