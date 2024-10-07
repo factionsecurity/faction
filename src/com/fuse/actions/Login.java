@@ -324,10 +324,10 @@ public class Login extends FSActionSupport {
 
 		if (u != null) {
 			// Check if user is inactive due to number of days inactive
-			if (ems != null && ems.getInactiveDays() != null && ems.getInactiveDays() > 30) {
+			/*if (ems != null && ems.getInactiveDays() != null && ems.getInactiveDays() != 0) {
 				Date ll = u.getLastLogin();
 				// first check if the user has ever logged in.
-				if (ll != null || ll.getTime() != 0l) {
+				if (ll != null && ll.getTime() != 0l) {
 					java.util.Calendar backdate = java.util.Calendar.getInstance();
 					backdate.add(java.util.Calendar.DATE, -ems.getInactiveDays());
 					if (ll.getTime() < backdate.getTimeInMillis()) {
@@ -341,7 +341,7 @@ public class Login extends FSActionSupport {
 						return "gotologin";
 					}
 				}
-			}
+			}*/
 
 			String key = UUID.randomUUID().toString();
 			PasswordReset reset = new PasswordReset();
