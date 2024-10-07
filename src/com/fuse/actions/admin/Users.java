@@ -143,6 +143,8 @@ public class Users extends FSActionSupport {
 			this._message = "Invalid Team Selected";
 			return this.ERRORJSON;
 		}
+		
+		PasswordReset reset = null;
 
 		this.username = this.username.toLowerCase();
 		User userExists = (User) em.createQuery("from User where username = :username")
@@ -181,12 +183,15 @@ public class Users extends FSActionSupport {
 					this._message = "Can't have two LDAP or OAuth users with the same email address.";
 					return this.ERRORJSON;
 				}else {
-					u.setPasshash((UUID.randomUUID()).toString());
+					String key = UUID.randomUUID().toString();
+					u.setPasshash(key);
 					message += "Your account has been created. Please access the link below and click to access with your SSO Credentials<br><br>";
 					String url = request.getRequestURL().toString();
 					url = url.replace(request.getRequestURI(), "");
 					url = url + request.getContextPath();
 					message += "<a href='" + url + "'>Click here to Login</a><br>";
+					
+					
 				}
 			} else if(this.credential != null && !this.credential.trim().equals("")){
 				String passErrorMessage = AccessControl.checkPassword(this.credential, this.credential);
@@ -205,7 +210,7 @@ public class Users extends FSActionSupport {
 			}else {
 				String key = UUID.randomUUID().toString();
 				u.setPasshash(AccessControl.HashPass(UUID.randomUUID().toString()));
-				PasswordReset reset = new PasswordReset();
+				reset = new PasswordReset();
 				reset.setKey(key);
 				reset.setUser(u);
 				reset.setCreated(new Date());
@@ -236,6 +241,9 @@ public class Users extends FSActionSupport {
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
 			em.persist(u);
+			if(reset != null) {
+				em.persist(reset);
+			}
 			AuditLog.audit(this, "User " + u.getUsername() + " added", AuditLog.UserAction, false);
 
 			HibHelper.getInstance().commit();
