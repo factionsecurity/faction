@@ -148,6 +148,7 @@ class EditLocks {
 		let _this = this;
 		setInterval(function() {
 			$.get(`vulnerability/check/locks?id=${_this.assessmentId}`).done((resp) => {
+				console.log(resp);
 				if (resp.result && resp.result == "error") {
 					if (!_this.errorMessageShown) {
 						_this.errorMessageShown = true
@@ -173,7 +174,8 @@ class EditLocks {
 					_this.caller.caller.queue.caller._token = resp.token;
 				}
 				_this.updateCallback('vulnerability', resp);
-			}).catch(() => {
+			}).catch((e) => {
+				console.log(e);
 				if (!_this.errorMessageShown) {
 					_this.errorMessageShown = true;
 					$.confirm({

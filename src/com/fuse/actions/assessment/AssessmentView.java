@@ -252,6 +252,10 @@ public class AssessmentView extends FSActionSupport {
 		
 		vulns.stream().forEach( (vuln) -> {
 			String severity = levelMap.get(vuln.getOverall().intValue());
+			if(severity == null) {
+				int first = levelMap.keySet().stream().findFirst().get();
+				severity = levelMap.get(first);
+			}
 			Integer count = vulnMap.get(severity);
 			vulnMap.put(severity, ++count);
 		});
