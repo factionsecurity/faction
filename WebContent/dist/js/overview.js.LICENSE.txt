@@ -6,21 +6,10 @@
  */
 
 /*!
- * Chart.js v4.4.1
+ * Chart.js v4.4.4
  * https://www.chartjs.org
- * (c) 2023 Chart.js Contributors
+ * (c) 2024 Chart.js Contributors
  * Released under the MIT License
- */
-
-/*!
- * Sizzle CSS Selector Engine v2.3.9
- * https://sizzlejs.com/
- *
- * Copyright JS Foundation and other contributors
- * Released under the MIT license
- * https://js.foundation/
- *
- * Date: 2022-12-19
  */
 
 /*!
@@ -52,26 +41,23 @@
  */
 
 /*!
- * jQuery JavaScript Library v3.6.3
+ * jQuery JavaScript Library v3.7.1
  * https://jquery.com/
- *
- * Includes Sizzle.js
- * https://sizzlejs.com/
  *
  * Copyright OpenJS Foundation and other contributors
  * Released under the MIT license
  * https://jquery.org/license
  *
- * Date: 2022-12-20T21:28Z
+ * Date: 2023-08-28T13:37Z
  */
 
 /*!
- * jQuery UI Widget 1.13.2
- * http://jqueryui.com
+ * jQuery UI Widget 1.14.0
+ * https://jqueryui.com
  *
- * Copyright jQuery Foundation and other contributors
+ * Copyright OpenJS Foundation and other contributors
  * Released under the MIT license.
- * http://jquery.org/license
+ * https://jquery.org/license
  */
 
 /*!
@@ -100,10 +86,6 @@ PERFORMANCE OF THIS SOFTWARE.
 ***************************************************************************** */
 
 /*! @license DOMPurify 2.3.3 | (c) Cure53 and other contributors | Released under the Apache license 2.0 and Mozilla Public License 2.0 | github.com/cure53/DOMPurify/blob/2.3.3/LICENSE */
-
-/*! DataTables 1.13.1
- * ©2008-2022 SpryMedia Ltd - datatables.net/license
- */
 
 /*! DataTables Bootstrap 3 integration
  * ©2011-2015 SpryMedia Ltd - datatables.net/license
