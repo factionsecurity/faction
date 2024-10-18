@@ -58,7 +58,7 @@ public class CMS extends FSActionSupport {
 	private String file_dataContentType;
 	private String file_dataFilename;
 	private String message;
-	private String reportType;
+	private String fileType;
 
 	@Action(value = "cms", results = {
 			@Result(name = "templateUpload", location = "/WEB-INF/jsp/cms/TemplateUpload.jsp"),
@@ -164,8 +164,8 @@ public class CMS extends FSActionSupport {
 					selectedTemplate.setFilename(filename);
 					selectedTemplate.setBase64EncodedTemplate(b64Docx);
 					selectedTemplate.setSaveInDB(true);
-					if(Arrays.asList(FinalizeReport.getReportOptions()).stream().anyMatch(this.reportType::equals)) {
-						selectedTemplate.setFileType(this.reportType);
+					if(Arrays.asList(FinalizeReport.getReportOptions()).stream().anyMatch(this.fileType::equals)) {
+						selectedTemplate.setFileType(this.fileType);
 					}else {
 						selectedTemplate.setFileType("docx");
 					}
@@ -186,8 +186,8 @@ public class CMS extends FSActionSupport {
 					selectedTemplate.setTeam(team);
 					selectedTemplate.setType(type);
 					selectedTemplate.setRetest(retest);
-					if(Arrays.asList(FinalizeReport.getReportOptions()).stream().anyMatch(this.reportType::equals)) {
-						selectedTemplate.setFileType(this.reportType);
+					if(Arrays.asList(FinalizeReport.getReportOptions()).stream().anyMatch(this.fileType::equals)) {
+						selectedTemplate.setFileType(this.fileType);
 					}else {
 						selectedTemplate.setFileType("docx");
 					}
@@ -447,11 +447,11 @@ public class CMS extends FSActionSupport {
 		return message;
 	}
 	
-	public void setReportType(String reportType) {
-		this.reportType = reportType;
+	public void setFileType(String fileType) {
+		this.fileType = fileType;
 		
 	}
-	public List<String> getReportTypes(){
+	public List<String> getFileTypes(){
 		return Arrays.asList(FinalizeReport.getReportOptions());
 	}
 	
