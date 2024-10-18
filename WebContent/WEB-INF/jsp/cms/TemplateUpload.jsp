@@ -48,7 +48,7 @@
 <bs:row>
 <bs:select name="Result File Type" colsize="12" id="reportType">
 	<s:iterator value="reportTypes" var="type">
-		<s:if test="type == selectedTemplate.reportType">
+		<s:if test="type == selectedTemplate.fileType">
 			<option value="${type }" selected="selected">${type}</option>
 		</s:if>
 		<s:else>
