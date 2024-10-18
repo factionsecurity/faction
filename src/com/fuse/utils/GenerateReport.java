@@ -207,7 +207,7 @@ public class GenerateReport {
 
 			String docx = Base64
 					.encodeBase64String(
-							FinalizeReport.finalizeReport(finalReport)
+							FinalizeReport.finalizeReport(finalReport, "pdf")
 					);
 			return docx;
 
