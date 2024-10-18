@@ -37,6 +37,7 @@ public class Reports extends FSActionSupport {
 	private String type;
 	private String team;
 	private String filename;
+	private String contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 	private String guid;
 	private InputStream reportStream;
 
@@ -120,7 +121,7 @@ public class Reports extends FSActionSupport {
 					type = "stream", 
 					params = { 
 							"inputName", "reportStream",
-							"contentType", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
+							"contentType", "${contentType}", 
 							"bufferSize", "1024", 
 							"contentDisposition", "attachment;filename=\"${filename}\"" 
 							}
@@ -130,12 +131,8 @@ public class Reports extends FSActionSupport {
 	public String downloadReport() {
 
 		User user = this.getSessionUser();
-		filename = "Report.docx";
+		filename = "Report.";
 
-		// response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-		// // HTTP 1.1.
-		// response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
-		// response.setDateHeader("Expires", 0); // Proxies.
 		if (test == null) {
 
 			String b64Rpt = "";
@@ -219,6 +216,14 @@ public class Reports extends FSActionSupport {
 					if (tmpAsmt != null)
 						filename = tmpAsmt.getName() + " - " + tmpAsmt.getType().getType() + " " + filename;
 				}
+				
+				if(report.length > 3 && report[1] == (byte)'P' && report[2] == (byte)'D' && report[3] == (byte)'F') {
+					contentType = "application/pdf";
+					filename +="pdf";
+						
+				}else {
+					filename +="docx";
+				}
 				reportStream = new ByteArrayInputStream(report);
 				return "report";
 			} catch (Exception e) {
@@ -239,6 +244,11 @@ public class Reports extends FSActionSupport {
 				return ERROR;
 			}
 			filename = "Report.docx";
+			if(bytes.length > 3 && bytes[1] == (byte)'P' && bytes[2] == (byte)'D' && bytes[3] == (byte)'F') {
+				contentType = "application/pdf";
+				filename = "Report.pdf";
+					
+			}
 			reportStream = new ByteArrayInputStream(bytes);
 			return "report";
 		}
@@ -275,6 +285,9 @@ public class Reports extends FSActionSupport {
 
 	public String getFilename() {
 		return this.filename;
+	}
+	public String getContentType() {
+		return this.contentType;
 	}
 	public InputStream getReportStream() {
 		return this.reportStream;
