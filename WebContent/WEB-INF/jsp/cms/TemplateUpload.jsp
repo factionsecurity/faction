@@ -47,9 +47,8 @@
 </bs:row>
 <bs:row>
 <bs:select name="Result File Type" colsize="12" id="fileType">
-<!-- ${selectedTemplate.fileType} -->
 	<s:iterator value="fileTypes" var="fileType">
-		<s:if test="fileType == selectedTemplate.fileType">
+		<s:if test="#fileType.equals(selectedTemplate.fileType)" >
 			<option value="${fileType }" selected="selected">${fileType}</option>
 		</s:if>
 		<s:else>

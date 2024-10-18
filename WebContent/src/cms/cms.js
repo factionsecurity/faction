@@ -120,7 +120,7 @@ $(function(){
                     data+="&name=" + $("#name").val();
                     data+="&teamid="+$("#team").val();
                     data+="&typeid="+$("#type").val();
-                    data+="&reportType="+$("#reportType").val();
+                    data+="&fileType="+$("#fileType").val();
                     data+="&retest="+$("#retest").is(':checked');
                     $.post("cms",data).done(function(resp){
                         if(resp.result == "success"){
