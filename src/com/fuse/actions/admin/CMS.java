@@ -186,6 +186,11 @@ public class CMS extends FSActionSupport {
 					selectedTemplate.setTeam(team);
 					selectedTemplate.setType(type);
 					selectedTemplate.setRetest(retest);
+					if(Arrays.asList(FinalizeReport.getReportOptions()).stream().anyMatch(this.reportType::equals)) {
+						selectedTemplate.setFileType(this.reportType);
+					}else {
+						selectedTemplate.setFileType("docx");
+					}
 				}
 				HibHelper.getInstance().preJoin();
 				em.joinTransaction();
