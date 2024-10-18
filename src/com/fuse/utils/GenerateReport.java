@@ -347,7 +347,7 @@ public class GenerateReport {
 
 			byte[] finalReport = (baos.toByteArray());
 			
-			return FinalizeReport.finalizeReport(finalReport);
+			return FinalizeReport.finalizeReport(finalReport, "pdf");
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
