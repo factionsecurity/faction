@@ -3,6 +3,7 @@ package com.fuse.actions.admin;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -11,6 +12,7 @@ import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 import org.apache.commons.codec.binary.Base64;
 
+import com.faction.docx.FinalizeReport;
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.AssessmentType;
 import com.fuse.dao.HibHelper;
@@ -56,6 +58,7 @@ public class CMS extends FSActionSupport {
 	private String file_dataContentType;
 	private String file_dataFilename;
 	private String message;
+	private String reportType;
 
 	@Action(value = "cms", results = {
 			@Result(name = "templateUpload", location = "/WEB-INF/jsp/cms/TemplateUpload.jsp"),
@@ -161,6 +164,12 @@ public class CMS extends FSActionSupport {
 					selectedTemplate.setFilename(filename);
 					selectedTemplate.setBase64EncodedTemplate(b64Docx);
 					selectedTemplate.setSaveInDB(true);
+					if(Arrays.asList(FinalizeReport.getReportOptions()).stream().anyMatch(this.reportType::equals)) {
+						selectedTemplate.setFileType(this.reportType);
+					}else {
+						selectedTemplate.setFileType("docx");
+					}
+					
 				} else {
 					Teams team = (Teams) em.find(Teams.class, this.teamid);
 					AssessmentType type = (AssessmentType) em.find(AssessmentType.class, this.typeid);
@@ -431,6 +440,14 @@ public class CMS extends FSActionSupport {
 
 	public String getMessage() {
 		return message;
+	}
+	
+	public void setReportType(String reportType) {
+		this.reportType = reportType;
+		
+	}
+	public List<String> getReportTypes(){
+		return Arrays.asList(FinalizeReport.getReportOptions());
 	}
 	
 

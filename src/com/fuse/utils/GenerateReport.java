@@ -151,19 +151,20 @@ public class GenerateReport {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			mlp.save(baos);
 			byte[] finalReport = baos.toByteArray();
-			String docx = Base64.encodeBase64String(finalReport);
+			byte [] updatedReport = FinalizeReport.finalizeReport(finalReport, base.getFileType());
+			String docx = Base64.encodeBase64String(updatedReport);
 			return docx;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}
 		return null;
 	}
-	public String generateDocxReport(Long id, EntityManager em) {
+	public String [] generateDocxReport(Long id, EntityManager em) {
 		
 		return this.generateDocxReport(id, em, false);
 	}
 
-	public String generateDocxReport(Long id, EntityManager em, Boolean isRetest) {
+	public String [] generateDocxReport(Long id, EntityManager em, Boolean isRetest) {
 
 		ReportOptions RPO = FSUtils.getOrCreateReportOptionsIfNotExist(em);
 
@@ -207,9 +208,9 @@ public class GenerateReport {
 
 			String docx = Base64
 					.encodeBase64String(
-							FinalizeReport.finalizeReport(finalReport, "pdf")
+							FinalizeReport.finalizeReport(finalReport, base.getFileType())
 					);
-			return docx;
+			return new String [] {docx, base.getFileType()};
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -347,7 +348,7 @@ public class GenerateReport {
 
 			byte[] finalReport = (baos.toByteArray());
 			
-			return FinalizeReport.finalizeReport(finalReport, "pdf");
+			return FinalizeReport.finalizeReport(finalReport, base.getFileType());
 
 		} catch (Exception ex) {
 			ex.printStackTrace();

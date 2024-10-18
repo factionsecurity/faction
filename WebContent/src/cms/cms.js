@@ -107,8 +107,7 @@ $(function(){
             content: 'url:cms?action=templateUpload&id='+id,
             contentLoaded:function(){
                 setTimeout(function(){
-                $("#imgForm").show();
-                //$("#team, #retest, #type").attr('disabled','disabled');
+                	$("#imgForm").show();
                 }, 1000);
             },
             buttons:{
@@ -121,6 +120,7 @@ $(function(){
                     data+="&name=" + $("#name").val();
                     data+="&teamid="+$("#team").val();
                     data+="&typeid="+$("#type").val();
+                    data+="&reportType="+$("#reportType").val();
                     data+="&retest="+$("#retest").is(':checked');
                     $.post("cms",data).done(function(resp){
                         if(resp.result == "success"){

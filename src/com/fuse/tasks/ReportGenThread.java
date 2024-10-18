@@ -64,9 +64,9 @@ public class ReportGenThread implements Runnable{
 		Long id = this.asmt.getId();
 		try{
 			GenerateReport genReport = new GenerateReport();
-			String docx = "";
-			docx = genReport.generateDocxReport(id, em, isRetest);
-			this.report = docx;
+			String [] generated = genReport.generateDocxReport(id, em, isRetest);
+			this.report = generated[0];
+			String fileType = generated[1];
 			em.close();
 			em = HibHelper.getInstance().getEM();
 			HibHelper.getInstance().preJoin();
@@ -77,24 +77,28 @@ public class ReportGenThread implements Runnable{
 				FinalReport fr = new FinalReport();
 				fr.setRetest(false);
 				fr.setFilename(guid);
-				fr.setBase64EncodedPdf(docx);
+				fr.setBase64EncodedPdf(this.report);
 				fr.setGentime(new Date());
+				fr.setFileType(generated[1]);
 				em.persist(fr);
 				a.setFinalReport(fr);
 			}else if(!isRetest){
-				a.getFinalReport().setBase64EncodedPdf(docx);
+				a.getFinalReport().setBase64EncodedPdf(this.report);
+				a.getFinalReport().setFileType(fileType);
 				a.getFinalReport().setGentime(new Date());
 			}else if(isRetest && a.getRetestReport() == null){
 				String guid = UUID.randomUUID().toString();
 				FinalReport fr = new FinalReport();
 				fr.setRetest(true);
 				fr.setFilename(guid);
-				fr.setBase64EncodedPdf(docx);
+				fr.setBase64EncodedPdf(this.report);
+				fr.setFileType(fileType);
 				fr.setGentime(new Date());
 				em.persist(fr);
 				a.setRetestReport(fr);
 			}else if(isRetest){
-				a.getRetestReport().setBase64EncodedPdf(docx);
+				a.getRetestReport().setBase64EncodedPdf(this.report);
+				a.getFinalReport().setFileType(fileType);
 				a.getRetestReport().setGentime(new Date());
 			}
 				

@@ -191,7 +191,6 @@ public class getReport extends HttpServlet {
 		}
 		
 		em.close();
-		//session.close();
 	}
 
 	/**

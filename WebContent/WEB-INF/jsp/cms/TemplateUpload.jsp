@@ -46,12 +46,25 @@
 </bs:select>
 </bs:row>
 <bs:row>
+<bs:select name="Result File Type" colsize="12" id="reportType">
+	<s:iterator value="reportTypes" var="type">
+		<s:if test="type == selectedTemplate.reportType">
+			<option value="${type }" selected="selected">${type}</option>
+		</s:if>
+		<s:else>
+			<option value="${type }">${type}</option>
+			
+		</s:else>
+	</s:iterator>
+</bs:select>
+</bs:row>
+<bs:row>
 <form enctype="multipart/form-data" action="cms" id="imgForm" method="POST" style="display:none">
 	<input type="hidden" id="id" value="${id}" name="id"/>
 	<input type="hidden" id="action" value="templateSave" name="action"/>
 	
 		<div class="col-md-12">
-                <label class="control-label">Select Docx File</label>
+                <label class="control-label">Select DOCX File</label>
     			<input id="image" type="file" name="file_data"/>
         </div>
 	
