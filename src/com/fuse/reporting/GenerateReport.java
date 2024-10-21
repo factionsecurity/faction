@@ -1,8 +1,9 @@
-package com.fuse.utils;
+package com.fuse.reporting;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -18,14 +19,15 @@ import com.fuse.dao.AssessmentType;
 import com.fuse.dao.ReportOptions;
 import com.fuse.dao.ReportTemplates;
 import com.fuse.dao.RiskLevel;
+import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
-import com.fuse.docx.DocxUtils;
+import com.fuse.utils.FSUtils;
 import com.fuse.utils.reporttemplate.ReportTemplate;
 import com.fuse.utils.reporttemplate.ReportTemplateFactory;
 
-import com.faction.docx.FinalizeReport;
+import com.faction.reporting.ReportFeatures;
 
 public class GenerateReport {
 
@@ -151,7 +153,7 @@ public class GenerateReport {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			mlp.save(baos);
 			byte[] finalReport = baos.toByteArray();
-			byte [] updatedReport = FinalizeReport.finalizeReport(finalReport, base.getFileType());
+			byte [] updatedReport = ReportFeatures.finalizeReport(finalReport, base.getFileType());
 			String docx = Base64.encodeBase64String(updatedReport);
 			return docx;
 		} catch (Exception ex) {
@@ -208,7 +210,7 @@ public class GenerateReport {
 
 			String docx = Base64
 					.encodeBase64String(
-							FinalizeReport.finalizeReport(finalReport, base.getFileType())
+							ReportFeatures.finalizeReport(finalReport, base.getFileType())
 					);
 			return new String [] {docx, base.getFileType()};
 
@@ -218,7 +220,9 @@ public class GenerateReport {
 		return null;
 	}
 
-	public static Assessment createTestAssessment(Teams t, AssessmentType type, List<RiskLevel> riskLevels) {
+	public static Assessment createTestAssessment(Teams t, AssessmentType type, List<RiskLevel> riskLevels, String[] sections) {
+		
+		int index = 1;
 
 		String details = "<b><u>Example:</u></b><pre class='code'>Code Example</pre><br/>Image Shown below<br/><img src='" + img +img2+img3+img4+img5+img6+img7+img8+img9+img10+img11+img12+img13+img14+img15
 				+ "'></img><br/>";
@@ -242,53 +246,58 @@ public class GenerateReport {
 		a.setAppId("1337");
 		a.setRiskAnalysis("Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.");
 		a.setSummary("This is a test report with a table <br> <table><tr><th>Site</th><th>Description</th></tr><tr><td><a href='https://www.factionsecurity.com'>https://www.factionsecurity.com</a></td><td>Something Descriptive</td></tr></table>");
-		Vulnerability v0 = new Vulnerability();
-		v0.setLevels(riskLevels);
-		Vulnerability v1 = new Vulnerability();
-		v1.setLevels(riskLevels);
-		Vulnerability v2 = new Vulnerability();
-		v2.setLevels(riskLevels);
-		v0.setId(1l);
-		v0.setName("Test Issue 1");
-		v0.setImpact(5l);
-		v0.setLikelyhood(5l);
-		v0.setOverall(5l);
-		v0.setCvssScore("8.3");
-		v0.setCvssString("CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N");
-		v0.setRecommendation("Test Recommendation with table <br> <table><tr><th>Site</th><th>Description</th></tr><tr><td><a href='https://www.factionsecurity.com'>https://www.factionsecurity.com</a></td><td>Something Descriptive</td></tr></table><br>");
-		v0.setDescription("Test Description with table <br> <table><tr><th>Site</th><th>Description</th></tr><tr><td><a href='https://www.factionsecurity.com'>https://www.factionsecurity.com</a></td><td>Something Descriptive</td></tr></table><br>");
-		v0.setDetails(details);
-		v0.setTracking("VID-1234");
-		v0.setAssessmentId(1l);
-		v1.setId(2l);
-		v1.setName("Test Issue 2");
-		v1.setImpact(4l);
-		v1.setLikelyhood(4l);
-		v1.setOverall(4l);
-		v1.setCvssScore("8.3");
-		v1.setCvssString("CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N");
-		v1.setRecommendation("Test Recommendation");
-		v1.setDescription("Test Description");
-		v1.setDetails(details);
-		v1.setTracking("VID-1235");
-		v1.setAssessmentId(1l);
-		v2.setId(3l);
-		v2.setName("Test Issue 3");
-		v2.setImpact(3l);
-		v2.setLikelyhood(3l);
-		v2.setOverall(3l);
-		v2.setCvssScore("8.3");
-		v2.setCvssString("CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N");
-		v2.setRecommendation("Test Recommendation");
-		v2.setDescription("Test Description");
-		v2.setDetails(details);
-		v2.setTracking("VID-1236");
-		v2.setAssessmentId(1l);
-		a.setType(type);
 		a.setVulns((new ArrayList<Vulnerability>()));
-		a.getVulns().add(v0);
-		a.getVulns().add(v1);
-		a.getVulns().add(v2);
+		for(String section : sections) {
+			Vulnerability v0 = new Vulnerability();
+			v0.setLevels(riskLevels);
+			Vulnerability v1 = new Vulnerability();
+			v1.setLevels(riskLevels);
+			Vulnerability v2 = new Vulnerability();
+			v2.setLevels(riskLevels);
+			v0.setId(1l);
+			v0.setName("Test Issue " + index++);
+			v0.setImpact(5l);
+			v0.setLikelyhood(5l);
+			v0.setOverall(5l);
+			v0.setCvssScore("8.3");
+			v0.setCvssString("CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N");
+			v0.setRecommendation("Test Recommendation with table <br> <table><tr><th>Site</th><th>Description</th></tr><tr><td><a href='https://www.factionsecurity.com'>https://www.factionsecurity.com</a></td><td>Something Descriptive</td></tr></table><br>");
+			v0.setDescription("Test Description with table <br> <table><tr><th>Site</th><th>Description</th></tr><tr><td><a href='https://www.factionsecurity.com'>https://www.factionsecurity.com</a></td><td>Something Descriptive</td></tr></table><br>");
+			v0.setDetails(details);
+			v0.setTracking("VID-1234");
+			v0.setAssessmentId(1l);
+			v0.setSection(section);
+			v1.setId(2l);
+			v1.setName("Test Issue " + index++);
+			v1.setImpact(4l);
+			v1.setLikelyhood(4l);
+			v1.setOverall(4l);
+			v1.setCvssScore("8.3");
+			v1.setCvssString("CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N");
+			v1.setRecommendation("Test Recommendation");
+			v1.setDescription("Test Description");
+			v1.setDetails(details);
+			v1.setTracking("VID-1235");
+			v1.setAssessmentId(1l);
+			v1.setSection(section);
+			v2.setId(3l);
+			v2.setName("Test Issue " + index++);
+			v2.setImpact(3l);
+			v2.setLikelyhood(3l);
+			v2.setOverall(3l);
+			v2.setCvssScore("8.3");
+			v2.setCvssString("CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:H/VI:L/VA:L/SC:N/SI:N/SA:N");
+			v2.setRecommendation("Test Recommendation");
+			v2.setDescription("Test Description");
+			v2.setDetails(details);
+			v2.setTracking("VID-1236");
+			v2.setAssessmentId(1l);
+			v2.setSection(section);
+			a.getVulns().add(v0);
+			a.getVulns().add(v1);
+			a.getVulns().add(v2);
+		}
+		a.setType(type);
 		a.setStart(new Date());
 		a.setEnd(new Date());
 
@@ -299,11 +308,6 @@ public class GenerateReport {
 
 	public byte[] testDocxPage(EntityManager em, Long teamId, Long typeId, boolean retest) {
 
-		Properties props = System.getProperties();
-
-		String debug = (String) props.get("fusevt.debug");
-
-		String guid = UUID.randomUUID().toString();
 
 		ReportOptions RPO = FSUtils.getOrCreateReportOptionsIfNotExist(em);
 
@@ -316,8 +320,24 @@ public class GenerateReport {
 
 			Vulnerability v0 = new Vulnerability();
 			v0.updateRiskLevels();
+			
+			String [] sections = new String[] { "Default" };
+			
+			if(ReportFeatures.allowSections()) {
+				SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+						.findFirst().orElse(null);
+				String features = ems.getFeatures();
+				String [] reportSections = ReportFeatures.getFeatures(features);
+				sections = new String[reportSections.length +1];
+				sections[0] = "Default";
+				int index=1;
+				for(String section : reportSections) {
+					sections[index++] = section;
+				}
+			}
+			
 
-			Assessment a = this.createTestAssessment(t, type, v0.getLevels());
+			Assessment a = createTestAssessment(t, type, v0.getLevels(), sections);
 
 			String mongoQuery = "{\"type_id\" : " + a.getType().getId() + ", \"team_id\" : "
 					+ a.getAssessor().get(0).getTeam().getId() + ", \"retest\" : " + retest + "}";
@@ -348,7 +368,7 @@ public class GenerateReport {
 
 			byte[] finalReport = (baos.toByteArray());
 			
-			return FinalizeReport.finalizeReport(finalReport, base.getFileType());
+			return ReportFeatures.finalizeReport(finalReport, base.getFileType());
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
