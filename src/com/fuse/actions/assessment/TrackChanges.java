@@ -4,6 +4,7 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
@@ -19,6 +20,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
+import com.faction.reporting.ReportFeatures;
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
@@ -30,6 +32,7 @@ import com.fuse.dao.Notification;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.PeerReviewLock;
 import com.fuse.dao.RiskLevel;
+import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
@@ -63,6 +66,7 @@ public class TrackChanges extends FSActionSupport {
 	private String field;
 	private PeerReviewLock lock;
 	private List<PeerReviewLock> allLocks;
+	private List<String> sections = new ArrayList<>();
 
 
 	@Action(value = "SaveChanges", results = {
@@ -327,6 +331,17 @@ public class TrackChanges extends FSActionSupport {
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 		if (pr == null)
 			return "redirect";
+		
+		this.sections.add("Default");
+		if(ReportFeatures.allowSections()) {
+			
+			SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+					.findFirst().orElse(null);
+			
+			for(String section : ReportFeatures.getFeatures(ems.getFeatures())){
+				this.sections.add(section);
+			}
+		}
 
 		boolean isAssessor = false;
 		for (User u : pr.getAssessment().getAssessor()) {
@@ -563,7 +578,7 @@ public class TrackChanges extends FSActionSupport {
 
 	private void clearOldLocks(Comment comment) {
 		Calendar now = Calendar.getInstance();
-		now.add(Calendar.MINUTE, -5);
+		now.add(Calendar.MINUTE, -1);
 		Date fiveMin = now.getTime();
 		List<PeerReviewLock> allOldLocks = (List<PeerReviewLock>) em
 				.createQuery("from PeerReviewLock where lastComment = :comment and lockedAt < :fiveMin")
@@ -803,5 +818,9 @@ public class TrackChanges extends FSActionSupport {
 
 	public List<PeerReviewLock> getAllLocks() {
 		return this.allLocks;
+	}
+	
+	public List<String> getSections(){
+		return this.sections;
 	}
 }
