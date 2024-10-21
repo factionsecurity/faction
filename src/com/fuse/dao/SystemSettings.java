@@ -75,6 +75,7 @@ public class SystemSettings {
 	private String ldapSearchDn;
 	private Boolean ldapInsecureSSL=false;
 	private String ldapObjectClass;
+	private String features;
 	
 	
 	public void initSMTPSettings() {
@@ -515,6 +516,14 @@ public class SystemSettings {
 	
 	public Boolean getSelfPeerReview() {
 		return this.selfPeerReview;
+	}
+	
+	public String getFeatures() {
+		return this.features;
+	}
+	
+	public void setFeatures(String features) {
+		this.features = features;
 	}
 
 

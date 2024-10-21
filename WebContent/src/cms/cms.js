@@ -79,6 +79,49 @@ $(function(){
             
         });
     });
+	$("#addSection").on('click', () =>{
+		let sectionName = $("#sectionName").val();
+		
+		sectionName = sectionName.replaceAll(/[~!@#=\[\]\\{}|;':"<>?,./$%^&*()+`]+/g, "");
+		let sectionNamePretty = sectionName.replaceAll(/[\ \t]+/g, " ");
+		sectionName = sectionName.replaceAll(/[\ \t]+/g, "_");
+		
+		if(sectionName.trim() == ""){
+			return;
+		}
+		let data = "reportSection=" + sectionName;
+		
+		$.post("addReportSection", data).done( (response) => {
+			
+			$("#reportSectionsTable").find("tbody").append(
+				"<tr><td>" + sectionNamePretty + "</td>" +
+				"<td>" + sectionName + "</td>" +
+				"<td><span class='vulnControl vulnControl-delete deleteSection' id='deleteSection_" + sectionName +
+				"'> <i class='fa fa-trash'></i>" +
+				"</span></td></tr>");
+			$("[id^=deleteSection]").unbind();
+			
+			$("[id^=deleteSection]").on('click', function(){
+				let sectionId = $(this).attr("id");
+				let sectionName =sectionId.replace("deleteSection_","");
+				let data = "reportSection=" + sectionName;
+				$.post("deleteReportSection", data).done( (response) => {
+					$("#"+sectionId).parent().parent().remove();
+				});
+			});
+			
+		});
+	});
+	
+    $("[id^=deleteSection]").on('click', function(){
+        let sectionId = $(this).attr("id");
+        let sectionName =sectionId.replace("deleteSection_","");
+		let data = "reportSection=" + sectionName;
+		$.post("deleteReportSection", data).done( (response) => {
+			$("#"+sectionId).parent().parent().remove();
+		});
+	});
+	
     $("[id^=tmpDel]").click(function(){
         let id = $(this).attr("id");
         id=id.replace("tmpDel","");
@@ -120,7 +163,7 @@ $(function(){
                     data+="&name=" + $("#name").val();
                     data+="&teamid="+$("#team").val();
                     data+="&typeid="+$("#type").val();
-                    data+="&fileType="+$("#fileType").val();
+                    data+="&reportExtension="+$("#fileType").val();
                     data+="&retest="+$("#retest").is(':checked');
                     $.post("cms",data).done(function(resp){
                         if(resp.result == "success"){

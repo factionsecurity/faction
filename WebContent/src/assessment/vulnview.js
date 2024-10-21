@@ -148,7 +148,6 @@ class EditLocks {
 		let _this = this;
 		setInterval(function() {
 			$.get(`vulnerability/check/locks?id=${_this.assessmentId}`).done((resp) => {
-				console.log(resp);
 				if (resp.result && resp.result == "error") {
 					if (!_this.errorMessageShown) {
 						_this.errorMessageShown = true
@@ -175,7 +174,6 @@ class EditLocks {
 				}
 				_this.updateCallback('vulnerability', resp);
 			}).catch((e) => {
-				console.log(e);
 				if (!_this.errorMessageShown) {
 					_this.errorMessageShown = true;
 					$.confirm({
@@ -294,6 +292,9 @@ class VulnerablilityView {
 			$("#likelyhood").val(sev).trigger("change");
 			$("#impact").val(sev).trigger("change");
 
+		});
+		$("#reportSection").on('change', (event) => {
+			$("#reportSection").next().removeClass("field-error");
 		});
 
 		$("#vulntable tbody tr").on('click', function(event) {
@@ -840,6 +841,7 @@ class VulnerablilityView {
 			data += "&feedMsg="
 			data += "&cvssScore="
 			data += "&cvssString="
+			data += "section="
 			let fields = [];
 			for (let id of customFields) {
 				let value = $(`#type${id}`).data('default');
@@ -970,10 +972,11 @@ class VulnerablilityView {
 		$("#impact").val("").trigger("change");
 		$("#likelyhood").val("").trigger("change");
 		$("#overall").val("").trigger("change");
+		$("#reportSection").val("Default").trigger("change")
 		$("#category").val("");
 		$("#title").attr("intVal", "-1");
 		$("#title").val("");
-		$("#dcategory").val("").trigger('change')
+		$("#dcategory").val("").trigger('change');
 		$('[id^="type"]').each((_index, el) => {
 			if(el.id.indexOf("header") != -1)
 				return;
@@ -1004,6 +1007,7 @@ class VulnerablilityView {
 		$("#overall").unbind('input');
 		$("#impact").unbind('input');
 		$("#likelyhood").unbind('input');
+		$("#reportSection").unbind('input');
 		$("#dcategory").unbind('input');
 		$("#cvssString").unbind('input');
 		$("#cvssString").unbind('change');
@@ -1058,6 +1062,9 @@ class VulnerablilityView {
 		});
 		$("#likelyhood").on('input', function(event) {
 			_this.queue.push('vulnerability', _this.vulnId, "likelyhood", $(this).val());
+		});
+		$("#reportSection").on('input', function(event) {
+			_this.queue.push('vulnerability', _this.vulnId, "reportSection", $(this).val());
 		});
 		$("#dcategory").on('input', function(event) {
 			const catName = $(this).select2('data')[0].text
@@ -1120,6 +1127,15 @@ class VulnerablilityView {
 			_this.setIntVal(data.likelyhood, 'likelyhood');
 			_this.setIntVal(data.impact, 'impact');
 			_this.setIntVal(data.catid, 'dcategory');
+			if(data.section && data.section != ""){
+				$("#reportSection").val(data.section).trigger("change");
+				if($("#reportSection").val()==null){
+					$("#reportSection").next().addClass("field-error");
+				}
+			}else{
+				$("#reportSection").val("Default").trigger("change");
+				$("#reportSection").next().removeClass("field-error");
+			}
 			$(data.cf).each(function(a, b) {
 				let el = $("#type" + b.typeid);
 				if(el.length == 0 )

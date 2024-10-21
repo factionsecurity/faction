@@ -17,7 +17,7 @@ import com.fuse.dao.FinalReport;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Notification;
 import com.fuse.dao.User;
-import com.fuse.utils.GenerateReport;
+import com.fuse.reporting.GenerateReport;
 
 
 

@@ -14,9 +14,9 @@ import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
+import com.fuse.reporting.GenerateReport;
 import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
-import com.fuse.utils.GenerateReport;
 
 import java.util.GregorianCalendar;
 import java.util.Base64;

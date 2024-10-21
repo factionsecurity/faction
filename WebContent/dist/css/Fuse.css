@@ -5186,3 +5186,8 @@ code {
 	background-color: #12101073;
 	padding: 10px;
 }
+.field-error{
+	border-color: #ff000082;
+    border-width: thin;
+    border-style: solid;
+}

@@ -20,9 +20,10 @@ import com.fuse.dao.Permissions;
 import com.fuse.dao.User;
 //import com.fuse.dao.VTImage;
 import com.fuse.dao.Verification;
+import com.fuse.reporting.GenerateReport;
 import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
-import com.fuse.utils.GenerateReport;
+
 import org.apache.commons.codec.binary.Base64;
 
 /**

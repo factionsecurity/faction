@@ -1,4 +1,4 @@
-package com.fuse.utils;
+package com.fuse.reporting;
 
 import static org.junit.Assert.*;
 
@@ -18,7 +18,6 @@ import org.docx4j.org.apache.xml.security.utils.Base64;
 import org.junit.Test;
 
 import com.fuse.dao.HibHelper;
-import com.fuse.docx.DocxUtils;
 
 public class GenerateReportTest {
 
