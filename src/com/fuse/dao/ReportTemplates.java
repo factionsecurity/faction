@@ -44,6 +44,7 @@ public class ReportTemplates {
 	private boolean retest = false;
 	private String base64EncodedTemplate;
 	private Boolean saveInDB=false; //This is to support existing customers
+	private String fileType = "docx";
 	public Long getId() {
 		return id;
 	}
@@ -97,6 +98,12 @@ public class ReportTemplates {
 	}
 	public void setSaveInDB(Boolean saveInDB) {
 		this.saveInDB = saveInDB;
+	}
+	public void setFileType(String fileType) {
+		this.fileType = fileType;
+	}
+	public String getFileType() {
+		return this.fileType == null || this.fileType.equals("")? "docx": this.fileType;
 	}
 	
 	@Transient

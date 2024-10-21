@@ -16,7 +16,9 @@
 "dfcatid" : "<s:property value="current.defaultVuln.category.id"/>",
 "catid" : "<s:property value="current.category.id"/>",
 "cvssScore" : "<s:property value="current.cvssScore" escapeJavaScript="true"/>",
-"cvssString" : "<s:property value="current.cvssString" escapeJavaScript="true"/>"
+"cvssString" : "<s:property value="current.cvssString" escapeJavaScript="true"/>",
+"section" : "<s:property value="current.section" escapeJavaScript="true"/>",
+"sectionPretty" : "<s:property value="current.sectionPretty" escapeJavaScript="true"/>"
 }
 
 

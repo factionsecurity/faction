@@ -146,15 +146,22 @@ span.Informational {
 	<bs:mco colsize="12">
  <div class="nav-tabs-custom">
    <ul class="nav nav-tabs">
-     <li class="active"><a href="#tab_1" data-toggle="tab">Overview</a></li>
-     <li><a href="#tab_2" data-toggle="tab">Vulnerabilities</a></li>
+     <li class="active"><a href="#overview" data-toggle="tab">Overview</a></li>
+     <s:iterator value="sections" var="section">
+		 <s:if test="#section == 'Default'">
+			 <li><a href="#default" data-toggle="tab">Vulnerabilities</a></li>
+		 </s:if>
+		 <s:else>
+			 <li><a href="#<s:property value="section"/>" data-toggle="tab"><s:property value="#section.replace('_', ' ')"/> Vulnerabilities</a></li>
+		 </s:else>
+	</s:iterator>
      <li><a href="#tabfiles" data-toggle="tab">Files</a></li>
      <s:iterator value="checklists" var="cl">
      	<li><a href="#tabcl_${key}" data-toggle="tab"><s:property value="value[0].checklist"/> Checklist</a></li>
      </s:iterator>
    </ul>
    <div class="tab-content">
-     <div class="tab-pane active" id="tab_1">
+     <div class="tab-pane active" id="overview">
 			  <bs:row>
 				<bs:mco colsize="12">
 			    <bs:box title="Application Summary" type="primary">
@@ -198,104 +205,116 @@ span.Informational {
 			  	</bs:mco>
 			  </bs:row>
 		</div>
-		<div class="tab-pane" id="tab_2">
+     <s:iterator value="sections" var="section">
+		 <s:if test="#section == 'Default'">
+			<div class="tab-pane" id="default">
+		 </s:if>
+		 <s:else>
+			<div class="tab-pane" id="<s:property value="section"/>">
+		 </s:else>
+		 <!-- Begin -->
 			  <s:iterator value="asmt.vulns" status="stat" var="v">
 			  	${v.updateRiskLevels()}
-			   <bs:row>
-				<bs:mco colsize="12">
-				<div id='' class='box box-warning'>
-					<div class='box-header with-border'>
-						<h3 class='box-title'><b style='color:lightgray'><u><s:property value="name"/></u></b></h3>
-						</div>
-						<div class='box-body'>
-							<bs:row>
-								<s:if test="asmt.type.cvss31 || asmt.type.cvss40">
-								<bs:mco colsize="1">
-									<div class="scoreBody" style="margin-top:5px">
-										<h3 class="scoreBox <s:property value="overallStr"/>" id="score"> <s:property value="cvssScore"/></h3>
-										<span class="severityBox <s:property value="overallStr"/>" id="severity"><s:property value="overallStr"/></span>
-									</div>
-								</bs:mco>
-								<bs:mco colsize="2">
-									<span class='meta'><u>Category:</u></span><br/>
-									<span class='meta'><s:property value="category.name"/></span><br/>
-									<br/>
-									<span class='meta'><u>CVSS Vector:</u></span><br/>
-									<span class='meta'><s:property value="cvssString"/></span><br/>
-								</bs:mco>
-								</s:if>
-								<s:else>
-								<bs:mco colsize="12">
-									<div class='rating'>
-										<span class='meta'>Category:</span><br/>
-										<span class='catName'><s:property value="category.name"/></span><br/>
-										<span class='meta'>Severity:</span>
-										<br>
-										<span class='label ' title='Severity'><s:property value="overallStr"/> Severity</span>
-										<span class='label ' title='Impact'><s:property value="impactStr"/> Impact</span>
-										<span class='label ' title='Likelihood'><s:property value="likelyhoodStr"/> Likelihood</span>
-									</div>
+			  	<s:if test="#v.section == #section || (#v.section == '' && #section == 'Default')">
+				   <bs:row>
+					<bs:mco colsize="12">
+					<div id='' class='box box-warning'>
+						<div class='box-header with-border'>
+							<h3 class='box-title'><b style='color:lightgray'><u><s:property value="name"/></u></b></h3>
+							</div>
+							<div class='box-body'>
+								<bs:row>
+									<s:if test="asmt.type.cvss31 || asmt.type.cvss40">
+									<bs:mco colsize="1">
+										<div class="scoreBody" style="margin-top:5px">
+											<h3 class="scoreBox <s:property value="overallStr"/>" id="score"> <s:property value="cvssScore"/></h3>
+											<span class="severityBox <s:property value="overallStr"/>" id="severity"><s:property value="overallStr"/></span>
+										</div>
 									</bs:mco>
-								</s:else>
-							</bs:row>
-							<bs:row>
-								&nbsp;
-							</bs:row>
-							<bs:row>
-							   
-								<bs:mco colsize="7">
-									<div class="text-header" >Description <span id="vuln_desc['${id}']_header"></span></div>
-									  <textarea id="vuln_desc['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="description"/></textarea>
-								  </bs:mco>
-								  <bs:mco colsize="4">
-									<div class="text-header" >Description Notes <span id="vuln_desc_notes['${id}']_header"></span></div>
-									  <textarea id="vuln_desc_notes['${id}']" style="width: 100%"><s:property value="desc_notes"/></textarea>
-								  </bs:mco>
-								  
-								  <bs:mco colsize="1" style="padding-right:30px">
+									<bs:mco colsize="2">
+										<span class='meta'><u>Category:</u></span><br/>
+										<span class='meta'><s:property value="category.name"/></span><br/>
+										<br/>
+										<span class='meta'><u>CVSS Vector:</u></span><br/>
+										<span class='meta'><s:property value="cvssString"/></span><br/>
+									</bs:mco>
+									</s:if>
+									<s:else>
+									<bs:mco colsize="12">
+										<div class='rating'>
+											<span class='meta'>Category:</span><br/>
+											<span class='catName'><s:property value="category.name"/></span><br/>
+											<span class='meta'>Severity:</span>
+											<br>
+											<span class='label ' title='Severity'><s:property value="overallStr"/> Severity</span>
+											<span class='label ' title='Impact'><s:property value="impactStr"/> Impact</span>
+											<span class='label ' title='Likelihood'><s:property value="likelyhoodStr"/> Likelihood</span>
+										</div>
+										</bs:mco>
+									</s:else>
+								</bs:row>
+								<bs:row>
+									&nbsp;
+								</bs:row>
+								<bs:row>
+								   
+									<bs:mco colsize="7">
+										<div class="text-header" >Description <span id="vuln_desc['${id}']_header"></span></div>
+										  <textarea id="vuln_desc['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="description"/></textarea>
+									  </bs:mco>
+									  <bs:mco colsize="4">
+										<div class="text-header" >Description Notes <span id="vuln_desc_notes['${id}']_header"></span></div>
+										  <textarea id="vuln_desc_notes['${id}']" style="width: 100%"><s:property value="desc_notes"/></textarea>
+									  </bs:mco>
+									  
+									  <bs:mco colsize="1" style="padding-right:30px">
+											  <bs:row>
+												  <button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
+											  </bs:row>
+									  </bs:mco>
+									  </bs:row>
+									<bs:row>
+									<bs:mco colsize="7">
+										<div class="text-header" >Recommendation <span id="vuln_rec['${id}']_header"></span></div>
+										  <textarea id="vuln_rec['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="recommendation"/></textarea>
+									  </bs:mco>
+									  <bs:mco colsize="4">
+										<div class="text-header">Recommendation Notes <span id="vuln_rec_notes['${id}']_header"></span></div>
+										  <textarea id="vuln_rec_notes['${id}']" style="width: 100%"><s:property value="rec_notes"/></textarea>
+									  </bs:mco>
+									  <bs:mco colsize="1" style="padding-right:30px">
+									  
 										  <bs:row>
-											  <button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
-										  </bs:row>
+												  <button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
+											  </bs:row>
 								  </bs:mco>
 								  </bs:row>
-								<bs:row>
-								<bs:mco colsize="7">
-									<div class="text-header" >Recommendation <span id="vuln_rec['${id}']_header"></span></div>
-									  <textarea id="vuln_rec['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="recommendation"/></textarea>
+									<bs:row>
+									<bs:mco colsize="7">
+										<div class="text-header" >Details <span id="vuln_details['${id}']_header"></span></div>
+										  <textarea id="vuln_details['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="details"/></textarea>
+									  </bs:mco>
+									  <bs:mco colsize="4">
+										<div class="text-header">Detail Notes <span id="vuln_detail_notes['${id}']_header"></span></div>
+										  <textarea id="vuln_detail_notes['${id}']" style="width: 100%"><s:property value="detail_notes"/></textarea>
+									  </bs:mco>
+									  <bs:mco colsize="1" style="padding-right:30px">
+									  
+										  <bs:row>
+												  <button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
+											  </bs:row>
 								  </bs:mco>
-								  <bs:mco colsize="4">
-									<div class="text-header">Recommendation Notes <span id="vuln_rec_notes['${id}']_header"></span></div>
-									  <textarea id="vuln_rec_notes['${id}']" style="width: 100%"><s:property value="rec_notes"/></textarea>
-								  </bs:mco>
-								  <bs:mco colsize="1" style="padding-right:30px">
-								  
-									  <bs:row>
-											  <button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
-										  </bs:row>
-							  </bs:mco>
-							  </bs:row>
-								<bs:row>
-								<bs:mco colsize="7">
-									<div class="text-header" >Details <span id="vuln_details['${id}']_header"></span></div>
-									  <textarea id="vuln_details['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="details"/></textarea>
-								  </bs:mco>
-								  <bs:mco colsize="4">
-									<div class="text-header">Detail Notes <span id="vuln_detail_notes['${id}']_header"></span></div>
-									  <textarea id="vuln_detail_notes['${id}']" style="width: 100%"><s:property value="detail_notes"/></textarea>
-								  </bs:mco>
-								  <bs:mco colsize="1" style="padding-right:30px">
-								  
-									  <bs:row>
-											  <button class="btn btn-danger complete col-md-12" <s:if test="!showComplete">disabled</s:if>><i class="fa fa-check"></i> Complete</button><br><br>
-										  </bs:row>
-							  </bs:mco>
-							  </bs:row>
-			  	</div>
-			  	</div>
-			  	</bs:mco>
-			  </bs:row>
+								  </bs:row>
+					  </div>
+					  </div>
+					  </bs:mco>
+				  </bs:row>
+				  </s:if>
 			  </s:iterator>
 		</div>
+		 
+		 <!-- End -->
+	</s:iterator>
 		<div class="tab-pane" id="tabfiles">
 			<bs:row>
 					<bs:mco colsize="6">

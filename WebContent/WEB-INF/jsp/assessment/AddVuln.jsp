@@ -219,6 +219,23 @@ td:first-child {
 								</div>
 
 							</bs:row>
+							<s:if test="sectionsEnabled">
+								<bs:row>
+									<div class="form-group">
+										<label for="section" class="col-sm-2 control-label">Section:
+											<span id="reportSection_header"></span>
+										</label>
+										<div class="col-sm-10">
+											<select class="select2 form-control field-error" id="reportSection"
+												style="width: 100%">
+												<s:iterator value="sections" var="section">
+													<option value="<s:property value="#section[0]"/>"><s:property value="#section[1]"/></option>
+												</s:iterator>
+											</select>
+										</div>
+									</div>
+								</bs:row>
+							</s:if>
 							<s:if test="assessment.type.cvss31 || assessment.type.cvss40" >
 							<div class="cvss<s:property value="assessment.type.cvss31 || assessment.type.cvss40"/>">
 								<bs:row>

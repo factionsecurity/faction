@@ -1,4 +1,4 @@
-package com.fuse.utils;
+package com.fuse.reporting;
 
 import static org.junit.Assert.*;
 
@@ -18,7 +18,6 @@ import org.docx4j.org.apache.xml.security.utils.Base64;
 import org.junit.Test;
 
 import com.fuse.dao.HibHelper;
-import com.fuse.docx.DocxUtils;
 
 public class GenerateReportTest {
 
@@ -27,10 +26,10 @@ public class GenerateReportTest {
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		GenerateReport report = new GenerateReport();
 		
-		String b64report = report.generateDocxReport(28l, em);
-		assertNotNull(b64report);
+		String [] b64report = report.generateDocxReport(28l, em);
+		assertNotNull(b64report[0]);
 		try {
-			byte [] bytereport = Base64.decode(b64report);
+			byte [] bytereport = Base64.decode(b64report[0]);
 			assertNotNull(bytereport);
 
 		} catch (Base64DecodingException e) {

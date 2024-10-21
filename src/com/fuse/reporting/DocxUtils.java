@@ -1,9 +1,11 @@
-package com.fuse.docx;
+package com.fuse.reporting;
 
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -11,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
 import org.docx4j.TextUtils;
@@ -18,9 +21,12 @@ import org.docx4j.TraversalUtil;
 import org.docx4j.XmlUtils;
 import org.docx4j.convert.in.xhtml.XHTMLImporterImpl;
 import org.docx4j.jaxb.Context;
+import org.docx4j.jaxb.XPathBinderAssociationIsPartialException;
 import org.docx4j.model.datastorage.migration.VariablePrepare;
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
+import org.docx4j.openpackaging.parts.WordprocessingML.FooterPart;
+import org.docx4j.openpackaging.parts.WordprocessingML.HeaderPart;
 import org.docx4j.openpackaging.parts.WordprocessingML.MainDocumentPart;
 import org.docx4j.toc.TocException;
 import org.docx4j.toc.TocGenerator;
@@ -28,7 +34,9 @@ import org.docx4j.wml.BooleanDefaultTrue;
 import org.docx4j.wml.Br;
 import org.docx4j.wml.CTShd;
 import org.docx4j.wml.ContentAccessor;
+import org.docx4j.wml.Ftr;
 import org.docx4j.wml.Hdr;
+import org.docx4j.wml.ObjectFactory;
 import org.docx4j.wml.P;
 import org.docx4j.wml.PPrBase.Ind;
 import org.docx4j.wml.R;
@@ -36,17 +44,21 @@ import org.docx4j.wml.RFonts;
 import org.docx4j.wml.STTabTlc;
 import org.docx4j.wml.Tbl;
 import org.docx4j.wml.Tc;
+import org.docx4j.wml.Text;
 import org.docx4j.wml.Tr;
 import org.docx4j.wml.CTTxbxContent;
 
+import com.faction.reporting.ReportFeatures;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.utils.FSUtils;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 
 import jakarta.xml.bind.JAXBElement;
@@ -54,7 +66,6 @@ import jakarta.xml.bind.JAXBException;
 
 public class DocxUtils {
 	public String FONT = "";
-	private String CONTENT_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml";
 	private String[] keywords = { "asmtName", "asmtId", "asmtAppid", "asmtAssessor", "asmtAssessor_Email",
 			"asmtAssessor_Lines", "asmtAssessor_Comma", "asmtAssessor_Bullets", "remediation", "asmtTeam", "asmtType",
 			"today", "asmtStart", "asmtEnd", "asmtAccessKey", "totalOpenVulns", "totalClosedVulns"};
@@ -62,12 +73,14 @@ public class DocxUtils {
 	private Assessment assessment;
 	private List<Vulnerability> vulns;
 	private final WordprocessingMLPackage mlp;
+	private String [] reportSections = new String[0];
 	
 	public DocxUtils(EntityManagerFactory entityManagerFactory, WordprocessingMLPackage mlp, Assessment assessment) {
 		this.mlp = mlp;
 		this.reportExtension = new Extensions(entityManagerFactory, Extensions.EventType.REPORT_MANAGER);
 		this.assessment = assessment;
 		this.vulns = assessment.getVulns();
+		this.setupReportSections(entityManagerFactory);
 	}
 
 	public DocxUtils(WordprocessingMLPackage mlp, Assessment assessment) {
@@ -75,6 +88,25 @@ public class DocxUtils {
 		this.reportExtension = new Extensions(HibHelper.getInstance().getEMF(), Extensions.EventType.REPORT_MANAGER);
 		this.assessment = assessment;
 		this.vulns = assessment.getVulns();
+		this.setupReportSections(HibHelper.getInstance().getEMF());
+	}
+	
+	private void setupReportSections(EntityManagerFactory entityManagerFactory) {
+		if(ReportFeatures.allowSections()) {
+			EntityManager em = entityManagerFactory.createEntityManager();
+			try {
+				SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+						.findFirst().orElse(null);
+				String features = ems.getFeatures();
+				reportSections = ReportFeatures.getFeatures(features);
+			}finally {
+				em.close();
+			}
+		}
+	}
+	
+	private Boolean sectionExists(String section) {
+		return Arrays.asList(this.reportSections).stream().anyMatch(reportSection -> reportSection.equals(section));
 	}
 	
 	private boolean cellContains(Tc cell, String variable) {
@@ -100,9 +132,40 @@ public class DocxUtils {
 		return widths;
 		
 	}
+	
+	private List<Vulnerability> getFilteredVulns(String section){
+		
+		if(section == null) {
+			section = "Default";
+		}else if(section.isEmpty()) {
+			section = "Default";
+		}
+		
+		List<Vulnerability> filteredVulns = new ArrayList<>();
+		if(section.equals("Default")) {
+			filteredVulns = this.vulns.stream()
+					.filter(vuln -> vuln.getSection() == null 
+									|| vuln.getSection().isEmpty() 
+									|| vuln.getSection().equals("Default")
+									|| !sectionExists(vuln.getSection())
+									)
+					.collect(Collectors.toList());
+		}else {
+			final String query = section;
+			filteredVulns = this.vulns.stream()
+					.filter(
+							vuln -> vuln.getSection().equals(query)
+					).collect(Collectors.toList());
+		}
+		
+		return filteredVulns;
+		
+	}
 
-	private void checkTables(String variable, String customCSS)
+	private void checkTables(String variable, String section, String customCSS)
 			throws JAXBException, Docx4JException {
+		
+		List<Vulnerability> filteredVulns = this.getFilteredVulns(section);
 
 		List<Object> tables = getAllElementFromObject(mlp.getMainDocumentPart(), Tbl.class);
 		for (Object table : tables) {
@@ -116,14 +179,18 @@ public class DocxUtils {
 				widths = setWidths(tc, "rec", widths);
 				widths = setWidths(tc, "details", widths);
 			}
-			String txt = getMatchingText(paragraphs, "${" + variable + "}");
+			String tableVariable ="${" + variable + "}";
+			if(ReportFeatures.allowSections() && section!=null && !section.isEmpty() && !section.equals("Default")) {
+				tableVariable ="${" + variable + " " + section + "}";
+			}
+			String txt = getMatchingText(paragraphs, tableVariable);
 			if (txt == null)
 				continue;
 
 			// Found a findings table
 			// Get colorsMap if it exits;
-			HashMap<String, String> colorMap = new HashMap();
-			HashMap<String, String> cellMap = new HashMap();
+			HashMap<String, String> colorMap = new HashMap<>();
+			HashMap<String, String> cellMap = new HashMap<>();
 			String colors = getMatchingText(paragraphs, "${color");
 			if (colors != null) {
 				colors = colors.replace("${color", "").replace("}", "").trim();
@@ -146,6 +213,14 @@ public class DocxUtils {
 
 				}
 			}
+			String noIssuesText = getMatchingText(paragraphs, "${noIssuesText");
+			if(noIssuesText != null) {
+				noIssuesText = noIssuesText.replace("${noIssuesText ", "").replace("}", "");
+			}else {
+				noIssuesText = "No issues detected for this section.";
+			}
+			
+			
 			// Now we need to replace data in the rows with vulndata.
 			// The loop parameter tells us the row we want to loop though.
 			// Loop can also specify the number of rows we want to grab.
@@ -178,7 +253,7 @@ public class DocxUtils {
 			SimpleDateFormat formatter;
 			formatter = new SimpleDateFormat("MM/dd/yyyy");
 			int count = 1;
-			for (Vulnerability v : this.vulns) {
+			for (Vulnerability v : filteredVulns) {
 				// Change Colors if need be
 				for (String xml : xmls) {
 					String nxml = xml.replaceAll("\\$\\{vulnName\\}", v.getName());
@@ -249,7 +324,7 @@ public class DocxUtils {
 
 					((Tbl) table).getContent().add(newrow);
 
-					HashMap<String, List<Object>> map2 = new HashMap();
+					HashMap<String, List<Object>> map2 = new HashMap<>();
 					if (xml.contains("${rec}")) {
 						if (v.getRecommendation() == null && v.getDefaultVuln() != null) {
 							String rec = v.getDefaultVuln().getRecommendation();
@@ -340,40 +415,19 @@ public class DocxUtils {
 
 			}
 			// If no issues are discovered then we just blank out the table.
-			if (this.vulns == null || this.vulns.size() == 0) {
-				for (String xml : xmls) {
-					String nxml = xml.replaceAll("\\$\\{vulnName\\}", "No Issues disclosed.");
-					nxml = nxml.replaceAll("\\$\\{severity\\}", "");
-					nxml = nxml.replaceAll("\\$\\{impact\\}", "");
-					nxml = nxml.replaceAll("\\$\\{cvssScore\\}", "");
-					nxml = nxml.replaceAll("\\$\\{cvssString\\}", "");
-					nxml = nxml.replaceAll("\\$\\{tracking\\}", "");
-					try {
-						nxml = nxml.replaceAll("\\$\\{vid\\}", "");
-					} catch (Exception ex) {
-					}
-					nxml = nxml.replaceAll("\\$\\{likelihood\\}", "");
-					nxml = nxml.replaceAll("\\$\\{category\\}", "");
-					nxml = nxml.replaceAll("\\$\\{desc\\}", "");
-					nxml = nxml.replaceAll("\\$\\{rec\\}", "");
-					nxml = nxml.replaceAll("\\$\\{details\\}", "");
-					nxml = nxml.replaceAll("\\$\\{status\\}", "");
-					nxml = nxml.replaceAll("\\$\\{count\\}", "1");
-
-					nxml = nxml.replaceAll("\\$\\{loop\\}", "");
-					nxml = nxml.replaceAll("\\$\\{loop\\-[0-9]+\\}", "");
-					nxml = nxml.replaceAll("\\$\\{cf.*\\}", "");
-
-					Tr newrow = (Tr) XmlUtils.unmarshalString(nxml);
-					// update colors
-					for (String match : colorMap.keySet())
-						changeColorOfCell(newrow, match, colorMap.get(match));
-					for (String match : cellMap.keySet())
-						changeColorOfCell(newrow, match, cellMap.get(match));
-					for (String match : colorMap.keySet())
-						changeColorOfText(newrow, match, colorMap.get(match));
-					((Tbl) table).getContent().add(newrow);
-				}
+			if (filteredVulns == null || filteredVulns.size() == 0) {
+				ObjectFactory factory = Context.getWmlObjectFactory();
+				Tr newrow = factory.createTr();
+				Tc td = factory.createTc();
+				P p = factory.createP();
+				R r = factory.createR();
+				Text text = factory.createText();
+				text.setValue(noIssuesText);
+				r.getContent().add(text);
+				p.getContent().add(r);
+				td.getContent().add(p);
+				newrow.getContent().add(td);
+				((Tbl) table).getContent().add(newrow);
 			}
 			// delete all the variable tables
 			int tmpIndex = -1;
@@ -392,10 +446,16 @@ public class DocxUtils {
 
 
 		// Convert all tables and match and replace values
-		checkTables("vulnTable", customCSS);
+		checkTables("vulnTable", "Default", customCSS);
+		setFindings("Default", customCSS);
+		if(ReportFeatures.allowSections()) {
+			for(String section : this.reportSections) {
+				checkTables("vulnTable", section, customCSS);
+				setFindings(section, customCSS);
+			}
+		}
 
 		// look for findings areass {fiBegin/fiEnd}
-		setFindings(customCSS);
 		HashMap<String, List<Object>> map = new HashMap();
 
 		map.put("${summary1}",
@@ -486,7 +546,6 @@ public class DocxUtils {
 
 		formatter = new SimpleDateFormat("MM/dd/yyyy");
 
-		int[] results = getVulnCount();
 		String assessors_nl = "";
 		String assessors_comma = "";
 		String assessors_bullets = "<ul>";
@@ -498,7 +557,7 @@ public class DocxUtils {
 			isfirst = false;
 		}
 		assessors_bullets += "</ul>";
-		HashMap<String, String> map = new HashMap();
+		HashMap<String, String> map = new HashMap<>();
 		map.put(getKey("asmtname"), this.assessment.getName());
 		map.put(getKey("asmtid"), "" + this.assessment.getId());
 		map.put(getKey("asmtappid"), "" + this.assessment.getAppId());
@@ -534,11 +593,12 @@ public class DocxUtils {
 		replacementText(map);
 
 		// replace with HTML content
-		Map<String, List<Object>> map2 = new HashMap();
+		Map<String, List<Object>> map2 = new HashMap<>();
 		map2.put("${asmtAssessors_Lines}", wrapHTML(assessors_nl, customCSS, ""));
 		map2.put("${asmtAssessors_Bullets}", wrapHTML(assessors_bullets, customCSS, ""));
 		map2.put("${asmtAssessors_Comma}", wrapHTML(assessors_comma, customCSS, ""));
 		replaceHTML(mlp.getMainDocumentPart(), map2);
+		replaceHeaderAndFooter(map);
 
 	}
 
@@ -782,17 +842,30 @@ public class DocxUtils {
 
 	}
 
-	private void setFindings(String customCSS)
+	private void setFindings(String section, String customCSS)
 			throws JAXBException, Docx4JException {
-		int begin = getIndex(mlp.getMainDocumentPart(), "${fiBegin}");
-		int end = getIndex(mlp.getMainDocumentPart(), "${fiEnd}");
+		int begin = -1;
+		int end = -1;
+		
+		if(Strings.isNullOrEmpty(section)) {
+			begin = getIndex(mlp.getMainDocumentPart(), "${fiBegin}");
+			end = getIndex(mlp.getMainDocumentPart(), "${fiEnd}");
+		}else if(section != null && section.equals("Default")) {
+			begin = getIndex(mlp.getMainDocumentPart(), "${fiBegin}");
+			end = getIndex(mlp.getMainDocumentPart(), "${fiEnd}");
+		}else if(section != null) {
+			begin = getIndex(mlp.getMainDocumentPart(), "${fiBegin "+ section +"}");
+			end = getIndex(mlp.getMainDocumentPart(), "${fiEnd " + section +"}");
+		}
+		
 		if (begin == -1)
 			return;
 		if (end == -1)
 			return;
 
-		HashMap<String, String> colorMap = new HashMap();
-		HashMap<String, String> cellMap = new HashMap();
+		HashMap<String, String> colorMap = new HashMap<>();
+		HashMap<String, String> cellMap = new HashMap<>();
+		String noIssuesText= "";
 
 		// Get relevent parts of the document and put them into a
 		// temporary array.
@@ -822,6 +895,12 @@ public class DocxUtils {
 
 				}
 			}
+			noIssuesText = getMatchingText(paragraphs, "${noIssuesText");
+			if(noIssuesText != null) {
+				noIssuesText = noIssuesText.replace("${noIssuesText ", "").replace("}", "");
+			}else {
+				noIssuesText = "No issues detected for this section.";
+			}
 		}
 		// Remove the elements from the doc. These will be replaced with
 		// out temp array when its updated later on
@@ -830,15 +909,30 @@ public class DocxUtils {
 		}
 		SimpleDateFormat formatter;
 		formatter = new SimpleDateFormat("MM/dd/yyyy");
+		
+		List<Vulnerability> filteredVulns = this.getFilteredVulns(section);
+		
+		//No issues found in this section
+		if(filteredVulns == null || filteredVulns.size()==0) {
+				ObjectFactory factory = Context.getWmlObjectFactory();
+				P p = factory.createP();
+				R r = factory.createR();
+				Text text = factory.createText();
+				text.setValue(noIssuesText);
+				r.getContent().add(text);
+				p.getContent().add(r);
+			mlp.getMainDocumentPart().getContent().add(begin++, p);
+			return;
+		}
 
-		for (Vulnerability v : this.vulns) {
+		for (Vulnerability v : filteredVulns) {
 			for (Object obj : findingTemplate) {
 
 				String xml = XmlUtils.marshaltoString(obj, false, false);
 				String nxml = xml.replaceAll("\\$\\{vulnName\\}", v.getName());
 				nxml = nxml.replaceAll("\\$\\{severity\\}", v.getOverallStr());
 				nxml = nxml.replaceAll("\\$\\{impact\\}", v.getImpactStr());
-				nxml = nxml.replaceAll("\\$\\{cvssString\\}", v.getCvssScore());
+				nxml = nxml.replaceAll("\\$\\{cvssString\\}", v.getCvssString());
 				nxml = nxml.replaceAll("\\$\\{cvssScore\\}", v.getCvssScore());
 				nxml = nxml.replaceAll("\\$\\{tracking\\}", v.getTracking());
 				if(v.getOpened() != null) {
@@ -895,7 +989,7 @@ public class DocxUtils {
 
 		// Add the vulnerability description and recommandations.
 		// update custom fields inside the html before inserting into the document.
-		for (Vulnerability v : vulns) {
+		for (Vulnerability v : filteredVulns) {
 			HashMap<String, List<Object>> map2 = new HashMap();
 
 			if (v.getDescription() == null && v.getDefaultVuln() != null) {
@@ -1112,8 +1206,74 @@ public class DocxUtils {
 		return paragraphs;
 		
 	}
+	
+	private void replaceHeaderAndFooter(final Map<String,String> replacements) {
+			List<Object> list = new ArrayList<>();
+			try {
+				
+				if(this.mlp.getHeaderFooterPolicy().getDefaultHeader() != null) {
+					HeaderPart fp = this.mlp.getHeaderFooterPolicy().getDefaultHeader();
+					String xml = XmlUtils.marshaltoString( fp.getContents() , false, true);
+					for( String key : replacements.keySet()) {
+						xml = xml.replace("${"+key+"}", replacements.get(key));
+					}
+					this.mlp.getHeaderFooterPolicy().getDefaultHeader().setContents( (Hdr) XmlUtils.unmarshalString(xml));
+				}
+				if(this.mlp.getHeaderFooterPolicy().getFirstHeader() != null) {
+					HeaderPart fp = this.mlp.getHeaderFooterPolicy().getFirstHeader();
+					String xml = XmlUtils.marshaltoString( fp.getContents() , false, true);
+					for( String key : replacements.keySet()) {
+						xml = xml.replace("${"+key+"}", replacements.get(key));
+					}
+					this.mlp.getHeaderFooterPolicy().getFirstHeader().setContents( (Hdr) XmlUtils.unmarshalString(xml));
+				}
+				if(this.mlp.getHeaderFooterPolicy().getEvenHeader() != null) {
+					HeaderPart fp = this.mlp.getHeaderFooterPolicy().getEvenHeader();
+					String xml = XmlUtils.marshaltoString( fp.getContents() , false, true);
+					for( String key : replacements.keySet()) {
+						xml = xml.replace("${"+key+"}", replacements.get(key));
+					}
+					this.mlp.getHeaderFooterPolicy().getEvenHeader().setContents( (Hdr) XmlUtils.unmarshalString(xml));
+					
+				}
+				if(this.mlp.getHeaderFooterPolicy().getDefaultFooter() != null) {
+					FooterPart fp = this.mlp.getHeaderFooterPolicy().getDefaultFooter();
+					String xml = XmlUtils.marshaltoString( fp.getContents() , false, true);
+					for( String key : replacements.keySet()) {
+						xml = xml.replace("${"+key+"}", replacements.get(key));
+					}
+					this.mlp.getHeaderFooterPolicy().getDefaultFooter().setContents( (Ftr) XmlUtils.unmarshalString(xml));
+				}
+				if(this.mlp.getHeaderFooterPolicy().getFirstFooter() != null) {
+					FooterPart fp = this.mlp.getHeaderFooterPolicy().getFirstFooter();
+					String xml = XmlUtils.marshaltoString( fp.getContents() , false, true);
+					for( String key : replacements.keySet()) {
+						xml = xml.replace("${"+key+"}", replacements.get(key));
+					}
+					this.mlp.getHeaderFooterPolicy().getFirstFooter().setContents( (Ftr) XmlUtils.unmarshalString(xml));
+				}
+				if(this.mlp.getHeaderFooterPolicy().getEvenFooter() != null) {
+					FooterPart fp = this.mlp.getHeaderFooterPolicy().getEvenFooter();
+					String xml = XmlUtils.marshaltoString( fp.getContents() , false, true);
+					for( String key : replacements.keySet()) {
+						xml = xml.replace("${"+key+"}", replacements.get(key));
+					}
+					this.mlp.getHeaderFooterPolicy().getEvenFooter().setContents( (Ftr) XmlUtils.unmarshalString(xml));
+					
+				}
+				
+			} catch (XPathBinderAssociationIsPartialException | JAXBException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (Docx4JException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 
 	private void replaceHTML(final Object mainPart, final Map<String, List<Object>> replacements, boolean once) {
+		if(mainPart == null) return;
 		Preconditions.checkNotNull(mainPart, "the supplied main doc part may not be null!");
 		Preconditions.checkNotNull(replacements, "replacements may not be null!");
 		

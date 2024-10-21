@@ -27,6 +27,7 @@ public class FinalReport{
 	private String base64EncodedPdf;
 	private Date gentime;
 	private Boolean retest;
+	private String fileType;
 	
 	public Long getId() {
 		return id;
@@ -57,6 +58,12 @@ public class FinalReport{
 	}
 	public void setRetest(Boolean retest) {
 		this.retest = retest;
+	}
+	public String getFileType() {
+		return this.fileType == null || this.fileType.equals("")? "docx": this.fileType;
+	}
+	public void setFileType(String fileType) {
+		this.fileType = fileType;
 	}
 	
 	

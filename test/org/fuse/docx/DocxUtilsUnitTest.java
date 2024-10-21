@@ -25,8 +25,8 @@ import com.fuse.dao.AssessmentType;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
-import com.fuse.docx.DocxUtils;
-import com.fuse.utils.GenerateReport;
+import com.fuse.reporting.DocxUtils;
+import com.fuse.reporting.GenerateReport;
 
 public class DocxUtilsUnitTest {
 
