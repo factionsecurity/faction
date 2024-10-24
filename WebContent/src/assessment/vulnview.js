@@ -583,7 +583,7 @@ class VulnerablilityView {
 			if (activeVulns.indexOf(vuln.id) == -1) {
 				let rowData = `<tr data-vulnid="${vuln.id}"><td class="sev${vuln.severity}">`
 				rowData += `<input type="checkbox" id="ckl${vuln.id}"/></td><td data-sort="${vuln.severity}">`
-				rowData += `<span class="vulnName">${entityEncode(vuln.title)}</span><br>`
+				rowData += `<span class="vulnName">${entityEncode(this.b64DecodeUnicode(vuln.title))}</span><br>`
 				rowData += `<span class="category">${entityEncode(vuln.category)}</span><br>`
 				rowData += `<span class="severity">${entityEncode(vuln.severityName)}</span>`
 				rowData += `</td>`
@@ -602,8 +602,8 @@ class VulnerablilityView {
 					let severity = $(row[0]).find(".severity")[0].innerHTML;
 					//Titles or severity was changed by another user. 
 					// update the table an resort it
-					if (vulnName != vuln.title) {
-						$(row[0]).find(".vulnName")[0].innerHTML = vuln.title;
+					if (vulnName != this.b64DecodeUnicode(vuln.title)) {
+						$(row[0]).find(".vulnName")[0].innerHTML = this.b64DecodeUnicode(vuln.title);
 					}
 					if (category != vuln.category) {
 						$(row[0]).find(".category")[0].innerHTML = vuln.category;
@@ -1116,7 +1116,7 @@ class VulnerablilityView {
 		let _this = this;
 		$("#vulnForm").removeClass("disabled");
 		$.get('AddVulnerability?vulnid=' + id + '&action=get').done(function(data) {
-			$("#title").val($("<div/>").html(data.name).text());
+			$("#title").val($("<div/>").html(_this.b64DecodeUnicode(data.name)).text());
 			$("#cvssString").val($("<div/>").html(data.cvssString).text())
 			let vector = _this.cvss.updateCVSSString(data.cvssString);
 			_this.cvss.updateCVSSScore(vector);

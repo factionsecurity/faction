@@ -31,7 +31,7 @@
 "current": [
 	<s:iterator value="currentVulns" status="stats">
 	{ "id": "<s:property value="id"/>", 
-	  "title" : "<s:property value="name" escapeJavaScript="true"/>",
+	  "title" : "<s:property value='getSafeJSON(name)'/>",
 	  "category" : "<s:property value="getCategory().getName()" escapeJavaScript="true"/>",
 	  "severityName" : "<s:property value="overallStr" escapeJavaScript="true"/>",
 	  "severity" : <s:if test="assessment.type.cvss31 || assessment.type.cvss40">"<s:property value="cvssScore" escapeJavaScript="true"/>" </s:if><s:else><s:property value="overall" escapeJavaScript="true"/></s:else>

@@ -464,4 +464,8 @@ public class UserEditLocks extends FSActionSupport {
 	public List<Note> getLockedNotes() {
 		return this.lockedNotes;
 	}
+	
+	public String getSafeJSON(String vuln) {
+		return Base64.getEncoder().encodeToString(vuln.getBytes());
+	}
 }

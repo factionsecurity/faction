@@ -2,7 +2,7 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@ page language="java" contentType="application/json; charset=UTF-8"
     pageEncoding="UTF-8"%>
-{ "name" : "<s:property value="current.name" escapeJavaScript="true"/>",
+{ "name" : "<s:property value="getSafeJSON(current.name)"/>",
 "description" : "<s:property value="description"/>",
 "recommendation" : "<s:property value="recommendation"/>",
 "details" : "<s:property value="details"/>",

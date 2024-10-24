@@ -14,9 +14,6 @@ services:
       context: .
       dockerfile: Dockerfile
       target: base_app
-    volumes:
-        - "~/.faction/templates:/opt/faction/templates"
-        - "~/.faction/modules:/opt/faction/modules"
     environment:
         - 'FACTION_REPORT_STORAGE=local'
         - 'FACTION_MONGO_HOST=faction-mongo'
