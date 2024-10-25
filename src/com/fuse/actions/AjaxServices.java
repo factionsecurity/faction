@@ -21,6 +21,7 @@ import com.fuse.dao.Campaign;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.PeerReview;
+import com.fuse.dao.Permissions;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
@@ -63,22 +64,26 @@ public class AjaxServices extends FSActionSupport {
 						.getResultList();
 				List<PeerReview> prs = (List<PeerReview>) em.createQuery("from PeerReview where completed = :date")
 						.setParameter("date", new Date(0)).getResultList();
-
-				// remove PR's of which i am a user unless settings allows it
-				if(!(settings != null && settings.getSelfPeerReview() != null && settings.getSelfPeerReview())) {
-				prs = prs.stream().filter(
-						pr -> !pr.getAssessment().getAssessor().stream().anyMatch(u -> u.getId() == user.getId()))
-						.collect(Collectors.toList());
+				int prcount = 0;
+				if(user.getPermissions().getAccessLevel() != Permissions.AccessLevelUserOnly) {
+					// remove PR's of which i am a user unless settings allows it
+					if(!(settings != null && settings.getSelfPeerReview() != null && settings.getSelfPeerReview())) {
+					prs = prs.stream().filter(
+							pr -> !pr.getAssessment().getAssessor().stream().anyMatch(u -> u.getId() == user.getId()))
+							.collect(Collectors.toList());
+					}
+					// remove PRs from different teams
+					prs = prs.stream()
+							.filter(pr -> pr.getAssessment().getAssessor().stream()
+									.anyMatch(u -> u.getTeam().getId().longValue() == user.getTeam().getId().longValue()))
+							.collect(Collectors.toList());
+					prcount = prs.size();
 				}
-				// remove PRs from different teams
-				prs = prs.stream()
-						.filter(pr -> pr.getAssessment().getAssessor().stream()
-								.anyMatch(u -> u.getTeam().getId().longValue() == user.getTeam().getId().longValue()))
-						.collect(Collectors.toList());
+
 
 				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 				String json = "{ 'count' : " + assessments.size() + ",\n";
-				json += "'prcount' : " + prs.size() + ",\n";
+				json += "'prcount' : " + prcount + ",\n";
 				json += "'assessments' : [";
 				boolean isFirst = true;
 				for (Assessment a : assessments) {

@@ -87,7 +87,7 @@ public class AssessmentQueries {
 	public static List<Assessment>getAssessmentsByCampaign(EntityManager em, User user, Long CampId, int assessmentType){
 		
 		String query = "db.Assessment.find({ \"$query\" : {";
-		if(!user.getPermissions().isManager() || user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
+		if(!user.getPermissions().isManager() && user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
 			query += "\"assessor\" : "+user.getId() + "," ;
 		}
 		
@@ -318,14 +318,13 @@ public class AssessmentQueries {
 	
 	
 	private static boolean hasTeam(User user, Assessment asmt) {
-		boolean hasTeam = false;
 		if(asmt == null || asmt.getAssessor().size() == 0)
 			return false;
-		for(User u : asmt.getAssessor()) {
-			if(u.getTeam().getId().longValue() == user.getTeam().getId().longValue())
-				hasTeam = true;
+		if(asmt.getAssessor() == null || asmt.getAssessor().size() == 0) {
+			return false;
 		}
-		return hasTeam;
+		Long asmtTeam = asmt.getAssessor().get(0).getTeam().getId();
+		return user.getTeam().getId().equals(asmtTeam);
 	}
 
 }
