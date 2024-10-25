@@ -48,7 +48,7 @@ public class getReport extends HttpServlet {
 		User user = (User)request.getSession().getAttribute("user");
 		
 		if(user == null || !(user.getPermissions().isAssessor() || user.getPermissions().isManager() || user.getPermissions().isAdmin())){
-			//return;
+			return;
 		}
 		String test = request.getParameter("test");
 		String team = request.getParameter("team");
@@ -66,51 +66,66 @@ public class getReport extends HttpServlet {
 			Assessment assessment= null;
 			FinalReport finalreport = null;
 			if(request.getParameter("id") != null){
-				Long id = Long.parseLong(request.getParameter("id"));
-				assessment = (Assessment) em.createQuery("from Assessment where id = :id").setParameter("id",id).getResultList().stream().findFirst().orElse(null);
-				boolean found=false;
-				for(User u : assessment.getAssessor()){
-					if(u.getId() == user.getId()){
-						found=true;
-						break;
+				try {
+					Long id = Long.parseLong(request.getParameter("id"));
+					assessment = (Assessment) em.createQuery("from Assessment where id = :id").setParameter("id",id).getResultList().stream().findFirst().orElse(null);
+					
+					if(assessment == null) {
+						return;
 					}
-				}
-				if(!found){ // check if authorized via verifications
-					String mongo ="{ 'assessment_id' : " + assessment.getId() + "}";
-					mongo = mongo.replace("'", "\"");
-					Verification ver = (Verification) em.createNativeQuery(mongo, Verification.class).getResultList()
-						.stream().findFirst().orElse(null);
-					if(ver != null && ver.getAssessor().getId() == user.getId()){
-						found = true;
-					}
-					
-				}
-				//FIXME: this will not work in all situations
-				if(!found && user.getPermissions().getAccessLevel() != Permissions.AccessLevelAllData)
-					return; //not authorized
-				if(request.getParameter("retest") != null){
-
-					
-					// All reports must be placed in a queue to prevent running the server out of memory
-					ReportGenThread reportThread = new ReportGenThread("", assessment, assessment.getAssessor(), true);
-					TaskQueueExecutor.getInstance().execute(reportThread);
-					
-					//wait for it to complete
-					int breakit = 0;
-					while(!reportThread.complete && breakit < 2*20 ){ // wait 5 seconds
-						try {
-							Thread.sleep(500);
-						} catch (InterruptedException e) {
-							// TODO Auto-generated catch block
-							e.printStackTrace();
+					boolean found=false;
+					for(User u : assessment.getAssessor()){
+						if(u.getId() == user.getId()){
+							found=true;
+							break;
 						}
-						breakit++;
 					}
-					b64Rpt = reportThread.getReport();
-					
-					
-				}else{
-					b64Rpt = assessment.getFinalReport().getBase64EncodedPdf();
+					if(!found){ // check if authorized via verifications
+						String mongo ="{ 'assessment_id' : " + assessment.getId() + "}";
+						mongo = mongo.replace("'", "\"");
+						Verification ver = (Verification) em.createNativeQuery(mongo, Verification.class).getResultList()
+							.stream().findFirst().orElse(null);
+						if(ver != null && ver.getAssessor().getId() == user.getId()){
+							found = true;
+						}
+						
+					}
+					if(!found && 
+							!(user.getPermissions().getAccessLevel() == Permissions.AccessLevelAllData || 
+								(user.getPermissions().getAccessLevel() == Permissions.AccessLevelTeamOnly 
+									&& user.getTeam().getId().equals(assessment.getAssessor().get(0).getTeam().getId())
+								)
+							)
+					){
+						return; //not authorized
+					}
+					if(request.getParameter("retest") != null){
+
+						
+						// All reports must be placed in a queue to prevent running the server out of memory
+						ReportGenThread reportThread = new ReportGenThread("", assessment, assessment.getAssessor(), true);
+						TaskQueueExecutor.getInstance().execute(reportThread);
+						
+						//wait for it to complete
+						int breakit = 0;
+						while(!reportThread.complete && breakit < 2*20 ){ // wait 5 seconds
+							try {
+								Thread.sleep(500);
+							} catch (InterruptedException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+							breakit++;
+						}
+						b64Rpt = reportThread.getReport();
+						
+						
+					}else{
+						b64Rpt = assessment.getFinalReport().getBase64EncodedPdf();
+					}
+				}catch(Exception ex) {
+					ex.printStackTrace();
+					return;
 				}
 			}else if(request.getParameter("guid") != null){
 				
