@@ -256,7 +256,7 @@
 											type="password" placeholder="Sends Registration Email if Blank" autocomplete="new-password">
 									</div>
 									<div class="form-group">
-										<label>Firstame: *</label> <input type="search"
+										<label>First Name: *</label> <input type="search"
 											class="form-control" id="fname" placeholder="First">
 									</div>
 									<div class="form-group">
