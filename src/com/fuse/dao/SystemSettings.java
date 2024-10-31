@@ -537,7 +537,7 @@ public class SystemSettings {
         config.setPreferredJwsAlgorithm(JWSAlgorithm.RS256);
         config.setMaxAge(0);
         config.addCustomParam("display", "popup");
-        config.addCustomParam("prompt", "select_account");
+        //config.addCustomParam("prompt", "select_account");
 				
         
         return config;
