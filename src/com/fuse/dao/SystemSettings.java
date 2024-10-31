@@ -535,7 +535,7 @@ public class SystemSettings {
 		config.setDiscoveryURI(this.oauthDiscoveryURI==null?"":this.oauthDiscoveryURI);
         config.setUseNonce(true);
         config.setPreferredJwsAlgorithm(JWSAlgorithm.RS256);
-        config.setMaxAge(0);
+        config.setMaxAge(10);
         config.addCustomParam("display", "popup");
         //config.addCustomParam("prompt", "select_account");
 				
