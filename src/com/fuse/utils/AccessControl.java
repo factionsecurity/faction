@@ -73,13 +73,15 @@ public class AccessControl {
 		if( profiles != null && profiles.size() > 0) {
 			for(UserProfile profile : profiles) {
 				String email = (String) profile.getAttribute("email");
+				
 				if(email != null) {
-					User tmp = (User) em.createQuery("from User where email = :email")
-							.setParameter("email", email)
-							.getResultList()
-							.stream()
-							.findFirst()
-							.orElse(null);
+					String query = String.format("{'email': {$regex: '^%s$', $options: 'i'}}",FSUtils.sanitizeMongo(email));
+					List<User> users = em.createNativeQuery(query, User.class).getResultList();
+					User tmp = null;
+					if(users.size() == 1) {
+						tmp = users.get(0);
+					}
+					
 					if(tmp != null) {
 						tmp.setLastLogin(tmp.getLoginTime());
 						tmp.setLoginTime(new Date());
