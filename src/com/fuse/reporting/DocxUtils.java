@@ -464,7 +464,7 @@ public class DocxUtils {
 				this.wrapHTML(this.assessment.getRiskAnalysis() == null ? "" : this.assessment.getRiskAnalysis(), customCSS, "summary2"));
 		replaceHTML(mlp.getMainDocumentPart(), map, false);
 		replaceAssessment(customCSS);
-		updateDocWithExtensions();
+		updateDocWithExtensions(customCSS);
 
 		return mlp;
 
@@ -1332,7 +1332,7 @@ public class DocxUtils {
 		}
 		
 	}
-	private void updateDocWithExtensions() {
+	private void updateDocWithExtensions(String customCSS) {
 		
 		MainDocumentPart mainPart = mlp.getMainDocumentPart();
 		// look for all P elements in the specified object
@@ -1353,13 +1353,12 @@ public class DocxUtils {
 			if (listToModify != null) {
 				final int index = listToModify.indexOf(paragraph);
 				Preconditions.checkState(index > -1, "could not located the paragraph in the specified list!");
-
 				if(this.reportExtension.isExtended()) {
 					String html = this.reportExtension.updateReport(this.assessment, identifier);
 					if(html != null && !html.equals(identifier)) {
 						listToModify.remove(index);
 						try {
-							listToModify.addAll(index,this.wrapHTML(html, "", ""));
+							listToModify.addAll(index,this.wrapHTML(html,customCSS, ""));
 						}catch(Exception ex) {
 							ex.printStackTrace();
 						}

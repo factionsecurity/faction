@@ -187,6 +187,32 @@ public class Extensions {
 		}
 		return clonedFields;
 	}
+	private List<com.faction.elements.CustomField> cloneCustomFields(Vulnerability daoVulnerability) {
+		List<CustomField> daoFields = daoVulnerability.getCustomFields();
+		List<com.faction.elements.CustomField> clonedFields = new ArrayList<>();
+		if (daoFields != null) {
+			for (CustomField field : daoFields) {
+				com.faction.elements.CustomField tmpField = new com.faction.elements.CustomField();
+				com.faction.elements.CustomType tmpType = new com.faction.elements.CustomType();
+				tmpType.setKey(field.getType().getKey());
+				tmpType.setVariable(field.getType().getVariable());
+				tmpField.setType(tmpType);
+				tmpField.setValue(field.getValue());
+				clonedFields.add(tmpField);
+
+			}
+			if (daoFields != null && daoFields.size() > 0) {
+				for (CustomField originalField : daoFields) {
+					for (com.faction.elements.CustomField clonedField : clonedFields) {
+						if (clonedField.getType().getId() == originalField.getType().getId()) {
+							clonedField.setValue(originalField.getValue());
+						}
+					}
+				}
+			}
+		}
+		return clonedFields;
+	}
 	@SuppressWarnings("unchecked")
 	public String updateReport(Assessment localAssessment, String reportText) {
 		if (!this.isExtended())
@@ -201,6 +227,7 @@ public class Extensions {
 			for (Vulnerability v : vulnerabilities) {
 				com.faction.elements.Vulnerability tVuln = new com.faction.elements.Vulnerability();
 				copy(v, tVuln);
+				tVuln.setCustomFields(this.cloneCustomFields(v));
 				tmpVulns.add(tVuln);
 			}
 			// Clone Engagement
