@@ -40,14 +40,13 @@ background-color: white;
 				</div>
 				<s:if test="!(hideit)">
 					<div class="row">
-						<div class="col-md-1"></div>
-						<div class="col-md-11" style="padding-top: 8px">
+						<div class="col-md-11" style="padding-top: 8px; margin-left:10px">
 							<span id="createNote"
 								class="vulnControl vulnControl-add createNote" for="notebook"
-								title='SCreate a New Note'> <i class="fa fa-save"></i>
+								title='Create a New Note'> <i class="fa fa-add"></i>
 							</span> 
 							</span> <span id="deleteNote" class="vulnControl vulnControl-delete deleteNote"
-								title='Delete Templates' for="notebook"> <i
+								title='Delete Note' for="notebook"> <i
 								class="fa fa-trash"></i>
 							</span>
 						</div>

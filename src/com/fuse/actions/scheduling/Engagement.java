@@ -86,7 +86,7 @@ public class Engagement  extends FSActionSupport{
 	private Boolean randId = true;
 	private List<String> ratings;
 	private String ratingName;
-	private String defaultStatus;
+	private String statusName;
 	private String defaultRating;
 	private String back;
 	
@@ -348,6 +348,22 @@ public class Engagement  extends FSActionSupport{
 				}else
 					first = false;
 				mongoQuery += comma + " 'appId' : '" + this.appid + "' ";
+			}
+			if(statusName != null && !statusName.equals("")) {
+				if( !first ){
+					comma = ",";
+				}else
+					first = false;
+				if(statusName.equals("Open")) {
+					mongoQuery += comma + " 'completed' : { '$exists': false } ";
+					
+				}else if(statusName.equals("Completed")) {
+					mongoQuery += comma + " 'completed' : { '$exists': true } ";
+					
+				}
+				
+				
+				
 			}
 			mongoQuery += " } ";
 			//EntityManager em = HibHelper.getEM();
@@ -660,24 +676,13 @@ public class Engagement  extends FSActionSupport{
 		
 	}
 
-
-
-
-
 	public List<String> getRatings() {
 		return ratings;
 	}
 
-
-
-
 	public void setRatingName(String ratingName) {
 		this.ratingName = ratingName;
 	}
-
-
-
-
 
 	public String getDefaultRating() {
 		return defaultRating;
@@ -691,19 +696,8 @@ public class Engagement  extends FSActionSupport{
 		this.back = back;
 	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
-	
+	public void setStatusName(String statusName) {
+		this.statusName = statusName;
+	}
 
 }

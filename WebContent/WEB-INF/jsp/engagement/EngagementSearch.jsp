@@ -21,9 +21,8 @@
 	</bs:select>
 	<bs:select name="Status:" colsize="2" id="statusSearch">
 	 		<option value="">&nbsp;</option>
-		 	<s:iterator value="status" var="stat">
-                      <option value="<s:property value="stat"/>"><s:property value="stat"/></option>
-            </s:iterator>
+	 		<option value="Open">Open</option>
+	 		<option value="Completed">Completed</option>
 	</bs:select>
 </bs:row>
 <br>

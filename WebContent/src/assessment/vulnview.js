@@ -340,7 +340,7 @@ class VulnerablilityView {
 							$(option).html(note.name);
 							$(`#notebook`).append(option).trigger("change");
 							$(option).on("click", async (event)=>{
-								await getNoteFromEvent(event)
+								await _this.getNoteFromEvent(event)
 							})
 						}
 						alertMessage(resp, "Note Created.");
@@ -581,7 +581,7 @@ class VulnerablilityView {
 		for (let vuln of data.current) {
 			//vuln was added by another user so add it to the table
 			if (activeVulns.indexOf(vuln.id) == -1) {
-				let rowData = `<tr data-vulnid="${vuln.id}"><td class="sev${vuln.severity}">`
+				let rowData = `<tr data-vulnid="${vuln.id}"><td class="sev${entityEncode(vuln.severityName)}">`
 				rowData += `<input type="checkbox" id="ckl${vuln.id}"/></td><td data-sort="${vuln.severity}">`
 				rowData += `<span class="vulnName">${entityEncode(this.b64DecodeUnicode(vuln.title))}</span><br>`
 				rowData += `<span class="category">${entityEncode(vuln.category)}</span><br>`
@@ -941,7 +941,11 @@ class VulnerablilityView {
 					type: "green",
 					content: success,
 					columnClass: 'small',
-					autoClose: 'ok|100'
+					autoClose: 'ok|100',
+					backgroundDismiss: 'OK',
+					buttons: {
+						OK: ()=>{}
+					}
 				}
 			);
 		else
@@ -951,7 +955,11 @@ class VulnerablilityView {
 					type: "red",
 					content: resp.message,
 					columnClass: 'small',
-					autoClose: 'ok|100'
+					autoClose: 'ok|100',
+					backgroundDismiss: 'OK',
+					buttons: {
+						OK: ()=>{}
+					}
 				}
 			);
 
@@ -1219,6 +1227,9 @@ $(function() {
 	$("a").click(evt => {
 		if (evt.target.href.indexOf("VulnView") != -1) {
 			location.href = "#VulnView"
+			setTimeout(function(){
+				global.vulnView.vulntable.columns.adjust();
+			}, 500)
 		} else if (evt.target.href.indexOf("NoteView") != -1) {
 			location.href = "#NoteView"
 		}

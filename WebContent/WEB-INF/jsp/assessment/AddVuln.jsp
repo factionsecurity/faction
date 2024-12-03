@@ -462,7 +462,7 @@ td:first-child {
 			<div class="box-body">
 				<div class="moveDown"></div>
 				<table id="vulntable"
-					class="table table-striped table-hover dataTable">
+					class="table table-striped table-hover dataTable" style="width:100%">
 					<thead class="theader">
 						<tr>
 							<th></th>
