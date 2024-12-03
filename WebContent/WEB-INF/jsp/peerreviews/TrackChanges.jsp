@@ -225,7 +225,7 @@ span.Informational {
 							<div class='box-body'>
 								<bs:row>
 									<s:if test="asmt.type.cvss31 || asmt.type.cvss40">
-									<bs:mco colsize="1">
+									<bs:mco colsize="1" style="width: 170px">
 										<div class="scoreBody" style="margin-top:5px">
 											<h3 class="scoreBox <s:property value="overallStr"/>" id="score"> <s:property value="cvssScore"/></h3>
 											<span class="severityBox <s:property value="overallStr"/>" id="severity"><s:property value="overallStr"/></span>
