@@ -581,7 +581,7 @@ class VulnerablilityView {
 		for (let vuln of data.current) {
 			//vuln was added by another user so add it to the table
 			if (activeVulns.indexOf(vuln.id) == -1) {
-				let rowData = `<tr data-vulnid="${vuln.id}"><td class="sev${vuln.severity}">`
+				let rowData = `<tr data-vulnid="${vuln.id}"><td class="sev${entityEncode(vuln.severityName)}">`
 				rowData += `<input type="checkbox" id="ckl${vuln.id}"/></td><td data-sort="${vuln.severity}">`
 				rowData += `<span class="vulnName">${entityEncode(this.b64DecodeUnicode(vuln.title))}</span><br>`
 				rowData += `<span class="category">${entityEncode(vuln.category)}</span><br>`
