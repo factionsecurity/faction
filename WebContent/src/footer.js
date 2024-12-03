@@ -54,6 +54,7 @@ global.alertMessage = function alertMessage(resp, success) {
 				content: success,
 				columnClass: 'small',
 				autoClose: 'OK|2000',
+				backgroundDismiss: 'OK',
 				buttons: {
 					OK: ()=>{}
 				}
@@ -68,6 +69,7 @@ global.alertMessage = function alertMessage(resp, success) {
 				content: resp.message,
 				columnClass: 'small',
 				autoClose: 'OK|2000',
+				backgroundDismiss: 'OK',
 				buttons: {
 					OK: ()=>{}
 				}
