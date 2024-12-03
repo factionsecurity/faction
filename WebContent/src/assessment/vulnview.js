@@ -941,7 +941,11 @@ class VulnerablilityView {
 					type: "green",
 					content: success,
 					columnClass: 'small',
-					autoClose: 'ok|100'
+					autoClose: 'ok|100',
+					backgroundDismiss: 'OK',
+					buttons: {
+						OK: ()=>{}
+					}
 				}
 			);
 		else
@@ -951,7 +955,11 @@ class VulnerablilityView {
 					type: "red",
 					content: resp.message,
 					columnClass: 'small',
-					autoClose: 'ok|100'
+					autoClose: 'ok|100',
+					backgroundDismiss: 'OK',
+					buttons: {
+						OK: ()=>{}
+					}
 				}
 			);
 
