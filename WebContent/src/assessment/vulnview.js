@@ -340,7 +340,7 @@ class VulnerablilityView {
 							$(option).html(note.name);
 							$(`#notebook`).append(option).trigger("change");
 							$(option).on("click", async (event)=>{
-								await getNoteFromEvent(event)
+								await _this.getNoteFromEvent(event)
 							})
 						}
 						alertMessage(resp, "Note Created.");
