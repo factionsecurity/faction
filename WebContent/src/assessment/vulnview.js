@@ -1227,6 +1227,9 @@ $(function() {
 	$("a").click(evt => {
 		if (evt.target.href.indexOf("VulnView") != -1) {
 			location.href = "#VulnView"
+			setTimeout(function(){
+				global.vulnView.vulntable.columns.adjust();
+			}, 500)
 		} else if (evt.target.href.indexOf("NoteView") != -1) {
 			location.href = "#NoteView"
 		}
