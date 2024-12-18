@@ -250,10 +250,10 @@
 							<option value="<s:property value='id'/>" title="<s:property value='user.fname'/> <s:property value='user.lname'/>"
 								global="<s:property value="global"/>"
 								<s:if test="global == true">
-								class='globalTemplate'>
+								class='globalTemplate'
 								</s:if><s:else>
-								class='userTemplate'>
-								</s:else>
+								class='userTemplate'
+								</s:else>>
 							<s:property value="title"/>
 							</option>
 						</s:iterator>
@@ -338,10 +338,10 @@
 							<option value="<s:property value='id'/>" title="<s:property value='user.fname'/> <s:property value='user.lname'/>"
 								global="<s:property value='global'/>"
 								<s:if test="global == true">
-								class='globalTemplate'>
+								class='globalTemplate'
 							</s:if><s:else>
-								class='userTemplate'>
-							</s:else>
+								class='userTemplate'
+							</s:else>>
 							<s:property value='title'/>
 							</option>
 						</s:iterator>

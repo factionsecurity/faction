@@ -409,6 +409,17 @@ public class TrackChanges extends FSActionSupport {
 				&& !pr.getAssessment().getAssessor().stream().anyMatch(usr -> usr.getId() == user.getId())) {
 			return ERROR;
 		}
+		
+		this.sections.add("Default");
+		if(ReportFeatures.allowSections()) {
+			
+			SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+					.findFirst().orElse(null);
+			
+			for(String section : ReportFeatures.getFeatures(ems.getFeatures())){
+				this.sections.add(section);
+			}
+		}
 
 		asmt = com.exportAssessment(em);
 		asmt.setAnswers(pr.getAssessment().getAnswers());
