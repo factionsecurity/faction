@@ -51,7 +51,7 @@ import com.opensymphony.xwork2.interceptor.annotations.Before;
 public class FSActionSupport extends ActionSupport implements SessionAware, ServletRequestAware, ServletResponseAware { 
 	
 
-	protected SessionMap<String,Object> JSESSION;  
+	protected SessionMap JSESSION;  
 	protected Map<String,String> COOKIES;
 	public HttpServletRequest request = ServletActionContext.getRequest();
 	public HttpServletResponse response = ServletActionContext.getResponse();
