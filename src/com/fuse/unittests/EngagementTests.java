@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.ArrayList;
 
-import org.apache.struts2.StrutsJUnit4TestCase;
+import org.apache.struts2.junit.StrutsTestCase;
 import org.junit.Test;
 
 import com.fuse.actions.Login;
@@ -14,7 +14,7 @@ import com.fuse.dao.Assessment;
 import com.fuse.dao.User;
 import com.opensymphony.xwork2.ActionProxy;
 
-public class EngagementTests extends StrutsJUnit4TestCase {
+public class EngagementTests extends StrutsTestCase {
 
 	public User login(String username, String password) throws Exception {
 

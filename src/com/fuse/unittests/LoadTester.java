@@ -3,14 +3,14 @@ package com.fuse.unittests;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.apache.struts2.StrutsJUnit4TestCase;
+import org.apache.struts2.junit.StrutsTestCase;
 import org.junit.Test;
 
 import com.fuse.actions.Login;
 import com.fuse.dao.User;
 import com.opensymphony.xwork2.ActionProxy;
 
-public class LoadTester extends StrutsJUnit4TestCase {
+public class LoadTester extends StrutsTestCase {
 
 	private static long camp1 = 8l;
 	private static int type1 = 4;

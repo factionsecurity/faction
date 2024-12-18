@@ -15,7 +15,7 @@ import java.util.UUID;
 
 import javax.persistence.EntityManager;
 
-import org.apache.struts2.StrutsJUnit4TestCase;
+import org.apache.struts2.junit.StrutsJUnit4TestCase;
 import org.junit.Test;
 
 import com.fuse.actions.Login;

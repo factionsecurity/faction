@@ -78,7 +78,7 @@ public class DocxUtilsUnitTest {
 			levels.add(level);
 		}
 
-		Assessment assessment = GenerateReport.createTestAssessment(team, type, levels);
+		Assessment assessment = GenerateReport.createTestAssessment(team, type, levels, new String [] {});
 		WordprocessingMLPackage mlp = WordprocessingMLPackage.load(initialFile);
 
 		DocxUtils genDoc = new DocxUtils(mlp, assessment);

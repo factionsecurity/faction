@@ -8,9 +8,7 @@ import java.util.Map;
 import javax.persistence.EntityManager;
 import javax.servlet.ServletException;
 
-import org.apache.struts2.StrutsJUnit4TestCase;
-import org.apache.struts2.StrutsSpringJUnit4TestCase;
-import org.apache.struts2.StrutsTestCase;
+import org.apache.struts2.junit.StrutsTestCase;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

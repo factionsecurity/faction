@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
-import org.apache.struts2.StrutsJUnit4TestCase;
+import org.apache.struts2.junit.StrutsTestCase;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
 import org.junit.Test;
@@ -14,7 +14,7 @@ import com.fuse.actions.Login;
 import com.fuse.dao.User;
 import com.opensymphony.xwork2.ActionProxy;
 
-public class TestAjax extends StrutsJUnit4TestCase {
+public class TestAjax extends StrutsTestCase {
 
 	public User login(String username, String password) {
 		try {

@@ -3,14 +3,14 @@ package com.fuse.unittests;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-import org.apache.struts2.StrutsJUnit4TestCase;
+import org.apache.struts2.junit.StrutsTestCase;
 import org.junit.Test;
 
 import com.fuse.actions.Login;
 import com.fuse.dao.User;
 import com.opensymphony.xwork2.ActionProxy;
 
-public class LoginTests extends StrutsJUnit4TestCase {
+public class LoginTests extends StrutsTestCase {
 
 	public User login(String username, String password) throws Exception {
 
