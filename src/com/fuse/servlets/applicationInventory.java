@@ -127,9 +127,9 @@ public class applicationInventory extends HttpServlet {
 				json.put("appname", a.getName());
 				json.put("type", a.getType().getId());
 				json.put("distro", a.getDistributionList());
-				json.put("remediationId", a.getRemediation().getId());
-				json.put("engId", a.getEngagement().getId());
-				json.put("remediationName", a.getRemediation().getFname() + " " + a.getRemediation().getLname());
+				json.put("remediationId", a.getRemediation() != null? a.getRemediation().getId() : null);
+				json.put("engId", a.getEngagement() != null? a.getEngagement().getId() : null);
+				json.put("remediationName", a.getRemediation() != null? a.getRemediation().getFname() + " " + a.getRemediation().getLname() :  "");
 				json.put("campName", a.getCampaign().getName());
 				json.put("cid", a.getCampaign().getId());
 				JSONArray fields = new JSONArray();

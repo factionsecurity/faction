@@ -98,7 +98,14 @@
 		 </bs:select>
 		 <bs:select name="Select Campaign: <b></b>" colsize="4" id="campName"  readOnly="${currentAssessment.isFinalized() }" >
 		 	<s:iterator value="campaigns">
-	            <option value="<s:property value="id"/>"><s:property value="name"/></option>
+		 		<s:if test="selected == true">
+	            	<option value="<s:property value="id"/>"><s:property value="name"/></option>
+	            </s:if>
+	        </s:iterator>
+		 	<s:iterator value="campaigns">
+		 		<s:if test="selected == null || selected == false">
+	            	<option value="<s:property value="id"/>"><s:property value="name"/></option>
+	            </s:if>
 	        </s:iterator>
 		 </bs:select>
 		

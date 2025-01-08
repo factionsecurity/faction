@@ -70,6 +70,7 @@ public class Options extends FSActionSupport {
 	private String riskName;
 	private Long riskId;
 	private Integer riskType;
+	private Boolean selected;
 
 	@Action(value = "Options")
 	public String execute() {
@@ -168,6 +169,10 @@ public class Options extends FSActionSupport {
 				this.message = "Campaign Name is Empty.";
 				return this.ERRORJSON;
 			}
+			if(this.selected == null) {
+				this.selected = false;
+			}
+			
 			Campaign CA = AssessmentQueries.getCampaignByName(em, this.name);
 
 			if (CA != null) {
@@ -179,6 +184,7 @@ public class Options extends FSActionSupport {
 			em.joinTransaction();
 			Campaign camp = new Campaign();
 			camp.setName(this.name.trim());
+			camp.setSelected(this.selected);
 			em.persist(camp);
 			AuditLog.audit(this, "Campaign " + this.name + " added", AuditLog.UserAction, false);
 			HibHelper.getInstance().commit();
@@ -500,6 +506,38 @@ public class Options extends FSActionSupport {
 		em.joinTransaction();
 		em.persist(c);
 		HibHelper.getInstance().commit();
+		return this.SUCCESSJSON;
+
+	}
+	@Action(value = "editSelectedCampaign")
+	public String editSelectedCampaign() {
+		if (!(this.isAcadmin() || this.isAcmanager() || this.isAcengagement())) {
+			return LOGIN;
+		}
+
+		if (!this.testToken(false))
+			return this.ERRORJSON;
+
+		
+		List<Campaign> camps = em.createQuery("from Campaign").getResultList();
+		if (camps == null)
+			return this.SUCCESSJSON;
+		
+		for(Campaign c : camps) {
+			if(c.getId().equals(this.getId())) {
+				c.setSelected(this.selected);
+				HibHelper.getInstance().preJoin();
+				em.joinTransaction();
+				em.persist(c);
+				HibHelper.getInstance().commit();
+			}else {
+				c.setSelected(false);
+				HibHelper.getInstance().preJoin();
+				em.joinTransaction();
+				em.persist(c);
+				HibHelper.getInstance().commit();
+			}
+		}
 		return this.SUCCESSJSON;
 
 	}
@@ -947,6 +985,10 @@ public class Options extends FSActionSupport {
 	
 	public void setRiskType(Integer riskType) {
 		this.riskType = riskType;
+	}
+	
+	public void setSelected(Boolean selected) {
+		this.selected = selected;
 	}
 	
 

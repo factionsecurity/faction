@@ -142,15 +142,17 @@ import '../scripts/jquery.autocomplete.min';
 						`<div class="col-md-12">
 							<div class="row">
 								<div class="form-group">
-									<label title="Enter a Campaign Name">Campaign Name</label><input type="text" placeholder="Campaign Name" class="form-control pull-right" id="campaignName" value="">
+									<label title="Enter a Campaign Name">Campaign Name</label><input type="text" placeholder="Campaign Name" class="form-control pull-right" id="campaignName" value=""/>
 								</div>
 							</div>
 						</div>`,
 					buttons: {
 						"Add" : function(){
 							let name = $("#campaignName").val();
+							let selected = $("#campaignSelected").val();
 							let data="action=addCampaign";
 							data+="&name=" + name;
+							data+="&selected=false";
 							data+="&_token=" + _token;
 							$.post("Options",data).done(function(resp){
 								alertRedirect(resp);
@@ -313,6 +315,14 @@ import '../scripts/jquery.autocomplete.min';
 		
 
 	};
+	global.editSelectedCampaign = function editSelectedCampaign(el, typeId){
+		let data="id=" + typeId;
+		data+="&selected=" + $(el).is(":checked");
+		data+="&_token=" + _token;
+		$.post("editSelectedCampaign",data).done(function(resp){
+			alertRedirect(resp);
+		});
+	}
 	global.editCampaign = function editCampaign(el, typeId){
 		var campName = $($($($(el).parent()).parent()).find("td")[0]).text();
 		

@@ -17,7 +17,6 @@
 	     <interceptor name="accessControlInterceptor" class="com.fuse.utils.AccessControlInterceptor"/>
 	     <interceptor-stack name="defaultSecurityStack">
 	         <interceptor-ref name="defaultStack">
-	         	<param name="fileUpload.allowedExtensions">msg,jpg,gif,png,pdf,doc,xls,xlsx,docx,txt,csv,xml,bmp,jpeg,zip,rar,tar,gzip,tar.gz,jar</param>
 	         </interceptor-ref>
 	         <interceptor-ref name="accessControlInterceptor"/>
 	         <interceptor-ref name="cachingHeadersInterceptor"/>
