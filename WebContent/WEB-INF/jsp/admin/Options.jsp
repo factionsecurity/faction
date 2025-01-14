@@ -61,10 +61,11 @@
 					<br>
 					<bs:row>
 						<bs:mco colsize="12">
-							<bs:datatable columns="Name,Options" classname="" id="campaign">
+							<bs:datatable columns="Name,Default,Options" classname="" id="campaign">
 								<s:iterator value="campaigns">
 									<tr>
 										<td><s:property value="name" /></td>
+										<td><input type="checkbox" onClick="editSelectedCampaign(this,${id})" <s:if test="selected">checked</s:if>></td>
 										<td width="100px"><span
 											onclick="editCampaign(this,${id })" class="vulnControl">
 												<i class="fa fa-edit"></i>

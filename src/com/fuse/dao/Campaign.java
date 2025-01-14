@@ -21,6 +21,7 @@ public class Campaign {
     )
 	private Long id;
 	private String name;
+	private Boolean selected = false;
 	public Long getId() {
 		return id;
 	}
@@ -32,6 +33,12 @@ public class Campaign {
 	}
 	public void setName(String name) {
 		this.name = name;
+	}
+	public Boolean getSelected() {
+		return this.selected;
+	}
+	public void setSelected(Boolean selected) {
+		this.selected = selected;
 	}
 	
 
