@@ -241,9 +241,10 @@ $(function() {
 		global.editors.description.reset();
 		global.editors.recommendation.reset();
 		$("#title").val("");
-		$("#impact").val(0).trigger('change')
-		$("#likelyhood").val(0).trigger('change')
-		$("#overall").val(0).trigger('change')
+		const last_sev = $("#overall").children()[0].value;
+		$("#impact").val(last_sev).trigger('change')
+		$("#likelyhood").val(last_sev).trigger('change')
+		$("#overall").val(last_sev).trigger('change')
 		$("#catNameSelect").val(0).trigger('change')
 		$("#cvss31String").val('');
 		$("#cvss40String").val('');
