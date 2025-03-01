@@ -161,7 +161,7 @@ public class Login extends FSActionSupport {
 				return "failedAuth";
 			}
 
-		} else if (action != null && action.equals("create")) {
+		} else if (AccessControl.isNewInstance(em) && (action != null && action.equals("create"))) {
 			if (adminUsername == null || adminUsername.trim().equals("")) {
 				this.message = "Username is blank";
 				return "createAccount";

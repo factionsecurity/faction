@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.faction</groupId>
 	<artifactId>faction</artifactId>
-	<version>1.4.0-SNAPSHOT</version>
+	<version>1.4.2-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>Faction</name>
 	<scm>
