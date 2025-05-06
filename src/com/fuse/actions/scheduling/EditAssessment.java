@@ -26,6 +26,7 @@ import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.Files;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.Permissions;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
@@ -96,7 +97,7 @@ public class EditAssessment extends FSActionSupport {
 			this.randId = true;
 
 		if (action != null && action.equals("get")) {
-			currentAssessment = em.find(Assessment.class, (long) this.aid);
+			currentAssessment = AssessmentQueries.getAssessment(em, user, (long) this.aid);
 			files = (List<Files>) em.createQuery("from Files where entityId = :id").setParameter("id", (long) this.aid)
 					.getResultList();
 			assessors = currentAssessment.getAssessor();

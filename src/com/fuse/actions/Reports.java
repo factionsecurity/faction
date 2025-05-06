@@ -139,7 +139,7 @@ public class Reports extends FSActionSupport {
 			Assessment assessment = null;
 			FinalReport finalreport = null;
 			if (aid != null) {
-				assessment = (Assessment) em.find(Assessment.class, aid);
+				assessment = AssessmentQueries.getAssessment(em, user, aid);
 				boolean found = false;
 				for (User u : assessment.getAssessor()) {
 					if (u.getId() == user.getId()) {
