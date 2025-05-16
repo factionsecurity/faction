@@ -427,12 +427,16 @@ $(function() {
 		"ordering": true,
 		"info": true,
 		"autoWidth": true,
-		"order": [[4, "desc"]],
+		"order": [[6, "desc"]],
 		 columnDefs: [
 			{
 				target: 11,
 				visible: false,
 				searchable: false
+			},
+			{
+				target: [3,4,5,9,10],
+				orderable: false
 			}
         ],
 		serverSide: true,
@@ -457,12 +461,14 @@ $(function() {
 	searchTable.on('draw', function(){
 		$('#searchResults').off('click', 'tr');
 		$('#searchResults').on('click', 'tr', function(event){
-			const id = searchTable.row(this).data()[11]
-			console.log(event.target.outerHTML)
-			if(event.target.outerHTML.indexOf('trash') != -1){
-				deleteAssessment(this,id);
-			}else{
-				window.open(`EditAssessment?action=get&aid=${id}`, '_blank');
+			if(this.firstChild.tagName != "TH"){
+				const id = searchTable.row(this).data()[11]
+				console.log(event.target.outerHTML)
+				if(event.target.outerHTML.indexOf('trash') != -1){
+					deleteAssessment(this,id);
+				}else{
+					window.open(`EditAssessment?action=get&aid=${id}`, '_blank');
+				}
 			}
 		});
 	});
