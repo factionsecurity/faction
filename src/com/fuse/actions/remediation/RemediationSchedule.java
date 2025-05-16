@@ -85,9 +85,9 @@ public class RemediationSchedule extends FSActionSupport{
 		List<User>users = em.createQuery("from User").getResultList();
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 		for(User u : users){
-			if(u.getPermissions().isRemediation())
+			if(u.getPermissions() != null && u.getPermissions().isRemediation())
 				remusers.add(u);
-			if(u.getPermissions().isAssessor())
+			if(u.getPermissions() != null && u.getPermissions().isAssessor())
 				assessors.add(u);
 		}
 		

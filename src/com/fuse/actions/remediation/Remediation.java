@@ -71,9 +71,9 @@ public class Remediation extends FSActionSupport{
 			
 		}
 		for(User u : users){
-			if(u.getPermissions().isRemediation())
+			if(u.getPermissions() != null && u.getPermissions().isRemediation())
 				remusers.add(u);
-			if(u.getPermissions().isAssessor())
+			if(u.getPermissions() != null && u.getPermissions().isAssessor())
 				assessors.add(u);
 		}
 		
