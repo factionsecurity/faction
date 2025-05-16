@@ -89,6 +89,7 @@ public class Engagement  extends FSActionSupport{
 	private String statusName;
 	private String defaultRating;
 	private String back;
+	private List<Object> order;
 	
 
 	
@@ -362,15 +363,20 @@ public class Engagement  extends FSActionSupport{
 					
 				}
 				
-				
-				
 			}
-			mongoQuery += " } ";
+			
+			String dir = request.getParameter("order[0][dir]");
+			
+			String colNum = request.getParameter("order[0][column]");
+			mongoQuery += " }";
 			//EntityManager em = HibHelper.getEM();
 			String CountQuery = "db.Assessment.count(" + mongoQuery + ")";
 			this.count = ((Long)em.createNativeQuery(CountQuery).getSingleResult()).intValue();
+			String sortedQuery = "db.Assessment.find({ '$query' :" + mongoQuery + ", "
+					+ " '$orderby': { '" + convertColNumToName(colNum) +"' : " + convertDir(dir) + " } })";
 			
-			this.assessments = (List<Assessment>)em.createNativeQuery(mongoQuery, Assessment.class)
+			
+			this.assessments = (List<Assessment>)em.createNativeQuery(sortedQuery, Assessment.class)
 					.setMaxResults(this.length)
 					.setFirstResult(this.start)
 					.getResultList();
@@ -447,6 +453,28 @@ public class Engagement  extends FSActionSupport{
 		
 		//session.close();
 		return SUCCESS;
+	}
+	
+	private String convertColNumToName(String number) {
+		switch(number) {
+			case "0": return "appId";
+			case "1": return "name";
+			case "2": return "status";
+			case "3": return "assessor";
+			case "4": return "type";
+			case "5": return "campaign";
+			case "6": return "start";
+			case "7": return "end";
+			case "8": return "completed";
+			default: return "appId";
+		}
+	}
+	private String convertDir(String dir) {
+		switch(dir) {
+			case "desc": return "-1";
+			case "asc": return "1";
+			default: return "-1";
+		}
 	}
 
 	
@@ -648,6 +676,10 @@ public class Engagement  extends FSActionSupport{
 
 	public void setSearch(String search) {
 		this.search = search;
+	}
+	
+	public void setOrder(List<Object> order) {
+		this.order = order;
 	}
 
 
