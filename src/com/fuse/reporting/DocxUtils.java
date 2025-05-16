@@ -50,6 +50,7 @@ import org.docx4j.wml.CTTxbxContent;
 
 import com.faction.reporting.ReportFeatures;
 import com.fuse.dao.Assessment;
+import com.fuse.dao.CheckListAnswers;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.SystemSettings;

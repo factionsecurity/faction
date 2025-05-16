@@ -9,7 +9,7 @@ require('../scripts/fileupload/css/fileinput.css');
 import '../scripts/fileupload/js/fileinput.min';
 require('./checklist.css');
   
-  function addQuestion(el){
+global.addQuestion = function addQuestion(el){
 	  let data = encodeURIComponent($("#newQuest").val());
 	  data="question="+ data;
 	  data+="&checklist=" + $("#list").val();
@@ -229,13 +229,8 @@ require('./checklist.css');
 		  
 		  
 	  });
-	 /* 
-	  <s:iterator value="lists.get(0).types" var="id">
-	  	$("#t${id }").prop('checked', true);
-	  </s:iterator>
-      */
 	  
   });
   $('.add-question').on('click', (event) => {
-      addQuestion(this);
+	global.addQuestion(this);
   });
