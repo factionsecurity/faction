@@ -23,7 +23,9 @@ import java.util.Base64;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.Set;
@@ -47,11 +49,13 @@ import org.springframework.beans.BeanWrapperImpl;
 
 import com.fuse.dao.AppStore;
 import com.fuse.dao.Assessment;
+import com.fuse.dao.CheckListAnswers;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
+import com.faction.elements.CheckList;
 import com.faction.elements.results.AssessmentManagerResult;
 import com.faction.elements.results.InventoryResult;
 import com.faction.elements.utils.Log;
@@ -160,6 +164,33 @@ public class Extensions {
 		}
 		return daoFields;
 	}
+	
+	private List<com.faction.elements.CheckList> cloneChecklists(Assessment assessment){
+			Map<String,com.faction.elements.CheckList> checklists = new HashMap<>(); // This is to make mapping easy
+			
+			for (CheckListAnswers a : assessment.getAnswers()) {
+				if(!checklists.containsKey(a.getChecklist())) {
+					com.faction.elements.CheckList checklist = new com.faction.elements.CheckList();
+					checklist.setName(a.getChecklist());
+					checklist.setCheckListItems(new ArrayList<>());
+					checklists.put(a.getChecklist(), checklist);
+					
+				}
+				com.faction.elements.CheckListItem item = new com.faction.elements.CheckListItem();
+				com.faction.elements.CheckListItem.Answer answer =  com.faction.elements.CheckListItem.Answer
+						.getAnswer(a.getAnswer().getValue());
+				item.setAnswer(answer);
+				item.setNotes(a.getNotes());
+				item.setQuestion(a.getQuestion());
+				com.faction.elements.CheckList checklist = checklists.get(a.getChecklist());
+				checklist.getCheckListItems().add(item);
+				
+			}
+			com.faction.elements.CheckList[] clonedChecklists = checklists
+					.values().toArray( new com.faction.elements.CheckList[checklists.size()]);
+			
+			return Arrays.asList(clonedChecklists);
+	}
 
 	private List<com.faction.elements.CustomField> cloneCustomFields(Assessment daoAssessment) {
 		List<CustomField> daoFields = daoAssessment.getCustomFields();
@@ -230,6 +261,10 @@ public class Extensions {
 				tVuln.setCustomFields(this.cloneCustomFields(v));
 				tmpVulns.add(tVuln);
 			}
+			// Clone Checklists
+			List<com.faction.elements.CheckList> clonedChecklists = this.cloneChecklists(localAssessment);
+			tmpAssessment.setChecklists(clonedChecklists);
+			
 			// Clone Engagement
 			com.faction.elements.User eng = new com.faction.elements.User();
 			copy(localAssessment.getEngagement(), eng);
@@ -258,7 +293,6 @@ public class Extensions {
 				tmpAssessment.setType(localAssessment.getType().getType());
 			}
 			for (ReportManager mgr : this.reportManagers) {
-				
 				String updatedText = mgr.reportCreate(tmpAssessment, tmpVulns,reportText);
 				if(updatedText != null) {
 					reportText = updatedText;
@@ -290,6 +324,11 @@ public class Extensions {
 				// Clone Assessment
 				com.faction.elements.Assessment tmpAssessment = new com.faction.elements.Assessment();
 				copy(localAssessment, tmpAssessment);
+				
+				// Clone Checklists
+				List<com.faction.elements.CheckList> clonedChecklists = this.cloneChecklists(localAssessment);
+				tmpAssessment.setChecklists(clonedChecklists);
+				
 				// Clone Vulns
 				List<com.faction.elements.Vulnerability> tmpVulns = new ArrayList();
 				List<Vulnerability> vulnerabilities = localAssessment.getVulns();
@@ -530,7 +569,7 @@ public class Extensions {
 				try {
 					Thread.currentThread().setContextClassLoader(extensionLoader);
 					for (ReportManager reportMgr : ServiceLoader.load(ReportManager.class, extensionLoader)) {
-						if (reportMgr != null && app.getReportEnabled()) {
+						if (reportMgr != null && app.getReportEnabled()) {  ///eventually need to make this report enabled and have a sep section in app store
 							reportMgr.setConfigs(app.getHashMapConfig());
 							reportManagers.add(reportMgr);
 						}

@@ -249,7 +249,7 @@
 		<dependency>
 			<groupId>com.factionsecurity</groupId>
 			<artifactId>faction-extender</artifactId>
-			<version>2.5</version>
+			<version>2.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.docx4j</groupId>
