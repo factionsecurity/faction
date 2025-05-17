@@ -54,9 +54,9 @@ public class Assessment {
 	private String AccessNotes;
 	@ManyToOne
 	private AssessmentType type;
-	@OneToOne(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
+	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private FinalReport finalReport;
-	@OneToOne(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
+	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private FinalReport retestReport;
 	@ManyToOne
 	private Campaign campaign;
