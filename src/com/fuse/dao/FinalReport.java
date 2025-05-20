@@ -65,7 +65,7 @@ public class FinalReport{
 		if(base64EncodedPdf != null && base64EncodedPdf.length() > 15_000_000) {
 			this.largeFile=true;
 			String [] chunks = this.chunk(base64EncodedPdf);
-			this.setBase64EncodedPdf("");
+			this.base64EncodedPdf="";
 			int index=0;
 			for(String c : chunks) {
 				FinalReportPart frp = new FinalReportPart();
@@ -74,6 +74,7 @@ public class FinalReport{
 				this.parts.add(frp);
 			}
 		}else {
+			this.largeFile=false;
 			this.base64EncodedPdf = base64EncodedPdf;
 		}
 	}
