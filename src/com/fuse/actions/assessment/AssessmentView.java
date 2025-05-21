@@ -434,6 +434,7 @@ public class AssessmentView extends FSActionSupport {
 				return result;
 
 		}
+		AssessmentQueries.removeImages(assessment);
 		assessment.setCompleted(new Date());
 		assessment.setFinalized();
 		List<Vulnerability> vulns = assessment.getVulns();

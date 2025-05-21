@@ -362,5 +362,35 @@ public class AssessmentQueries {
 				replaceImageLinks(asmt, asmt.getRiskAnalysis())
 				);
 	}
+	
+	public static void removeImages(Assessment assessment) {
+		List<Image>removeImages = new ArrayList<>();
+		for(Image image : assessment.getImages()) {
+			boolean found = false;
+			String guid = image.getGuid();
+			if(assessment.getSummary() != null && assessment.getSummary().contains(guid)) {
+				found = true;
+			}else if(assessment.getRiskAnalysis() != null && assessment.getRiskAnalysis().contains(guid)) {
+				found = true;
+			}else {
+				for(Vulnerability vuln: assessment.getVulns()) {
+					if(vuln.getDescription() != null && vuln.getDescription().contains(guid)) {
+						found = true;
+					}else if(vuln.getRecommendation() != null && vuln.getRecommendation().contains(guid)) {
+						found = true;
+					}else if(vuln.getDetails() != null && vuln.getDetails().contains(guid)) {
+						found = true;
+					}
+				}
+			}
+			if(!found) {
+				removeImages.add(image);
+			}
+		}
+		for(Image removed : removeImages) {
+			assessment.getImages().remove(removed);
+		}
+		
+	}
 
 }

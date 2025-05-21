@@ -1,6 +1,8 @@
 package com.fuse.actions.images;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
@@ -23,7 +25,6 @@ public class UploadImage extends FSActionSupport {
 		image.setBase64Image(encodedImage);
 		Assessment assessment = AssessmentQueries.getAssessment(em, getSessionUser(), assessmentId);
 		if(assessment != null) {
-			//removeImages(assessment);
 			assessment.getImages().add(image);
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
@@ -39,31 +40,6 @@ public class UploadImage extends FSActionSupport {
 		return this.MESSAGEJSON;
 	}
 	
-	private void removeImages(Assessment assessment) {
-		for(Image image : assessment.getImages()) {
-			boolean found = false;
-			String guid = image.getGuid();
-			if(assessment.getSummary() != null && assessment.getSummary().contains(guid)) {
-				found = true;
-			}else if(assessment.getRiskAnalysis() != null && assessment.getRiskAnalysis().contains(guid)) {
-				found = true;
-			}else {
-				for(Vulnerability vuln: assessment.getVulns()) {
-					if(vuln.getDescription() != null && vuln.getDescription().contains(guid)) {
-						found = true;
-					}else if(vuln.getRecommendation() != null && vuln.getRecommendation().contains(guid)) {
-						found = true;
-					}else if(vuln.getDetails() != null && vuln.getDetails().contains(guid)) {
-						found = true;
-					}
-				}
-			}
-			if(!found) {
-				assessment.getImages().remove(image);
-			}
-		}
-		
-	}
 	
 	public void setEncodedImage(String encodedImage) {
 		this.encodedImage = encodedImage;
