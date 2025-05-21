@@ -65,6 +65,9 @@ public class Assessment {
 
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Vulnerability> vulns = new ArrayList<>();
+	
+	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval=true)
+	private List<Image> images = new ArrayList<>();
 
 	private String pr_sum_notes;
 	private String pr_risk_notes;
@@ -267,6 +270,13 @@ public class Assessment {
 	@Transient
 	public String getPr_sum_notes() {
 		return pr_sum_notes;
+	}
+	public List<Image> getImages(){
+		return this.images;
+	}
+	
+	public void setImages(List<Image> images) {
+		this.images = images;
 	}
 
 	@Transient
