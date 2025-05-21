@@ -32,6 +32,7 @@ import com.fuse.dao.HibHelper;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
+import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.utils.FSUtils;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
@@ -868,8 +869,8 @@ public class vulnerabilities {
 	@Path("all")
 	public Response getall(
 			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
-			@ApiParam(value = "Start Date of Search", required = true) @FormParam("start") String start,
-			@ApiParam(value = "End Date of Search", required = true) @FormParam("end") String end) 
+			@ApiParam(value = "Start Date of Search (MM/DD/YYYY)", required = true) @FormParam("start") String start,
+			@ApiParam(value = "End Date of Search (MM/DD/YYYY)", required = true) @FormParam("end") String end) 
 	{
 		
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
@@ -894,6 +895,7 @@ public class vulnerabilities {
 				
 				for(Vulnerability v : vulns){
 					v.updateRiskLevels(em);
+					AssessmentQueries.updateImages(em, v);
 					jarray.add(this.dao2JSON(v, Vulnerability.class));	
 				}
 			}else{

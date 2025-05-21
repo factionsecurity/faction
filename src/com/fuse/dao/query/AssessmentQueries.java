@@ -14,11 +14,13 @@ import com.fuse.dao.Campaign;
 import com.fuse.dao.Comment;
 import com.fuse.dao.Files;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.Image;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.Permissions;
 import com.fuse.dao.ReportTemplates;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
+import com.fuse.dao.Vulnerability;
 import com.fuse.utils.FSUtils;
 
 public class AssessmentQueries {
@@ -325,6 +327,40 @@ public class AssessmentQueries {
 		}
 		Long asmtTeam = asmt.getAssessor().get(0).getTeam().getId();
 		return user.getTeam().getId().equals(asmtTeam);
+	}
+	
+	public static String replaceImageLinks(Assessment asmt, String text) {
+		Long aid= asmt.getId();
+		String matchPrefix = "getImage\\?id(=|&#61;)" + aid + ":";
+		for(Image img : asmt.getImages()) {
+			String matchStr = matchPrefix + img.getGuid();
+			text = text.replaceAll( matchStr, img.getBase64Image());
+		}
+		return text;
+		
+	}
+	public static void updateImages(Assessment asmt, Vulnerability v) {
+		v.setDescription(
+				replaceImageLinks(asmt, v.getDescription())
+				);
+		v.setRecommendation(
+				replaceImageLinks(asmt, v.getRecommendation())
+				);
+		v.setDetails(
+				replaceImageLinks(asmt, v.getDetails())
+		);
+	}
+	public static void updateImages(EntityManager em, Vulnerability v) {
+		Assessment asmt = getAssessmentById(em, v.getAssessmentId());
+		updateImages(asmt,v);
+	}
+	public static void updateImages(Assessment asmt) {
+		asmt.setSummary(
+				replaceImageLinks(asmt, asmt.getSummary())
+				);
+		asmt.setRiskAnalysis(
+				replaceImageLinks(asmt, asmt.getRiskAnalysis())
+				);
 	}
 
 }

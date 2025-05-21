@@ -68,6 +68,7 @@ public class assessments {
 					List<Assessment> asmts = AssessmentQueries.getAssessmentsByUserId(em, u, u.getId(),
 							AssessmentQueries.OnlyNonCompleted);
 					for (Assessment a : asmts) {
+						AssessmentQueries.updateImages(a);
 						jarray.add(Support.dao2JSON(a, Assessment.class));
 					}
 				} catch (Exception ex) {
@@ -112,6 +113,7 @@ public class assessments {
 					return Response.status(401).entity(String.format(Support.ERROR, "No Assessment")).build();
 				for (Assessment a : asmts) {
 					for (Vulnerability v : a.getVulns()) {
+						AssessmentQueries.updateImages(a, v);
 						jarray.add(Support.dao2JSON(v, Vulnerability.class));
 					}
 				}
@@ -154,6 +156,7 @@ public class assessments {
 					return Response.status(401).entity(String.format(Support.ERROR, "No Assessment")).build();
 				for (Assessment a : asmts) {
 					for (Vulnerability v : a.getVulns()) {
+						AssessmentQueries.updateImages(a, v);
 						v.updateRiskLevels(em);
 						jarray.add(Support.dao2JSON(v, Vulnerability.class));
 					}
@@ -255,6 +258,9 @@ public class assessments {
 				}else {
 					v.setDetails(v.getDetails().replaceAll("\n", "\r\n"));
 				}
+				
+				AssessmentQueries.updateImages(em, v);
+				
 				if (v == null)
 					return Response.status(400).entity(String.format(Support.ERROR, "Vulnerability Does Not Exist."))
 							.build();
