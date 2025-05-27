@@ -1,5 +1,7 @@
 package com.fuse.dao;
 
+import java.io.File;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -17,7 +19,13 @@ import org.pac4j.core.client.Clients;
 import org.pac4j.core.config.Config;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
+import org.pac4j.saml.client.SAML2Client;
+import org.pac4j.saml.config.SAML2Configuration;
 import org.pac4j.core.client.direct.AnonymousClient;
+
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.UrlResource;
 
 import com.fuse.authentication.oauth.SecurityFilterWrapper;
 import com.fuse.utils.FSUtils;
@@ -555,6 +563,37 @@ public class SystemSettings {
         Clients clients = new Clients(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback",
                 oidcClient, new AnonymousClient());
 		SecurityFilterWrapper.getInstance().setConfigOnly(new Config(clients));
+	}
+	
+	@Transient
+	public SAML2Configuration getSAML2Config() throws MalformedURLException {
+		SAML2Configuration config = new SAML2Configuration(
+				new FileSystemResource(new File("/Users/joshsummitt/Code/faction-all/free/faction/samlKeystore.jks").getAbsolutePath()),
+			    "pac4j-demo-passwd",
+			    "pac4j-demo-passwd",
+			    new UrlResource("https://login.microsoftonline.com/edc3de58-7bfc-4c22-ba4f-1d3c13e92aa5/federationmetadata/2007-06/federationmetadata.xml?appid=94b55130-89a1-4450-93aa-b997d4666a1d"));
+		 config.setAuthnRequestSigned(true);  // Azure requires signed Authn requests
+	     config.setWantsAssertionsSigned(true);
+	     config.setForceAuth(true);
+	     config.setAcceptedSkew(120);
+        return config;
+	}
+	
+	@Transient
+	public void updateSAML2Filter() {
+		try {
+			SAML2Client samlClient = new SAML2Client(getSAML2Config());
+			
+			samlClient.setAuthorizationGenerator((ctx, profile) -> {
+				profile.addRole("ROLE_USER");
+				return Optional.ofNullable(profile);
+			});
+			Clients clients = new Clients(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml/callback",
+					samlClient, new AnonymousClient());
+			SecurityFilterWrapper.getInstance().setConfigOnly(new Config(clients));
+		}catch(Exception ex) {
+			System.out.println(ex);
+		}
 	}
 	
 	@Transient

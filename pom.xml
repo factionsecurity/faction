@@ -387,6 +387,11 @@
 			<version>4.5.7</version>
 		</dependency>
 		<dependency>
+			<groupId>org.pac4j</groupId>
+			<artifactId>pac4j-saml</artifactId>
+			<version>4.5.7</version>
+		</dependency>
+		<dependency>
 			<groupId>org.commonmark</groupId>
 			<artifactId>commonmark</artifactId>
 			<version>0.21.0</version>
