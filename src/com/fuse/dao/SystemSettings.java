@@ -4,6 +4,9 @@ import java.io.ByteArrayOutputStream;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
+import java.security.SecureRandom;
+import java.security.Security;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -19,6 +22,8 @@ import javax.persistence.Id;
 import javax.persistence.TableGenerator;
 import javax.persistence.Transient;
 
+import org.bouncycastle.asn1.x500.X500Name;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.pac4j.core.client.Clients;
 import org.pac4j.core.config.Config;
 import org.pac4j.oidc.client.OidcClient;
@@ -32,16 +37,15 @@ import com.fuse.authentication.oauth.SecurityConfigFactory;
 import com.fuse.authentication.oauth.SecurityFilterWrapper;
 import com.fuse.utils.FSUtils;
 import com.nimbusds.jose.JWSAlgorithm;
-import java.security.cert.X509Certificate;
-import sun.security.x509.X509CertImpl;
-import sun.security.x509.X509CertInfo;
-import sun.security.x509.CertificateValidity;
-import sun.security.x509.CertificateX509Key;
-import sun.security.x509.CertificateSerialNumber;
-import sun.security.x509.CertificateVersion;
-import sun.security.x509.AlgorithmId;
-import sun.security.x509.CertificateAlgorithmId;
-import sun.security.x509.X500Name;
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
+
+import org.bouncycastle.cert.X509v3CertificateBuilder;
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
+import org.bouncycastle.operator.ContentSigner;
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
+
+import java.math.BigInteger;
+import java.security.*;
 
 
 @Entity
@@ -656,7 +660,7 @@ public class SystemSettings {
 				this.setKeystorePassword(randomPass);
 				
 				KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
-				keyPairGen.initialize(2048);
+				keyPairGen.initialize(2048, new SecureRandom());
 				KeyPair keyPair = keyPairGen.generateKeyPair();
 
 				X509Certificate cert = generateSelfSignedCert(keyPair);
@@ -684,25 +688,38 @@ public class SystemSettings {
 	
 	@Transient
 	 private static X509Certificate generateSelfSignedCert(KeyPair keyPair) throws Exception {
-	        long now = System.currentTimeMillis();
-	        Date startDate = new Date(now);
-	        Date endDate = new Date(now + 365L * 24 * 60 * 60 * 1000); // 1 year validity
 
-	        X500Name owner = new X500Name("CN=faction-saml, OU=faction, O=faction,  L=City, ST=CA, C=US");
-	        X509CertInfo info = new X509CertInfo();
-	        info.set(X509CertInfo.VALIDITY, new CertificateValidity(startDate, endDate));
-	        info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber((int) (now >> 4)));
-	        info.set(X509CertInfo.SUBJECT, owner);
-	        info.set(X509CertInfo.ISSUER, owner);
-	        info.set(X509CertInfo.KEY, new CertificateX509Key(keyPair.getPublic()));
-	        info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
-	        AlgorithmId algo = new AlgorithmId(AlgorithmId.sha256WithRSAEncryption_oid);
-	        info.set(X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(algo));
+	        
+	        Security.addProvider(new BouncyCastleProvider());
 
-	        X509CertImpl cert = new X509CertImpl(info);
-	        cert.sign(keyPair.getPrivate(), "SHA256withRSA");
+	        // Certificate subject and issuer (same for self-signed)
+	        X500Name dnName = new X500Name("CN=faction-saml, OU=faction, O=faction,  L=City, ST=CA, C=US");
 
-	        return cert;
+	        // Validity period
+	        Date startDate = new Date();
+	        Date endDate = new Date(startDate.getTime() + (365L * 24 * 60 * 60 * 1000)); // 1 year
+
+	        // Serial number
+	        BigInteger certSerialNumber = new BigInteger(Long.toString(System.currentTimeMillis()));
+
+	        // Create certificate builder
+	        X509v3CertificateBuilder certBuilder = new JcaX509v3CertificateBuilder(
+	                dnName, certSerialNumber, startDate, endDate, dnName, keyPair.getPublic());
+
+	        // Content signer
+	        ContentSigner contentSigner = new JcaContentSignerBuilder("SHA256withRSA")
+	        		.setProvider("BC")
+	                .build(keyPair.getPrivate());
+
+	        // Build the certificate
+	        X509Certificate certificate = new JcaX509CertificateConverter()
+	                .setProvider("BC")
+	                .getCertificate(certBuilder.build(contentSigner));
+ 
+	        
+	        
+
+	        return certificate;
 	    }
 	
 
