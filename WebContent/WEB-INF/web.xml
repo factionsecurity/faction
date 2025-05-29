@@ -57,12 +57,10 @@
 		</init-param>
 	</filter>
 	
-<!--  
 	<filter-mapping>
 		<filter-name>corsFilter</filter-name>
 		<url-pattern>/saml2/*</url-pattern>
 	</filter-mapping>
-	-->	
 	
 	<filter-mapping>
 		<filter-name>saml2Callback</filter-name>
