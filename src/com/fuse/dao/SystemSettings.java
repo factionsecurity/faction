@@ -1,9 +1,6 @@
 package com.fuse.dao;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.net.MalformedURLException;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -28,11 +25,7 @@ import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.saml.client.SAML2Client;
 import org.pac4j.saml.config.SAML2Configuration;
-import org.pac4j.core.client.direct.AnonymousClient;
 import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.UrlResource;
 
 import com.fuse.authentication.oauth.SecurityConfigFactory;
@@ -40,9 +33,16 @@ import com.fuse.authentication.oauth.SecurityFilterWrapper;
 import com.fuse.utils.FSUtils;
 import com.nimbusds.jose.JWSAlgorithm;
 import java.security.cert.X509Certificate;
-import sun.security.x509.*;
+import sun.security.x509.X509CertImpl;
+import sun.security.x509.X509CertInfo;
+import sun.security.x509.CertificateValidity;
+import sun.security.x509.CertificateX509Key;
+import sun.security.x509.CertificateSerialNumber;
+import sun.security.x509.CertificateVersion;
+import sun.security.x509.AlgorithmId;
+import sun.security.x509.CertificateAlgorithmId;
+import sun.security.x509.X500Name;
 
-import java.util.Base64;
 
 @Entity
 public class SystemSettings {
