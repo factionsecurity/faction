@@ -1,11 +1,18 @@
 package com.fuse.dao;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.net.MalformedURLException;
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -22,14 +29,20 @@ import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.saml.client.SAML2Client;
 import org.pac4j.saml.config.SAML2Configuration;
 import org.pac4j.core.client.direct.AnonymousClient;
-
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.UrlResource;
 
+import com.fuse.authentication.oauth.SecurityConfigFactory;
 import com.fuse.authentication.oauth.SecurityFilterWrapper;
 import com.fuse.utils.FSUtils;
 import com.nimbusds.jose.JWSAlgorithm;
+import java.security.cert.X509Certificate;
+import sun.security.x509.*;
+
+import java.util.Base64;
 
 @Entity
 public class SystemSettings {
@@ -84,6 +97,9 @@ public class SystemSettings {
 	private Boolean ldapInsecureSSL=false;
 	private String ldapObjectClass;
 	private String features;
+	private String saml2MetaUrl;
+	private String keystore;
+	private String keystorePassword;
 	
 	
 	public void initSMTPSettings() {
@@ -533,6 +549,60 @@ public class SystemSettings {
 	public void setFeatures(String features) {
 		this.features = features;
 	}
+	
+	public String getSaml2MetaUrl() {
+		return this.saml2MetaUrl;
+	}
+	
+	public void setSaml2MetaUrl(String saml2MetaUrl) {
+		this.saml2MetaUrl = saml2MetaUrl;
+	}
+	
+	public void setKeystorePassword(String password) {
+		this.keystorePassword = FSUtils.encryptPassword(password);
+	}
+	
+	public String getKeystorePassword() {
+		return FSUtils.decryptPassword(this.keystorePassword);
+	}
+	
+	@Transient
+	public void updateSSOFilters() {
+		OidcClient oidcClient = new OidcClient();
+		SAML2Client saml2Client = new SAML2Client();
+		Clients clients = updateSSOClients(oidcClient, saml2Client);
+		SecurityFilterWrapper.getInstance().setConfigOnly(new Config(clients));
+		SecurityConfigFactory.refreshConfig();
+		
+	}
+	@Transient
+	public Clients updateSSOClients( OidcClient oidcClient, SAML2Client saml2Client) {
+		try {
+			oidcClient.setConfiguration(getOdicConfig());
+			oidcClient.setAuthorizationGenerator((ctx, profile) -> {
+				profile.addRole("ROLE_USER");
+				return Optional.ofNullable(profile);
+			});
+			oidcClient.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback");
+			oidcClient.init();
+		}catch(Exception ex) {
+			System.out.println(ex);
+		}
+		try {
+			saml2Client.setConfiguration(getSAML2Config());
+			saml2Client.setAuthorizationGenerator((ctx, profile) -> {
+				profile.addRole("ROLE_USER");
+				return Optional.ofNullable(profile);
+			});
+			
+			saml2Client.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
+			saml2Client.init();
+		}catch(Exception ex) {
+			System.out.println(ex);
+		}
+		return new Clients(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback",
+				oidcClient, saml2Client);
+	}
 
 
 	@Transient
@@ -546,60 +616,94 @@ public class SystemSettings {
         //config.setMaxAge(10);
         config.addCustomParam("display", "popup");
         //config.addCustomParam("prompt", "select_account");
-				
-        
+        config.init();
         return config;
 	}
 	
-	@Transient
-	public void updateOdicFilter() {
-		OidcClient oidcClient = new OidcClient();
-		
-        oidcClient.setConfiguration(getOdicConfig());
-        oidcClient.setAuthorizationGenerator((ctx, profile) -> {
-            profile.addRole("ROLE_USER");
-            return Optional.ofNullable(profile);
-        });
-        Clients clients = new Clients(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback",
-                oidcClient, new AnonymousClient());
-		SecurityFilterWrapper.getInstance().setConfigOnly(new Config(clients));
-	}
+	
 	
 	@Transient
-	public SAML2Configuration getSAML2Config() throws MalformedURLException {
-		SAML2Configuration config = new SAML2Configuration(
-				new FileSystemResource(new File("/Users/joshsummitt/Code/faction-all/free/faction/samlKeystore.jks").getAbsolutePath()),
-			    "pac4j-demo-passwd",
-			    "pac4j-demo-passwd",
-			    new UrlResource("https://login.microsoftonline.com/edc3de58-7bfc-4c22-ba4f-1d3c13e92aa5/federationmetadata/2007-06/federationmetadata.xml?appid=94b55130-89a1-4450-93aa-b997d4666a1d"));
-		 config.setAuthnRequestSigned(true);  // Azure requires signed Authn requests
-	     config.setWantsAssertionsSigned(true);
-	     config.setForceAuth(true);
-	     config.setAcceptedSkew(120);
-        return config;
-	}
-	
-	@Transient
-	public void updateSAML2Filter() {
-		try {
-			SAML2Client samlClient = new SAML2Client(getSAML2Config());
-			
-			samlClient.setAuthorizationGenerator((ctx, profile) -> {
-				profile.addRole("ROLE_USER");
-				return Optional.ofNullable(profile);
-			});
-			Clients clients = new Clients(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml/callback",
-					samlClient, new AnonymousClient());
-			SecurityFilterWrapper.getInstance().setConfigOnly(new Config(clients));
-		}catch(Exception ex) {
-			System.out.println(ex);
+	public SAML2Configuration getSAML2Config() throws Exception {
+		if(this.keystore == null) {
+			createKeystoreIfNotExists();
 		}
+		SAML2Configuration config = new SAML2Configuration(
+				new ByteArrayResource(this.getKeyStore()),
+				this.getKeystorePassword(),
+				this.getKeystorePassword(),
+				new UrlResource(this.saml2MetaUrl==null?"":this.saml2MetaUrl));
+		 config.setServiceProviderEntityId(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
+		 config.setAuthnRequestSigned(true);  // Azure requires signed Authn requests
+		 config.setWantsAssertionsSigned(true);
+		 config.setForceAuth(true);
+		 config.setAcceptedSkew(120);
+		 config.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
+		 config.init();
+		return config;
 	}
+	
 	
 	@Transient
 	public List<String> getRatings() {
 		return new ArrayList<>(Arrays.asList( new String[]{"Native", "CVSS 3.1"}));
 	}
+	
+	@Transient
+	public void createKeystoreIfNotExists(){
+		if(this.keystore == null) {
+			try {
+				String randomPass = UUID.randomUUID().toString();
+				this.setKeystorePassword(randomPass);
+				
+				KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance("RSA");
+				keyPairGen.initialize(2048);
+				KeyPair keyPair = keyPairGen.generateKeyPair();
+
+				X509Certificate cert = generateSelfSignedCert(keyPair);
+
+				char[] password = randomPass.toCharArray();
+				KeyStore keyStore = KeyStore.getInstance("JKS");
+				keyStore.load(null, null);
+				keyStore.setKeyEntry("pac4j", keyPair.getPrivate(), password, new java.security.cert.Certificate[]{cert});
+
+				ByteArrayOutputStream keystoreOutput = new ByteArrayOutputStream();
+				keyStore.store(keystoreOutput, password);
+				
+				this.keystore = FSUtils.encryptBytes(keystoreOutput.toByteArray());
+			}catch(Exception e) {
+				System.out.println(e);
+				this.keystore=null;
+			}
+		}
+		
+	}
+	@Transient
+	public byte [] getKeyStore() {
+		return FSUtils.decryptBytes(this.keystore);
+	}
+	
+	@Transient
+	 private static X509Certificate generateSelfSignedCert(KeyPair keyPair) throws Exception {
+	        long now = System.currentTimeMillis();
+	        Date startDate = new Date(now);
+	        Date endDate = new Date(now + 365L * 24 * 60 * 60 * 1000); // 1 year validity
+
+	        X500Name owner = new X500Name("CN=faction-saml, OU=faction, O=faction,  L=City, ST=CA, C=US");
+	        X509CertInfo info = new X509CertInfo();
+	        info.set(X509CertInfo.VALIDITY, new CertificateValidity(startDate, endDate));
+	        info.set(X509CertInfo.SERIAL_NUMBER, new CertificateSerialNumber((int) (now >> 4)));
+	        info.set(X509CertInfo.SUBJECT, owner);
+	        info.set(X509CertInfo.ISSUER, owner);
+	        info.set(X509CertInfo.KEY, new CertificateX509Key(keyPair.getPublic()));
+	        info.set(X509CertInfo.VERSION, new CertificateVersion(CertificateVersion.V3));
+	        AlgorithmId algo = new AlgorithmId(AlgorithmId.sha256WithRSAEncryption_oid);
+	        info.set(X509CertInfo.ALGORITHM_ID, new CertificateAlgorithmId(algo));
+
+	        X509CertImpl cert = new X509CertImpl(info);
+	        cert.sign(keyPair.getPrivate(), "SHA256withRSA");
+
+	        return cert;
+	    }
 	
 
 }

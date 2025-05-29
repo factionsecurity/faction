@@ -70,6 +70,7 @@ public class Users extends FSActionSupport {
 	private String oauthClientId;
 	private String oauthClientSecret;
 	private String oauthDiscoveryURI;
+	private String saml2MetaUrl;
 
 	@Action(value = "Users")
 	public String execute() {
@@ -92,6 +93,7 @@ public class Users extends FSActionSupport {
 			this.ldapObjectClass = ems.getLdapObjectClass();
 			this.oauthClientId = ems.getOauthClientId();
 			this.oauthDiscoveryURI = ems.getOauthDiscoveryURI();
+			this.saml2MetaUrl = ems.getSaml2MetaUrl();
 		}
 
 		return SUCCESS;
@@ -176,7 +178,7 @@ public class Users extends FSActionSupport {
 			this.authMethod = this.authMethod.trim();
 			u.setAuthMethod(this.authMethod);
 			String message = "Hello " + this.fname + " " + this.lname + "<br><br>";
-			if (this.authMethod.equals("LDAP") || this.authMethod.equals("OAUTH2.0") ) {
+			if (this.authMethod.equals("LDAP") || this.authMethod.equals("OAUTH2.0") || this.authMethod.equals("SAML2") ) {
 				User emailExists = (User) em.createQuery("from User where email = :email")
 						.setParameter("email", this.email.trim()).getResultList().stream().findFirst().orElse(null);
 				if(emailExists != null) {
@@ -721,7 +723,28 @@ public class Users extends FSActionSupport {
 		em.persist(settings);
 		HibHelper.getInstance().commit();
 		//update the odic config in the filter
-		settings.updateOdicFilter();
+		settings.updateSSOFilters();
+		
+		return this.SUCCESSJSON;
+	}
+	
+	@Action(value = "SaveSAML2")
+	public String saveSAML2() {
+		if (!(this.isAcadmin())) {
+			return LOGIN;
+		}
+		if (!this.testToken(false))
+			return this.ERRORJSON;
+
+		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+				.findFirst().orElse(new SystemSettings());
+		settings.setSaml2MetaUrl(this.saml2MetaUrl);
+		settings.createKeystoreIfNotExists();
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		em.persist(settings);
+		HibHelper.getInstance().commit();
+		settings.updateSSOFilters();
 		
 		return this.SUCCESSJSON;
 	}
@@ -1050,6 +1073,13 @@ public class Users extends FSActionSupport {
 
 	public void setOauthClientSecret(String oauthClientSecret) {
 		this.oauthClientSecret = oauthClientSecret;
+	}
+	
+	public void setSaml2MetaUrl(String saml2MetaUrl) {
+		this.saml2MetaUrl = saml2MetaUrl;
+	}
+	public String getSaml2MetaUrl() {
+		return this.saml2MetaUrl;
 	}
 	
 	

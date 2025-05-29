@@ -196,7 +196,7 @@ public class User {
 	}
 
 	public void setAuthMethod(String authMethod) {
-		if (authMethod.equals("Native") || authMethod.equals("LDAP") || authMethod.equals("OAUTH2.0"))
+		if (authMethod.equals("Native") || authMethod.equals("LDAP") || authMethod.equals("OAUTH2.0") || authMethod.equals("SAML2"))
 			this.authMethod = authMethod;
 		else
 			this.authMethod = "Native";

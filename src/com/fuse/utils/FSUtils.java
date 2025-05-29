@@ -438,6 +438,30 @@ public class FSUtils {
 		}
 
 	}
+	public static byte [] decryptBytes(String data) {
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			String secret = System.getenv("FACTION_SECRET_KEY");
+			byte[] hash = md.digest(secret.getBytes());
+			char[] b64hash = Base64.encodeBase64String(hash).toCharArray();
+
+			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+			KeySpec spec = new PBEKeySpec(b64hash, "f04ce910-bedb-4d8f-a023-4d2441dc0fba".getBytes(), 65536, 256);
+			SecretKey tmp = factory.generateSecret(spec);
+			SecretKey SecKey = new SecretKeySpec(tmp.getEncoded(), "AES");
+
+			Cipher AesCipher = Cipher.getInstance("AES");
+			AesCipher.init(Cipher.DECRYPT_MODE, SecKey);
+			byte[] cypherText = Base64.decodeBase64(data);
+			byte[] bytePlainText = AesCipher.doFinal(cypherText);
+			return bytePlainText;
+
+		} catch (Exception ex) {
+			System.out.println(ex);
+			return null;
+		}
+
+	}
 	
 	public static String md5hash(String data) {
 		try {
@@ -481,6 +505,33 @@ public class FSUtils {
 
 			AesCipher.init(Cipher.ENCRYPT_MODE, SecKey);
 			byte[] byteCipherText = AesCipher.doFinal(byteText);
+
+			return Base64.encodeBase64String(byteCipherText);
+
+		} catch (Exception Ex) {
+			Ex.printStackTrace();
+			return null;
+		}
+
+	}
+	public static String encryptBytes(byte [] data) {
+		try {
+
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			String secret = System.getenv("FACTION_SECRET_KEY");
+			byte[] hash = md.digest(secret.getBytes());
+			char[] b64hash = Base64.encodeBase64String(hash).toCharArray();
+
+			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+			KeySpec spec = new PBEKeySpec(b64hash, "f04ce910-bedb-4d8f-a023-4d2441dc0fba".getBytes(), 65536, 256);
+			SecretKey tmp = factory.generateSecret(spec);
+			SecretKey SecKey = new SecretKeySpec(tmp.getEncoded(), "AES");
+
+			Cipher AesCipher = Cipher.getInstance("AES");
+
+
+			AesCipher.init(Cipher.ENCRYPT_MODE, SecKey);
+			byte[] byteCipherText = AesCipher.doFinal(data);
 
 			return Base64.encodeBase64String(byteCipherText);
 

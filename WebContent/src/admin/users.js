@@ -314,6 +314,32 @@ $(function() {
 		});
 
 	});
+	function saml2Save(callback){
+		let pdata = "saml2MetaUrl=" + $("#saml2MetaUrl").val();
+		pdata += "&_token=" + global._token;
+		$.post("SaveSAML2", pdata, function(data) {
+			global._token = data.token;
+			callback(data)
+		});
+		
+	}
+	$("#saml2Save").on('click', function() {
+		saml2Save( (data) => {
+			global._token = data.token;
+			if (data.result == "success") {
+				$.alert("SAML2 Settings Saved");
+			} else {
+				$.confirm({
+					title: "Error",
+					content: data.message,
+					buttons: {
+						"OK": function() { return; }
+					}
+				});
+			}
+		});
+
+	});
 	$("#uname").autoComplete({
 		minLength: 2,
 		cache: false,

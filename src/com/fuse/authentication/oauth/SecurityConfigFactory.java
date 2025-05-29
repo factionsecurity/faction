@@ -19,8 +19,9 @@ import java.util.Optional;
 import javax.persistence.EntityManager;
 
 public class SecurityConfigFactory implements ConfigFactory {
-    private static final OidcClient oidcClient = new OidcClient();
-    private static final SAML2Client saml2Client = new SAML2Client();
+    private static volatile OidcClient oidcClient = new OidcClient();
+    private static volatile SAML2Client saml2Client = new SAML2Client();
+    private static volatile Config currentConfig;
     
 	public static OidcClient getOidcClientInstance() {
 		return oidcClient;
@@ -28,7 +29,21 @@ public class SecurityConfigFactory implements ConfigFactory {
 	public static SAML2Client getSAML2ClientInstance() {
 		return saml2Client;
 	}
-    
+	
+	public static Config getCurrentConfig() {
+        if (currentConfig == null) {
+            synchronized (SecurityConfigFactory.class) {
+                if (currentConfig == null) {
+                    currentConfig = new SecurityConfigFactory().build();
+                }
+            }
+        }
+        return currentConfig;
+    }
+	
+	public static void refreshConfig() {
+		currentConfig = new SecurityConfigFactory().build();
+	}
 
     @Override
     public Config build(final Object... parameters) {
@@ -38,32 +53,12 @@ public class SecurityConfigFactory implements ConfigFactory {
 		if(ss == null) {
 			ss = new SystemSettings();
 		}
-		final OidcConfiguration oidcConfiguration = ss.getOdicConfig();
-		SAML2Configuration saml2Configuration;
-		try {
-			saml2Configuration = ss.getSAML2Config();
-			saml2Client.setConfiguration(saml2Configuration);
-			saml2Client.setAuthorizationGenerator((ctx, profile) -> {
-				profile.addRole("ROLE_USER");
-				return Optional.of(profile);
-			});
-		} catch (MalformedURLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		
+		Clients clients = ss.updateSSOClients(oidcClient, saml2Client);
+		currentConfig = new Config(clients);
 		em.close();
-		oidcClient.setConfiguration(oidcConfiguration);
-		oidcClient.setAuthorizationGenerator((ctx, profile) -> {
-			profile.addRole("ROLE_USER");
-			return Optional.of(profile);
-		});
-
-        final Clients clientsbk = new Clients(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback",
-                oidcClient,  new AnonymousClient());
         
-        final Clients clients = new Clients(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback",
-                saml2Client,  new AnonymousClient());
-        return new Config(clients);
+        return currentConfig;
     }
     
 }

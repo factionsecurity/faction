@@ -226,6 +226,22 @@
 						</div>
 					</div>
 				</div>
+				<div class="row">
+					<div class="box box-primary">
+						<div class="box-header with-border">
+							<h3 class="box-title">SAML2 Configuration</h3>
+						</div>
+						<div class="box-body">
+							<div class="row">
+								<bs:inputgroup name="App Federation Metadata Url" colsize="12" id="saml2MetaUrl"
+									placeholder=""><s:property value="saml2MetaUrl" /></bs:inputgroup>
+								<bs:button color="primary" id="saml2Save" text="Save" size="md"
+									colsize="4" addlabel="true"></bs:button>
+							</div>
+
+						</div>
+					</div>
+				</div>
 			</div>
 
 
@@ -285,6 +301,7 @@
 											<option value="Native">Native</option>
 											<option value="LDAP">LDAP</option>
 											<option value="OAUTH2.0">OAUTH 2.0</option>
+											<option value="SAML2">SAML2</option>
 										</select>
 									</div>
 									<div class="form-group">

@@ -8,6 +8,7 @@ import java.io.IOException;
 
 @WebFilter(filterName = "corsFilter")
 public class CorsFilter implements Filter {
+	
 
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain chain)
