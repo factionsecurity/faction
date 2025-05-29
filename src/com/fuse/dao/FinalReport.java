@@ -37,7 +37,7 @@ public class FinalReport{
 	private String fileType;
 	private Boolean largeFile=false;
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<FinalReportPart>parts;
+	private List<FinalReportPart>parts = new ArrayList<>();
 	
 	public Long getId() {
 		return id;
@@ -61,6 +61,8 @@ public class FinalReport{
 	public void setBase64EncodedPdf(String base64EncodedPdf) {
 		if(this.parts != null) {
 			this.parts.clear();
+		}else {
+			
 		}
 		if(base64EncodedPdf != null && base64EncodedPdf.length() > 15_000_000) {
 			this.largeFile=true;
