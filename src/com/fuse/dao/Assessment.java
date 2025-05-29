@@ -21,6 +21,9 @@ import javax.persistence.TableGenerator;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
 import com.fuse.utils.FSUtils;
 
 @Entity
@@ -55,8 +58,10 @@ public class Assessment {
 	@ManyToOne
 	private AssessmentType type;
 	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	@NotFound(action = NotFoundAction.IGNORE)
 	private FinalReport finalReport;
 	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	@NotFound(action = NotFoundAction.IGNORE)
 	private FinalReport retestReport;
 	@ManyToOne
 	private Campaign campaign;
