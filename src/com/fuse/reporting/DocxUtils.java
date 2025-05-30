@@ -53,6 +53,7 @@ import com.fuse.dao.Assessment;
 import com.fuse.dao.CheckListAnswers;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.Image;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
@@ -502,6 +503,7 @@ public class DocxUtils {
 		try {
 			value = value.replaceAll("\n", "<br />");
 			value = value.replaceAll("</p><p><br /></p><p>", "<br /></p><p>");
+			value = this.replaceImageLinks(value);
 
 			List<Object> converted = xhtml.convert(
 							"<!DOCTYPE html><html><head>"
@@ -829,6 +831,8 @@ public class DocxUtils {
 		content = content.replaceAll("\\$\\{totalOpenVulns\\}", this.getTotalOpenVulns(this.assessment.getVulns()));
 		content = content.replaceAll("\\$\\{totalClosedVulns\\}", this.getTotalClosedVulns(this.assessment.getVulns()));
 		
+		content = this.replaceImageLinks(content);
+		
 		//Run extensions
 		if(this.reportExtension.isExtended()) {
 			content = this.reportExtension.updateReport(this.assessment, content);
@@ -841,6 +845,17 @@ public class DocxUtils {
 		content = FSUtils.jtidy(content);
 		return content;
 
+	}
+	
+	private String replaceImageLinks(String text) {
+		Long aid= this.assessment.getId();
+		String matchPrefix = "getImage\\?id(=|&#61;)" + aid + ":";
+		for(Image img : this.assessment.getImages()) {
+			String matchStr = matchPrefix + img.getGuid();
+			text = text.replaceAll( matchStr, img.getBase64Image());
+		}
+		return text;
+		
 	}
 
 	private void setFindings(String section, String customCSS)

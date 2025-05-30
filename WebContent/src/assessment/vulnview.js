@@ -237,27 +237,75 @@ class VulnerablilityView {
 				el: document.querySelector('#description'),
 				previewStyle: 'vertical',
 				height: '600px',
-				autofocus: false
+				autofocus: false,
+				hooks: {
+					addImageBlobHook: async (blob,callback, source)=>{
+						const encodedImage = await imageToURL(blob)
+						let data = "encodedImage=" + encodeURIComponent(encodedImage);
+						data += "&assessmentId="+$("#appid")[0].value;
+						$.post("UploadImage",data).done(function(resp) {
+							let uuid = resp.message;
+							callback("getImage?id=" + uuid);
+						});
+							
+					}
+				}
 			});
 			
 		this.editors.recommendation =  new Editor({
 				el: document.querySelector('#recommendation'),
 				previewStyle: 'vertical',
 				height: '600px',
-				autofocus: false
+				autofocus: false,
+				hooks: {
+					addImageBlobHook: async (blob,callback, source)=>{
+						const encodedImage = await imageToURL(blob)
+						let data = "encodedImage=" + encodeURIComponent(encodedImage);
+						data += "&assessmentId="+$("#appid")[0].value;
+						$.post("UploadImage",data).done(function(resp) {
+							let uuid = resp.message;
+							callback("getImage?id=" + uuid);
+						});
+							
+					}
+				}
 			});
 		this.editors.details = new Editor({
 				el: document.querySelector('#details'),
 				previewStyle: 'vertical',
 				height: '600px',
-				autofocus: false
+				autofocus: false,
+				hooks: {
+					addImageBlobHook: async (blob,callback, source)=>{
+						const encodedImage = await imageToURL(blob)
+						let data = "encodedImage=" + encodeURIComponent(encodedImage);
+						data += "&assessmentId="+$("#appid")[0].value;
+						$.post("UploadImage",data).done(function(resp) {
+							let uuid = resp.message;
+							callback("getImage?id=" + uuid);
+						});
+							
+					}
+				}
 			});
 		const initialHTML = entityDecode($("#notes").html());
 		this.editors.notes = new Editor({
 				el: document.querySelector('#notes'),
 				previewStyle: 'vertical',
 				height: '600px',
-				autofocus: false
+				autofocus: false,
+				hooks: {
+					addImageBlobHook: async (blob,callback, source)=>{
+						const encodedImage = await imageToURL(blob)
+						let data = "encodedImage=" + encodeURIComponent(encodedImage);
+						data += "&assessmentId="+$("#appid")[0].value;
+						$.post("UploadImage",data).done(function(resp) {
+							let uuid = resp.message;
+							callback("getImage?id=" + uuid);
+						});
+							
+					}
+				}
 			});
 		this.editors.notes.hide();
 		this.editors.notes.setHTML(initialHTML, false);
@@ -1102,7 +1150,19 @@ class VulnerablilityView {
 				previewStyle: 'vertical',
 				height: '600px',
 				autofocus: false,
-				plugins: [colorSyntax, tableMergedCell]
+				plugins: [colorSyntax, tableMergedCell],
+				hooks: {
+					addImageBlobHook: async (blob,callback, source)=>{
+						const encodedImage = await imageToURL(blob)
+						let data = "encodedImage=" + encodeURIComponent(encodedImage);
+						data += "&assessmentId="+$("#appid")[0].value;
+						$.post("UploadImage",data).done(function(resp) {
+							let uuid = resp.message;
+							callback("getImage?id=" + uuid);
+						});
+							
+					}
+				}
 			});
 		}
 		this.editors[type].hide();	

@@ -209,7 +209,19 @@ function createEditor(id){
 				height: 'auto',
 				autofocus: false,
 				height: '560px',
-				plugins: [colorSyntax, tableMergedCell]
+				plugins: [colorSyntax, tableMergedCell],
+				hooks: {
+					addImageBlobHook: async (blob,callback, source)=>{
+						const encodedImage = await imageToURL(blob)
+						let data = "encodedImage=" + encodeURIComponent(encodedImage);
+						data += "&assessmentId="+$("#appid")[0].value;
+						$.post("UploadImage",data).done(function(resp) {
+							let uuid = resp.message;
+							callback("getImage?id=" + uuid);
+						});
+							
+					}
+				}
 			});
 	editors[id].hide();
 	editors[id].setHTML(initialHTML[id], false);
