@@ -79,6 +79,7 @@ class AssessmentStats {
 
 	createCharts() {
 		this.requestStats((resp) => {
+			try{
 			const vulns = resp.data.vulns;
 			const categories = resp.data.categories;
 			this.severityNames= resp.data.severityNames;
@@ -93,6 +94,9 @@ class AssessmentStats {
 			resp.data.colors.forEach( (color, _index) => this.allColors.push(color+"22"));
 			this.createBarChart(vulns)
 			this.createPieChart(categories)
+			}catch(e){
+				console.log(e)
+			}
 			
 		})
 		
@@ -100,6 +104,7 @@ class AssessmentStats {
 	
 	updateAllStats(){
 		this.requestStats( (resp) => {
+			try{
 			const vulns = resp.data.vulns;
 			let categories = resp.data.categories;
 			if(categories.length == 0){
@@ -118,6 +123,9 @@ class AssessmentStats {
 			this.vulnBarChart.data.datasets[0].data = vulnDataset;
 
 			this.vulnBarChart.update();
+			}catch(e){
+				console.log(e)
+			}
 			
 		});
 	}

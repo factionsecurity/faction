@@ -9,6 +9,13 @@
 		<filter-name>corsFilter</filter-name>
 		<url-pattern>/oauth/*</url-pattern>
 	</filter-mapping>
+	
+	
+	<filter-mapping>
+		<filter-name>callbackFilter</filter-name>
+		<url-pattern>/oauth/callback</url-pattern>
+		<dispatcher>REQUEST</dispatcher>
+	</filter-mapping>
 	<filter>
 		<filter-name>callbackFilter</filter-name>
 		<filter-class>org.pac4j.jee.filter.CallbackFilter</filter-class>
@@ -25,10 +32,13 @@
 			<param-value>true</param-value>
 		</init-param>
 	</filter>
+	
+	
 	<filter-mapping>
-		<filter-name>callbackFilter</filter-name>
-		<url-pattern>/oauth/callback</url-pattern>
+		<filter-name>OidcFilter</filter-name>
+		<url-pattern>/oauth/*</url-pattern>
 		<dispatcher>REQUEST</dispatcher>
+		<dispatcher>FORWARD</dispatcher>
 	</filter-mapping>
 	<filter>
 		<filter-name>OidcFilter</filter-name>
@@ -46,12 +56,56 @@
 			<param-value>isAuthenticated</param-value>
 		</init-param>
 	</filter>
+	
 	<filter-mapping>
-		<filter-name>OidcFilter</filter-name>
-		<url-pattern>/oauth/*</url-pattern>
+		<filter-name>corsFilter</filter-name>
+		<url-pattern>/saml2/*</url-pattern>
+	</filter-mapping>
+	
+	<filter-mapping>
+		<filter-name>saml2Callback</filter-name>
+		<url-pattern>/saml2/callback</url-pattern>
+		<dispatcher>REQUEST</dispatcher>
+	</filter-mapping>
+	<filter>
+		<filter-name>saml2Callback</filter-name>
+		<filter-class>org.pac4j.jee.filter.CallbackFilter</filter-class>
+		<init-param>
+			<param-name>defaultUrl</param-name>
+			<param-value>/saml2</param-value>
+		</init-param>
+		<init-param>
+			<param-name>renewSession</param-name>
+			<param-value>true</param-value>
+		</init-param>
+		<init-param>
+			<param-name>multiProfile</param-name>
+			<param-value>true</param-value>
+		</init-param>
+	</filter>
+	
+	<filter-mapping>
+		<filter-name>Saml2SecurityFilter</filter-name>
+		<url-pattern>/saml2/*</url-pattern>
 		<dispatcher>REQUEST</dispatcher>
 		<dispatcher>FORWARD</dispatcher>
 	</filter-mapping>
+	<filter>
+		<filter-name>Saml2SecurityFilter</filter-name>
+		<filter-class>com.fuse.authentication.oauth.SecurityFilterWrapper</filter-class>
+		<init-param>
+			<param-name>configFactory</param-name>
+			<param-value>com.fuse.authentication.oauth.SecurityConfigFactory</param-value>
+		</init-param>
+		<init-param>
+			<param-name>clients</param-name>
+			<param-value>saml2Client</param-value>
+		</init-param>
+		<init-param>
+			<param-name>authorizers</param-name>
+			<param-value>isAuthenticated</param-value>
+		</init-param>
+	</filter>
 
 
 

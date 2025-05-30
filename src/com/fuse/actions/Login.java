@@ -79,6 +79,7 @@ public class Login extends FSActionSupport {
 	@Action(value = "index", results = { @Result(name = "createAccount", location = "/WEB-INF/jsp/newInstance.jsp"),
 			@Result(name = "failedAuth", location = "/index.jsp"),
 			@Result(name = "redirect_to_oauth", location = "/oauth"),
+			@Result(name = "redirect_to_saml2", location = "saml2"),
 			@Result(name = "assessorQueue", type = "redirectAction", location = "portal/Dashboard"),
 			@Result(name = "engagement", type = "redirectAction", location = "portal/Engagement"),
 			@Result(name = "admin", type = "redirectAction", location = "portal/Users"),
@@ -146,6 +147,9 @@ public class Login extends FSActionSupport {
 			} else if (result == AuthResult.REDIRECT_OAUTH) {
 				Map<String,String[]> map = request.getParameterMap();
 				return "redirect_to_oauth";
+			} else if (result == AuthResult.REDIRECT_SAML2) {
+				Map<String,String[]> map = request.getParameterMap();
+				return "redirect_to_saml2";
 			}else if (result == AuthResult.NOT_VALID_OAUTH_ACCOUNT) {
 				failed = true;
 				message = "Not a valid OAuth User. Try another account or contact the administrator.";

@@ -27,7 +27,7 @@ import com.fuse.dao.User;
 public class AccessControl {
 
 	public static enum AuthResult {
-		FAILED_AUTH, LOCKEDOUT, NOACCOUNT, SUCCESS, INACTIVITY, REDIRECT_OAUTH, NOT_VALID_OAUTH_ACCOUNT
+		FAILED_AUTH, LOCKEDOUT, NOACCOUNT, SUCCESS, INACTIVITY, REDIRECT_OAUTH, NOT_VALID_OAUTH_ACCOUNT, REDIRECT_SAML2
 	}
 
 	public static boolean isNewInstance(EntityManager em) {
@@ -73,6 +73,23 @@ public class AccessControl {
 		if( profiles != null && profiles.size() > 0) {
 			for(UserProfile profile : profiles) {
 				String email = (String) profile.getAttribute("email");
+				if (email == null) {
+				    email = (String) profile.getAttribute("EmailAddress");
+				}
+				if (email == null) {
+				    Object attribute = profile.getAttribute("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
+				    if(attribute != null) {
+				    	if (attribute instanceof String) {
+				            email = (String) attribute;
+				        } else if (attribute instanceof List) {
+				            List<?> list = (List<?>) attribute;
+				            if (!list.isEmpty() && list.get(0) instanceof String) {
+				                email = (String) list.get(0);
+				            }
+				        }
+				    	
+				    }
+				}
 				
 				if(email != null) {
 					String query = String.format("{'email': {$regex: '^%s$', $options: 'i'}}",FSUtils.sanitizeMongo(email));
@@ -121,6 +138,9 @@ public class AccessControl {
 		// redirect to OAUTH
 		if(tmp.getAuthMethod().equals("OAUTH2.0")) {
 			return AuthResult.REDIRECT_OAUTH;
+		// redirect SAML
+		}else if(tmp.getAuthMethod().equals("SAML2")) {
+			return AuthResult.REDIRECT_SAML2;
 		// Validate LDAP
 		}else if (tmp.getAuthMethod().equals("LDAP")) {
 			LDAPValidator ldapValidator = new LDAPValidator(ems.getLdapURL(), ems.getLdapBaseDn(),
