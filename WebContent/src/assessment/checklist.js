@@ -20,7 +20,9 @@ global.addQuestion = function addQuestion(el){
 			  let id = resp.id;
 			  $("#questionTable").DataTable().row.add(
 					  [ id, 
-						  "<textarea class='form-control' style='min-width: 100%' id='q" + id +"'>"+$($("<div />").html($("#newQuest").val())).text()+"</textarea>", 
+						  "<textarea class='form-control' style='min-width: 100%' id='q" 
+						  + id +"'>"
+						  +$($("<div />").html( entityEncode($("#newQuest").val()) )).text()+"</textarea>", 
 						  "<button class='btn btn-primary' onclick='saveQuestion("+ id + ")'><span class='fa fa-save'></span></button> <button class='btn btn-danger' onclick='deleteQuestion(this," + $("#list").val() +"," + id +")'><span class='fa fa-trash'></span></button>"]
 			).draw();
 			$("#newQuest").val("");

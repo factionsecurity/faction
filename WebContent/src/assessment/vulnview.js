@@ -600,7 +600,7 @@ class VulnerablilityView {
 					if ($(el).find(".userEdit").length == 0) {
 						let vulnName = $(el).find(".vulnName")[0].outerHTML;
 						vulnName = vulnName + "<span class='userEdit'>" + vuln.lockby + " is making changes</span>";
-						$(el).find(".vulnName")[0].outerHTML = vulnName;
+						$(el).find(".vulnName")[0].outerHTML = (vulnName);
 					}
 				}
 			});
@@ -650,8 +650,8 @@ class VulnerablilityView {
 					let severity = $(row[0]).find(".severity")[0].innerHTML;
 					//Titles or severity was changed by another user. 
 					// update the table an resort it
-					if (vulnName != this.b64DecodeUnicode(vuln.title)) {
-						$(row[0]).find(".vulnName")[0].innerHTML = this.b64DecodeUnicode(vuln.title);
+					if (vulnName != entityEncode(this.b64DecodeUnicode(vuln.title))) {
+						$(row[0]).find(".vulnName")[0].innerHTML = entityEncode(this.b64DecodeUnicode(vuln.title));
 					}
 					if (category != vuln.category) {
 						$(row[0]).find(".category")[0].innerHTML = vuln.category;
@@ -1184,7 +1184,7 @@ class VulnerablilityView {
 		let _this = this;
 		$("#vulnForm").removeClass("disabled");
 		$.get('AddVulnerability?vulnid=' + id + '&action=get').done(function(data) {
-			$("#title").val($("<div/>").html(_this.b64DecodeUnicode(data.name)).text());
+			$("#title").val($("<div/>").html(entityEncode(_this.b64DecodeUnicode(data.name))).text());
 			$("#cvssString").val($("<div/>").html(data.cvssString).text())
 			let vector = _this.cvss.updateCVSSString(data.cvssString);
 			_this.cvss.updateCVSSScore(vector);
