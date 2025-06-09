@@ -9,8 +9,6 @@
 		<filter-name>corsFilter</filter-name>
 		<url-pattern>/oauth/*</url-pattern>
 	</filter-mapping>
-	
-	
 	<filter-mapping>
 		<filter-name>callbackFilter</filter-name>
 		<url-pattern>/oauth/callback</url-pattern>
@@ -18,19 +16,7 @@
 	</filter-mapping>
 	<filter>
 		<filter-name>callbackFilter</filter-name>
-		<filter-class>org.pac4j.jee.filter.CallbackFilter</filter-class>
-		<init-param>
-			<param-name>defaultUrl</param-name>
-			<param-value>/oauth</param-value>
-		</init-param>
-		<init-param>
-			<param-name>renewSession</param-name>
-			<param-value>true</param-value>
-		</init-param>
-		<init-param>
-			<param-name>multiProfile</param-name>
-			<param-value>true</param-value>
-		</init-param>
+		<filter-class>com.fuse.authentication.oauth.OIDCCallbackFilterWrapper</filter-class>
 	</filter>
 	
 	
@@ -69,19 +55,7 @@
 	</filter-mapping>
 	<filter>
 		<filter-name>saml2Callback</filter-name>
-		<filter-class>org.pac4j.jee.filter.CallbackFilter</filter-class>
-		<init-param>
-			<param-name>defaultUrl</param-name>
-			<param-value>/saml2</param-value>
-		</init-param>
-		<init-param>
-			<param-name>renewSession</param-name>
-			<param-value>true</param-value>
-		</init-param>
-		<init-param>
-			<param-name>multiProfile</param-name>
-			<param-value>true</param-value>
-		</init-param>
+		<filter-class>com.fuse.authentication.oauth.SAML2CallbackFilterWrapper</filter-class>
 	</filter>
 	
 	<filter-mapping>

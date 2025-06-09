@@ -11,6 +11,7 @@ import org.apache.struts2.convention.annotation.Result;
 
 import com.fuse.actions.FSActionSupport;
 import com.fuse.authentication.LDAPValidator;
+import com.fuse.authentication.oauth.SecurityConfigFactory;
 import com.fuse.dao.APIKeys;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
@@ -723,7 +724,8 @@ public class Users extends FSActionSupport {
 		em.persist(settings);
 		HibHelper.getInstance().commit();
 		//update the odic config in the filter
-		settings.updateSSOFilters();
+		//settings.updateSSOFilters();
+		SecurityConfigFactory.refreshConfig();
 		
 		return this.SUCCESSJSON;
 	}
@@ -744,7 +746,7 @@ public class Users extends FSActionSupport {
 		em.joinTransaction();
 		em.persist(settings);
 		HibHelper.getInstance().commit();
-		settings.updateSSOFilters();
+		SecurityConfigFactory.refreshConfig();
 		
 		return this.SUCCESSJSON;
 	}

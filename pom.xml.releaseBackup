@@ -1,8 +1,10 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.faction</groupId>
 	<artifactId>faction</artifactId>
-	<version>1.4.3-SNAPSHOT</version>
+	<version>1.5.2-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>Faction</name>
 	<scm>
@@ -249,7 +251,7 @@
 		<dependency>
 			<groupId>com.factionsecurity</groupId>
 			<artifactId>faction-extender</artifactId>
-			<version>2.5</version>
+			<version>2.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.docx4j</groupId>
@@ -387,6 +389,11 @@
 			<version>4.5.7</version>
 		</dependency>
 		<dependency>
+			<groupId>org.pac4j</groupId>
+			<artifactId>pac4j-saml</artifactId>
+			<version>4.5.7</version>
+		</dependency>
+		<dependency>
 			<groupId>org.commonmark</groupId>
 			<artifactId>commonmark</artifactId>
 			<version>0.21.0</version>
@@ -435,7 +442,17 @@
 			<artifactId>faction-reporting</artifactId>
 			<version>1.0</version>
 			<scope>system</scope>
-            <systemPath>${basedir}/WebContent/WEB-INF/lib/faction-reporting.jar</systemPath>
+			<systemPath>${basedir}/WebContent/WEB-INF/lib/faction-reporting.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.70</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk15on</artifactId>
+			<version>1.70</version>
 		</dependency>
 	</dependencies>
 	<dependencyManagement>

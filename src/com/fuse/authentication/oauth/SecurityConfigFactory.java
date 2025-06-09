@@ -19,16 +19,8 @@ import java.util.Optional;
 import javax.persistence.EntityManager;
 
 public class SecurityConfigFactory implements ConfigFactory {
-    private static volatile OidcClient oidcClient = new OidcClient();
-    private static volatile SAML2Client saml2Client = new SAML2Client();
     private static volatile Config currentConfig;
     
-	public static OidcClient getOidcClientInstance() {
-		return oidcClient;
-	}
-	public static SAML2Client getSAML2ClientInstance() {
-		return saml2Client;
-	}
 	
 	public static Config getCurrentConfig() {
         if (currentConfig == null) {
@@ -54,7 +46,7 @@ public class SecurityConfigFactory implements ConfigFactory {
 			ss = new SystemSettings();
 		}
 		
-		Clients clients = ss.updateSSOClients(oidcClient, saml2Client);
+		Clients clients = ss.updateSSOClients(new OidcClient(), new SAML2Client());
 		currentConfig = new Config(clients);
 		em.close();
         

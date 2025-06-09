@@ -573,15 +573,15 @@ public class SystemSettings {
 		return FSUtils.decryptPassword(this.keystorePassword);
 	}
 	
-	@Transient
+	/*@Transient
 	public void updateSSOFilters() {
 		OidcClient oidcClient = new OidcClient();
 		SAML2Client saml2Client = new SAML2Client();
 		Clients clients = updateSSOClients(oidcClient, saml2Client);
 		SecurityFilterWrapper.getInstance().setConfigOnly(new Config(clients));
-		SecurityConfigFactory.refreshConfig();
+		//SecurityConfigFactory.refreshConfig();
 		
-	}
+	}*/
 	@Transient
 	public Clients updateSSOClients( OidcClient oidcClient, SAML2Client saml2Client) {
 		LinkedList<Client> clients = new LinkedList<>();
@@ -593,6 +593,7 @@ public class SystemSettings {
 			});
 			oidcClient.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback");
 			oidcClient.init();
+			
 			clients.add(oidcClient);
 		}catch(Exception ex) {
 			System.out.println(ex);
@@ -605,7 +606,7 @@ public class SystemSettings {
 			});
 			
 			saml2Client.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
-			saml2Client.init();
+			//saml2Client.init();
 			clients.add(saml2Client);
 		}catch(Exception ex) {
 			System.out.println(ex);
@@ -613,6 +614,7 @@ public class SystemSettings {
 		
 		Clients configuredClients = new Clients();
 		configuredClients.setClients(clients);
+		configuredClients.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback");
 		return configuredClients;
 		
 		
@@ -630,7 +632,7 @@ public class SystemSettings {
         //config.setMaxAge(10);
         config.addCustomParam("display", "popup");
         //config.addCustomParam("prompt", "select_account");
-        config.init();
+        //config.init();
         return config;
 	}
 	
