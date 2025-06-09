@@ -10,6 +10,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -24,7 +25,9 @@ import javax.persistence.Transient;
 
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.pac4j.core.client.Client;
 import org.pac4j.core.client.Clients;
+import org.pac4j.core.client.direct.AnonymousClient;
 import org.pac4j.core.config.Config;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
@@ -581,6 +584,7 @@ public class SystemSettings {
 	}
 	@Transient
 	public Clients updateSSOClients( OidcClient oidcClient, SAML2Client saml2Client) {
+		LinkedList<Client> clients = new LinkedList<>();
 		try {
 			oidcClient.setConfiguration(getOdicConfig());
 			oidcClient.setAuthorizationGenerator((ctx, profile) -> {
@@ -589,6 +593,7 @@ public class SystemSettings {
 			});
 			oidcClient.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback");
 			oidcClient.init();
+			clients.add(oidcClient);
 		}catch(Exception ex) {
 			System.out.println(ex);
 		}
@@ -601,11 +606,16 @@ public class SystemSettings {
 			
 			saml2Client.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
 			saml2Client.init();
+			clients.add(saml2Client);
 		}catch(Exception ex) {
 			System.out.println(ex);
 		}
-		return new Clients(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback",
-				oidcClient, saml2Client);
+		
+		Clients configuredClients = new Clients();
+		configuredClients.setClients(clients);
+		return configuredClients;
+		
+		
 	}
 
 

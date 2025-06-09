@@ -154,6 +154,14 @@ public class Login extends FSActionSupport {
 				failed = true;
 				message = "Not a valid OAuth User. Try another account or contact the administrator.";
 				return "failedAuth";
+			}else if (result == AuthResult.NOT_VALID_EMAIL) {
+				failed = true;
+				message = "Claims did not include email address.";
+				return "failedAuth";
+			}else if (result == AuthResult.DUPLICATE_USERS) {
+				failed = true;
+				message = "More than one user exists with this email address.";
+				return "failedAuth";
 			} else {
 				HibHelper.getInstance().preJoin();
 				em.joinTransaction();
