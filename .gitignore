@@ -11,6 +11,7 @@ vtrack-os/\.settings/org\.eclipse\.wst\.common\.project\.facet\.core\.xml
 workspace
 node_modules
 target
+target_test-classes
 bin
 vtrack-os/WebContent/WEB-INF/lib
 vtrack-os/WebContent/WEB-INF/classes
