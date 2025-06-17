@@ -7,6 +7,7 @@
 	<constant name="struts.multipart.maxSize" value="1000000000"/>
 	<constant name="struts.i18n.reload" value="true" />
 	<constant name="struts.locale" value="en_US" />
+	<constant name="struts.convention.action.packages" value="com.fuse.enterprise.actions,com.fuse.actions.*"/>
     <package name="default" namespace="/" extends="struts-default">
       <interceptors>
       	 <interceptor name="staticParams" class="com.opensymphony.xwork2.interceptor.StaticParametersInterceptor"/>
@@ -46,15 +47,14 @@
             <exception-mapping exception="java.lang.Exception" result="error"/>
         </global-exception-mappings>
         
-		
-
     </package>
-     <constant name="struts.convention.default.parent.package" value="default"/>
-     <constant name="struts.devMode" value="false" />
+    <constant name="struts.convention.default.parent.package" value="default"/>
+    <constant name="struts.devMode" value="false" />
 	<constant name="struts.csp.enable" value="false" />
 	<constant name="struts.csp.policy" value="default-src 'self'; script-src 'self'; style-src 'self'" />
 
     <!-- Add packages here -->
-     <constant name="struts.action.excludePattern" value="/(service|api)/.*"/>
+    <constant name="struts.action.excludePattern" value="/(service|api)/.*"/>
+    <include file="struts-overlays.xml"/>
 
 </struts>

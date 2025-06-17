@@ -150,7 +150,7 @@ public class Assessment {
 	}
 
 	public List<Vulnerability> getVulns() {
-		if(this.getType().isCvss31() || this.getType().isCvss40()) {
+		if( this.getType() !=  null && (this.getType().isCvss31() || this.getType().isCvss40())) {
 			Collections.sort( this.vulns, new Comparator<Vulnerability>() {
 				@Override
 				public int compare(Vulnerability v1, Vulnerability v2) {

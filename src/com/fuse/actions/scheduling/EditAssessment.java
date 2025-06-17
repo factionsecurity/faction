@@ -86,7 +86,7 @@ public class EditAssessment extends FSActionSupport {
 		campaigns = em.createQuery("from Campaign").getResultList();
 		List<User> tmp = new ArrayList(assessors);
 		for (User u : tmp) {
-			if (!u.getPermissions().isAssessor())
+			if (u.getPermissions() != null && !u.getPermissions().isAssessor())
 				assessors.remove(u);
 		}
 		SystemSettings ss = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
