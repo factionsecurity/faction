@@ -1,6 +1,8 @@
 package com.fuse.api;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -22,6 +24,8 @@ import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fuse.api.util.DateParam;
 import com.fuse.api.util.Support;
 import com.fuse.dao.Assessment;
@@ -37,7 +41,7 @@ import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.utils.FSUtils;
 
-
+import com.fasterxml.jackson.annotation.JsonInclude;
 import ch.qos.logback.core.pattern.parser.Node;
 
 import io.swagger.annotations.Api;
@@ -732,6 +736,55 @@ public class assessments {
 			} else {
 				return Support.autherror();
 			}
+		} finally {
+			em.close();
+		}
+
+	}
+	@POST
+	@ApiOperation(value = "Gets All Completed Assessments by Date", notes = "Gets all assessments by Date range", response = Assessment.class, responseContainer = "List")
+	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
+			@ApiResponse(code = 400, message = "Bad Request."),
+			@ApiResponse(code = 200, message = "Returns Vulnerability and Exploit Step Information") })
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/completed")
+	public Response getCompletedAssessments(
+			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
+			@ApiParam(value = "Start Date (DD/MM/YYYY)", required = true) @FormParam("start") String start,
+			@ApiParam(value = "End Date (DD/MM/YYYY)", required = false) @FormParam("end") String end
+		){
+		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+		JSONArray jarray = new JSONArray();
+		try {
+			User u = Support.getUser(em, apiKey);
+			if (u != null && (u.getPermissions().isManager())) {
+				 SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+				 Date startDate = null;
+				 Date endDate = null;
+				 
+				 try {
+					startDate = sdf.parse(start);
+					if(end != null) {
+						endDate = sdf.parse(end);
+					}
+				 }catch(Exception ex) {
+					 return Response.status(500).entity(String.format(Support.ERROR, "Invalid Date Fromat")).build();
+				 }
+				
+				List<Assessment> completed = AssessmentQueries.getAllCompletedAssessmentsByDateRange(em, u, startDate, endDate);
+				for(Assessment a : completed) {
+					AssessmentQueries.updateImages(a);
+				}
+				ObjectMapper mapper = new ObjectMapper();
+				mapper.setPropertyNamingStrategy(new CapitalizedNamingStrategy());
+		        String json = mapper.writeValueAsString(completed);
+		        return Response.status(200).entity(json).build();
+
+			} else {
+				return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+			}
+		} catch (JsonProcessingException e) {
+			return Response.status(500).entity(String.format(Support.ERROR, e.getMessage())).build();
 		} finally {
 			em.close();
 		}

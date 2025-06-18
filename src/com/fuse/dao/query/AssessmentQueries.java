@@ -1,6 +1,8 @@
 package com.fuse.dao.query;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -57,6 +59,7 @@ public class AssessmentQueries {
 	public static Assessment getAssessmentById(EntityManager em, Long id) {
 		return em.find(Assessment.class, id);
 	}
+	
 	public static List<Assessment>getAllAssessments(EntityManager em, User user, int assessmentType ){
 		
  		String query = "db.Assessment.find({ \"$query\" : {";
@@ -72,6 +75,40 @@ public class AssessmentQueries {
 		
 		
 		query +="}, \"$orderby\": { \"start\" : 1 }})";
+		List<Assessment> assessments = (List<Assessment>)em.createNativeQuery(
+				query, Assessment.class).getResultList();
+		
+		if(user.getPermissions().getAccessLevel() == Permissions.AccessLevelTeamOnly)
+			return (List<Assessment>)assessments.stream().filter(
+					a -> hasTeam(user,a) 
+					).collect(Collectors.toList()); 
+		else 
+			return assessments;
+		
+	}
+	
+	public static List<Assessment>getAllCompletedAssessmentsByDateRange(EntityManager em, User user, Date start, Date end){
+		
+ 		String query = "db.Assessment.find({";
+		if(!user.getPermissions().isManager() || user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
+			query += "\"assessor\" : "+user.getId() + "," ;
+		}
+		
+		
+		if(start == null) {
+			return new ArrayList();
+		}
+		if(end == null) {
+			end = new Date();
+		}
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+		String startStr = sdf.format(start);
+		String endStr = sdf.format(end);
+		
+		query += " \"completed\":{ \"$exists\": true, \"$gte\":ISODate(\""+ startStr +"\"), \"$lt\":ISODate(\"" +endStr +"\") }";
+		
+		
+		query +="})";
 		List<Assessment> assessments = (List<Assessment>)em.createNativeQuery(
 				query, Assessment.class).getResultList();
 		
@@ -330,12 +367,17 @@ public class AssessmentQueries {
 	}
 	
 	public static String replaceImageLinks(Assessment asmt, String text) {
+		if(text == null) {
+			return "";
+		}
+		
 		Long aid= asmt.getId();
 		String matchPrefix = "getImage\\?id(=|&#61;)" + aid + ":";
 		for(Image img : asmt.getImages()) {
 			String matchStr = matchPrefix + img.getGuid();
 			text = text.replaceAll( matchStr, img.getBase64Image());
 		}
+		
 		return text;
 		
 	}
