@@ -82,7 +82,6 @@ global.edit = function edit(id) {
 	$.post("GetUser", pdata, function(data) {
 		console.log(data)
 		$("#uname").val(data.username);
-		$("#uname").attr("disabled", "true");
 		if(data.authMethod != "Native"){
 			$("#fname").attr("disabled", "true");
 			$("#lname").attr("disabled", "true");
@@ -172,7 +171,7 @@ global.edit = function edit(id) {
 		$("#saveUser").on('click', function() {
 			pdata = permissionString();
 			pdata += "&userId=" + selectedUser;
-			//pdata +="&uname=" +  $("#uname").val();
+			pdata += "&username=" +  $("#uname").val();
 			pdata += "&fname=" + $("#fname").val();
 			pdata += "&lname=" + $("#lname").val();
 			pdata += "&email=" + encodeURIComponent($("#email").val());
@@ -182,10 +181,20 @@ global.edit = function edit(id) {
 			pdata += "&accesscontrol=" + $('input:radio[name=accesslevel]:checked').val();
 			pdata += "&update=true";
 			pdata += "&_token=" + _token;
-			$.post("UpdateUser", pdata, function(resp) {
-				global._token = resp.token;
-				$('#userModal').modal('hide');
-				alertRedirect(resp);
+			$.post("UpdateUser", pdata, function(data) {
+				global._token = data.token;
+				if (data.result == "success") {
+					$('#userModal').modal('hide');
+					alertRedirect(data);
+				} else {
+					$.confirm({
+						title: "Error",
+						content: data.message,
+						buttons: {
+							"OK": function() { return; }
+						}
+					});
+				}
 			});
 		});
 	}).fail(function(data) { console.log(data); });
