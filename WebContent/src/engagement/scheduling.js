@@ -176,6 +176,10 @@ $(function() {
 		readonly_select($(".select2"), true);
 	}
 	createEditor("notes")
+	$('[id^="rtCust"]').each( (_index,el)=>{
+		let id = el.id;
+		createEditor(id)
+	})
 	if(!finalized){
 
 		$('#reservation').daterangepicker({
@@ -342,6 +346,13 @@ function confirmAndPostIt(messages, index, size) {
 								val = $(el).is(':checked')
 							}
 								
+							let field = `{"id" : ${id}, "text" : "${val}"}`;
+							fields.push(field);
+						})
+						$('[id^="rtCust"]').each( (_index,el)=>{
+							let id = el.id;
+							id = id.replace('rtCust',"");
+							let val = encodeURIComponent(btoa(getEditorText("rtCust" + id)));
 							let field = `{"id" : ${id}, "text" : "${val}"}`;
 							fields.push(field);
 						})
@@ -523,6 +534,7 @@ $(function() {
 			$("#engName").val(json.engId).trigger("change");
 			$("#remName").val(json.remediationId).trigger("change");
 			$("[id^=cust]").val("");
+			$("[id^=rtCust]").val("");
 			$(json.fields).each(function(a, b) {
 				let el = $("#cust" + b.fid)
 				if(el.type == 'checkbox' && b.value == "true"){
@@ -531,7 +543,7 @@ $(function() {
 					$(el).prop('checked', false);
 				}else{
 					$(el).val(b.value);
-				}
+				}//TODO: add rtCust
 				
 			});
 

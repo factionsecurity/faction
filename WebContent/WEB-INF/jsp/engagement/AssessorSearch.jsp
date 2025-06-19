@@ -8,6 +8,9 @@
 #notes{
 	background-color: white;
 }
+div[id^='rtCust']{
+	background-color: white;
+}
 </style>
 
  
@@ -54,6 +57,7 @@
 		 </bs:select>
 		
 		 <s:iterator value="custom">
+			<s:if test="fieldType < 3">
 			 <bs:mco colsize="4">
 			 <div class="form-group">
 			     <label><s:property value="key"/>:</label>
@@ -84,6 +88,7 @@
 			       	</s:if>
 			   </div><!-- /.form group -->
 			 </bs:mco>
+			</s:if>
 		 </s:iterator>
 		 
 		 <bs:select name="Select Team: <b>*</b>" colsize="4" id="teamName" readOnly="${currentAssessment.isFinalized() }">
@@ -183,6 +188,19 @@
 	     <br>
      </bs:row>
      <br>
+	 <s:iterator value="custom">
+		<s:if test="fieldType == 3">
+		 <bs:mco colsize="12">
+			 <div class="form-group">
+				 <label><s:property value="key"/>:</label>
+					<div id="rtCust<s:property value="id"/>" <s:if test="currentAssessment.finalized">disabled</s:if> > 
+			       		<s:property value="defaultValue"/>
+					</div>
+			</div>
+		</bs:mco>
+		</s:if>
+		</s:iterator>
+			 
 </bs:mco> <!--  End of Top col -->
 
 <bs:mco colsize="6">

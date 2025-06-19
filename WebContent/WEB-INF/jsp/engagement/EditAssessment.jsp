@@ -133,6 +133,7 @@
     	<s:iterator value="currentAssessment.CustomFields">
     		<s:if test="type.fieldType == 1 && value == 'true'"> $("#cust${type.id}").prop('checked', true);</s:if>
     		<s:elseif test="type.fieldType == 1 && value == 'false'"> $("#cust${type.id}").prop('checked', false);</s:elseif>
+    		<s:elseif test="type.fieldType == 3"> $("#rtCust${type.id}").html(entityDecode("<s:property value="value"/>"))</s:elseif>
     		<s:else>$("#cust${type.id}").val("${value}");</s:else>
 			customFields.push(${type.id});
     	</s:iterator>
