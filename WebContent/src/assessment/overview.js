@@ -912,12 +912,10 @@ $(function() {
 		$('.nav-tabs a[href="' + location.hash + '"]').tab('show');
 	}
 	$("a").click(evt => {
-		if (evt.target.href.indexOf("Finalize") != -1) {
-			location.href = "#Finalize"
-		} else if (evt.target.href.indexOf("Summary") != -1) {
-			location.href = "#Summary"
-		} else if (evt.target.href.indexOf("History") != -1) {
-			location.href = "#History"
+		if (evt.target.href.indexOf("#") != -1) {
+			console.log("Here")
+			location.href = evt.target.href
 		}
+		
 	})
 });
