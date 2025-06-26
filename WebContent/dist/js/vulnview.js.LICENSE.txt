@@ -6,13 +6,6 @@
  */
 
 /*!
- * TOAST UI Editor : Code Syntax Highlight Plugin
- * @version 3.1.0 | Fri Aug 05 2022
- * @author NHN Cloud FE Development Lab <dl_javascript@nhn.com>
- * @license MIT
- */
-
-/*!
  * TOAST UI Editor : Color Syntax Plugin
  * @version 3.1.0 | Fri Aug 05 2022
  * @author NHN Cloud FE Development Lab <dl_javascript@nhn.com>

@@ -5194,3 +5194,6 @@ code {
     border-width: thin;
     border-style: solid;
 }
+.toastui-editor-defaultUI{
+    background-color: white;
+}
