@@ -1182,22 +1182,23 @@ class VulnerablilityView {
             }
             $(data.cf).each(function (a, b) {
                 let el = $("#type" + b.typeid);
-                if (el.length == 0)
-                    return;
+                if (el.length != 0){
 
-                if (el[0].type == 'checkbox' && b.value == 'true') {
-                    $(el).prop('checked', true);
-                }
-                else if (el[0].type == 'checkbox' && b.value == 'false') {
-                    $(el).prop('checked', false);
-                }
-                else if (el[0].type == 'input')
-                    $(el).val(b.value).trigger('change');
+					if (el[0].type == 'checkbox' && b.value == 'true') {
+						$(el).prop('checked', true);
+					}
+					else if (el[0].type == 'checkbox' && b.value == 'false') {
+						$(el).prop('checked', false);
+					}
+					else if (el[0].type == 'input')
+						$(el).val(b.value).trigger('change');
+                }else{
 
-                let rtId = `rtCust${b.typeid}`
-                if(rtId in _this.editors){
-                    setEditorContents(rtId, b.value, true)
-                }
+					let rtId = `rtCust${b.typeid}`
+					if(rtId in _this.editors){
+						_this.setEditorContents(rtId, b.value, true)
+					}
+				}
 
         });
         _this.enableAutoSave()
