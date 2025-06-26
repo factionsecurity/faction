@@ -1127,7 +1127,7 @@ class VulnerablilityView {
         	const rtId = this.id;
             _this.editors[rtId].on('change', function () {
 				let contents = _this.editors[rtId].getHTML()
-				_this.queue.push('vulnerability', _this.vulnId, rtId, encodeURIComponent(contents));
+				_this.queue.push('vulnerability', _this.vulnId, rtId.replace("rtCust", "type"), encodeURIComponent(contents));
         	});
         });
 
