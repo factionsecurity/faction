@@ -2,11 +2,6 @@ require('jquery-fileinput/fileinput.css');
 require('select2/dist/css/select2.min.css')
 require('./overview.css');
 require('../loading/css/jquery-loading.css');
-import Editor from '@toast-ui/editor';
-import colorSyntax from '@toast-ui/editor-plugin-color-syntax';
-import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
-import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell';
-import '@toast-ui/editor/dist/toastui-editor.css';
 import 'bootstrap';
 import 'datatables.net';
 import 'datatables.net-bs';
@@ -15,10 +10,11 @@ import 'jquery-confirm';
 import 'jquery-fileinput';
 import 'jquery-ui';
 import 'select2';
-import 'tui-color-picker/dist/tui-color-picker.css';
 import CVSS from '../cvss';
 import '../loading/js/jquery-loading';
 import '../scripts/jquery.autocomplete.min';
+import {FactionEditor} from '../utils/editor';
+
 
 class SaveQueue {
     constructor(caller, assessmentId, saveCallback, updateVulnsCallback) {
@@ -193,27 +189,6 @@ class EditLocks {
     }
 }
 
-function createEditor(editors, id) {
-    editors[id] = new Editor({
-        el: document.querySelector(`#${id}`),
-        previewStyle: 'vertical',
-        height: '600px',
-        autofocus: false,
-        hooks: {
-            addImageBlobHook: async (blob, callback, source) => {
-                const encodedImage = await imageToURL(blob)
-                let data = "encodedImage=" + encodeURIComponent(encodedImage);
-                data += "&assessmentId=" + $("#appid")[0].value;
-                $.post("UploadImage", data).done(function (resp) {
-                    let uuid = resp.message;
-                    callback("getImage?id=" + uuid);
-                });
-
-            }
-        }
-    });
-}
-
 
 class VulnerablilityView {
 
@@ -228,6 +203,7 @@ class VulnerablilityView {
         this.editorTimeout = {};
         this.clearLockTimeout = {};
         $(".select2").select2();
+		this.editors = new FactionEditor(assessmentId);
 
         this.vulntable = $('#vulntable').DataTable({
             "paging": false,
@@ -256,35 +232,22 @@ class VulnerablilityView {
         let _this = this;
         $('[id^="rtCust"]').each(function () {
             const id = $(this).attr('id')
-            createEditor(_this.editors, id)
+            _this.editors.createEditor(id,true);
         });
-        createEditor(this.editors, "description")
-        createEditor(this.editors, "recommendation")
-        createEditor(this.editors, "details")
+            _this.editors.createEditor("description",true);
+            _this.editors.createEditor("recommendation",true);
+            _this.editors.createEditor("details",true);
 
         const initialHTML = entityDecode($("#notes").html());
-        this.editors.notes = new Editor({
-            el: document.querySelector('#notes'),
-            previewStyle: 'vertical',
-            height: '600px',
-            autofocus: false,
-            hooks: {
-                addImageBlobHook: async (blob, callback, source) => {
-                    const encodedImage = await imageToURL(blob)
-                    let data = "encodedImage=" + encodeURIComponent(encodedImage);
-                    data += "&assessmentId=" + $("#appid")[0].value;
-                    $.post("UploadImage", data).done(function (resp) {
-                        let uuid = resp.message;
-                        callback("getImage?id=" + uuid);
-                    });
-
-                }
-            }
-        });
-        this.editors.notes.hide();
-        this.editors.notes.setHTML(initialHTML, false);
-        this.editors.notes.show();
-        this.setUpNoteChangeEvent();
+		this.editors.createEditor("notes",true, (param, editor) =>{
+            let noteId = "";
+            const selected = $(`#notebook option:selected`);
+            noteId = selected.val()
+            this.queue.push('note', noteId, 'noteText', encodeURIComponent(this.editors.getEditorText('notes')));
+		});
+        this.editors.hide("notes");
+        this.editors.setHTML("notes", initialHTML, false);
+        this.editors.show("notes");
         this.setUpVulnAutoComplete()
         this.is40 = $("#isCVSS40").val() == "true"
         this.is31 = $("#isCVSS31").val() == "true"
@@ -420,14 +383,6 @@ class VulnerablilityView {
 
 
     }
-    setUpNoteChangeEvent() {
-        this.editors.notes.on('change', () => {
-            let noteId = "";
-            const selected = $(`#notebook option:selected`);
-            noteId = selected.val()
-            this.queue.push('note', noteId, 'noteText', encodeURIComponent(this.getEditorText('notes')));
-        });
-    }
     getNote(id) {
         let _this = this;
         $.get('getNote?noteid=' + id)
@@ -436,14 +391,19 @@ class VulnerablilityView {
                 $("#createdAt").html(note.createdAt);
                 $("#updatedBy").html(note.updatedBy);
                 $("#updatedAt").html(note.updatedAt);
-                _this.setEditorContents("notes", entityDecode(note.note), true);
+        		_this.editors.recreateEditor("notes", note.note, true, true);
                 $("#noteName").val(note.name);
-                _this.setUpNoteChangeEvent();
+				_this.editors.setOnChangeCallBack("notes", () =>{
+					let noteId = "";
+					const selected = $(`#notebook option:selected`);
+					noteId = selected.val()
+					_this.queue.push('note', noteId, 'noteText', encodeURIComponent(_this.editors.getEditorText('notes')));
+				});
                 $("#notes").removeClass("disabled");
             });
     }
     getNoteFromEvent(event) {
-        this.editors.notes.off('change');
+        this.editors.changeOff("notes");
         let value = event.target.value;
         this.getNote(value);
     }
@@ -456,10 +416,6 @@ class VulnerablilityView {
     setIntVal(value, el) {
         $("#" + el).val(value).trigger("change");
     };
-    getEditorText(name) {
-        const html = this.editors[name].getHTML();
-        return Array.from($(html)).filter(a => a.innerHTML != "<br>").map(a => a.outerHTML).join("")
-    }
     updateColors() {
         const colors = ["#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"];
         const boxCount = $("#infobar").find("div.row").find("[class^=col-sm]").length;
@@ -714,8 +670,8 @@ class VulnerablilityView {
                 );
             },
             onSelect: function (e, term, item) {
-                let d = _this.getEditorText("description");
-                let r = _this.getEditorText("recommendation");
+                let d = _this.editors.getEditorText("description");
+                let r = _this.editors.getEditorText("recommendation");
                 const splits = term.split(" :: ");
                 $("#title").val(splits[1]);
                 $(".selected").find(".vulnName")[0].innerHTML = splits[1]
@@ -742,8 +698,8 @@ class VulnerablilityView {
                             "yes": function () {
                                 $.get('DefaultVulns?action=getvuln&vulnId=' + vulnid)
                                     .done(function (data) {
-                                        _this.setEditorContents("description", data.desc)
-                                        _this.setEditorContents("recommendation", data.rec)
+                                        _this.editors.setEditorContents("description", data.desc, true)
+                                        _this.editors.setEditorContents("recommendation", data.rec, true)
                                         _this.setIntVal(data.category, 'dcategory');
                                         let severity = ""
                                         if (_this.is40 && data.cvss40String != "") {
@@ -796,8 +752,8 @@ class VulnerablilityView {
                 } else {
                     $.get('DefaultVulns?action=getvuln&vulnId=' + vulnid)
                         .done(function (data) {
-                            _this.setEditorContents("description", data.desc)
-                            _this.setEditorContents("recommendation", data.rec)
+                            _this.editors.setEditorContents("description", data.desc, true)
+                            _this.editors.setEditorContents("recommendation", data.rec, true)
                             _this.setIntVal(data.category, 'dcategory');
                             let severity = ""
                             if (_this.is40 && data.cvss40String != "") {
@@ -991,12 +947,12 @@ class VulnerablilityView {
     deleteVulnForm() {
         this.disableAutoSave()
         $("#vulnForm").addClass("disabled")
-        this.setEditorContents("recommendation", "", true);
-        this.setEditorContents("details", "", true);
-        this.setEditorContents("description", "", true);
+        this.editors.recreateEditor("recommendation", "", true, true);
+        this.editors.recreateEditor("details", "", true, true);
+        this.editors.recreateEditor("description", "", true, true);
         let _this = this;
         $('[id^="rtCust"]').each(function () {
-            _this.setEditorContents(this.id, "", true);
+        	_this.editors.recreateEditor(this.id, "", true, true);
         });
 
         $('[id*="header"]').each((_a, h) => h.innerHTML = "");
@@ -1035,12 +991,12 @@ class VulnerablilityView {
     disableAutoSave() {
         $('[id*="header"]').each((_a, h) => h.innerHTML = "");
 
-        this.editors.recommendation.off('change');
-        this.editors.description.off('change')
-        this.editors.details.off('change')
+        this.editors.changeOff("recommendation")
+        this.editors.changeOff("description")
+        this.editors.changeOff("details")
         let _this = this
         $('[id^="rtCust"]').each(function () {
-            _this.editors[this.id].off('change')
+        	_this.editors.changeOff(this.id)
         });
         $("#title").unbind('input');
         $("#overall").unbind('input');
@@ -1055,7 +1011,7 @@ class VulnerablilityView {
 
     enableAutoSave() {
         let _this = this;
-        this.descUndoCount = 0;
+        /*this.descUndoCount = 0;
         /// This is a hack becuase toastui does not have inital undo history set correctly
         /// https://github.com/nhn/tui.editor/issues/3195
 
@@ -1065,19 +1021,18 @@ class VulnerablilityView {
                 e.preventDefault();
                 throw new Error("Prevent Undo");
             }
-        })
-
-        this.editors.description.on('change', function () {
-            _this.descUndoCount++;
-            let contents = _this.editors.description.getHTML()
+        })*/
+		this.editors.setOnChangeCallBack("description", () =>{
+            //_this.descUndoCount++;
+            let contents = _this.editors.getHTML("description");
             _this.queue.push('vulnerability', _this.vulnId, "description", encodeURIComponent(contents));
         });
-        this.editors.recommendation.on('change', function () {
-            let contents = _this.editors.recommendation.getHTML()
+		this.editors.setOnChangeCallBack("recommendation", () =>{
+            let contents = _this.editors.getHTML("recommendation")
             _this.queue.push('vulnerability', _this.vulnId, "recommendation", encodeURIComponent(contents));
         });
-        this.editors.details.on('change', function () {
-            let contents = _this.editors.details.getHTML()
+		this.editors.setOnChangeCallBack("details", () =>{
+            let contents = _this.editors.getHTML("details")
             _this.queue.push('vulnerability', _this.vulnId, "details", encodeURIComponent(contents));
         });
 
@@ -1123,29 +1078,18 @@ class VulnerablilityView {
             _this.queue.push('vulnerability', _this.vulnId, this.id, `${val}`);
         }));
 
+
         $('[id^="rtCust"]').each(function () {
         	const rtId = this.id;
-            _this.editors[rtId].on('change', function () {
-				let contents = _this.editors[rtId].getHTML()
+			this.editors.setOnChangeCallBack(rtId, () =>{
+				let contents = _this.editors.getHTML(rtId)
 				_this.queue.push('vulnerability', _this.vulnId, rtId.replace("rtCust", "type"), encodeURIComponent(contents));
         	});
         });
-
         this.setUpCVSSScoreEvents();
 
     }
-    setEditorContents(type, data, createNew = false) {
-        let decoded = this.b64DecodeUnicode(data);
-        decoded = decoded.replaceAll("<br />", "\n");
-        if (createNew) {
-            this.editors[type].destroy();
-            createEditor(this.editors, type);
-        }
-        this.editors[type].hide();
-        this.editors[type].setHTML(decoded, false);
-        this.initialHTML[type] = this.editors[type].getHTML();
-        this.editors[type].show();
-    }
+    
     getVuln(id) {
         this.vulnId = id;
 
@@ -1164,9 +1108,9 @@ class VulnerablilityView {
             $("#cvssString").val($("<div/>").html(data.cvssString).text())
             let vector = _this.cvss.updateCVSSString(data.cvssString);
             _this.cvss.updateCVSSScore(vector);
-            _this.setEditorContents("recommendation", data.recommendation, true);
-            _this.setEditorContents("details", data.details, true);
-            _this.setEditorContents("description", data.description, true);
+			_this.editors.recreateEditor("recommendation", data.recommendation, true, true);
+			_this.editors.recreateEditor("details", data.details, true, true);
+			_this.editors.recreateEditor("description", data.description, true, true);
             _this.setIntVal(data.overall, 'overall');
             _this.setIntVal(data.likelyhood, 'likelyhood');
             _this.setIntVal(data.impact, 'impact');
@@ -1196,7 +1140,7 @@ class VulnerablilityView {
 
 					let rtId = `rtCust${b.typeid}`
 					if(rtId in _this.editors){
-						_this.setEditorContents(rtId, b.value, true)
+						_this.editors.setEditorContents(rtId, b.value, true)
 					}
 				}
 
