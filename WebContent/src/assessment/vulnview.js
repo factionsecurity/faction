@@ -83,9 +83,9 @@ class SaveQueue {
 
     handleCustom(data) {
         let fields = data
-            .filter((row) => row.indexOf("type") == 0)
+            .filter((row) => row.indexOf("type") == 0 || row.indexOf("rtCust") == 0)
             .map((row) => {
-                let tmp = row.replace("type", "");
+                let tmp = row.replace("type", "").replace("rtCust","")
                 let cfId = tmp.split("=")[0];
                 let cfValue = tmp.split("=")[1];
                 return `{"typeid" : ${cfId}, "value" : "${cfValue}"}`;
@@ -232,7 +232,9 @@ class VulnerablilityView {
         let _this = this;
         $('[id^="rtCust"]').each(function () {
             const id = $(this).attr('id')
-            _this.editors.createEditor(id,true);
+            if(id.indexOf("_header") == -1){
+            	_this.editors.createEditor(id,true);
+            }
         });
             _this.editors.createEditor("description",true);
             _this.editors.createEditor("recommendation",true);
@@ -470,8 +472,6 @@ class VulnerablilityView {
         });
     }
     saveChanges(type, data, _this) {
-        //data = data.replaceAll("%3C%2Fp%3E%3Cp%3E%3Cbr%3E%3C%2Fp%3E%3Cp%3E", "%3Cbr%3E%3C%2Fp%3E%3Cp%3E");
-        //data = data.replaceAll("%3C%2Fp%3E%3Cp%3E%3Cbr%3E%3C%2Fp%3E%3Cp%3E", "%3C%2Fp%3E%3Cbr%3E%3Cp%3E");
         data = `${data}&_token=${_this._token}`
         if (type == 'vulnerability') {
             $.post("updateVulnerability", data, function (resp) {
@@ -730,16 +730,20 @@ class VulnerablilityView {
 
                                         $(data.cf).each(function (a, b) {
                                             let el = $("#type" + b.typeid);
-                                            if (el.length == 0)
-                                                return;
-                                            if (el[0].type == 'checkbox' && b.value == 'true') {
-                                                $(el).prop('checked', true)
-                                            }
-                                            else if (el[0].type == 'checkbox' && b.value == 'false') {
-                                                $(el).prop('checked', false)
-                                            }
-                                            else {
-                                                $(el).val(b.value).trigger('change');
+                                            let rtEl = $("#rtCust" + b.typeid);
+                                            if (el.length != 0){
+                								let value = b64DecodeUnicode(b.value)
+												if (el[0].type == 'checkbox' && value == 'true') {
+													$(el).prop('checked', true)
+												}
+												else if (el[0].type == 'checkbox' && value == 'false') {
+													$(el).prop('checked', false)
+												}
+												else {
+													$(el).val(value).trigger('change');
+												}
+                                            }else if(rtEl.length != 0){
+                                            	_this.editors.setEditorContents("rtCust" + b.typeid, b.value, true);
                                             }
                                         });
                                     });
@@ -819,12 +823,26 @@ class VulnerablilityView {
             data += "&feedMsg="
             data += "&cvssScore="
             data += "&cvssString="
-            data += "section="
+            data += "&section="
             let fields = [];
             for (let id of customFields) { //this is populated on the jsp
-                let value = $(`#type${id}`).data('default');
-                $(`#type${id}`).val(value).trigger('change');
-                fields.push(`{"typeid" : ${id}, "value" : "${value}"}`);
+            	let field = $(`#type${id}`) 
+            	console.log("0000000000000000")
+            	if(field.length ==1){
+            	console.log(field)
+					let value = field.data('default');
+					$(`#type${id}`).val(value).trigger('change');
+					value =  encodeURIComponent(b64EncodeUnicode(value))
+					fields.push(`{"typeid" : ${id}, "value" : "${value}"}`);
+                }
+            	field = $(`#rtCust${id}`) 
+            	if(field.length == 1){
+            	console.log(field)
+					let value = field.data('default');
+					_this.editors.setEditorContents(`rtCust${id}`,value,false)
+					value =  encodeURIComponent(b64EncodeUnicode(value))
+					fields.push(`{"typeid" : ${id}, "value" : "${value}"}`);
+                }
             }
             data += '&cf=[' + fields.join(",") + "]";
             data += "&add2feed=false"
@@ -952,7 +970,9 @@ class VulnerablilityView {
         this.editors.recreateEditor("description", "", true, true);
         let _this = this;
         $('[id^="rtCust"]').each(function () {
-        	_this.editors.recreateEditor(this.id, "", true, true);
+        	if(this.id.indexOf("header") == -1){
+        		_this.editors.recreateEditor(this.id, "", true, true);
+        	}
         });
 
         $('[id*="header"]').each((_a, h) => h.innerHTML = "");
@@ -996,7 +1016,9 @@ class VulnerablilityView {
         this.editors.changeOff("details")
         let _this = this
         $('[id^="rtCust"]').each(function () {
-        	_this.editors.changeOff(this.id)
+        	if(this.id.indexOf("header") == -1){
+        		_this.editors.changeOff(this.id)
+        	}
         });
         $("#title").unbind('input');
         $("#overall").unbind('input');
@@ -1075,16 +1097,18 @@ class VulnerablilityView {
             } else {
                 val = $(this).val();
             }
-            _this.queue.push('vulnerability', _this.vulnId, this.id, `${val}`);
+            _this.queue.push('vulnerability', _this.vulnId, this.id, encodeURIComponent(b64EncodeUnicode(val)));
         }));
 
 
         $('[id^="rtCust"]').each(function () {
         	const rtId = this.id;
-			this.editors.setOnChangeCallBack(rtId, () =>{
-				let contents = _this.editors.getHTML(rtId)
-				_this.queue.push('vulnerability', _this.vulnId, rtId.replace("rtCust", "type"), encodeURIComponent(contents));
-        	});
+        	if(rtId.indexOf("header") == -1 ){
+				_this.editors.setOnChangeCallBack(rtId, () =>{
+					let contents = _this.editors.getHTML(rtId)
+					_this.queue.push('vulnerability', _this.vulnId, rtId, encodeURIComponent(b64EncodeUnicode(contents)));
+				});
+        	}
         });
         this.setUpCVSSScoreEvents();
 
@@ -1126,22 +1150,19 @@ class VulnerablilityView {
             }
             $(data.cf).each(function (a, b) {
                 let el = $("#type" + b.typeid);
+                let rtEl = $("#rtCust" + b.typeid);
                 if (el.length != 0){
-
-					if (el[0].type == 'checkbox' && b.value == 'true') {
+                	let value = b64DecodeUnicode(b.value)
+					if (el[0].type == 'checkbox' && value == 'true') {
 						$(el).prop('checked', true);
 					}
-					else if (el[0].type == 'checkbox' && b.value == 'false') {
+					else if (el[0].type == 'checkbox' && value == 'false') {
 						$(el).prop('checked', false);
 					}
-					else if (el[0].type == 'input')
-						$(el).val(b.value).trigger('change');
-                }else{
-
-					let rtId = `rtCust${b.typeid}`
-					if(rtId in _this.editors){
-						_this.editors.setEditorContents(rtId, b.value, true)
-					}
+					else
+						$(el).val(value).trigger('change');
+                }else if(rtEl.length != 0){
+					_this.editors.recreateEditor("rtCust" + b.typeid, b.value, true,true)
 				}
 
         });

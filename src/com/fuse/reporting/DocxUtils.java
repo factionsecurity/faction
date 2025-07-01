@@ -583,17 +583,18 @@ public class DocxUtils {
 		map.put(getKey("asmtaccesskey"), this.assessment.getGuid());
 		map.put(getKey("totalopenvulns"), this.getTotalOpenVulns(this.assessment.getVulns()));
 		map.put(getKey("totalclosedvulns"), this.getTotalClosedVulns(this.assessment.getVulns()));
-
-		// replavce all cusotm varables
-		if (this.assessment.getCustomFields() != null) {
-			for (CustomField cf : this.assessment.getCustomFields()) {
-				map.put("cf" + cf.getType().getVariable(), cf.getValue());
-			}
-		}
-
 		map.putAll(getVulnMap());
 
 		replacementText(map);
+
+		// replavce all cusotm varables
+		Map<String, List<Object>> cfMap = new HashMap<>();
+		if (this.assessment.getCustomFields() != null) {
+			for (CustomField cf : this.assessment.getCustomFields()) {
+				cfMap.put("${cf" + cf.getType().getVariable() +"}", wrapHTML(cf.getValue(), customCSS, ""));
+			}
+		}
+
 
 		// replace with HTML content
 		Map<String, List<Object>> map2 = new HashMap<>();
@@ -601,6 +602,7 @@ public class DocxUtils {
 		map2.put("${asmtAssessors_Bullets}", wrapHTML(assessors_bullets, customCSS, ""));
 		map2.put("${asmtAssessors_Comma}", wrapHTML(assessors_comma, customCSS, ""));
 		replaceHTML(mlp.getMainDocumentPart(), map2);
+		replaceHTML(mlp.getMainDocumentPart(), cfMap, false);
 		replaceHeaderAndFooter(map);
 
 	}

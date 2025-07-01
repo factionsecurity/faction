@@ -50,7 +50,7 @@
  <div class="nav-tabs-custom">
    <ul class="nav nav-tabs" role="tablist">
    	<s:if test="%{#request.summaryActive == 'true'}">
-     <li class="nav-item " role="presentation"><a href="#Summary" data-toggle="tab" role="tab">Overview</a></li>
+     <li class="nav-item active" role="presentation"><a href="#Summary" data-toggle="tab" role="tab">Overview</a></li>
      <jsp:include page="AssessmentExtendedTabs.jsp"/>
      <li class="nav-item "><a href="VulnerabilityView#VulnView">Vulnerabilities</a></li>
      <li class="nav-item "><a href="VulnerabilityView#NoteView">Notes</a></li>

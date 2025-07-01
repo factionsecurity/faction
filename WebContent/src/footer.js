@@ -205,6 +205,11 @@ global.b64DecodeUnicode = function b64DecodeUnicode(str) {
 		return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
 	}).join(''));
 };
+global.b64EncodeUnicode= function b64EncodeUnicode(str) {
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+    (match, p1) => String.fromCharCode('0x' + p1)
+  ));
+}
 global.entityDecode = function entityDecode(encoded){
 	let textArea = document.createElement("textarea");
 	textArea.innerHTML = encoded;

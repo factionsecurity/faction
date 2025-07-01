@@ -263,6 +263,12 @@ export class FactionEditor {
 			return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
 		}).join(''));
 	}
+	b64EncodeUnicode(str) {
+	  // First we encode to UTF-8, then Base64
+	  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+		(match, p1) => String.fromCharCode('0x' + p1)
+	  ));
+	}	
 	setEditorContents(id, contents, isEncoded) {
 		if (isEncoded) {
 			contents = this.b64DecodeUnicode(contents)
@@ -283,6 +289,7 @@ export class FactionEditor {
 		contents = contents.replaceAll("<br />", "\n");
 		contents = contents.replace(/<u>([^<]+)<\/u>/g, '++$1++');
 		this.editors[id].setHTML(contents, false);
+		this.editors[id].moveCursorToStart(false);
 		this.initialHTML[id] = this.editors[id].getHTML();
 		this.editors[id].show();	
 	}
