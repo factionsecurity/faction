@@ -179,6 +179,7 @@ color:#00a65a
 
 
   
+    <script src="../dist/js/listbootstrap.js"></script>
 <!--
     <script src="../plugins/jQuery/jQuery-2.1.4.min.js"></script> -->
     <script src="../plugins/iCheck/icheck.min.js"></script>
