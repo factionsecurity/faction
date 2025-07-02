@@ -135,58 +135,6 @@
 							<!-- /.input group -->
 						</div>
 					</div>
-					<s:iterator value="assessment.customFields">
-						<div class="form-group">
-							<label for="team" class="col-sm-2 control-label"
-								title="Variable: &#x24;{cf${type.variable}}">${type.key}</label>
-
-							<s:if test="!type.readonly">
-								<div class="col-sm-8">
-									<s:if test="type.fieldType == 0">
-										<input type="text" class="form-control" id="cust${id}"
-											value='${value}'
-											<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
-									</s:if>
-									<s:if test="type.fieldType == 1">
-										<br>
-										<input type="checkbox" class="icheckbox_minimal-blue"
-											style="width: 20px; height: 20px; position: absolute; margin-top: -13px"
-											id="cust<s:property value="id"/>"
-											<s:if test="value == 'true'">checked</s:if>
-											<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
-									</s:if>
-									<s:if test="type.fieldType == 2">
-										<select class='form-control select2 ' style='width: 100%;'
-											id="cust<s:property value="id"/>"
-											<s:if test="currentAssessment.finalized">readonly</s:if>>
-											<s:iterator value="type.defaultValue.split(',')" var="option">
-												<s:set var="aOption" value="option" />
-												<option value="<s:property value="option"/>"
-													<s:if test="value.equals(#aOption)">selected</s:if>><s:property
-														value="option" /></option> 
-											</s:iterator>
-										</select>
-									</s:if>
-								</div>
-								<div class="col-sm-2">
-									<s:if
-										test="!(assessment.InPr || assessment.prComplete || assessment.finalized)">
-										<button class="btn btn-default updateCF" for="${id}">Update</button>
-									</s:if>
-								</div>
-							</s:if>
-							<s:else>
-								<div class="col-sm-8">
-									<input type="text" class="form-control" value='${value}'
-										disabled>
-								</div>
-								<div class="col-sm-2"></div>
-							</s:else>
-
-
-						</div>
-					</s:iterator>
-
 				</div>
 				<!-- /.box-body -->
 
@@ -195,6 +143,75 @@
 		<!-- /.box -->
 	</div>
 </div>
+					
+					
+<div class="row">
+	<div class="col-md-12">
+		<!-- Horizontal Form -->
+		<div class="box box-primary">
+			<div class="box-header with-border">
+				<h3 class="box-title">
+					<i class="glyphicon  glyphicon-list-alt"></i> Assessment Variables
+				</h3>
+			</div>
+			<!-- /.box-header -->
+			<!-- form start -->
+			<div class="form-horizontal">
+				<div class="box-body">
+				<div class="row">	
+					<s:iterator value="assessment.customFields">
+						<s:if test="type.fieldType < 3">
+							<div class="form-group col-sm-3">
+								<label for="team" class="col-sm-3 control-label"
+									title="Variable: &#x24;{cf${type.variable}}">${type.key}
+										<span id="cust${id}_header"></span> 
+										</label>
+
+								<s:if test="!type.readonly">
+									<div class="col-sm-8">
+										<s:if test="type.fieldType == 0">
+											<input type="text" class="form-control" id="cust${id}"
+												value='${value}'
+												<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
+										</s:if>
+										<s:if test="type.fieldType == 1">
+											<br>
+											<input type="checkbox" class="icheckbox_minimal-blue"
+												style="width: 20px; height: 20px; margin-top: -30px"
+												id="cust<s:property value="id"/>"
+												<s:if test="value == 'true'">checked</s:if>
+												<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
+										</s:if>
+										<s:if test="type.fieldType == 2">
+											<select class='form-control select2 ' style='width: 100%;'
+												id="cust<s:property value="id"/>"
+												<s:if test="currentAssessment.finalized">readonly</s:if>>
+												<s:iterator value="type.defaultValue.split(',')" var="option">
+													<s:set var="aOption" value="option" />
+													<option value="<s:property value="option"/>"
+														<s:if test="value.equals(#aOption)">selected</s:if>><s:property
+															value="option" /></option> 
+												</s:iterator>
+											</select>
+										</s:if>
+									</div>
+								</s:if>
+								<s:else>
+									<div class="col-sm-4">
+										<input type="text" class="form-control" value='${value}'
+											disabled>
+									</div>
+									<div class="col-sm-1"></div>
+								</s:else>
+							</div>
+						</s:if>
+					</s:iterator>
+					</div>
+				</div>
+		</div>
+	</div>
+</div>
+
 
 <div class="row">
 	<!-- SUMMARY Section -->
