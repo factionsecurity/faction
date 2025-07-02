@@ -573,4 +573,12 @@ public class Assessment {
 			return false;
 	}
 	
+	@Transient
+	public Boolean getFormsExist() {
+		if(this.getCustomFields() == null) return false;
+		else {
+			return this.getCustomFields().stream().anyMatch(cf -> cf.getType().getFieldType() == 3);
+		}
+	}
+	
 }

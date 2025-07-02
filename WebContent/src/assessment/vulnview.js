@@ -827,9 +827,7 @@ class VulnerablilityView {
             let fields = [];
             for (let id of customFields) { //this is populated on the jsp
             	let field = $(`#type${id}`) 
-            	console.log("0000000000000000")
             	if(field.length ==1){
-            	console.log(field)
 					let value = field.data('default');
 					$(`#type${id}`).val(value).trigger('change');
 					value =  encodeURIComponent(b64EncodeUnicode(value))
@@ -837,9 +835,9 @@ class VulnerablilityView {
                 }
             	field = $(`#rtCust${id}`) 
             	if(field.length == 1){
-            	console.log(field)
 					let value = field.data('default');
-					_this.editors.setEditorContents(`rtCust${id}`,value,false)
+					//_this.editors.setEditorContents(`rtCust${id}`,value,true)
+					_this.editors.recreateEditor(`rtCust${id}`,value,true,false,()=>{});
 					value =  encodeURIComponent(b64EncodeUnicode(value))
 					fields.push(`{"typeid" : ${id}, "value" : "${value}"}`);
                 }
@@ -1033,17 +1031,6 @@ class VulnerablilityView {
 
     enableAutoSave() {
         let _this = this;
-        /*this.descUndoCount = 0;
-        /// This is a hack becuase toastui does not have inital undo history set correctly
-        /// https://github.com/nhn/tui.editor/issues/3195
-
-        this.editors.description.on('keydown', function (a, e) {
-            const html = _this.editors.description.getHTML()
-            if ((e.ctrlKey || e.metaKey) && e.key == 'z' && html == _this.initialHTML.description) {
-                e.preventDefault();
-                throw new Error("Prevent Undo");
-            }
-        })*/
 		this.editors.setOnChangeCallBack("description", () =>{
             //_this.descUndoCount++;
             let contents = _this.editors.getHTML("description");
