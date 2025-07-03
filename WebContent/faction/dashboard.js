@@ -64,7 +64,6 @@ $(function() {
 		}
 	});*/
 	$.get('../services/getVerifications', function(json) {
-		console.log("Here")
 		//json = JSON.parse(data);
 		verifications = json.verifications;
 		var table = $("#vqueue").DataTable();

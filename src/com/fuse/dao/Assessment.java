@@ -580,5 +580,12 @@ public class Assessment {
 			return this.getCustomFields().stream().anyMatch(cf -> cf.getType().getFieldType() == 3);
 		}
 	}
+	@Transient
+	public Boolean getVarsExist() {
+		if(this.getCustomFields() == null) return false;
+		else {
+			return this.getCustomFields().stream().anyMatch(cf -> cf.getType().getFieldType() < 3);
+		}
+	}
 	
 }
