@@ -72,21 +72,21 @@
 								value="<s:property value="assessment.distributionList"/>">
 						</div>
 					</div>
-					<div class="form-group">
+					<!--  <div class="form-group">
 						<label for="Distro" class="col-sm-2 control-label">Status</label>
 						<div class="col-sm-10">
 							<input type="text" disabled="" class="form-control" id="status"
 								value="<s:property value="assessment.status"/>">
 						</div>
-					</div>
+					</div>-->
 
 
 				</div>
+			<!-- /.box-body -->
+			</form>
 		</div>
-		<!-- /.box-body -->
-		</form>
-	</div>
 	<!-- /.box -->
+	</div>
 
 	<div class="col-md-6">
 		<!-- Horizontal Form -->
@@ -143,7 +143,8 @@
 		<!-- /.box -->
 	</div>
 </div>
-					
+
+<s:if test="assessment.varsExist">	
 					
 <div class="row">
 	<div class="col-md-12">
@@ -162,16 +163,17 @@
 					<s:iterator value="assessment.customFields">
 						<s:if test="type.fieldType < 3">
 							<div class="form-group col-sm-3">
-								<label for="team" class="col-sm-3 control-label"
-									title="Variable: &#x24;{cf${type.variable}}">${type.key}
-										<span id="cust${id}_header"></span> 
+								<div class="col-sm-12">
+								<label class=""
+									title='Variable: &#x24;{cf<s:property value="type.variable"/>}'><s:property value="type.key"/>
+										<span id="cust${id}_header"></span><br/><small>Variable: &#x24;&#x7B;cf<s:property value="type.variable"/>&#x7D;</small>
 										</label>
 
 								<s:if test="!type.readonly">
-									<div class="col-sm-8">
+									<div class="">
 										<s:if test="type.fieldType == 0">
 											<input type="text" class="form-control" id="cust${id}"
-												value='${value}'
+												value='<s:property value="value"/>'
 												<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
 										</s:if>
 										<s:if test="type.fieldType == 1">
@@ -197,20 +199,22 @@
 									</div>
 								</s:if>
 								<s:else>
-									<div class="col-sm-4">
+									<div class="">
 										<input type="text" class="form-control" value='${value}'
 											disabled>
 									</div>
-									<div class="col-sm-1"></div>
 								</s:else>
+								</div>
 							</div>
 						</s:if>
 					</s:iterator>
-					</div>
+					</div> <!-- end iterator -->
 				</div>
+			</div>
 		</div>
 	</div>
 </div>
+</s:if>
 
 
 <div class="row">
