@@ -24,6 +24,7 @@ import javax.persistence.Version;
 import org.hibernate.annotations.NotFound;
 import org.hibernate.annotations.NotFoundAction;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fuse.utils.FSUtils;
 
 @Entity
@@ -50,16 +51,20 @@ public class Assessment {
 	private Date completed;
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<CustomField> CustomFields;
+	@JsonIgnore
 	private String Notes;
+	@JsonIgnore
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Note> notebook = new ArrayList<>();
 	private String DistributionList;
 	private String AccessNotes;
 	@ManyToOne
 	private AssessmentType type;
+	@JsonIgnore
 	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	@NotFound(action = NotFoundAction.IGNORE)
 	private FinalReport finalReport;
+	@JsonIgnore
 	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	@NotFound(action = NotFoundAction.IGNORE)
 	private FinalReport retestReport;
@@ -71,30 +76,43 @@ public class Assessment {
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Vulnerability> vulns = new ArrayList<>();
 	
+	@JsonIgnore
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval=true)
 	private List<Image> images = new ArrayList<>();
-
+	@JsonIgnore
 	private String pr_sum_notes;
+	@JsonIgnore
 	private String pr_risk_notes;
+	@JsonIgnore
 	private String guid = UUID.randomUUID().toString();
 	private Boolean peerreview;
 	private String status;
 	private Integer workflow = 0;
 
+	@JsonIgnore
 	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private PeerReview peerReview;
 
+	@JsonIgnore
 	private Boolean notesLock = false;
+	@JsonIgnore
 	@ManyToOne
 	private User notes_locked_by;
+	@JsonIgnore
 	private Date notes_lock_time;
+	@JsonIgnore
 	private Boolean summary_lock = false;
+	@JsonIgnore
 	@ManyToOne
 	private User summary_locked_by;
+	@JsonIgnore
 	private Date summary_lock_time;
+	@JsonIgnore
 	private Boolean risk_lock = false;
+	@JsonIgnore
 	@ManyToOne
 	private User risk_locked_by;
+	@JsonIgnore
 	private Date risk_lock_time;
 	
 
@@ -150,7 +168,7 @@ public class Assessment {
 	}
 
 	public List<Vulnerability> getVulns() {
-		if(this.getType().isCvss31() || this.getType().isCvss40()) {
+		if( this.getType() !=  null && (this.getType().isCvss31() || this.getType().isCvss40())) {
 			Collections.sort( this.vulns, new Comparator<Vulnerability>() {
 				@Override
 				public int compare(Vulnerability v1, Vulnerability v2) {
@@ -553,6 +571,21 @@ public class Assessment {
 			return true;
 		else
 			return false;
+	}
+	
+	@Transient
+	public Boolean getFormsExist() {
+		if(this.getCustomFields() == null) return false;
+		else {
+			return this.getCustomFields().stream().anyMatch(cf -> cf.getType().getFieldType() == 3);
+		}
+	}
+	@Transient
+	public Boolean getVarsExist() {
+		if(this.getCustomFields() == null) return false;
+		else {
+			return this.getCustomFields().stream().anyMatch(cf -> cf.getType().getFieldType() < 3);
+		}
 	}
 	
 }

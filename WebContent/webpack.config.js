@@ -12,6 +12,7 @@ module.exports = {
 		vulnview:  path.resolve(__dirname, './src/assessment/vulnview.js'),
 		assessment_queue:  path.resolve(__dirname, './src/assessment/assessment_queue.js'),
 		checklist:  path.resolve(__dirname, './src/assessment/checklist.js'),
+		listbootstrap:  path.resolve(__dirname, './src/assessment/listbootstrap.js'),
 		peerreviewedit:  path.resolve(__dirname, './src/peerreview/peerreviewedit.js'),
 		peerreview_queue:  path.resolve(__dirname, './src/peerreview/peerreview_queue.js'),
 		assessorreviewedit:  path.resolve(__dirname, './src/peerreview/assessorreviewedit.js'),

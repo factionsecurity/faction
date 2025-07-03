@@ -331,6 +331,7 @@ td:first-child {
 							</s:if>
 						</div>
 						<s:iterator value="customFields">
+						<s:if test="fieldType != 3">
 							<div class="form-group">
 								<div class="col-md-6">
 									<label class="col-sm-2 control-label"
@@ -367,6 +368,7 @@ td:first-child {
 									</div>
 								</div>
 							</div>
+							</s:if>
 
 						</s:iterator>
 					</div>
@@ -440,6 +442,10 @@ td:first-child {
 							<!-- /.box -->
 						</div>
 					</div>
+					
+					<!-- Custom Forms -->
+						<jsp:include page="VulnRichTextForms.jsp"/>
+					<!--  Custom Forms -->
 
 				</div>
 				<!-- /.box-body -->

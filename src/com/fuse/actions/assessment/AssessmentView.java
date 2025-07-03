@@ -108,6 +108,7 @@ public class AssessmentView extends FSActionSupport {
 		if (assessment == null)
 			return SUCCESS;
 		
+		
 
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 
@@ -686,6 +687,7 @@ public class AssessmentView extends FSActionSupport {
 	public List<String> getColors() {
 		return new ArrayList<String>(Arrays.asList("#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"));
 	}
+	
 	
 	
 	   

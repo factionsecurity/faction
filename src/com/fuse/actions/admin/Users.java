@@ -139,9 +139,13 @@ public class Users extends FSActionSupport {
 			this._message = "Must set at least one Role: Manager, Assessor, Remediation, Engagement, or Admin";
 			return this.ERRORJSON;
 		}
-
-		Teams t = (Teams) em.createQuery("from Teams where id = :tid").setParameter("tid", Long.parseLong(this.team))
-				.getResultList().stream().findFirst().orElse(null);
+		Teams t = null;
+		try {
+			t = (Teams) em.createQuery("from Teams where id = :tid").setParameter("tid", Long.parseLong(this.team))
+					.getResultList().stream().findFirst().orElse(null);
+		}catch(Exception ex) {
+			
+		}
 		if (t == null) {
 			this._message = "Invalid Team Selected";
 			return this.ERRORJSON;
@@ -319,9 +323,9 @@ public class Users extends FSActionSupport {
 			return this.ERRORJSON;
 		User user = this.getSessionUser();
 		Long id = Long.parseLong(userId.replace("user", ""));
-		// this.selectedUser = (User)session.createQuery("from User where Id =
-		// :uid").setLong("uid", id).uniqueResult();
+		
 		this.selectedUser = em.find(User.class, id);
+		String currentEmail = selectedUser.getUsername();
 		if (this.selectedUser == null) {
 			this._message = "Cannot find user to update";
 			return this.ERRORJSON;
@@ -330,7 +334,7 @@ public class Users extends FSActionSupport {
 			this._message = "Must set at least one Role: Manager, Assessor, Remediation, Engagement, or Admin";
 			return this.ERRORJSON;
 		}
-		if (this.isNullStirng(this.email) || this.isNullStirng(fname) || this.isNullStirng(this.lname)) {
+		if (this.isNullStirng(this.username) || this.isNullStirng(this.email) || this.isNullStirng(fname) || this.isNullStirng(this.lname)) {
 			this._message = "Some inputs are empty";
 			return this.ERRORJSON;
 		}
@@ -350,16 +354,32 @@ public class Users extends FSActionSupport {
 					settings.getLdapBindDn(), settings.getLdapSecurity(), settings.getLdapInsecureSSL());
 			String password = FSUtils.decryptPassword(settings.getLdapPassword());
 			User ldapInfo = validator.getUserInfo(this.selectedUser.getUsername(), password, settings.getLdapObjectClass());
-			this.selectedUser.setLdapUserDn(ldapInfo.getLdapUserDn());
-			this.selectedUser.setEmail(ldapInfo.getEmail());
+			if(ldapInfo!= null) {
+				this.selectedUser.setLdapUserDn(ldapInfo.getLdapUserDn());
+				this.selectedUser.setEmail(ldapInfo.getEmail());
+			}
 		}else {
 			this.selectedUser.setEmail(this.email.trim());
 		}
+		User userExists = (User) em.createQuery("from User where username = :username")
+				.setParameter("username", this.username.trim()).getResultList().stream().findFirst().orElse(null);
+		if(userExists != null && !id.equals(userExists.getId())) {
+			this._message = "Username already exists";
+			return this.ERRORJSON;
+		}
+		
+		User emailExists = (User) em.createQuery("from User where email = :email")
+				.setParameter("email", this.selectedUser.getEmail()).getResultList().stream().findFirst().orElse(null);
+		
+		if(emailExists != null && !id.equals(emailExists.getId())) {
+			this._message = "Email address already in use";
+			return this.ERRORJSON;
+		}
+		
+		this.selectedUser.setUsername(username);
 		this.selectedUser.setFname(this.fname.trim());
 		this.selectedUser.setLname(this.lname.trim());
 		this.selectedUser.setAuthMethod(this.authMethod.trim());
-		// Teams t = (Teams) session.createQuery("from Teams where id =
-		// :tid").setLong("tid", Long.parseLong(this.team)).uniqueResult();
 		Teams t = em.find(Teams.class, Long.parseLong(this.team));
 		if (t == null) {
 			this._message = "Could not find a valid team.";
@@ -376,7 +396,7 @@ public class Users extends FSActionSupport {
 		this.selectedUser.getPermissions().setAccessLevel(this.accesscontrol);
 
 		if (!this.authMethod.equals("Native")) {
-			this.selectedUser.setPasshash(UUID.randomUUID().toString());
+			this.selectedUser.setPasshash(AccessControl.HashPass(UUID.randomUUID().toString()));
 		}
 
 		HibHelper.getInstance().preJoin();

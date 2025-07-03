@@ -719,6 +719,7 @@ public class FSUtils {
 			Node document = parser.parse(text);
 			HtmlRenderer renderer = HtmlRenderer.builder().extensions(extensions).build();
 			String converted = renderer.render(document);
+			converted = converted.replaceAll("\\+\\+([^+]+)\\+\\+", "<u>$1</u>"); // Allow for custom underline markdown
 			converted += "<br/>";
 			return converted;
 		} catch (Exception ex) {

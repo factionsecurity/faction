@@ -12,6 +12,7 @@ import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
+import org.glassfish.jersey.internal.util.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -86,7 +87,7 @@ public class EditAssessment extends FSActionSupport {
 		campaigns = em.createQuery("from Campaign").getResultList();
 		List<User> tmp = new ArrayList(assessors);
 		for (User u : tmp) {
-			if (!u.getPermissions().isAssessor())
+			if (u.getPermissions() != null && !u.getPermissions().isAssessor())
 				assessors.remove(u);
 		}
 		SystemSettings ss = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
@@ -223,7 +224,6 @@ public class EditAssessment extends FSActionSupport {
 						JSONParser parse = new JSONParser();
 						JSONArray array = (JSONArray) parse.parse(cf);
 
-						// am.setCustomFields(new ArrayList());
 
 						for (int i = 0; i < array.size(); i++) {
 							if (am.getCustomFields() == null)
@@ -236,7 +236,12 @@ public class EditAssessment extends FSActionSupport {
 							for (CustomField obj : am.getCustomFields()) {
 								if (obj.getType().getId().equals(cfid)) {
 									cfObj = obj;
-									cfObj.setValue("" + json.get("text"));
+									if(obj.getType().getFieldType() == 3) {
+										String b64Text = Base64.decodeAsString(""+json.get("text"));
+										cfObj.setValue(b64Text);
+									}else {
+										cfObj.setValue("" + json.get("text"));
+									}
 									break;
 								}
 							}

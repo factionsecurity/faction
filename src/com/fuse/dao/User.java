@@ -11,6 +11,8 @@ import javax.persistence.ManyToOne;
 import javax.persistence.TableGenerator;
 import javax.persistence.Transient;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 @Entity
 public class User {
 
@@ -22,23 +24,34 @@ public class User {
 	private String lname;
 	private String email;
 	private String username;
+	@JsonIgnore
 	private String passhash;
 	private boolean inActive = false;
+	@JsonIgnore
 	private String avatarGuid;
 	@ManyToOne
 	private Teams team;
+	@JsonIgnore
 	@ManyToOne(cascade = CascadeType.ALL)
 	private Permissions permissions;
+	@JsonIgnore
 	@Transient
 	private int count;
+	@JsonIgnore
 	@Transient
 	private int vcount;
+	@JsonIgnore
 	@Transient
 	private int ocount;
+	@JsonIgnore
 	private Date lastLogin;
+	@JsonIgnore
 	private Date loginTime;
+	@JsonIgnore
 	private Integer failedAuth;
+	@JsonIgnore
 	private String authMethod;
+	@JsonIgnore
 	private String ldapUserDn = "";
 
 	public User(Long id, String first, String last) {
@@ -126,6 +139,7 @@ public class User {
 		this.inActive = inActive;
 	}
 
+	@JsonIgnore
 	@Transient
 	public int getAssessmentCount() {
 		return count;
@@ -136,6 +150,7 @@ public class User {
 		this.count = count;
 	}
 
+	@JsonIgnore
 	@Transient
 	public int getVerificationCount() {
 		return vcount;
@@ -146,6 +161,7 @@ public class User {
 		this.vcount = count;
 	}
 
+	@JsonIgnore
 	@Transient
 	public int getOOOCount() {
 		return ocount;

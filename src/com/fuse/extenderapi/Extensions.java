@@ -258,6 +258,7 @@ public class Extensions {
 			for (Vulnerability v : vulnerabilities) {
 				com.faction.elements.Vulnerability tVuln = new com.faction.elements.Vulnerability();
 				copy(v, tVuln);
+				//clone custom fields
 				tVuln.setCustomFields(this.cloneCustomFields(v));
 				tmpVulns.add(tVuln);
 			}
@@ -335,6 +336,8 @@ public class Extensions {
 				for (Vulnerability v : vulnerabilities) {
 					com.faction.elements.Vulnerability tVuln = new com.faction.elements.Vulnerability();
 					copy(v, tVuln);
+					//Clone Custom Fields
+					tVuln.setCustomFields(cloneCustomFields(v));
 					tmpVulns.add(tVuln);
 				}
 				// Clone Engagement
@@ -414,8 +417,12 @@ public class Extensions {
 
 				// Clone Vulnerability
 				copy(localVuln, tmpVuln);
+				//Clone Custom Fields
+				tmpVuln.setCustomFields(cloneCustomFields(localVuln));
 				// Clone Assessment
 				copy(localAssessment, tmpAssessment);
+				//Clone Custom Fields
+				tmpAssessment.setCustomFields(cloneCustomFields(localAssessment));
 
 				// Execute Extensions
 				for (VulnerabilityManager mgr : this.vulnerabilityManagers) {
@@ -452,6 +459,8 @@ public class Extensions {
 				com.faction.elements.Vulnerability clonedVuln = new com.faction.elements.Vulnerability();
 				Vulnerability vulnerability = localVerification.getVerificationItems().get(0).getVulnerability();
 				copy(vulnerability, clonedVuln);
+				//Clone Custom Fields
+				clonedVuln.setCustomFields(cloneCustomFields(vulnerability));
 				// Clone User
 				com.faction.elements.User clonedUser = new com.faction.elements.User();
 				copy(localVerification.getAssessor(), clonedUser);

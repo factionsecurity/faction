@@ -79,7 +79,7 @@
 	     <div class="tab-pane" id="tab_2">
 	         <bs:datatable columns="Timestamp,Description,User" classname="" id="auditlog">
 		     <s:iterator value="logs">
-		     <tr><td>${timestamp }</td><td>${description }</td><td>${user.fname } ${user.lname }</td></tr>
+		     <tr><td>${timestamp }</td><td><s:property value="description"/></td><td><s:property value="user.fname"/> <s:property value="user.lname"/></td></tr>
 		     </s:iterator>
 		     </bs:datatable>
 	     </div><!-- /.tab-pane -->
@@ -133,6 +133,7 @@
     	<s:iterator value="currentAssessment.CustomFields">
     		<s:if test="type.fieldType == 1 && value == 'true'"> $("#cust${type.id}").prop('checked', true);</s:if>
     		<s:elseif test="type.fieldType == 1 && value == 'false'"> $("#cust${type.id}").prop('checked', false);</s:elseif>
+    		<s:elseif test="type.fieldType == 3"> $("#rtCust${type.id}").html(entityDecode("<s:property value="value"/>"))</s:elseif>
     		<s:else>$("#cust${type.id}").val("${value}");</s:else>
 			customFields.push(${type.id});
     	</s:iterator>

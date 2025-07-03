@@ -59,6 +59,7 @@
 				<artifactId>maven-war-plugin</artifactId>
 				<version>3.2.2</version>
 				<configuration>
+					<attachClasses>true</attachClasses>
 					<warSourceDirectory>WebContent</warSourceDirectory>
 					<warSourceExcludes>
 						node_modules/,.env/,.node_env/,WEB-INF/lib-bk/</warSourceExcludes>
@@ -434,13 +435,6 @@
 			<artifactId>lombok</artifactId>
 			<version>1.18.36</version>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.faction.docx</groupId>
-			<artifactId>faction-reporting</artifactId>
-			<version>1.0</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/WebContent/WEB-INF/lib/faction-reporting.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>

@@ -5194,3 +5194,13 @@ code {
     border-width: thin;
     border-style: solid;
 }
+.toastui-editor-defaultUI{
+    background-color: white;
+}
+
+.underline-button{
+	margin-top: -30px !important;
+    background: #f7f9fc !important;
+    font-size: 18px !important;
+}
+

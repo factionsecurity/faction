@@ -872,23 +872,39 @@ $(function() {
 });
 $(function() {
 	$(".select2").select2();
-	$(".updateCF").click(function() {
-		let cfid = $(this).attr("for");
-		let el = $("#cust" + cfid);
+	$('[id^="cust"]').each((_index, el) => $(el).on('input', function (event) {
+		let val = "";
+		if (this.type == 'checkbox') {
+			val = $(this).is(":checked");
+		} else {
+			val = $(this).val();
+		}
+		updateCustom(this.id);
+	}));
+	let pendingUpdate={}
+	
+	function updateCustom(cfid){
+		let el = $(`#${cfid}`);
+		$(`#${cfid}_header`).html("*");
 		let val = "";
 		if (el[0].type == 'checkbox') {
 			val = $(el).is(":checked");
 		} else {
 			val = $(el).val();
 		}
-		let data = `cfid=${cfid}`;
+		let data = `cfid=${cfid.replace("cust","")}`;
 		data += `&id=${id}`;
 		data += `&cfValue=${val}`;
 		data += "&_token=" + global._token;
-		$.post("UpdateAsmtCF", data).done(function(resp) {
-			alertMessage(resp, "Parameter Updated.");
-		});
-	});
+		clearTimeout(pendingUpdate[cfid]);
+		pendingUpdate[cfid] = setTimeout( () =>{
+			$.post("UpdateAsmtCF", data).done(function(resp) {
+				$(`#${cfid}_header`).html("");
+				
+				console.log("Updated");
+			});
+		}, 1000);
+	}
 
 });
 $(function() {
@@ -912,12 +928,10 @@ $(function() {
 		$('.nav-tabs a[href="' + location.hash + '"]').tab('show');
 	}
 	$("a").click(evt => {
-		if (evt.target.href.indexOf("Finalize") != -1) {
-			location.href = "#Finalize"
-		} else if (evt.target.href.indexOf("Summary") != -1) {
-			location.href = "#Summary"
-		} else if (evt.target.href.indexOf("History") != -1) {
-			location.href = "#History"
+		if (evt.target.href.indexOf("#") != -1) {
+			console.log("Here")
+			location.href = evt.target.href
 		}
+		
 	})
 });
