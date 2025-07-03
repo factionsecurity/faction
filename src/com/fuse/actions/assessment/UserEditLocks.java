@@ -60,8 +60,8 @@ public class UserEditLocks extends FSActionSupport {
 			if(this.assessment.getRiskAnalysis() == null) {
 				this.assessment.setRiskAnalysis("");
 			}
-			this.assessment.setNotes(URLEncoder
-					.encode(Base64.getEncoder().encodeToString(this.assessment.getNotes().getBytes()), "UTF-8"));
+			/*this.assessment.setNotes(URLEncoder
+					.encode(Base64.getEncoder().encodeToString(this.assessment.getNotes().getBytes()), "UTF-8"));*/
 			this.assessment.setSummary(URLEncoder
 					.encode(Base64.getEncoder().encodeToString(this.assessment.getSummary().getBytes()), "UTF-8"));
 			this.assessment.setRiskAnalysis(URLEncoder

@@ -413,8 +413,8 @@
 			<div class="box-body pad">
 				<div class="col-md-6">
 					<form>
-						<div name="engagmentnotes" toolbar="None"
-							id="engagmentnotes" readonly="true" clickToEnable="false">
+						<div name="engagementnotes" toolbar="None"
+							id="engagementnotes" readonly="true" clickToEnable="false">
 							<s:property value="assessment.accessNotes" />
 						</div>
 					</form>

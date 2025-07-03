@@ -1,10 +1,8 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.faction</groupId>
 	<artifactId>faction</artifactId>
-	<version>1.5.2-SNAPSHOT</version>
+	<version>1.6.0-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>Faction</name>
 	<scm>
@@ -61,6 +59,7 @@
 				<artifactId>maven-war-plugin</artifactId>
 				<version>3.2.2</version>
 				<configuration>
+					<attachClasses>true</attachClasses>
 					<warSourceDirectory>WebContent</warSourceDirectory>
 					<warSourceExcludes>
 						node_modules/,.env/,.node_env/,WEB-INF/lib-bk/</warSourceExcludes>
@@ -436,13 +435,6 @@
 			<artifactId>lombok</artifactId>
 			<version>1.18.36</version>
 			<scope>provided</scope>
-		</dependency>
-		<dependency>
-			<groupId>com.faction.docx</groupId>
-			<artifactId>faction-reporting</artifactId>
-			<version>1.0</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/WebContent/WEB-INF/lib/faction-reporting.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>

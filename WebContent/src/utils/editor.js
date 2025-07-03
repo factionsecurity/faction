@@ -142,6 +142,26 @@ export class FactionEditor {
 			}
 		}
 	}
+	createReadOnly(id,initialHTML){
+		$(`#${id}`).html("");
+		this.editors[id]=new Editor({
+					el: document.querySelector(`#${id}`),
+					toolbarItems:[],
+					previewStyle: 'vertical',
+					autofocus: false,
+					viewer: true,
+					height: '520px',
+					initialEditType: 'wysiwyg'
+				});
+		this.editors[id].setHTML(initialHTML, false);
+		this.editors[id].on('keydown', function(t,e) {
+			if ( !((e.ctrlKey || e.metaKey) && e.key == 'c')) {
+				e.preventDefault();
+				throw new Error("Prevent Edit");
+			 }
+			
+		});
+	}
 	
 	createEditor(id, offloadImages, onChangeCallback) {
 		if(typeof onChangeCallback == 'undefined'){
@@ -249,7 +269,8 @@ export class FactionEditor {
 	getEditorText(id) {
 		let html = this.editors[id].getHTML();
         html = html.replace(/\+\+([^+\n]+)\+\+/g, '<u>$1</u>');
-		return Array.from($(html)).filter(a => a.innerHTML != "<br>").map(a => a.outerHTML).join("")
+		//return Array.from($(html)).filter(a => a.innerHTML != "<br>").map(a => a.outerHTML).join("")
+		return html
 	}
 	changeOff(id){
 		this.editors[id].off('change')
@@ -273,7 +294,7 @@ export class FactionEditor {
 		if (isEncoded) {
 			contents = this.b64DecodeUnicode(contents)
 		}
-		contents = contents.replaceAll("<br />", "\n");
+		//contents = contents.replaceAll("<br />", "\n");
 		contents = contents.replace(/<u>([^<]+)<\/u>/g, '++$1++');
 		this.editors[id].setHTML(contents, false);
 		this.editors[id].moveCursorToStart(false);
@@ -286,7 +307,7 @@ export class FactionEditor {
 		if (isEncoded) {
 			contents = this.b64DecodeUnicode(contents)
 		}
-		contents = contents.replaceAll("<br />", "\n");
+		//contents = contents.replaceAll("<br />", "\n");
 		contents = contents.replace(/<u>([^<]+)<\/u>/g, '++$1++');
 		this.editors[id].setHTML(contents, false);
 		this.editors[id].moveCursorToStart(false);

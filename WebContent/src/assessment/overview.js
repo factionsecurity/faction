@@ -5,10 +5,6 @@ require('../loading/css/jquery-loading.css');
 import Editor from '@toast-ui/editor'
 import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
 import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
-import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
-import '@toast-ui/editor/dist/toastui-editor.css';
-import 'tui-color-picker/dist/tui-color-picker.css';
-import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
 import '../loading/js/jquery-loading';
 import 'jquery';
 import 'datatables.net';
@@ -19,18 +15,15 @@ import 'jquery-ui';
 import 'jquery-confirm';
 import '../scripts/jquery.autocomplete.min';
 import 'select2';
-import { marked } from 'marked';
 import Chart from 'chart.js/auto';
-import TurndownService from 'turndown'
-let html2md = new TurndownService()
+import {FactionEditor} from '../utils/editor';
 
 
 
 global._token = $("#_token")[0].value;
-let editors = {
-	risk: {},
-	summary: {}
-};
+let assessmentId = $("#assessmentId")[0].value
+console.log(assessmentId);
+let editors = new FactionEditor(assessmentId);
 let initialHTML={}
 
 
@@ -66,9 +59,6 @@ function alertMessage(resp, success) {
 	global._token = resp.token;
 }
 
-function getEditorText(name) {
-	return editors[name].getHTML()
-}
 function showLoading(com) {
 	$(com).loading({ overlay: true, base: 0.3 });
 }
@@ -114,8 +104,8 @@ function saveAllEditors(showLoadingScreen = false) {
 	if (showLoadingScreen) {
 		showLoading(".content");
 	}
-	let risk = getEditorText('risk');
-	let sum = getEditorText('summary');
+	let risk = editors.getEditorText('risk');
+	let sum = editors.getEditorText('summary');
 	let data = "riskAnalysis=" + encodeURIComponent(risk);
 	data += "&summary=" + encodeURIComponent(sum);
 	data += "&id=app" + $("#appid")[0].value
@@ -139,7 +129,7 @@ function saveAllEditors(showLoadingScreen = false) {
 
 function saveEditor(type) {
 
-	let edits = getEditorText(type);
+	let edits = editors.getEditorText(type);
 	let name = "";
 	let data = "";
 	if (type == "risk") {
@@ -179,94 +169,22 @@ function queueSave(type) {
 	});
 
 }
-function b64DecodeUnicode(str) {
-	str = decodeURIComponent(str);
-	return decodeURIComponent(Array.prototype.map.call(atob(str), function(c) {
-		return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
-	}).join(''));
-}
-function setEditorContents(contents, editor, isEncoded) {
-	if (isEncoded) {
-		contents = b64DecodeUnicode(contents)
-	}
-	console.log(contents)
-	editors[editor].setHTML(contents, false);
-	editors[editor].moveCursorToStart(false);
-}
-function entityDecode(encoded){
-	let textArea = document.createElement("textarea");
-	textArea.innerHTML = encoded;
-	return textArea.innerText;
-	
-}
 
-function createEditor(id){
-	initialHTML[id] = entityDecode($(`#${id}`).html());
-	$(`#${id}`).html("");
-	editors[id]= new Editor({
-				el: document.querySelector(`#${id}`),
-				previewStyle: 'vertical',
-				height: 'auto',
-				autofocus: false,
-				height: '560px',
-				plugins: [colorSyntax, tableMergedCell],
-				hooks: {
-					addImageBlobHook: async (blob,callback, source)=>{
-						const encodedImage = await imageToURL(blob)
-						let data = "encodedImage=" + encodeURIComponent(encodedImage);
-						data += "&assessmentId="+$("#appid")[0].value;
-						$.post("UploadImage",data).done(function(resp) {
-							let uuid = resp.message;
-							callback("getImage?id=" + uuid);
-						});
-							
-					}
-				}
-			});
-	editors[id].hide();
-	editors[id].setHTML(initialHTML[id], false);
-	initialHTML[id] = editors[id].getHTML();
-	editors[id].show();
-	editors[id].on('change', function() {
-		if (document.getElementById(`${id}_header`).innerHTML == "") {
-			queueSave(id);
+$(function() {
+
+	global._token = $("#_token")[0].value;
+	editors.createEditor("summary",true, () => {
+		if (document.getElementById(`summary_header`).innerHTML == "") {
+			queueSave("summary");
 		}
 	});
-	
-	/// This is a hack becuase toastui does not have inital undo history set correctly
-	/// https://github.com/nhn/tui.editor/issues/3195
-	editors[id].on( 'keydown', function(a,e){
-		const html = editors[id].getHTML()
-		if ((e.ctrlKey || e.metaKey) && e.key == 'z' && html == initialHTML[id]) {
-			e.preventDefault();
-			throw new Error("Prevent Undo");
-		 }
-	})
-	
-}
-$(function() {
-	global._token = $("#_token")[0].value;
-	createEditor("summary")
-	createEditor("risk")
-	let initialNotes = entityDecode($("#engagmentnotes").html());
-	$("#engagmentnotes").html("");
-	editors.engagenotes = new Editor({
-				el: document.querySelector('#engagmentnotes'),
-				toolbarItems:[],
-				previewStyle: 'vertical',
-				autofocus: false,
-				viewer: true,
-				height: '520px',
-				initialEditType: 'wysiwyg'
-			});
-	editors.engagenotes.setHTML(initialNotes, false);
-	editors.engagenotes.on('keydown', function(t,e) {
-		if ( !((e.ctrlKey || e.metaKey) && e.key == 'c')) {
-			e.preventDefault();
-			throw new Error("Prevent Edit");
-		 }
-		
+	editors.createEditor("risk", true, () => {
+		if (document.getElementById(`risk_header`).innerHTML == "") {
+			queueSave("risk");
+		}
 	});
+	let initialNotes = editors.entityDecode($("#engagementnotes").html());
+	editors.createReadOnly("engagementnotes", initialNotes);
 	let errorMessageShown=false;
 	setInterval(() => {
 		$.get("summary/check/locks").done((resp) => {
@@ -296,7 +214,7 @@ $(function() {
 					$("#" + type).addClass("disabled")
 					
 					document.getElementById(`${type}_header`).innerHTML = `<i class="lockUser">Editing by ${resp[type].lockBy} ${resp[type].lockAt}</i>`
-					setEditorContents(resp[type].updatedText, type, true);
+					editors.setEditorContents(type, resp[type].updatedText, true);
 				} else {
 					if (document.getElementById(`${type}_header`).innerHTML.indexOf("*") == -1) {
 						document.getElementById(`${type}_header`).innerHTML = "";
@@ -564,7 +482,7 @@ $(function() {
 	$(".saveTemp").click(function() {
 		var id = $(this).attr("for");
 		var data = "term=" + $("#" + id).val();
-		data += "&summary=" + encodeURIComponent(getEditorText($("#" + id).attr("for")));
+		data += "&summary=" + encodeURIComponent(editors.getEditorText($("#" + id).attr("for")));
 		if ($("#" + id).attr("for") == "step_description")
 			data += "&exploit=true";
 		data += "&_token=" + global._token;
@@ -606,7 +524,7 @@ $(function() {
 					selectedText = $("#tempName").val();
 				}
 				let data = `term=${selectedText.trim()}`
-				data += "&summary=" + encodeURIComponent(getEditorText(type));
+				data += "&summary=" + encodeURIComponent(editors.getEditorText(type));
 				data += `&type=${type}`;
 				data += "&active=true"
 				data += "&_token=" + global._token;
@@ -711,8 +629,8 @@ $(function() {
 		await $.get('tempSearchDetail?tmpId=' + value)
 			.done(function(data) {
 				let template = data.templates[0].text;
-				let text = getEditorText(type) + "\n\n" + template;
-				setEditorContents(text, type, false);
+				let text = editors.getEditorText(type) + "\n\n" + template;
+				editors.setEditorContents(type, text, false);
 			});
 		
 	}
@@ -738,21 +656,21 @@ $(function() {
 				overWrite: {
 					text: "OverWrite",
 					action: function() {
-						setEditorContents(text, type, false);
+						editors.setEditorContents(type, text, false);
 					}
 				},
 				prepend: {
 					text: "Prepend",
 					action: function() {
-						text = text + "\n\n" + getEditorText(type);
-						setEditorContents(text, type, false);
+						text = text + "\n\n" + editors.getEditorText(type);
+						editors.setEditorContents(type, text, false);
 					}
 				},
 				append: {
 					text: "Append",
 					action: function() {
-						text = getEditorText(type) + "\n\n" + text;
-						setEditorContents(text, type, false);
+						text = editors.getEditorText(type) + "\n\n" + text;
+						editors.setEditorContents(type, text, false);
 					}
 				},
 				cancel: function() {
@@ -788,7 +706,7 @@ $(function() {
 				);
 			},
 			onSelect: function(e, term, item) {
-				var s = getEditorText($(el).attr("for"));
+				var s = editors.getEditorText($(el).attr("for"));
 				var tmpId = term.split(":")[0];
 				$(el).val(term.split(":")[1].trim());
 				$(el).attr("tmpId", tmpId);
@@ -805,7 +723,7 @@ $(function() {
 										.done(function(data) {
 											let type = $(el).attr("for");
 											let text = data.templates[0].text;
-											setEditorContents(text, type, false);
+											editors.setEditorContents(type, text, false);
 										});
 								}
 
@@ -815,9 +733,9 @@ $(function() {
 								action: function() {
 									$.get('tempSearchDetail?tmpId=' + tmpId)
 										.done(function(data) {
-											var text = "<br />" + getEditorText($(el).attr("for"));
+											var text = "<br />" + editors.getEditorText($(el).attr("for"));
 											let type = $(el).attr("for");
-											setEditorContents(text, type, false);
+											editors.setEditorContents(type, text, false);
 										});
 								}
 
@@ -827,9 +745,9 @@ $(function() {
 								action: function() {
 									$.get('tempSearchDetail?tmpId=' + tmpId)
 										.done(function(data) {
-											var text = getEditorText($(el).attr("for")) + "<br />";
+											var text = editors.getEditorText($(el).attr("for")) + "<br />";
 											let type = $(el).attr("for");
-											setEditorContents(text, type, false);
+											editors.setEditorContents(type, text, false);
 										});
 								}
 
@@ -846,7 +764,7 @@ $(function() {
 						.done(function(data) {
 							let type = $(el).attr("for");
 							let text = data.templates[0].text;
-							setEditorContents(text, type, false);
+							editors.setEditorContents(type, text, false);
 						});
 				}
 

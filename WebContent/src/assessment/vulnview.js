@@ -190,7 +190,7 @@ class EditLocks {
 }
 
 
-class VulnerablilityView {
+class VulnerabilityView {
 
     constructor(assessmentId) {
         this._token = $("#_token")[0].value;
@@ -1227,7 +1227,7 @@ $(function () {
             location.href = "#NoteView"
         }
     })
-    global.vulnView = new VulnerablilityView($("#assessmentId")[0].value);
+    global.vulnView = new VulnerabilityView($("#assessmentId")[0].value);
 })
 
 
