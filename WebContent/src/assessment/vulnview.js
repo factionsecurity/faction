@@ -196,7 +196,6 @@ class VulnerabilityView {
         this._token = $("#_token")[0].value;
         this.queue = new SaveQueue(this, assessmentId, this.saveChanges, (type, vulns) => { this.updateCallback(type, vulns) });
         this.vulnId = -1;
-        this.editors = {};
         this.descUndoCount = 0;
         this.initialHTML = {};
         this.assesssmentId = assessmentId //$("#assessmentId")[0].value;
@@ -233,12 +232,12 @@ class VulnerabilityView {
         $('[id^="rtCust"]').each(function () {
             const id = $(this).attr('id')
             if(id.indexOf("_header") == -1){
-            	_this.editors.createEditor(id,true);
+            	_this.editors.createEditor(id,true, ()=>{});
             }
         });
-            _this.editors.createEditor("description",true);
-            _this.editors.createEditor("recommendation",true);
-            _this.editors.createEditor("details",true);
+		_this.editors.createEditor("description",true, ()=>{});
+		_this.editors.createEditor("recommendation",true, ()=>{});
+		_this.editors.createEditor("details",true, ()=>{});
 
         const initialHTML = entityDecode($("#notes").html());
 		this.editors.createEditor("notes",true, (param, editor) =>{
@@ -1086,7 +1085,6 @@ class VulnerabilityView {
             }
             _this.queue.push('vulnerability', _this.vulnId, this.id, encodeURIComponent(b64EncodeUnicode(val)));
         }));
-
 
         $('[id^="rtCust"]').each(function () {
         	const rtId = this.id;

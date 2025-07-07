@@ -5,6 +5,7 @@ import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
 import '@toast-ui/editor/dist/toastui-editor.css';
 import 'tui-color-picker/dist/tui-color-picker.css';
 import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
+import '@toast-ui/editor-plugin-table-merged-cell/dist/toastui-editor-plugin-table-merged-cell.css'
 import { marked } from 'marked';
 import TurndownService from 'turndown'
 let html2md = new TurndownService()
@@ -27,7 +28,7 @@ export class FactionEditor {
 				'span', 'hr', 's', 'del', 'blockquote'
 				// Add other tags Toast UI uses
 			],
-			ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'style', 'text-decoration'], // Optional
+			ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'style', 'text-decoration', 'colspan'], // Optional
 		});
 	};
 	createUnderlineButton(id) {
@@ -301,9 +302,12 @@ export class FactionEditor {
 	}
 	
 	recreateEditor(id, contents, offloadImages, isEncoded, callback){
+		if(typeof callback == 'undefined'){
+			callback = function(){}
+		}
+		this.changeOff(id);
 		this.editors[id].destroy();
 		this.createEditor(id,offloadImages,()=>{});
-		this.changeOff(id);
 		this.editors[id].hide();	
 		if (isEncoded) {
 			contents = this.b64DecodeUnicode(contents)
