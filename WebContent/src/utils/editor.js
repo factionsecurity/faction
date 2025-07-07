@@ -302,7 +302,8 @@ export class FactionEditor {
 	
 	recreateEditor(id, contents, offloadImages, isEncoded, callback){
 		this.editors[id].destroy();
-		this.createEditor(id,offloadImages,callback)
+		this.createEditor(id,offloadImages,()=>{});
+		this.changeOff(id);
 		this.editors[id].hide();	
 		if (isEncoded) {
 			contents = this.b64DecodeUnicode(contents)
@@ -312,6 +313,7 @@ export class FactionEditor {
 		this.editors[id].setHTML(contents, false);
 		this.editors[id].moveCursorToStart(false);
 		this.initialHTML[id] = this.editors[id].getHTML();
+		this.setOnChangeCallBack(id,callback);
 		this.editors[id].show();	
 	}
 	entityDecode(encoded){

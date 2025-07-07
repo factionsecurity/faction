@@ -7,24 +7,14 @@ import 'jquery-confirm';
 import '../scripts/jquery.autocomplete.min';
 import 'select2';
 import 'jquery-confirm';
-import Editor from '@toast-ui/editor'
-import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
-import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
-import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
-import '@toast-ui/editor/dist/toastui-editor.css';
-import 'tui-color-picker/dist/tui-color-picker.css';
-import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
+import {FactionEditor} from '../utils/editor';
 
 
-
+let editor = new FactionEditor(-1);
 $(function() {
 	global._token = $("#_token")[0].value;
-	let editor = new Editor({
-				el: document.querySelector('#templateEditor'),
-				previewStyle: 'vertical',
-				height: '600px',
-				autofocus: false
-			});
+	
+	editor.createEditor("templateEditor",false,()=>{});
 	
 	global.table = $('#templateTable').DataTable({
 		"paging": true,
@@ -72,32 +62,51 @@ $(function() {
 	global.table.on('draw', function(){
 		setUpEvents();
 	});
+	/*let editorTimeout={};	
+	function queueSave(id, text) {
+		$("#edits").html("*");
+		clearTimeout(editorTimeout[id]);
+		editorTimeout[id] = setTimeout(() => {
+			saveIt(id, text);
+		}, 2000);
+	}
+	function saveIt(id, text){
+		let data = `tmpId=${id}`
+		data += `&summary=${text}`;
+		data += "&active=true";
+		data += "&_token=" + global._token;
+		$.post("globalSave", data).done(function(resp) {
+			_token = resp.token;
+			if(alertMessage(resp, "Saved!")){
+				$("#edits").html("");
+			}	
+		
+		})
+		
+	}*/
+
 	function ShowSummary(templateId){
-		editor.off( 'change');
+		$("#edits").html("");
 		$("#editorContainer").removeClass("disabled")
 		$.get('tempSearchDetail?tmpId=' + templateId).done(function(data) {
-			const text = data.templates[0].text;
-			editor.hide();
-			editor.setHTML(text, false);
-			editor.show(false);
-			editor.on( 'change', function(t, e){
+			editor.recreateEditor("templateEditor",data.templates[0].text,false,false,()=>{
 				$("#edits").html("*");
-			})
+			});
 		});
 	}
 	$("#templateTable").on('click', 'tbody tr',function(event){
-			const templateId = parseInt(event.currentTarget.id.replace("template", ""));
-			$(".selected").each( (_index, tr) => $(tr).removeClass("selected"))
-			$(event.currentTarget).addClass("selected");
-			let data = table.row(this).data()
-			$("#templateName").html(data[1])	
-			ShowSummary(data[0]);
+		const templateId = parseInt(event.currentTarget.id.replace("template", ""));
+		$(".selected").each( (_index, tr) => $(tr).removeClass("selected"))
+		$(event.currentTarget).addClass("selected");
+		let data = table.row(this).data()
+		$("#templateName").html(data[1])	
+		ShowSummary(data[0]);
 	});
 	$("#createTemplate").on('click', async (event) =>{
 		$.confirm({
 			title: "New Template",
 			content: "Enter a Template name: <input id='tempName' class='form-control'></input><br>" +
-				"Select a type <select id='templateType' class='form-control select2'><option>summary</option><option>risk</option></select>",
+				"Select a type <select id='templateType' class='form-control select2'><option>summary</option><option>risk</option><option>custom field</option></select>",
 			buttons: {
 				create: function(){
 					const templateName = $("#tempName").val();
@@ -134,7 +143,7 @@ $(function() {
 		const templateName = rowData[1]
 		const type = rowData[2]
 		let data = `tmpId=${rowData[0]}`
-		data += "&summary=" + encodeURIComponent(editor.getHTML());
+		data += "&summary=" + encodeURIComponent(editor.getEditorText("templateEditor"));
 		data += "&active=true";
 		data += "&_token=" + global._token;
 		$.post("globalSave", data).done(function(resp) {

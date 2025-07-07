@@ -141,7 +141,7 @@ public class BoilerPlateConfig extends FSActionSupport {
 			return this.ERRORJSON;
 		}
 		if (!(this.type.trim().equals("risk") || this.type.trim().equals("summary")
-				|| this.type.trim().equals("exploit"))) {
+				|| this.type.trim().equals("exploit") || this.type.trim().equals("custom field") )) {
 			this._message = "Not a valid type";
 			return this.ERRORJSON;
 		}
