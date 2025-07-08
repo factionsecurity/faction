@@ -584,6 +584,13 @@ public class DocxUtils {
 		map.put(getKey("totalopenvulns"), this.getTotalOpenVulns(this.assessment.getVulns()));
 		map.put(getKey("totalclosedvulns"), this.getTotalClosedVulns(this.assessment.getVulns()));
 		map.putAll(getVulnMap());
+		if (this.assessment.getCustomFields() != null) {
+			for (CustomField cf : this.assessment.getCustomFields()) {
+				if(cf.getType().getFieldType() < 3) {
+					map.put("cf" + cf.getType().getVariable(), cf.getValue());
+				}
+			}
+		}
 
 		replacementText(map);
 
@@ -591,7 +598,9 @@ public class DocxUtils {
 		Map<String, List<Object>> cfMap = new HashMap<>();
 		if (this.assessment.getCustomFields() != null) {
 			for (CustomField cf : this.assessment.getCustomFields()) {
-				cfMap.put("${cf" + cf.getType().getVariable() +"}", wrapHTML(cf.getValue(), customCSS, ""));
+				if(cf.getType().getFieldType() == 3) {
+					cfMap.put("${cf" + cf.getType().getVariable() +"}", wrapHTML(cf.getValue(), customCSS, cf.getType().getVariable()));
+				}
 			}
 		}
 
