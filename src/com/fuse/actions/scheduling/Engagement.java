@@ -706,7 +706,7 @@ public class Engagement  extends FSActionSupport{
 		Pattern p = Pattern.compile(emailRegex);
 		String [] emails = this.distro.split(";");
 		for(String mail : emails) {
-			Matcher m = p.matcher(mail.trim());
+			Matcher m = p.matcher(mail.toLowerCase().trim());
 			if(m.matches())
 				continue;
 			else
