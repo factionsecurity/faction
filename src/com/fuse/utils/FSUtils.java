@@ -720,6 +720,7 @@ public class FSUtils {
 			String converted = renderer.render(document);
 			converted = converted.replaceAll("\\+\\+([^+]+)\\+\\+", "<u>$1</u>"); // Allow for custom underline markdown
 			converted += "<br/>";
+			converted = converted.replaceAll("<br>", "\r\n").replaceAll("<br/>","\r\n");
 			return converted;
 		} catch (Exception ex) {
 			ex.printStackTrace();

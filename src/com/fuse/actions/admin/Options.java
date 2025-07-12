@@ -308,6 +308,7 @@ public class Options extends FSActionSupport {
 		type.setDefaultValue(this.cfdefault);
 		type.setFieldType(this.cffieldtype);
 		type.setReadonly(this.readonly);
+		
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		em.persist(type);
