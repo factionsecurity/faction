@@ -44,6 +44,7 @@
 											class="vulnControl vulnControl-delete"> <i
 												class="fa fa-trash"></i>
 										</span></td>
+										<td >${id}</td>
 									</tr>
 								</s:iterator>
 							</bs:datatable>
@@ -101,11 +102,11 @@
 									<s:iterator value="custom">
 										<tr>
 											<td><input value="<s:property value="key"/>" id="key${id}"
-												class="form-control pull-right" /></td>
+												class="form-control pull-right" readonly></td>
 											<td><input id="var${id}" value="<s:property value="variable"/>"
-												class="form-control pull-right" /></td>
+												class="form-control pull-right" readonly /></td>
 											<td><input id="default${id}" value="<s:property value="defaultValue"/>"
-												class="form-control pull-right" /></td>
+												class="form-control pull-right" readonly/></td>
 											<td><s:property value="fieldTypeStr"/></td>
 											<td><s:property value="typeStr"/></td>
 											<s:if test="readonly">
@@ -115,7 +116,7 @@
 												<td><input type=checkbox id="ro${id}" /></td>
 											</s:else>
 											<td style="width: 70px"><span for="${id}" class="vulnControl updCF"><i
-													class="fa fa-save"></i></span><span for="${id}"
+													class="fa fa-edit"></i></span><span for="${id}"
 												class="vulnControl vulnControl-delete delCF"><i
 													class="fa fa-trash"></i></span></td>
 										</tr>

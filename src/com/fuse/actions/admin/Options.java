@@ -3,6 +3,7 @@ package com.fuse.actions.admin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.convention.annotation.Action;
@@ -71,6 +72,8 @@ public class Options extends FSActionSupport {
 	private Long riskId;
 	private Integer riskType;
 	private Boolean selected;
+	private String asmtTypes;
+	private CustomType resultType;
 
 	@Action(value = "Options")
 	public String execute() {
@@ -153,9 +156,26 @@ public class Options extends FSActionSupport {
 
 				return this.ERRORJSON;
 			}
+			
+			AssessmentType type = em.find(AssessmentType.class, this.id);
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
-			AssessmentType type = em.find(AssessmentType.class, this.id);
+			
+			//remove assessment type from custom types
+			List<CustomType> customTypes = em.createQuery("from CustomType").getResultList();
+			for(CustomType customType : customTypes) {
+				List<AssessmentType> asmtTypes = customType.getAssessmentTypes();
+				if(asmtTypes != null && asmtTypes.stream().anyMatch( asmtType -> asmtType.getId().equals(type.getId()))) {
+					List<AssessmentType> updatedList = asmtTypes
+							.stream()
+							.filter( asmtType -> !asmtType.getId().equals(type.getId()) )
+							.collect(Collectors.toList());
+					customType.setAssessmentTypes(updatedList);
+					em.persist(customType);
+				}
+			}
+			
+			
 			em.remove(type);
 			AuditLog.audit(this, "Assessment Type " + type.getType() + " deleted", AuditLog.UserAction, false);
 			HibHelper.getInstance().commit();
@@ -303,8 +323,25 @@ public class Options extends FSActionSupport {
 			message = "This variable has already been used by an active field";
 			return this.ERRORJSON;
 		}
-
+		
 		CustomType type = new CustomType(this.cfname, this.cfvar.replaceAll(" ", ""), this.cftype);
+		
+		List<AssessmentType> typeList = new ArrayList<>();
+		if(this.asmtTypes != null && this.asmtTypes != "") {
+			String [] typeArray = this.asmtTypes.split(",");
+			for(String typeId : typeArray) {
+				if(typeId.toLowerCase().equals("all")) {
+					typeList = em.createQuery("from AssessmentType").getResultList();
+					break;
+				}else {
+					AssessmentType at = em.find(AssessmentType.class, Long.parseLong(typeId));
+					if(at != null) {
+						typeList.add(at);
+					}
+				}
+			}
+			type.setAssessmentTypes(typeList);
+		}
 		type.setDefaultValue(this.cfdefault);
 		type.setFieldType(this.cffieldtype);
 		type.setReadonly(this.readonly);
@@ -340,12 +377,32 @@ public class Options extends FSActionSupport {
 		
 		CustomType type = (CustomType) em.createQuery("from CustomType where id = :id").setParameter("id", this.cfid)
 				.getResultList().stream().findFirst().orElse(null);
+		
+		List<AssessmentType> typeList = new ArrayList<>();
+		if(this.asmtTypes != null && this.asmtTypes != "") {
+			String [] typeArray = this.asmtTypes.split(",");
+			for(String typeId : typeArray) {
+				if(typeId.toLowerCase().equals("all")) {
+					typeList = em.createQuery("from AssessmentType").getResultList();
+					break;
+				}else {
+					AssessmentType at = em.find(AssessmentType.class, Long.parseLong(typeId));
+					if(at != null) {
+						typeList.add(at);
+					}
+				}
+			}
+			type.setAssessmentTypes(typeList);
+		}
+		
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		type.setKey(this.cfname);
 		type.setVariable(this.cfvar.replaceAll(" ", ""));
 		type.setReadonly(this.readonly);
 		type.setDefaultValue(cfdefault);
+		type.setFieldType(this.cffieldtype);
+		type.setType(this.cftype);
 		em.persist(type);
 		HibHelper.getInstance().commit();
 
@@ -377,6 +434,19 @@ public class Options extends FSActionSupport {
 		HibHelper.getInstance().commit();
 
 		return this.SUCCESSJSON;
+	}
+	
+	@Action(value = "getCustomType", results={
+			@Result(name="typeJson",location="/WEB-INF/jsp/admin/resultTypeJSON.jsp")
+		})
+	public String getCustomType() {
+		if (!(this.isAcadmin() || this.isAcmanager() || this.isAcengagement())) {
+			return LOGIN;
+		}
+		resultType = (CustomType) em.createQuery("from CustomType where id = :id").setParameter("id", this.cfid)
+				.getResultList().stream().findFirst().orElse(null);
+		
+		return "typeJson";
 	}
 
 	@Action(value = "updatePrConfig")
@@ -990,6 +1060,14 @@ public class Options extends FSActionSupport {
 	
 	public void setSelected(Boolean selected) {
 		this.selected = selected;
+	}
+	
+	public void setAsmtTypes(String asmtTypes) {
+		this.asmtTypes = asmtTypes;
+	}
+	
+	public CustomType getResultType() {
+		return this.resultType;
 	}
 	
 

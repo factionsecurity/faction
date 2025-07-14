@@ -73,7 +73,10 @@ import '../scripts/jquery.autocomplete.min';
              "searching": true,
              "ordering": true,
              "info": true,
-             "autoWidth": false}
+             "autoWidth": false,
+             "columnDefs": [
+              	{ target: 3, visible: false }
+             ]}
 		);
 		$("#campaign").DataTable(
 			
@@ -373,43 +376,39 @@ import '../scripts/jquery.autocomplete.min';
 
 		});
 	};
-    
-    $(function(){
-    	$("#addCF").click(function(){
-			$.confirm({
-				escapeKey: true,
-    			backgroundDismiss: false,
-				title: 'Add Custom Field',
-				content: `
+	
+	function buildCustomTypeForm(){
+		return `
 				<div class="col-md-12">
 					<div class="row">
-						<div class="form-group">
+						<div class="form-group col-md-12">
 							<label title="This is the name that is shown in UI">Field Display Name</label><input type="text" placeholder="" class="form-control pull-right" id="cfName" value="">
 						</div>
 					</div>
 					<div class="row">
-						<div class="form-group">
+						<div class="form-group col-md-12">
 							<label title="This variable will be populated in reports">Variable Name (No Spaces) <i class="fa-solid fa-question"></i></label><input type="text" placeholder="" class="form-control pull-right" id="cfVar" value="">
 						</div>
 					</div>
 					<div class="row">
-						<div class="form-group">
+						<div class="form-group col-md-12">
 							<label title="The Default Value that will be populated in the UI">Default Value (Optional) <i class="fa-solid fa-question"></i></label><input type="text" placeholder="" class="form-control pull-right" id="cfDefault" value="">
 						</div>
 					</div>
 					<div class="row">
 						<br>
-						<div class="form-group">
+						<div class="form-group col-md-12">
 						<label title="Strings will display as input boxes, Boolean will be checkboxes, and Lists will be dropdowns">Data Type <i class="fa-solid fa-question"></i></label>
 						<select id="cfFieldType" style="width:100%">
 							  <option value="0">String</option>
 							  <option value="1">Boolean</option>
 							  <option value="2">List</option>
+							  <option value="3">RichText</option>
 						  </select>
 						</div>
 					</div>
 					<div class="row">
-						<div class="form-group">
+						<div class="form-group col-md-12">
 						  <label title="The location where the field is valid">Applied to <i class="fa-solid fa-question"></i></label>
 						  <select id="cfType" style="width:100%">
 							  <option value="0">Assessment</option>
@@ -418,15 +417,25 @@ import '../scripts/jquery.autocomplete.min';
 						</div>
 					</div>
 					<div class="row">
-						<div class="form-group">
+						<div class="form-group col-md-12">
 							<label title="Read Only fields cannot be edited in assessments">Read Only <i class="fa-solid fa-question"></i></label><br/>
 							<input type="checkbox" id="readonly" class="icheckbox_minimal-blue">
 						</div>
 					</div>
 				</div>
-				`,
+				`
+	}
+    
+    $(function(){
+    	$("#addCF").click(function(){
+		    	
+			$.confirm({
+				escapeKey: true,
+    			backgroundDismiss: false,
+    			columnClass: "large",
+				title: 'Add Custom Field',
+				content: buildCustomTypeForm(),
 				onContentReady: function () {
-					console.log("content loaded")
 					$("#cfType").select2();
 					$("#cfFieldType").select2();
 				},
@@ -452,23 +461,50 @@ import '../scripts/jquery.autocomplete.min';
     		});
     		
     	});
+    
+    	
     	$(".updCF").click(function(){
     		let cfid = $(this).attr("for");
-    		let variable = $("#var" + cfid).val();
-    		let defaultVal = $("#default" + cfid).val();
-    		let text = $("#key"+cfid).val();
-    		let data = "cfid=" + cfid;
-    		data+="&cfname=" + text;
-    		data+="&cfvar=" + variable;
-    		data+="&cfdefault=" + defaultVal;
-    		data+="&readonly="+$("#ro"+cfid).is(":checked");
-    		data+="&_token=" + _token;
-    		$.post("UpdateCF",data).done(function(resp){
-    			alertMessage(resp,"Custom Field Updated");
-    			
-    		});
+			$.confirm({
+				escapeKey: true,
+    			backgroundDismiss: false,
+    			columnClass: "large",
+				title: 'Update Custom Field',
+				content: buildCustomTypeForm(),
+				onContentReady: function () {
+					$("#cfType").select2();
+					$("#cfFieldType").select2();
+					$.post("getCustomType","cfid="+cfid).done(function(resp){
+						$("#cfType").val(resp.type).trigger('change')
+						$("#cfName").val(resp.name)
+						$("#readonly").prop("checked",resp.readonly)
+						$("#cfVar").val(resp.variable)
+						$("#cfFieldType").val(resp.fieldType).trigger('change');
+						$("#cfDefault").val(resp.defaultValue)
+					});
+				},
+				buttons: {
+					cancel: () => {},
+					update: () => {
+						let data="cftype=" + $("#cfType").val();
+						data+="&cfid=" + cfid;
+						data+="&cfname="+$("#cfName").val();
+						data+="&readonly="+$("#readonly").is(":checked");
+						data+="&cfvar="+$("#cfVar").val();
+						data+="&cffieldtype="+$("#cfFieldType").val();
+						data+="&cfdefault="+$("#cfDefault").val();
+						data+="&_token=" + _token;
+						$.post("UpdateCF",data).done(function(resp){
+			    			alertRedirect(resp);
+						});
+					}
+				}
+			});
     		
     	});
+    	
+    	
+    	
     	$(".delCF").click(function(){
     		var cfid = $(this).attr("for");
     		$.confirm({
