@@ -330,14 +330,16 @@ td:first-child {
 								<hr>
 							</s:if>
 						</div>
+					</div>
+					<div class="row">
 						<s:iterator value="customFields">
 						<s:if test="fieldType != 3">
-							<div class="form-group">
-								<div class="col-md-6">
-									<label class="col-sm-2 control-label"
-										title="Variable: &#x24;{cf${variable}}">${key}<span
-										id="type${id}_header"></span></label>
-									<div class="col-md-4" style="height: 50px">
+							<div class="form-group col-md-3" style="padding-left: 25px">
+								<label class=""
+									title='Variable: &#x24;{cf<s:property value="variable"/>}'><s:property value="key"/>
+										<span id="type${id}_header"></span><br/><small>Variable: &#x24;&#x7B;cf<s:property value="variable"/>&#x7D;</small>
+										</label>
+									<div class="" style="height: 50px">
 										<s:if test="fieldType == 0">
 											<input type="text" class="form-control pull-right"
 												id="type${id}" value='${defaultValue}'
@@ -367,7 +369,6 @@ td:first-child {
 										</s:if>
 									</div>
 								</div>
-							</div>
 							</s:if>
 
 						</s:iterator>

@@ -42,6 +42,7 @@ $(function() {
 		} else
 			$(".disabled-select", objs).remove();
 	}
+	createAllCustomFields();
 
 	//getAssessors();
 	calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {
@@ -204,6 +205,83 @@ $(function() {
 		//$("#reservation").val(`${sDate} to ${eDate}`);
 		getAssessors();
 	}
+	function createCustomStringVariableHTML(name,id, readOnly, defaultValue){
+		let html =`<div class="col-md-4">
+			 <div class="form-group">
+			     <label>${name}:</label>
+			       		<input type="text" 
+			       			class="form-control" 
+			       			id="cust${id}" `
+		if(readOnly){
+			html =`${html}
+			readonly`;
+		}
+		html = `${html} /></div>`
+		return html;
+	}
+	function createCustomCheckBoxVariableHTML(name,id, readOnly, defaultValue){
+		let html =`<div class="col-md-4">
+			 <div class="form-group">
+			     <label>${name}:</label>
+			       		<br><input type="checkbox" 
+			       			class="icheckbox_minimal-blue" style="height:34px"
+			       			id="cust${id}" `;
+		if(readOnly){
+			html =`${html}
+			readonly`;
+		}
+		if(defaultValue == true){
+			html = `${html}
+			checked`;
+		}
+		html = `${html} /></div>`
+		
+		return html;
+	}
+	function createCustomListVariableHTML(name,id, readOnly, defaultValue){
+		let html =`<div class="col-md-4">
+			 <div class="form-group">
+			     <label>${name}:</label>
+			       		<select
+			       			class='form-control select2 ' style='width: 100%;'
+			       			id="cust${id}" `
+		if(readOnly){
+			html =`${html}
+			readonly`;
+		}
+		html = `${html} >`
+		let options = defaultValue.split(",");
+		console.log(options);
+		for(let option of options){
+			html = `${html}
+			<option value="${option}">${option}</option>`
+		}
+		html = `${html}
+			    </select></div>`
+		return html;
+	}
+	function createAllCustomFields(){
+		const assessmentType = $('#assType').val()
+		$.post('getCustomTypes', `assessmentType=${assessmentType}&variableType=0`)
+		.done((json) =>{
+			$("#variables").html("");
+			
+			for( let type of json){
+				if(type.fieldType == 0){
+					$("#variables").append(createCustomStringVariableHTML(type.name, type.id, finalized, type.defaultValue));
+				}
+				else if(type.fieldType == 1){
+					$("#variables").append(createCustomCheckBoxVariableHTML(type.name, type.id, finalized, type.defaultValue));
+				}
+				else if(type.fieldType == 2){
+					$("#variables").append(createCustomListVariableHTML(type.name, type.id, finalized, type.defaultValue));
+				}
+			}
+		});
+	}
+	$('#assType').on('change', () =>{
+		createAllCustomFields();
+	});
 	$('#reservation, #teamName').on('change', function() {
 		getAssessors();
 		let value3 = $("#assessorListSelect option");
@@ -535,17 +613,19 @@ $(function() {
 			$("#remName").val(json.remediationId).trigger("change");
 			$("[id^=cust]").val("");
 			$("[id^=rtCust]").val("");
-			$(json.fields).each(function(a, b) {
-				let el = $("#cust" + b.fid)
-				if(el.type == 'checkbox' && b.value == "true"){
-					$(el).prop('checked', true);
-				}else if(el.type == 'checkbox'){
-					$(el).prop('checked', false);
-				}else{
-					$(el).val(b.value);
-				}//TODO: add rtCust
+			setTimeout( () => {
+				$(json.fields).each(function(a, b) {
+					let el = $("#cust" + b.fid)
+					if(el.type == 'checkbox' && b.value == "true"){
+						$(el).prop('checked', true);
+					}else if(el.type == 'checkbox'){
+						$(el).prop('checked', false);
+					}else{
+						$(el).val(b.value);
+					}//TODO: add rtCust
+				});
 				
-			});
+			}, 300);
 
 		}
 

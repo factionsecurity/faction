@@ -23,7 +23,10 @@ div[id^='rtCust']{
    <bs:button size="lg" color="primary" colsize="2" text="<i class='glyphicon glyphicon-plus'></i> Save" id="AddAssessment"></bs:button>
  </bs:row>
  <bs:row>
- &nbsp;
+	  <bs:mco colsize="12">
+	  	<h3>Assessment Details</h3>
+	  <hr>
+	  </bs:mco>
  </bs:row>
 	<bs:row>
 		 <!--<bs:inputgroup name="App ID:" id="appId" colsize="3"><s:property value="currentAssessment.appId"/></bs:inputgroup>
@@ -45,52 +48,6 @@ div[id^='rtCust']{
 		
 		 <bs:inputgroup name="App Name: <b>*</b>" id="appName" colsize="4" ><s:property value="currentAssessment.name" /></bs:inputgroup>
 		 <bs:dt name="Start and End Date: <b>*</b>" colsize="4" id="reservation" readOnly="${currentAssessment.isFinalized() }"><s:property value="startStr"/> to <s:property value="endStr"/></bs:dt>
-		 <bs:select name="Engagement Contact: <b></b>" colsize="4" id="engName">
-		 	<s:iterator value="engagement">
-                      <option value="<s:property value="id"/>"><s:property value="fname"/> <s:property value="lname"/></option>
-            </s:iterator>
-		 </bs:select>
-		 <bs:select name="Remediation Contact: <b></b>" colsize="4" id="remName" readOnly="${currentAssessment.isFinalized() }">
-		 	<s:iterator value="remediation">
-                      <option value="<s:property value="id"/>"><s:property value="fname"/> <s:property value="lname"/></option>
-            </s:iterator>
-		 </bs:select>
-		
-		 <s:iterator value="custom">
-			<s:if test="fieldType < 3">
-			 <bs:mco colsize="4">
-			 <div class="form-group">
-			     <label><s:property value="key"/>:</label>
-			     	<s:if test="fieldType == 0">
-			       		<input type="text" 
-			       			class="form-control" 
-			       			id="cust<s:property value="id"/>" 
-			       			<s:if test="currentAssessment.finalized">readonly</s:if> 
-			       			value="<s:property value="defaultValue"/>"/>
-			       	</s:if>
-			       	<!--  ${fieldType} -->
-			     	<s:if test="fieldType == 1">
-			       		<br><input type="checkbox" 
-			       			class="icheckbox_minimal-blue" style="height:34px"
-			       			id="cust<s:property value="id"/>" 
-			       			<s:if test="currentAssessment.finalized">readonly</s:if> 
-			       			<s:if test="defaultValue == 'true'">checked</s:if>/>
-			       	</s:if>
-			     	<s:if test="fieldType == 2">
-			       		<select
-			       			class='form-control select2 ' style='width: 100%;'
-			       			id="cust<s:property value="id"/>" 
-			       			<s:if test="currentAssessment.finalized">readonly</s:if> >
-								<s:iterator value="defaultValue.split(',')" var="option">
-									<option value="<s:property value="option"/>"><s:property value="option"/></option>
-								</s:iterator>
-			       			</select>
-			       	</s:if>
-			   </div><!-- /.form group -->
-			 </bs:mco>
-			</s:if>
-		 </s:iterator>
-		 
 		 <bs:select name="Select Team: <b>*</b>" colsize="4" id="teamName" readOnly="${currentAssessment.isFinalized() }">
 		 	<s:iterator value="teams">
 	            <option value="<s:property value="id"/>"><s:property value="teamName"/></option>
@@ -113,13 +70,35 @@ div[id^='rtCust']{
 	            </s:if>
 	        </s:iterator>
 		 </bs:select>
-		
-		 
-		 
+	  </bs:row><!--  End of Top Row -->
+	  <bs:row>
+	  <bs:mco colsize="12">
+	  	<h3>Variables</h3>
+	  <hr>
+	  </bs:mco>
+	  <div id="variables"></div>
 		 
 	  </bs:row><!--  End of Top Row -->
 	  <!--  Add Distribution list section -->
 	 <bs:row>
+	  <bs:mco colsize="12">
+	  	<h3>Contacts</h3>
+	  <hr>
+	  </bs:mco>
+	  </bs:row>
+	 <bs:row>
+		 <bs:select name="Engagement Contact: <b></b>" colsize="4" id="engName">
+		 	<s:iterator value="engagement">
+                      <option value="<s:property value="id"/>"><s:property value="fname"/> <s:property value="lname"/></option>
+            </s:iterator>
+		 </bs:select>
+		 <bs:select name="Remediation Contact: <b></b>" colsize="4" id="remName" readOnly="${currentAssessment.isFinalized() }">
+		 	<s:iterator value="remediation">
+                      <option value="<s:property value="id"/>"><s:property value="fname"/> <s:property value="lname"/></option>
+            </s:iterator>
+		 </bs:select>
+		
+		 
 	 	<bs:inputgroup colsize="12" name="Distribution List:" id="distlist"  readOnly="${currentAssessment.isFinalized() }"><s:property value="currentAssessment.DistributionList"/> </bs:inputgroup>
 	 </bs:row>
 	 <br>
@@ -169,8 +148,13 @@ div[id^='rtCust']{
 	  
 	  <!--  Add Notes section -->
 	 <bs:row>
+		  <bs:mco colsize="12">
+			  <h3>Scope</h3>
+		  <hr>
+		  </bs:mco>
+	 </bs:row>
+	 <bs:row>
 	 	<bs:mco colsize="12">
-	 		<label>Notes:</label>
             <div id="notes" name="notes" rows="10" cols="80" <s:if test="currentAssessment.finalized">disabled</s:if> > 
             	<s:property value="currentAssessment.AccessNotes"/>                
             </div>
@@ -188,6 +172,7 @@ div[id^='rtCust']{
 	     <br>
      </bs:row>
      <br>
+     <bs:row>
 	 <s:iterator value="custom">
 		<s:if test="fieldType == 3">
 		 <bs:mco colsize="12">
@@ -200,6 +185,7 @@ div[id^='rtCust']{
 		</bs:mco>
 		</s:if>
 		</s:iterator>
+		</bs:row>
 			 
 </bs:mco> <!--  End of Top col -->
 

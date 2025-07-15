@@ -3,12 +3,14 @@ package com.fuse.actions.assessment;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
@@ -633,9 +635,6 @@ public class AssessmentView extends FSActionSupport {
 		return icsFile;
 	}
 
-	public List<CustomType> getVulntypes() {
-		return vulntypes;
-	}
 
 	public void setCfid(Long cfid) {
 		this.cfid = cfid;
