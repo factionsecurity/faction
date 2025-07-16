@@ -193,6 +193,7 @@ public class DocxUtils {
 			// Get colorsMap if it exits;
 			HashMap<String, String> colorMap = new HashMap<>();
 			HashMap<String, String> cellMap = new HashMap<>();
+			HashMap<String,String> customFieldMap = new HashMap<>();
 			String colors = getMatchingText(paragraphs, "${color");
 			if (colors != null) {
 				colors = colors.replace("${color", "").replace("}", "").trim();
@@ -212,6 +213,18 @@ public class DocxUtils {
 				for (String pair : pairs) {
 					pair = pair.trim();
 					cellMap.put(pair.split("=")[0], pair.split("=")[1].toUpperCase());
+
+				}
+			}
+			
+			String customFields = getMatchingText(paragraphs, "${custom-fields");
+			if (customFields != null) {
+				customFields = customFields.replace("${custom-fields", "").replace("}", "").trim();
+				String[] pairs = customFields.split(",");
+
+				for (String pair : pairs) {
+					pair = pair.trim();
+					customFieldMap.put(pair.split("=")[0], pair.split("=")[1].toUpperCase());
 
 				}
 			}
@@ -254,8 +267,16 @@ public class DocxUtils {
 			// and replace variables
 			SimpleDateFormat formatter;
 			formatter = new SimpleDateFormat("MM/dd/yyyy");
-			int count = 1;
+			int count = 1;		
+			int sevIdex = 0;
+			String prevSev = "";
 			for (Vulnerability v : filteredVulns) {
+				if(prevSev == v.getOverallStr()) {
+					index++;
+				}else {
+					prevSev = v.getOverallStr();
+					index=1;
+				}
 				// Change Colors if need be
 				for (String xml : xmls) {
 					String nxml = xml.replaceAll("\\$\\{vulnName\\}", v.getName());
@@ -293,10 +314,28 @@ public class DocxUtils {
 					nxml = nxml.replaceAll("\\$\\{count\\}", "" + count);
 					nxml = nxml.replaceAll("\\$\\{loop\\}", "");
 					nxml = nxml.replaceAll("\\$\\{loop\\-[0-9]+\\}", "");
+					
+					nxml = nxml.replaceAll("\\$\\{sevId\\}", "" + v.getOverallStr().charAt(0) + index);
 
 					if (v.getCustomFields() != null) {
 						for (CustomField cf : v.getCustomFields()) {
 							nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
+							if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
+								String colorMatch = customFieldMap.get(cf.getType().getVariable());
+								String color = colorMap.get(cf.getValue());
+								if(colorMatch != null && colorMatch != "" && color != null && color != "") {
+									// Change Custom Field Font Colors
+									nxml = nxml.replaceAll("w:val=\"" + colorMatch +"\"", "w:val=\"" + color + "\"");
+								}
+							}
+							if(customFieldMap.containsKey(cf.getType().getVariable()) && cellMap.containsKey(cf.getValue())){
+								String colorMatch = customFieldMap.get(cf.getType().getVariable());
+								String color = cellMap.get(cf.getValue());
+								if(colorMatch != null && colorMatch != "" && color != null && color != "") {
+									// Change Custom Field Font Colors
+									nxml = nxml.replaceAll("w:fill=\"" + colorMatch +"\"", "w:fill=\"" + color + "\"");
+								}
+							}
 						}
 					}
 
@@ -315,6 +354,8 @@ public class DocxUtils {
 					nxml = nxml.replaceAll("w:val=\"FAC701\"", "w:val=\"" + colorMap.get(v.getOverallStr()) + "\"");
 					nxml = nxml.replaceAll("w:val=\"FAC702\"", "w:val=\"" + colorMap.get(v.getLikelyhoodStr()) + "\"");
 					nxml = nxml.replaceAll("w:val=\"FAC703\"", "w:val=\"" + colorMap.get(v.getImpactStr()) + "\"");
+					
+					
 					Tr newrow = (Tr) XmlUtils.unmarshalString(nxml);
 
 					/*
@@ -484,6 +525,8 @@ public class DocxUtils {
 		content = content.replaceAll("</p><p><br /></p><p>", "<br /></p><p>");
 		return xhtml.convert(
 				"<!DOCTYPE html><html><head>"
+						+ "  <meta charset=\"UTF-8\" />\r\n"
+						+ "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>"
 						+ "<style>html{padding:0;margin:0;margin-right:0px;}\r\nbody{padding:0;margin:0;font-family:"
 						+ this.FONT + ";}\r\n" + customCSS + "</style>" + "</head><body><div class='" + className + "'>"
 						+ content + "</div></body></html>",
@@ -507,6 +550,8 @@ public class DocxUtils {
 
 			List<Object> converted = xhtml.convert(
 							"<!DOCTYPE html><html><head>"
+						+ "  <meta charset=\"UTF-8\" />\r\n"
+						+ "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>"
 							+ "<style>html{padding:0;margin:0;margin-right:0px;}\r\nbody{padding:0;margin:0;font-family:"
 							+ this.FONT + ";}\r\n" + customCSS + "</style>" + "</head><body><div class='" + className
 							+ "'>" + value + "</div></body></html>",
@@ -892,6 +937,7 @@ public class DocxUtils {
 
 		HashMap<String, String> colorMap = new HashMap<>();
 		HashMap<String, String> cellMap = new HashMap<>();
+		HashMap<String,String> customFieldMap = new HashMap<>();
 		String noIssuesText= "";
 
 		// Get relevent parts of the document and put them into a
@@ -919,6 +965,17 @@ public class DocxUtils {
 				for (String pair : pairs) {
 					pair = pair.trim();
 					cellMap.put(pair.split("=")[0], pair.split("=")[1].toUpperCase());
+
+				}
+			}
+			String customFields = getMatchingText(paragraphs, "${custom-fields");
+			if (customFields != null) {
+				customFields = customFields.replace("${custom-fields", "").replace("}", "").trim();
+				String[] pairs = customFields.split(",");
+
+				for (String pair : pairs) {
+					pair = pair.trim();
+					customFieldMap.put(pair.split("=")[0], pair.split("=")[1].toUpperCase());
 
 				}
 			}
@@ -951,8 +1008,16 @@ public class DocxUtils {
 			mlp.getMainDocumentPart().getContent().add(begin++, p);
 			return;
 		}
-
+		int index = 0;
+		String prevSev = "";
 		for (Vulnerability v : filteredVulns) {
+			if(prevSev == v.getOverallStr()) {
+				index++;
+			}else {
+				prevSev = v.getOverallStr();
+				index=1;
+			}
+			
 			for (Object obj : findingTemplate) {
 
 				String xml = XmlUtils.marshaltoString(obj, false, false);
@@ -989,13 +1054,32 @@ public class DocxUtils {
 				} else {
 					nxml = nxml.replaceAll("\\$\\{remediationStatus\\}", "Closed");
 				}
+				nxml = nxml.replaceAll("\\$\\{sevId\\}", "" + v.getOverallStr().charAt(0) + index);
+				
+				
 				// remove color loops
-				if(nxml.contains("${color") || nxml.contains("${fill"))
+				if(nxml.contains("${color") || nxml.contains("${fill") || nxml.contains("${custom-fields") )
 					nxml="";
 
 				if (v.getCustomFields() != null) {
 					for (CustomField cf : v.getCustomFields()) {
 						nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
+						if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
+							String colorMatch = customFieldMap.get(cf.getType().getVariable());
+							String color = colorMap.get(cf.getValue());
+							if(colorMatch != null && colorMatch != "" && color != null && color != "") {
+								// Change Custom Field Font Colors
+								nxml = nxml.replaceAll("w:val=\"" + colorMatch +"\"", "w:val=\"" + color + "\"");
+							}
+						}
+						if(customFieldMap.containsKey(cf.getType().getVariable()) && cellMap.containsKey(cf.getValue())){
+							String colorMatch = customFieldMap.get(cf.getType().getVariable());
+							String color = cellMap.get(cf.getValue());
+							if(colorMatch != null && colorMatch != "" && color != null && color != "") {
+								// Change Custom Field Font Colors
+								nxml = nxml.replaceAll("w:fill=\"" + colorMatch +"\"", "w:fill=\"" + color + "\"");
+							}
+						}
 					}
 				}
 				//Foreground colors
