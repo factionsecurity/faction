@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.Base64;
 
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
-import org.glassfish.jersey.internal.util.Base64;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -236,11 +236,12 @@ public class EditAssessment extends FSActionSupport {
 							for (CustomField obj : am.getCustomFields()) {
 								if (obj.getType().getId().equals(cfid)) {
 									cfObj = obj;
-									if(obj.getType().getFieldType() == 3) {
-										String b64Text = Base64.decodeAsString(""+json.get("text"));
-										cfObj.setValue(b64Text);
-									}else {
+									if(obj.getType().getFieldType() < 3) {
 										cfObj.setValue("" + json.get("text"));
+									}else {
+										byte [] decodedBytes = Base64.getDecoder().decode(""+json.get("text"));
+										String decodedString = new String(decodedBytes);
+										cfObj.setValue(decodedString);
 									}
 									break;
 								}
@@ -250,6 +251,13 @@ public class EditAssessment extends FSActionSupport {
 								CustomType ct = em.find(CustomType.class, cfid);
 								cfObj.setType(ct);
 								cfObj.setValue("" + json.get("text"));
+								if(cfObj.getType().getFieldType() < 3) {
+									cfObj.setValue("" + json.get("text"));
+								}else {
+									byte [] decodedBytes = Base64.getDecoder().decode(""+json.get("text"));
+									String decodedString = new String(decodedBytes);
+									cfObj.setValue(decodedString);
+								}
 								am.getCustomFields().add(cfObj);
 							}
 

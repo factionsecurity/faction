@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.faction</groupId>
 	<artifactId>faction</artifactId>
@@ -75,6 +77,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.3.0</version>
 				<executions>
 					<execution>
 						<id>build-jar</id>
@@ -282,6 +285,21 @@
 			<groupId>org.docx4j</groupId>
 			<artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
 			<version>11.4.11</version>
+		</dependency>
+		<dependency>
+			<groupId>com.openhtmltopdf</groupId>
+			<artifactId>openhtmltopdf-pdfbox</artifactId>
+			<version>1.0.10</version>
+		</dependency>
+		<dependency>
+			<groupId>com.openhtmltopdf</groupId>
+			<artifactId>openhtmltopdf-core</artifactId>
+			<version>1.0.10</version>
+		</dependency>
+		<dependency>
+			<groupId>com.openhtmltopdf</groupId>
+			<artifactId>openhtmltopdf-objects</artifactId>
+			<version>1.0.10</version>
 		</dependency>
 		<dependency>
 			<groupId>org.docx4j</groupId>

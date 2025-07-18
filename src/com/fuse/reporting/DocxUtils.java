@@ -268,14 +268,14 @@ public class DocxUtils {
 			SimpleDateFormat formatter;
 			formatter = new SimpleDateFormat("MM/dd/yyyy");
 			int count = 1;		
-			int sevIdex = 0;
+			int sevIndex = 0;
 			String prevSev = "";
 			for (Vulnerability v : filteredVulns) {
 				if(prevSev == v.getOverallStr()) {
-					index++;
+					sevIndex++;
 				}else {
 					prevSev = v.getOverallStr();
-					index=1;
+					sevIndex=1;
 				}
 				// Change Colors if need be
 				for (String xml : xmls) {
@@ -315,7 +315,7 @@ public class DocxUtils {
 					nxml = nxml.replaceAll("\\$\\{loop\\}", "");
 					nxml = nxml.replaceAll("\\$\\{loop\\-[0-9]+\\}", "");
 					
-					nxml = nxml.replaceAll("\\$\\{sevId\\}", "" + v.getOverallStr().charAt(0) + index);
+					nxml = nxml.replaceAll("\\$\\{sevId\\}", "" + v.getOverallStr().charAt(0)  + "V" + sevIndex);
 
 					if (v.getCustomFields() != null) {
 						for (CustomField cf : v.getCustomFields()) {
@@ -525,8 +525,6 @@ public class DocxUtils {
 		content = content.replaceAll("</p><p><br /></p><p>", "<br /></p><p>");
 		return xhtml.convert(
 				"<!DOCTYPE html><html><head>"
-						+ "  <meta charset=\"UTF-8\" />\r\n"
-						+ "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>"
 						+ "<style>html{padding:0;margin:0;margin-right:0px;}\r\nbody{padding:0;margin:0;font-family:"
 						+ this.FONT + ";}\r\n" + customCSS + "</style>" + "</head><body><div class='" + className + "'>"
 						+ content + "</div></body></html>",
@@ -909,6 +907,8 @@ public class DocxUtils {
 		for(Image img : this.assessment.getImages()) {
 			String matchStr = matchPrefix + img.getGuid();
 			text = text.replaceAll( matchStr, img.getBase64Image());
+			text = text.replaceAll("<img", "<br/><div stype='overflow:hidden; width:100%;'><img");
+			text = text.replaceAll("</img>", "</img></div>");
 		}
 		return text;
 		
@@ -1054,7 +1054,7 @@ public class DocxUtils {
 				} else {
 					nxml = nxml.replaceAll("\\$\\{remediationStatus\\}", "Closed");
 				}
-				nxml = nxml.replaceAll("\\$\\{sevId\\}", "" + v.getOverallStr().charAt(0) + index);
+				nxml = nxml.replaceAll("\\$\\{sevId\\}", "" + v.getOverallStr().charAt(0) + "V" +index);
 				
 				
 				// remove color loops
