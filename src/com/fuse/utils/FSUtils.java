@@ -623,7 +623,7 @@ public class FSUtils {
 			return "Version " + manifest.getMainAttributes().getValue("Implementation-Version");
 			
 		} catch (IOException e) {
-			e.printStackTrace();
+		} catch(Exception e) {
 		}
 		return "";
 		
