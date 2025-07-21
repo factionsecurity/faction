@@ -316,10 +316,11 @@ public class Options extends FSActionSupport {
 
 		CustomType foundType = (CustomType) em.createQuery("from CustomType where variable = :variable").setParameter("variable", this.cfvar)
 				.getResultList().stream().findFirst().orElse(null);
-		if (foundType != null && foundType.getDeleted() != null && foundType.getDeleted()) {
+		/*if (foundType != null && foundType.getDeleted() != null && foundType.getDeleted()) {
 			message = "This variable has already been used by a deleted field";
 			return this.ERRORJSON;
-		}else if (foundType != null && (foundType.getDeleted() == null || !foundType.getDeleted())) {
+		}else */
+		if (foundType != null && (foundType.getDeleted() == null || !foundType.getDeleted())) {
 			message = "This variable has already been used by an active field";
 			return this.ERRORJSON;
 		}
@@ -367,10 +368,11 @@ public class Options extends FSActionSupport {
 
 		CustomType foundType = (CustomType) em.createQuery("from CustomType where variable = :variable").setParameter("variable", this.cfvar)
 				.getResultList().stream().findFirst().orElse("null");
-		if (foundType != null && foundType.getDeleted()) {
+		/*if (foundType != null && foundType.getDeleted()) {
 			message = "This variable has already been used by a deleted field";
 			return this.ERRORJSON;
-		}else if (foundType != null && !foundType.getDeleted() && !foundType.getId().equals(this.cfid)) {
+		}else */
+		if (foundType != null && !foundType.getDeleted() && !foundType.getId().equals(this.cfid)) {
 			message = "This variable has already been used by an active field";
 			return this.ERRORJSON;
 		}
