@@ -109,8 +109,19 @@ public class FSUtils {
 			String out = new String(baos.toByteArray(), "UTF-8");
 			out = out.replaceAll("&nbsp;", " ");
 			ArrayList<String> updated = new ArrayList<String>();
+			Boolean preSection=false;
 			for (String line : out.split("\n")) {
-				updated.add(line.replaceAll("^[ ]+", ""));
+				line = line.replaceAll("^[ ]+", "");
+				if(line.contains("<code>")) {
+					preSection = true;
+				}
+				if (line.contains("</code>")) {
+					preSection = false;
+				}
+				if(preSection) {
+					line = line + "\n";
+				}
+				updated.add(line);
 			}
 			out = String.join("", updated);
 
@@ -265,18 +276,18 @@ public class FSUtils {
 						getDescriptionFromVulnDB((String) (((JSONObject) json.get("description")).get("$ref"))));
 
 				if (ref != null) {
-					String addRef = dv.getDescription() + "<br><br><b>References:</b><br>";
+					String addRef = dv.getDescription() + "<br><br/><b>References:</b><br/>";
 					if (ref.getClass().getName().contains("JSONArray")) {
 						JSONArray ja = (JSONArray) ref;
 						for (int i = 0; i < ja.size(); i++) {
 							String url = (String) ((JSONObject) ja.get(i)).get("url");
 							String t = (String) ((JSONObject) ja.get(i)).get("title");
-							addRef += "<a href='" + url + "'>" + t + "</a><br>";
+							addRef += "<a href='" + url + "'>" + t + "</a><br/>";
 						}
 					} else {
 						String url = (String) ((JSONObject) ref).get("url");
 						String t = (String) ((JSONObject) ref).get("title");
-						addRef += "<a href='" + url + "'>" + t + "</a><br>";
+						addRef += "<a href='" + url + "'>" + t + "</a><br/>";
 					}
 					dv.setDescription(addRef);
 

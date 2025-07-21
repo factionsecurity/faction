@@ -367,7 +367,7 @@ public class Options extends FSActionSupport {
 			return this.ERRORJSON;
 
 		CustomType foundType = (CustomType) em.createQuery("from CustomType where variable = :variable").setParameter("variable", this.cfvar)
-				.getResultList().stream().findFirst().orElse("null");
+				.getResultList().stream().findFirst().orElse(null);
 		/*if (foundType != null && foundType.getDeleted()) {
 			message = "This variable has already been used by a deleted field";
 			return this.ERRORJSON;
