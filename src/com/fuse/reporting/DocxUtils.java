@@ -1063,21 +1063,23 @@ public class DocxUtils {
 
 				if (v.getCustomFields() != null) {
 					for (CustomField cf : v.getCustomFields()) {
-						nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
-						if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
-							String colorMatch = customFieldMap.get(cf.getType().getVariable());
-							String color = colorMap.get(cf.getValue());
-							if(colorMatch != null && colorMatch != "" && color != null && color != "") {
-								// Change Custom Field Font Colors
-								nxml = nxml.replaceAll("w:val=\"" + colorMatch +"\"", "w:val=\"" + color + "\"");
+						if(cf.getType().getFieldType() < 3) {
+							nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
+							if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
+								String colorMatch = customFieldMap.get(cf.getType().getVariable());
+								String color = colorMap.get(cf.getValue());
+								if(colorMatch != null && colorMatch != "" && color != null && color != "") {
+									// Change Custom Field Font Colors
+									nxml = nxml.replaceAll("w:val=\"" + colorMatch +"\"", "w:val=\"" + color + "\"");
+								}
 							}
-						}
-						if(customFieldMap.containsKey(cf.getType().getVariable()) && cellMap.containsKey(cf.getValue())){
-							String colorMatch = customFieldMap.get(cf.getType().getVariable());
-							String color = cellMap.get(cf.getValue());
-							if(colorMatch != null && colorMatch != "" && color != null && color != "") {
-								// Change Custom Field Font Colors
-								nxml = nxml.replaceAll("w:fill=\"" + colorMatch +"\"", "w:fill=\"" + color + "\"");
+							if(customFieldMap.containsKey(cf.getType().getVariable()) && cellMap.containsKey(cf.getValue())){
+								String colorMatch = customFieldMap.get(cf.getType().getVariable());
+								String color = cellMap.get(cf.getValue());
+								if(colorMatch != null && colorMatch != "" && color != null && color != "") {
+									// Change Custom Field Font Colors
+									nxml = nxml.replaceAll("w:fill=\"" + colorMatch +"\"", "w:fill=\"" + color + "\"");
+								}
 							}
 						}
 					}
@@ -1091,8 +1093,13 @@ public class DocxUtils {
 				nxml = nxml.replaceAll("w:fill=\"FAC702\"", "w:fill=\"" + cellMap.get(v.getLikelyhoodStr()) + "\"");
 				nxml = nxml.replaceAll("w:fill=\"FAC703\"", "w:fill=\"" + cellMap.get(v.getImpactStr()) + "\"");
 				if(nxml != "") {
+					try {
 					Object paragraph = XmlUtils.unmarshalString(nxml);
 					mlp.getMainDocumentPart().getContent().add(begin++, paragraph);
+					}catch(Exception ex) {
+						ex.printStackTrace();
+						System.out.println(nxml);
+					}
 				}
 
 			}
@@ -1122,6 +1129,7 @@ public class DocxUtils {
 			} else {
 				map2.put("${desc}", wrapHTML("", customCSS, "desc"));
 			}
+			
 			if (v.getRecommendation() == null && v.getDefaultVuln() != null) {
 				String rec = v.getDefaultVuln().getRecommendation();
 				if (v.getCustomFields() != null) {
@@ -1141,6 +1149,7 @@ public class DocxUtils {
 			} else {
 				map2.put("${rec}", wrapHTML("", customCSS, "rec"));
 			}
+			
 			if (v.getDetails() != null) {
 				String details = v.getDetails();
 				if (v.getCustomFields() != null) {
@@ -1152,12 +1161,24 @@ public class DocxUtils {
 			} else {
 				map2.put("${details}", wrapHTML("", customCSS, "details"));
 			}
+			
+			if (v.getCustomFields() != null) {
+				for (CustomField cf : v.getCustomFields()) {
+					if(cf.getType().getFieldType() == 3) {
+						map2.put("${cf" + cf.getType().getVariable() + "}", wrapHTML(cf.getValue(), customCSS, ""));
+					}
+				}
+			}
+			
+			
 			replaceHTML(mlp.getMainDocumentPart(), map2, true);
 
 			HashMap<String, String> map1 = new HashMap();
 			if (v.getCustomFields() != null) {
 				for (CustomField cf : v.getCustomFields()) {
-					map1.put("cf" + cf.getType().getVariable(), cf.getValue());
+					if(cf.getType().getFieldType() < 3) {
+						map1.put("cf" + cf.getType().getVariable(), cf.getValue());
+					}
 				}
 			}
 
