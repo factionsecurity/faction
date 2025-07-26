@@ -28,6 +28,9 @@ import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.openpackaging.parts.WordprocessingML.FooterPart;
 import org.docx4j.openpackaging.parts.WordprocessingML.HeaderPart;
 import org.docx4j.openpackaging.parts.WordprocessingML.MainDocumentPart;
+import org.docx4j.openpackaging.parts.relationships.Namespaces;
+import org.docx4j.openpackaging.parts.relationships.RelationshipsPart;
+import org.docx4j.relationships.Relationship;
 import org.docx4j.toc.TocException;
 import org.docx4j.toc.TocGenerator;
 import org.docx4j.wml.BooleanDefaultTrue;
@@ -163,7 +166,12 @@ public class DocxUtils {
 		return filteredVulns;
 		
 	}
-
+	
+	private String CData(String text)
+	{
+		return "<![CDATA[" + text +  "]]>";
+	}
+	
 	private void checkTables(String variable, String section, String customCSS)
 			throws JAXBException, Docx4JException {
 		
@@ -279,12 +287,12 @@ public class DocxUtils {
 				}
 				// Change Colors if need be
 				for (String xml : xmls) {
-					String nxml = xml.replaceAll("\\$\\{vulnName\\}", v.getName());
-					nxml = nxml.replaceAll("\\$\\{severity\\}", v.getOverallStr());
-					nxml = nxml.replaceAll("\\$\\{impact\\}", v.getImpactStr());
-					nxml = nxml.replaceAll("\\$\\{cvssScore\\}", v.getCvssScore());
-					nxml = nxml.replaceAll("\\$\\{cvssString\\}", v.getCvssString());
-					nxml = nxml.replaceAll("\\$\\{tracking\\}", v.getTracking());
+					String nxml = xml.replaceAll("\\$\\{vulnName\\}", CData(v.getName()));
+					nxml = nxml.replaceAll("\\$\\{severity\\}", CData(v.getOverallStr()));
+					nxml = nxml.replaceAll("\\$\\{impact\\}", CData(v.getImpactStr()));
+					nxml = nxml.replaceAll("\\$\\{cvssScore\\}", CData(v.getCvssScore()));
+					nxml = nxml.replaceAll("\\$\\{cvssString\\}", CData(v.getCvssString()));
+					nxml = nxml.replaceAll("\\$\\{tracking\\}", CData(v.getTracking()));
 					if(v.getOpened() != null) {
 						nxml = nxml.replaceAll("\\$\\{openedAt\\}", formatter.format(v.getOpened()));
 					}else {
@@ -306,7 +314,7 @@ public class DocxUtils {
 					}
 					nxml = nxml.replaceAll("\\$\\{likelihood\\}", v.getLikelyhoodStr());
 					nxml = nxml.replaceAll("\\$\\{category\\}",
-							v.getCategory() == null ? "UnCategorized" : v.getCategory().getName());
+							v.getCategory() == null ? "UnCategorized" : CData(v.getCategory().getName()));
 					if (v.getClosed() == null)
 						nxml = nxml.replaceAll("\\$\\{remediationStatus\\}", "Open");
 					else
@@ -319,7 +327,7 @@ public class DocxUtils {
 
 					if (v.getCustomFields() != null) {
 						for (CustomField cf : v.getCustomFields()) {
-							nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
+							nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", CData(cf.getValue()));
 							if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
 								String colorMatch = customFieldMap.get(cf.getType().getVariable());
 								String color = colorMap.get(cf.getValue());
@@ -519,6 +527,9 @@ public class DocxUtils {
 		XHTMLImporterImpl xhtml = new XHTMLImporterImpl(mlp);
 		RFonts rfonts = Context.getWmlObjectFactory().createRFonts();
 		rfonts.setAscii(this.FONT);
+		if(className == null) {
+			className = "";
+		}
 
 		content = replacement(content);
 		content = content.replaceAll("\n", "<br />");
@@ -636,6 +647,7 @@ public class DocxUtils {
 		}
 
 		replacementText(map);
+		replacementHyperlinks(map);
 
 		// replavce all cusotm varables
 		Map<String, List<Object>> cfMap = new HashMap<>();
@@ -817,8 +829,31 @@ public class DocxUtils {
 		}
 
 		replacementText( map);
+		replacementHyperlinks(map);
 		replaceHTML(mlp.getMainDocumentPart(), map2);
 
+	}
+	
+	//replace simple text in hyperlinks
+	private void replacementHyperlinks(Map<String,String> map) {
+		RelationshipsPart relsPart = mlp.getMainDocumentPart().getRelationshipsPart();
+		for (Relationship rel : relsPart.getRelationships().getRelationship()) {
+		    if (rel.getType().equals(Namespaces.HYPERLINK)) {
+					for (String key : map.keySet()) {
+						String value = map.get(key);
+						if(value.indexOf("@") != -1) {
+							value = "mailto:" + value;
+						}
+						if (rel.getTarget().contains("$%7B" + key + "%7D")) {
+							rel.setTarget(rel.getTarget().replace("$%7B"+key+"%7D", value));
+						}
+						if (rel.getTarget().contains("$%257B" + key + "%257D")) {
+							rel.setTarget(rel.getTarget().replace("$%257B"+key+"%257D", value));
+						}
+					}
+		    }
+		}
+		
 	}
 
 
@@ -1021,8 +1056,8 @@ public class DocxUtils {
 			for (Object obj : findingTemplate) {
 
 				String xml = XmlUtils.marshaltoString(obj, false, false);
-				String nxml = xml.replaceAll("\\$\\{vulnName\\}", v.getName());
-				nxml = nxml.replaceAll("\\$\\{severity\\}", v.getOverallStr());
+				String nxml = xml.replaceAll("\\$\\{vulnName\\}", CData(v.getName()));
+				nxml = nxml.replaceAll("\\$\\{severity\\}", CData(v.getOverallStr()));
 				nxml = nxml.replaceAll("\\$\\{impact\\}", v.getImpactStr());
 				nxml = nxml.replaceAll("\\$\\{cvssString\\}", v.getCvssString());
 				nxml = nxml.replaceAll("\\$\\{cvssScore\\}", v.getCvssScore());
@@ -1048,7 +1083,7 @@ public class DocxUtils {
 				}
 				nxml = nxml.replaceAll("\\$\\{likelihood\\}", v.getLikelyhoodStr());
 				nxml = nxml.replaceAll("\\$\\{category\\}",
-						v.getCategory() == null ? "UnCategorized" : v.getCategory().getName());
+						v.getCategory() == null ? "UnCategorized" : CData(v.getCategory().getName()));
 				if (v.getClosed() == null) {
 					nxml = nxml.replaceAll("\\$\\{remediationStatus\\}", "Open");
 				} else {
@@ -1064,7 +1099,7 @@ public class DocxUtils {
 				if (v.getCustomFields() != null) {
 					for (CustomField cf : v.getCustomFields()) {
 						if(cf.getType().getFieldType() < 3) {
-							nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
+							nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", CData(cf.getValue()));
 							if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
 								String colorMatch = customFieldMap.get(cf.getType().getVariable());
 								String color = colorMap.get(cf.getValue());
@@ -1183,6 +1218,8 @@ public class DocxUtils {
 			}
 
 			replacementText(map1);
+			replacementHyperlinks(map1);
+			
 		}
 
 	}
