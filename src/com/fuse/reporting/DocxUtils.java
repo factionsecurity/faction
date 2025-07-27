@@ -334,10 +334,12 @@ public class DocxUtils {
 					if (v.getCustomFields() != null) {
 						for (CustomField cf : v.getCustomFields()) {
 							// Only perform this action if the variable is plain text and not a hyperlink
-							Boolean isHyperlink = nxml.matches(
+							/*Boolean isHyperlink = nxml.matches(
 									".*<w:hyperlink w:history=\"true\" r:id=\".*\"><w:r><w:rPr><w:rStyle w:val=\"Hyperlink\"/></w:rPr><w:t>\\$\\{cf"+cf.getType().getVariable()+"\\}.*");
 							if(cf.getType().getFieldType() < 3 && !isHyperlink) {
+							*/
 								
+							if(cf.getType().getFieldType() < 3) {
 								nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", CData(cf.getValue()));
 								if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
 									String colorMatch = customFieldMap.get(cf.getType().getVariable());
@@ -381,7 +383,7 @@ public class DocxUtils {
 					// Replace Hyperlinks
 					if (v.getCustomFields() != null) {
 						for (CustomField cf : v.getCustomFields()) {
-							this.replaceHyperlink(newrow, "${cf" + cf.getType().getVariable() + "}", cf.getValue());
+							this.replaceHyperlink(newrow, "${cf" + cf.getType().getVariable() + " link}", cf.getValue());
 						}
 					}
 
@@ -859,7 +861,7 @@ public class DocxUtils {
 	private void replacementHyperlinks(Object document, Map<String,String> map) {
 		for (String key : map.keySet()) {
 			String value = map.get(key);
-			this.replaceHyperlink(document, "${" + key + "}", value);
+			this.replaceHyperlink(document, "${" + key + " link}", value);
 		}
 	}
 
@@ -1146,9 +1148,10 @@ public class DocxUtils {
 					nxml="";
 				if (v.getCustomFields() != null && !nxml.equals("")) {
 					for (CustomField cf : v.getCustomFields()) {
-						Boolean isHyperlink = nxml.matches(
-								".*<w:hyperlink w:history=\"true\" r:id=\".*\"><w:r><w:rPr><w:rStyle w:val=\"Hyperlink\"/></w:rPr><w:t>\\$\\{cf"+cf.getType().getVariable()+"\\}.*");
-						if(cf.getType().getFieldType() < 3 && !isHyperlink) {
+						/*Boolean isHyperlink = nxml.matches(
+								".*<w:hyperlink w:history=\"true\" r:id=\".*\"><w:r><w:rPr><w:rStyle w:val=\"Hyperlink\"/>(<w:rFonts w:cstheme=\".*\"/>)?</w:rPr><w:t>\\$\\{cf"+cf.getType().getVariable()+"\\}.*");
+						if(cf.getType().getFieldType() < 3 && !isHyperlink) {*/
+						if(cf.getType().getFieldType() < 3) {
 							nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", CData(cf.getValue()));
 							if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
 								String colorMatch = customFieldMap.get(cf.getType().getVariable());
@@ -1182,8 +1185,9 @@ public class DocxUtils {
 					Object paragraph = XmlUtils.unmarshalString(nxml);
 					//Replace Hyperlinks
 					for (CustomField cf : v.getCustomFields()) {
-						this.replaceHyperlink(paragraph, "${cf" + cf.getType().getVariable() + "}", cf.getValue());
+						this.replaceHyperlink(paragraph, "${cf" + cf.getType().getVariable() + " link}", cf.getValue());
 					}
+					this.replaceHyperlink(paragraph, "${cvssString link}", v.getCvssString());
 					mlp.getMainDocumentPart().getContent().add(begin++, paragraph);
 					}catch(Exception ex) {
 						ex.printStackTrace();
@@ -1469,6 +1473,14 @@ public class DocxUtils {
 	                String updatedTarget = updatedHyperlink;
 	                if(updatedTarget.contains("@")) {
 	                	updatedTarget = "mailto:" + updatedTarget;
+	                }
+	                if(searchText.contains("cvssString link")) {
+	                	if(this.assessment.getType().isCvss31()){
+	                		updatedTarget = "https://www.first.org/cvss/calculator/3-1#" + newUrl;
+	                	}else {
+	                		updatedTarget = "https://www.first.org/cvss/calculator/4-0#" + newUrl;
+	                	}
+	                	
 	                }
 	                newRel.setTarget(updatedTarget);
 	                newRel.setTargetMode("External");
