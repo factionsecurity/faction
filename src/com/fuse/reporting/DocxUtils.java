@@ -3,6 +3,7 @@ package com.fuse.reporting;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -11,6 +12,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
@@ -647,9 +650,12 @@ public class DocxUtils {
 						: this.assessment.getAssessor().get(0).getTeam() == null ? ""
 								: this.assessment.getAssessor().get(0).getTeam().getTeamName().trim());
 		map.put(getKey("asmttype"), this.assessment.getType().getType());
-		map.put(getKey("today"), formatter.format(new Date()));
-		map.put(getKey("asmtstart"), formatter.format(this.assessment.getStart()));
-		map.put(getKey("asmtend"), formatter.format(this.assessment.getEnd()));
+		//map.put(getKey("today"), formatter.format(new Date()));
+		//map.put(getKey("asmtstart"), formatter.format(this.assessment.getStart()));
+		//map.put(getKey("asmtend"), formatter.format(this.assessment.getEnd()));
+		replacementDate("today",new Date());
+		replacementDate("asmtStart", this.assessment.getStart());
+		replacementDate("asmtEnd", this.assessment.getEnd());
 		map.put(getKey("asmtaccesskey"), this.assessment.getGuid());
 		map.put(getKey("totalopenvulns"), this.getTotalOpenVulns(this.assessment.getVulns()));
 		map.put(getKey("totalclosedvulns"), this.getTotalClosedVulns(this.assessment.getVulns()));
@@ -868,7 +874,45 @@ public class DocxUtils {
 		mlp.getMainDocumentPart().setContents((org.docx4j.wml.Document) XmlUtils.unmarshalString(xml));
 
 	}
-	
+	private void replacementDate(String key, Date date)
+			throws JAXBException, Docx4JException {
+		String xml = XmlUtils.marshaltoString(mlp.getMainDocumentPart().getContents(), false, false);
+		xml = replaceDateVariable(xml,key,date);
+		mlp.getMainDocumentPart().setContents((org.docx4j.wml.Document) XmlUtils.unmarshalString(xml));
+
+	}
+    public static String replaceDateVariable(String text, String key, Date date) {
+        // Pattern to match ${key} or ${key whitespace format}
+        // Group 1 will capture the format if present, or be null if not present
+        String patternStr = "\\$\\{\\s*" + Pattern.quote(key) + "(?:\\s+([^}]+))?\\s*\\}";
+        Pattern pattern = Pattern.compile(patternStr);
+        Matcher matcher = pattern.matcher(text);
+        
+        StringBuffer result = new StringBuffer();
+        
+        while (matcher.find()) {
+            String dateFormat = matcher.group(1);
+            
+            // Use default format if no format was specified
+            if (dateFormat == null || dateFormat.trim().isEmpty()) {
+                dateFormat = "MM/dd/yyyy";
+            } else {
+                dateFormat = dateFormat.trim();
+            }
+            
+            try {
+                SimpleDateFormat formatter = new SimpleDateFormat(dateFormat);
+                String formattedDate = formatter.format(date);
+                matcher.appendReplacement(result, formattedDate);
+            } catch (Exception e) {
+                // If date format is invalid, leave the original text unchanged
+                matcher.appendReplacement(result, matcher.group(0));
+            }
+        }
+        
+        matcher.appendTail(result);
+        return result.toString();
+    }	
 	private String getTotalOpenVulns(List<Vulnerability> vulns) {
 		return ""+vulns.stream().filter(v -> v.getClosed() == null).collect(Collectors.toList()).size();
 	}
@@ -915,7 +959,8 @@ public class DocxUtils {
 						: this.assessment.getAssessor().get(0).getTeam() == null ? ""
 								: this.assessment.getAssessor().get(0).getTeam().getTeamName().trim());
 		content = content.replaceAll("\\$\\{asmtType\\}", this.assessment.getType() == null ? "" : this.assessment.getType().getType().trim());
-		content = content.replaceAll("\\$\\{today\\}", formatter.format(new Date()));
+		//content = content.replaceAll("\\$\\{today\\}", formatter.format(new Date()));
+		content = replaceDateVariable(content, "today", new Date());
 		content = content.replaceAll("\\$\\{asmtStandND\\}", formatter.format(this.assessment.getEnd()));
 		content = content.replaceAll("\\$\\{asmtAccessKey\\}", this.assessment.getGuid());
 		content = content.replaceAll("\\$\\{totalOpenVulns\\}", this.getTotalOpenVulns(this.assessment.getVulns()));
