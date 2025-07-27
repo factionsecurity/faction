@@ -44,6 +44,8 @@ import org.docx4j.wml.P;
 import org.docx4j.wml.PPrBase.Ind;
 import org.docx4j.wml.R;
 import org.docx4j.wml.RFonts;
+import org.docx4j.wml.RPr;
+import org.docx4j.wml.RStyle;
 import org.docx4j.wml.STTabTlc;
 import org.docx4j.wml.Tbl;
 import org.docx4j.wml.Tc;
@@ -324,24 +326,29 @@ public class DocxUtils {
 					nxml = nxml.replaceAll("\\$\\{loop\\-[0-9]+\\}", "");
 					
 					nxml = nxml.replaceAll("\\$\\{sevId\\}", "" + v.getOverallStr().charAt(0)  + "V" + sevIndex);
+					
 
 					if (v.getCustomFields() != null) {
 						for (CustomField cf : v.getCustomFields()) {
-							nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", CData(cf.getValue()));
-							if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
-								String colorMatch = customFieldMap.get(cf.getType().getVariable());
-								String color = colorMap.get(cf.getValue());
-								if(colorMatch != null && colorMatch != "" && color != null && color != "") {
-									// Change Custom Field Font Colors
-									nxml = nxml.replaceAll("w:val=\"" + colorMatch +"\"", "w:val=\"" + color + "\"");
+							// Only perform this action if the variable is plain text and not a hyperlink
+							if(cf.getType().getFieldType() < 3 && !nxml.matches(".*<w:hyperlink.*\\$\\{cf"+cf.getType().getVariable()+"\\}.*</w:hyperlink>.*")) {
+								
+								nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", CData(cf.getValue()));
+								if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
+									String colorMatch = customFieldMap.get(cf.getType().getVariable());
+									String color = colorMap.get(cf.getValue());
+									if(colorMatch != null && colorMatch != "" && color != null && color != "") {
+										// Change Custom Field Font Colors
+										nxml = nxml.replaceAll("w:val=\"" + colorMatch +"\"", "w:val=\"" + color + "\"");
+									}
 								}
-							}
-							if(customFieldMap.containsKey(cf.getType().getVariable()) && cellMap.containsKey(cf.getValue())){
-								String colorMatch = customFieldMap.get(cf.getType().getVariable());
-								String color = cellMap.get(cf.getValue());
-								if(colorMatch != null && colorMatch != "" && color != null && color != "") {
-									// Change Custom Field Font Colors
-									nxml = nxml.replaceAll("w:fill=\"" + colorMatch +"\"", "w:fill=\"" + color + "\"");
+								if(customFieldMap.containsKey(cf.getType().getVariable()) && cellMap.containsKey(cf.getValue())){
+									String colorMatch = customFieldMap.get(cf.getType().getVariable());
+									String color = cellMap.get(cf.getValue());
+									if(colorMatch != null && colorMatch != "" && color != null && color != "") {
+										// Change Custom Field background Colors
+										nxml = nxml.replaceAll("w:fill=\"" + colorMatch +"\"", "w:fill=\"" + color + "\"");
+									}
 								}
 							}
 						}
@@ -365,6 +372,13 @@ public class DocxUtils {
 					
 					
 					Tr newrow = (Tr) XmlUtils.unmarshalString(nxml);
+					
+					// Replace Hyperlinks
+					if (v.getCustomFields() != null) {
+						for (CustomField cf : v.getCustomFields()) {
+							this.replaceHyperlink(newrow, "${cf" + cf.getType().getVariable() + "}", cf.getValue());
+						}
+					}
 
 					/*
 					 * for(String match : cellMap.keySet()) changeColorOfCell(newrow, match,
@@ -645,9 +659,8 @@ public class DocxUtils {
 				}
 			}
 		}
-
+		replacementHyperlinks(mlp.getMainDocumentPart(),map);
 		replacementText(map);
-		replacementHyperlinks(map);
 
 		// replavce all cusotm varables
 		Map<String, List<Object>> cfMap = new HashMap<>();
@@ -828,32 +841,18 @@ public class DocxUtils {
 			map2.put("${details}", wrapHTML( "", customCSS, "details"));
 		}
 
-		replacementText( map);
-		replacementHyperlinks(map);
+		replacementHyperlinks(mlp.getMainDocumentPart(),map);
+		replacementText(map);
 		replaceHTML(mlp.getMainDocumentPart(), map2);
 
 	}
 	
 	//replace simple text in hyperlinks
-	private void replacementHyperlinks(Map<String,String> map) {
-		RelationshipsPart relsPart = mlp.getMainDocumentPart().getRelationshipsPart();
-		for (Relationship rel : relsPart.getRelationships().getRelationship()) {
-		    if (rel.getType().equals(Namespaces.HYPERLINK)) {
-					for (String key : map.keySet()) {
-						String value = map.get(key);
-						if(value.indexOf("@") != -1) {
-							value = "mailto:" + value;
-						}
-						if (rel.getTarget().contains("$%7B" + key + "%7D")) {
-							rel.setTarget(rel.getTarget().replace("$%7B"+key+"%7D", value));
-						}
-						if (rel.getTarget().contains("$%257B" + key + "%257D")) {
-							rel.setTarget(rel.getTarget().replace("$%257B"+key+"%257D", value));
-						}
-					}
-		    }
+	private void replacementHyperlinks(Object document, Map<String,String> map) {
+		for (String key : map.keySet()) {
+			String value = map.get(key);
+			this.replaceHyperlink(document, "${" + key + "}", value);
 		}
-		
 	}
 
 
@@ -1056,6 +1055,9 @@ public class DocxUtils {
 			for (Object obj : findingTemplate) {
 
 				String xml = XmlUtils.marshaltoString(obj, false, false);
+				if(xml=="") {
+					continue;
+				}
 				String nxml = xml.replaceAll("\\$\\{vulnName\\}", CData(v.getName()));
 				nxml = nxml.replaceAll("\\$\\{severity\\}", CData(v.getOverallStr()));
 				nxml = nxml.replaceAll("\\$\\{impact\\}", v.getImpactStr());
@@ -1095,10 +1097,10 @@ public class DocxUtils {
 				// remove color loops
 				if(nxml.contains("${color") || nxml.contains("${fill") || nxml.contains("${custom-fields") )
 					nxml="";
-
-				if (v.getCustomFields() != null) {
+				if (v.getCustomFields() != null && !nxml.equals("")) {
 					for (CustomField cf : v.getCustomFields()) {
-						if(cf.getType().getFieldType() < 3) {
+						Boolean isHyperlink = nxml.matches(".*<w:hyperlink.*\\$\\{cf"+cf.getType().getVariable()+"\\}.*</w:hyperlink>.*");
+						if(cf.getType().getFieldType() < 3 && !isHyperlink) {
 							nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", CData(cf.getValue()));
 							if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
 								String colorMatch = customFieldMap.get(cf.getType().getVariable());
@@ -1130,6 +1132,10 @@ public class DocxUtils {
 				if(nxml != "") {
 					try {
 					Object paragraph = XmlUtils.unmarshalString(nxml);
+					//Replace Hyperlinks
+					for (CustomField cf : v.getCustomFields()) {
+						this.replaceHyperlink(paragraph, "${cf" + cf.getType().getVariable() + "}", cf.getValue());
+					}
 					mlp.getMainDocumentPart().getContent().add(begin++, paragraph);
 					}catch(Exception ex) {
 						ex.printStackTrace();
@@ -1207,7 +1213,7 @@ public class DocxUtils {
 			
 			
 			replaceHTML(mlp.getMainDocumentPart(), map2, true);
-
+			/*
 			HashMap<String, String> map1 = new HashMap();
 			if (v.getCustomFields() != null) {
 				for (CustomField cf : v.getCustomFields()) {
@@ -1218,7 +1224,7 @@ public class DocxUtils {
 			}
 
 			replacementText(map1);
-			replacementHyperlinks(map1);
+			*/
 			
 		}
 
@@ -1300,7 +1306,7 @@ public class DocxUtils {
 	}
 
 	/*
-	 * Utiltity function to file elements in the docx file
+	 * Utility function to find elements in the docx file
 	 */
 	private int indexOfRow(Tbl table, List<Object> paragraphs, String variable) {
 		for (Object para : paragraphs) {
@@ -1375,6 +1381,108 @@ public class DocxUtils {
 		return paragraphs;
 		
 	}
+	private List<P.Hyperlink> getHyperLinks(final Object mainPart) {
+	    final List<P.Hyperlink> links = new ArrayList<>();
+	    new TraversalUtil(mainPart, new TraversalUtil.CallbackImpl() {
+	        @Override
+	        public List<Object> apply(Object o) {
+	            if (o instanceof P.Hyperlink) {
+	                links.add((P.Hyperlink) o);
+	            }
+	            return null; // Continue traversal
+	        }
+	        
+	        @Override
+	        public boolean shouldTraverse(Object o) {
+	            return true; // Traverse all elements
+	        }
+	    });
+	    return links;
+	}
+	public void replaceHyperlink(Object wordPackage, String searchText, String newUrl) {
+	    try {
+	        // Find all hyperlinks
+	        List<P.Hyperlink> hyperlinks = getHyperLinks(wordPackage);
+	        
+	        for (P.Hyperlink hyperlink : hyperlinks) {
+	            // Check if this hyperlink contains the text we're looking for
+	            String hyperlinkText = getHyperlinkDisplayText(hyperlink);
+	            if (hyperlinkText != null && hyperlinkText.contains(searchText)) {
+	            	// Update the variable in the hyperlink text
+	                String updatedHyperlink = hyperlinkText.replace(searchText, newUrl);
+	                
+	                // Create new relationship (don't worry about removing old one)
+	                RelationshipsPart relsPart = this.mlp.getMainDocumentPart().getRelationshipsPart();
+	                
+	                // Add new hyperlink relationship
+	                org.docx4j.relationships.Relationship newRel = new org.docx4j.relationships.Relationship();
+	                newRel.setId(relsPart.getNextId()); // Get next available ID
+	                newRel.setType("http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink");
+	                String updatedTarget = updatedHyperlink;
+	                if(updatedTarget.contains("@")) {
+	                	updatedTarget = "mailto:" + updatedTarget;
+	                }
+	                newRel.setTarget(updatedTarget);
+	                newRel.setTargetMode("External");
+	                
+	                // Add the relationship
+	                relsPart.getRelationships().getRelationship().add(newRel);
+	                
+	                // Update the hyperlink element with new relationship ID
+	                hyperlink.setId(newRel.getId());
+	                
+	                // Update the display text
+	                updateHyperlinkDisplayText(hyperlink, updatedHyperlink);
+	            }
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	}
+
+	private String getHyperlinkDisplayText(P.Hyperlink hyperlink) {
+	    StringBuilder text = new StringBuilder();
+	    for (Object obj : hyperlink.getContent()) {
+	        if (obj instanceof R) {
+	            R run = (R) obj;
+	            for (Object runContent : run.getContent()) {
+	                if (runContent instanceof Text) {
+	                    text.append(((Text) runContent).getValue());
+	                } else if (runContent instanceof JAXBElement) {
+	                    JAXBElement<?> element = (JAXBElement<?>) runContent;
+	                    if (element.getValue() instanceof Text) {
+	                        text.append(((Text) element.getValue()).getValue());
+	                    }
+	                }
+	            }
+	        }
+	    }
+	    return text.toString();
+	}
+
+	private void updateHyperlinkDisplayText(P.Hyperlink hyperlink, String newText) {
+	    // Clear existing content
+	    hyperlink.getContent().clear();
+	    
+	    // Create new run with the text
+	    R run = new R();
+	    
+	    // Add hyperlink style
+	    RPr runProps = new RPr();
+	    RStyle hyperlinkStyle = new RStyle();
+	    hyperlinkStyle.setVal("Hyperlink");
+	    runProps.setRStyle(hyperlinkStyle);
+	    run.setRPr(runProps);
+	    
+	    // Add the text
+	    Text text = new Text();
+	    text.setValue(newText);
+	    run.getContent().add(text);
+	    
+	    hyperlink.getContent().add(run);
+	}
+	
+	
 	
 	private void replaceHeaderAndFooter(final Map<String,String> replacements) {
 			List<Object> list = new ArrayList<>();
