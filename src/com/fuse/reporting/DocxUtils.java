@@ -331,7 +331,9 @@ public class DocxUtils {
 					if (v.getCustomFields() != null) {
 						for (CustomField cf : v.getCustomFields()) {
 							// Only perform this action if the variable is plain text and not a hyperlink
-							if(cf.getType().getFieldType() < 3 && !nxml.matches(".*<w:hyperlink.*\\$\\{cf"+cf.getType().getVariable()+"\\}.*</w:hyperlink>.*")) {
+							Boolean isHyperlink = nxml.matches(
+									".*<w:hyperlink w:history=\"true\" r:id=\".*\"><w:r><w:rPr><w:rStyle w:val=\"Hyperlink\"/></w:rPr><w:t>\\$\\{cf"+cf.getType().getVariable()+"\\}.*");
+							if(cf.getType().getFieldType() < 3 && !isHyperlink) {
 								
 								nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", CData(cf.getValue()));
 								if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
@@ -1099,7 +1101,8 @@ public class DocxUtils {
 					nxml="";
 				if (v.getCustomFields() != null && !nxml.equals("")) {
 					for (CustomField cf : v.getCustomFields()) {
-						Boolean isHyperlink = nxml.matches(".*<w:hyperlink.*\\$\\{cf"+cf.getType().getVariable()+"\\}.*</w:hyperlink>.*");
+						Boolean isHyperlink = nxml.matches(
+								".*<w:hyperlink w:history=\"true\" r:id=\".*\"><w:r><w:rPr><w:rStyle w:val=\"Hyperlink\"/></w:rPr><w:t>\\$\\{cf"+cf.getType().getVariable()+"\\}.*");
 						if(cf.getType().getFieldType() < 3 && !isHyperlink) {
 							nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", CData(cf.getValue()));
 							if(customFieldMap.containsKey(cf.getType().getVariable()) && colorMap.containsKey(cf.getValue())){
