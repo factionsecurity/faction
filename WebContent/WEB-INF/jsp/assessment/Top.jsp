@@ -9,6 +9,10 @@
 <link href="../dist/css/throbber.css" media="all" rel="stylesheet" type="text/css" />
 <link href="../plugins/jquery-confirm/css/jquery-confirm.css" media="all" rel="stylesheet" type="text/css" />
 <link rel="stylesheet" href="../plugins/iCheck/all.css">
+<link href="../src/assessment-modern.css" media="all" rel="stylesheet" type="text/css" />
+<script>
+document.body.classList.add('assessment-page');
+</script>
 
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
@@ -84,10 +88,11 @@
    <div class="tab-content">
    <script>
    $(function(){
-	setTimeout( () => {
-	   window.scrollTo({
-		   top: 0,
-		 });
+ setTimeout( () => {
+    window.scrollTo({
+     top: 0,
+   });
    },100);
    });
    </script>
+   <script src="../src/assessment-modern.js"></script>

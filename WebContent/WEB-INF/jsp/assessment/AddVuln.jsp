@@ -15,9 +15,9 @@
 			</bs:row>
 		<bs:row>
 			<bs:mco colsize="2">
-				<button id="addVuln" class="btn btn-primary btn-lg"
+				<button id="addVuln" class="btn btn-primary btn-lg fade-in"
 					<s:if test="hideit">disabled</s:if>>
-					<b><i class="glyphicon glyphicon-plus"></i> New Vulnerability</b>
+					<i class="fas fa-plus"></i> New Vulnerability
 				</button>
 			</bs:mco>
 		</bs:row>
@@ -27,165 +27,13 @@
 	</div>
 	<!-- /.col -->
 </div>
-<style>
-.btn:active.focus, .btn:active:focus, .btn:focus {
-	outline: none !important;
-}
-
-.focus {
-	outline: none !important;
-}
-
-.active {
-	outline: none !important;
-}
-
-.activeVector {
-	background-color: purple !important;
-	color: white !important;
-	font-weight: bold;
-}
-
-label.btn {
-	background-color: lightgray;
-	color: #030D1C;
-}
-
-label.btn:hover {
-	font-weight: bold;
-}
-
-.scoreBody {
-	background-color: lightGray;
-	border-radius: 9px;
-	text-align: center;
-	padding-bottom: 5px;
-	margin-bottom: 40px;
-	width: 150px;
-}
-
-.scoreBody h3 {
-	font-size: xxx-large;
-	color: lightgray;
-	border-top-right-radius: 9px;
-	border-top-left-radius: 9px;
-	margin-top: 0px;
-}
-
-.scoreBody span {
-	font-size: large;
-	font-weight: bold;
-}
-
-h3.None {
-	background-color: #00a65a;
-}
-
-span.None {
-	color: #00a65a;
-}
-
-h3.Low {
-	background-color: #39cccc;
-}
-
-span.Low {
-	color: #39cccc;
-}
-
-h3.Medium {
-	background-color: #00c0ef;
-}
-
-span.Medium {
-	color: #00c0ef;
-}
-
-h3.High {
-	background-color: #f39c12;
-}
-
-span.High {
-	color: #f39c12;
-}
-
-h3.Critical {
-	background-color: #dd4b39;
-}
-
-span.Critical {
-	color: #dd4b39;
-}
-
-.circle {
-	border-radius: 50%;
-	width: 25px;
-	height: 25px;
-	padding: 7px;
-	padding-top: 6px;
-	font-size: small;
-	color: white;
-	z-index: 100000;
-}
-
-.moveDown {
-	z-index: 100000;
-}
-
-tr  td {
-	border-top: 0px !important;
-}
-
-.disabled {
-	opacity: 0.2;
-	pointer-events: none;
-}
-
-td:first-child {
-	border-left-width: 5px;
-	border-left-style: solid;
-}
-
-.selected td:first-child {
-	border-left-style: dotted;
-}
-
-.userEdit {
-	background: #f39c12;
-	color: white;
-	font-weight: bold;
-	border-radius: 5px;
-	padding-left: 4px;
-	padding-right: 7px;
-	padding-top: 2px;
-	padding-bottom: 4px;
-	margin-left: 30px;
-}
-
-.cvsstrue {
-	display: block;
-}
-.cvssfalse {
-	display: none;
-}
-
-#description {
-	background-color: white
-}
-#recommendation {
-	background-color: white
-}
-#details {
-	background-color: white
-}
-</style>
 
 <div class="row">
 	<div class="col-xs-8">
-		<div id="vulnForm" class="box box-danger disabled">
+		<div id="vulnForm" class="box disabled slide-up">
 			<div class="box-header">
 				<h3 class="box-title">
-					<i class="fa fa-bug"></i> Vulnerability Details
+					<i class="fas fa-bug"></i> Vulnerability Details
 				</h3>
 			</div>
 			<form>
@@ -248,7 +96,7 @@ td:first-child {
 												<input type="hidden" id="cvssScore"/>
 												<input type="hidden" id="overall"/>
 											</div>
-											<span id="cvssModal" class="btn btn-primary col-sm-1"><i class="fa-solid fa-calculator"></i></span>
+											<span id="cvssModal" class="btn btn-primary col-sm-1"><i class="fas fa-calculator"></i></span>
 										</div>
 								</bs:row>
 							</div>
@@ -377,10 +225,10 @@ td:first-child {
 
 						<!-- Vuln Description Section -->
 						<div class="col-md-12">
-							<div class="box box-default">
+							<div class="box">
 								<div class="box-header">
 									<h3 class="box-title">
-										<i class="glyphicon glyphicon-edit"></i> Vulnerability
+										<i class="fas fa-edit"></i> Vulnerability
 										Description: <span id="description_header"></span>
 									</h3>
 								</div>
@@ -400,10 +248,10 @@ td:first-child {
 					<div class="row">
 						<!-- Vuln Recommendation Section -->
 						<div class="col-md-12">
-							<div class="box box-info">
+							<div class="box">
 								<div class="box-header">
 									<h3 class="box-title">
-										<i class="glyphicon glyphicon-edit"></i> Vulnerability
+										<i class="fas fa-lightbulb"></i> Vulnerability
 										Recommendation: <span id="recommendation_header"></span>
 									</h3>
 								</div>
@@ -421,12 +269,12 @@ td:first-child {
 						</div>
 					</div>
 					<div class="row">
-						<!-- Vuln Recommendation Section -->
+						<!-- Vuln Details Section -->
 						<div class="col-md-12">
-							<div class="box box-info">
+							<div class="box">
 								<div class="box-header">
 									<h3 class="box-title">
-										<i class="glyphicon glyphicon-edit"></i> Details: <span
+										<i class="fas fa-file-alt"></i> Details: <span
 											id="details_header"></span>
 									</h3>
 								</div>
@@ -454,15 +302,15 @@ td:first-child {
 		</div>
 	</div>
 	<div class="col-xs-4">
-		<div class="box box-danger">
+		<div class="box slide-up">
 			<div class="box-header">
 				<h3 class="box-title">
-					<i class="fa fa-bug"></i> Vulnerability Findings
+					<i class="fas fa-list-ul"></i> Vulnerability Findings
 				</h3>
 				<s:if
 					test="!(assessment.InPr || assessment.prComplete || assessment.finalized)">
-					<span id="deleteMulti" class="fa fa-trash circle pull-right"
-						style="background: #192338" title="Delete Multiple Vulns"></span>
+					<span id="deleteMulti" class="fas fa-trash-alt circle pull-right"
+						style="background: var(--danger-color); padding: 8px; border-radius: 50%; cursor: pointer;" title="Delete Multiple Vulns"></span>
 				</s:if>
 			</div>
 			<!-- /.box-header -->
@@ -495,7 +343,7 @@ td:first-child {
 								<td><span class="vulnControl vulnControl-delete"
 									id="deleteVuln<s:property value="id"/>"
 									<s:if test="hideit">disabled</s:if>><i
-										class="fa fa-trash" title="Delete Vulnerability"></i></span></td>
+										class="fas fa-trash-alt" title="Delete Vulnerability"></i></span></td>
 							</tr>
 						</s:iterator>
 					</tbody>

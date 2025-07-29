@@ -1,0 +1,563 @@
+/* Assessment Modern Dark Theme CSS */
+/* Based on the same design system as dashboard-modern.css */
+
+:root {
+    /* Primary color palette */
+    --primary-color: #3498db;
+    --primary-hover: #2980b9;
+    --primary-light: #5dade2;
+    
+    /* Background colors */
+    --bg-primary: #1a1a2e;
+    --bg-secondary: #16213e;
+    --bg-tertiary: #0f172a;
+    --bg-card: rgba(255, 255, 255, 0.08);
+    --bg-card-hover: rgba(255, 255, 255, 0.12);
+    
+    /* Text colors */
+    --text-primary: #ffffff;
+    --text-secondary: #cbd5e1;
+    --text-muted: #94a3b8;
+    --text-accent: #3498db;
+    
+    /* Border and shadow */
+    --border-color: rgba(255, 255, 255, 0.1);
+    --border-hover: rgba(255, 255, 255, 0.2);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    
+    /* Glassmorphism */
+    --glass-bg: rgba(255, 255, 255, 0.1);
+    --glass-border: rgba(255, 255, 255, 0.2);
+    --glass-blur: blur(20px);
+    
+    /* Status colors */
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --danger-color: #e74c3c;
+    --info-color: #3498db;
+    
+    /* Vulnerability severity colors */
+    --critical-color: #dc3545;
+    --high-color: #fd7e14;
+    --medium-color: #ffc107;
+    --low-color: #17a2b8;
+    --info-vuln-color: #6c757d;
+}
+
+/* Base styles for assessment pages */
+body.assessment-page {
+    background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, var(--bg-tertiary) 100%);
+    background-attachment: fixed;
+    color: var(--text-primary);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Content wrapper modernization */
+.content-wrapper {
+    background: transparent !important;
+    padding: 20px;
+}
+
+/* Assessment heading modernization */
+.content-header {
+    background: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    padding: 24px !important;
+    margin: 0 0 24px 0 !important;
+    box-shadow: var(--shadow-md);
+    text-align: left !important;
+}
+
+.content-header h1 {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    font-size: 2rem;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.content-header h1 i {
+    color: var(--primary-color);
+    font-size: 1.8rem;
+}
+
+.content-header small {
+    display: block;
+    margin-top: 12px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+}
+
+.content-header .btn {
+    background: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    color: white;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.content-header .btn:hover {
+    background: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Navigation tabs modernization */
+.nav-tabs-custom {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    overflow: visible;
+}
+
+.nav-tabs-custom .nav-tabs {
+    background: transparent !important;
+    border: none !important;
+    padding: 0;
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.nav-tabs-custom .nav-tabs li {
+    flex: none;
+}
+
+.nav-tabs-custom .nav-tabs li a {
+    background: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 12px !important;
+    color: var(--text-secondary) !important;
+    padding: 12px 20px;
+    text-align: center;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-sm);
+    min-width: 120px;
+}
+
+.nav-tabs-custom .nav-tabs li a:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    color: var(--text-primary) !important;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.nav-tabs-custom .nav-tabs li.active a {
+    background: var(--primary-color) !important;
+    color: white !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.nav-tabs-custom .tab-content {
+    padding: 24px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+}
+
+/* Info bars and stats modernization */
+#infobar .small-box {
+    background: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 12px;
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+#infobar .small-box:hover {
+    background: var(--glass-bg) !important;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+#infobar .small-box .inner h3 {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+}
+
+#infobar .small-box .inner p {
+    color: var(--text-secondary) !important;
+}
+
+#infobar .small-box .icon i {
+    color: var(--primary-color) !important;
+}
+
+/* Box components modernization */
+.box {
+    background: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border) !important;
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+
+.box-header {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    padding: 20px 24px;
+}
+
+.box-header .box-title {
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.box-header .box-title i {
+    color: var(--primary-color);
+}
+
+.box-body {
+    padding: 24px;
+    background: transparent !important;
+}
+
+/* Form modernization */
+.form-control {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px;
+    color: var(--text-primary) !important;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+    color: var(--text-primary) !important;
+}
+
+.form-control::placeholder {
+    color: var(--text-muted) !important;
+}
+
+.control-label {
+    color: var(--text-secondary) !important;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+/* Select2 modernization */
+.select2-container--default .select2-selection--single {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px;
+    height: 44px;
+    line-height: 44px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: var(--text-primary) !important;
+    padding-left: 16px;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    right: 16px;
+    top: 10px;
+}
+
+.select2-dropdown {
+    background: var(--bg-secondary) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px;
+    box-shadow: var(--shadow-lg);
+}
+
+.select2-results__option {
+    color: var(--text-primary) !important;
+    padding: 12px 16px;
+}
+
+.select2-results__option--highlighted {
+    background: var(--primary-color) !important;
+}
+
+/* Button modernization */
+.btn {
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-primary {
+    background: var(--primary-color) !important;
+    color: white !important;
+}
+
+.btn-primary:hover {
+    background: var(--primary-hover) !important;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-lg {
+    padding: 16px 32px;
+    font-size: 1.1rem;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Table modernization */
+.table {
+    background: transparent !important;
+    color: var(--text-primary);
+    margin-bottom: 0;
+}
+
+.table thead th {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-primary) !important;
+    font-weight: 600;
+    padding: 16px;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table tbody td {
+    background: rgba(255, 255, 255, 0.02) !important;
+    border: 1px solid var(--border-color) !important;
+    color: var(--text-secondary) !important;
+    padding: 16px;
+    vertical-align: middle;
+}
+
+.table tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-primary) !important;
+}
+
+/* Vulnerability severity colors */
+.table tbody tr[data-vulnid] td:first-child {
+    border-left-width: 4px !important;
+    border-left-style: solid !important;
+}
+
+.sev0, .sevCritical { border-left-color: var(--critical-color) !important; }
+.sev1, .sevHigh { border-left-color: var(--high-color) !important; }
+.sev2, .sevMedium { border-left-color: var(--medium-color) !important; }
+.sev3, .sevLow { border-left-color: var(--low-color) !important; }
+.sev4, .sevInfo { border-left-color: var(--info-vuln-color) !important; }
+
+/* Vulnerability control icons */
+.vulnControl i {
+    color: var(--text-muted) !important;
+    font-size: 1.2rem;
+    padding: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.vulnControl i:hover {
+    color: var(--primary-color) !important;
+    background: rgba(52, 152, 219, 0.1);
+    transform: scale(1.1);
+}
+
+.vulnControl-delete i:hover {
+    color: var(--danger-color) !important;
+    background: rgba(231, 76, 60, 0.1);
+}
+
+/* Score display modernization */
+.scoreBody {
+    background: var(--glass-bg) !important;
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    padding: 20px;
+    text-align: center;
+    min-width: 160px;
+}
+
+.scoreBody h3 {
+    font-size: 2.5rem !important;
+    font-weight: 700;
+    margin: 0 0 8px 0;
+    color: var(--text-primary) !important;
+}
+
+.scoreBody span {
+    font-size: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* CVSS Score colors */
+h3.None, span.None { color: var(--info-vuln-color) !important; }
+h3.Low, span.Low { color: var(--low-color) !important; }
+h3.Medium, span.Medium { color: var(--medium-color) !important; }
+h3.High, span.High { color: var(--high-color) !important; }
+h3.Critical, span.Critical { color: var(--critical-color) !important; }
+
+/* Text editor modernization */
+#description, #recommendation, #details {
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px;
+    color: var(--text-primary) !important;
+    min-height: 200px;
+    padding: 16px;
+}
+
+/* Chart containers */
+canvas {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 8px;
+}
+
+/* Custom field styling */
+.form-group label small {
+    color: var(--text-muted) !important;
+    font-size: 0.8rem;
+}
+
+/* Checkbox styling */
+input[type="checkbox"] {
+    accent-color: var(--primary-color);
+    transform: scale(1.2);
+}
+
+/* Status indicators */
+.text-warning { color: var(--warning-color) !important; }
+.text-success { color: var(--success-color) !important; }
+.text-primary { color: var(--primary-color) !important; }
+.text-danger { color: var(--danger-color) !important; }
+
+/* Loading states */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    z-index: 1000;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.1);
+    border-left: 4px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .content-wrapper {
+        padding: 12px;
+    }
+    
+    .nav-tabs-custom .nav-tabs {
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .nav-tabs-custom .nav-tabs li a {
+        text-align: left;
+    }
+    
+    .box-body {
+        padding: 16px;
+    }
+    
+    .scoreBody {
+        min-width: 120px;
+        padding: 16px;
+    }
+    
+    .scoreBody h3 {
+        font-size: 2rem !important;
+    }
+}
+
+/* Animation utilities */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-up {
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from { transform: translateY(10px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+/* Accessibility improvements */
+.btn:focus,
+.form-control:focus,
+.nav-tabs li a:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Print styles */
+@media print {
+    body.assessment-page {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .box,
+    .nav-tabs-custom,
+    .content-header {
+        background: white !important;
+        border: 1px solid #ddd !important;
+        box-shadow: none !important;
+    }
+}

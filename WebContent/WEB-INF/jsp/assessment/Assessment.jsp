@@ -6,60 +6,18 @@
 
 <s:set var="summaryActive" value="'true'" scope="request"/>
 <jsp:include page="Top.jsp"/>
-	<style>
-				
-	tr:hover{
-		//font-weight: bold;
-	}
-	.tempSearch{
-	width:100%;
-	}
-
-	.text-warning{
-	color:#f39c12;
-	}
-	.text-success{
-	color:#00a65a
-
-	}
-	.disabled{
-		background: lightgray;
-		opacity: 0.2;
-		pointer-events: none;
-	}
-	.lockUser{
-	color: white;
-	}
-	.userTemplate:after {
-		content: '\f007';
-		font-family: FontAwesome;
-		font-style: normal;
-		font-weight: normal;
-		text-decoration: inherit;
-		margin-left: 10px;
-	}
-
-	.globalTemplate:after {
-		content: '\f0ac';
-		font-family: FontAwesome;
-		font-style: normal;
-		font-weight: normal;
-		text-decoration: inherit;
-		margin-left: 10px;
-	}
-	</style>
 
 
 
 
-     <div class="tab-pane active" id="Summary">
+     <div class="tab-pane active fade-in" id="Summary">
        <jsp:include page="AssessmentTextEditors.jsp" />
      </div><!-- /.tab-pane -->
      <jsp:include page="AssessmentExtendedContent.jsp"/>
-     <div class="tab-pane" id="Finalize">
+     <div class="tab-pane slide-up" id="Finalize">
        <jsp:include page="Finalize.jsp" />
      </div><!-- /.tab-pane -->
-     <div class="tab-pane" id="History">
+     <div class="tab-pane slide-up" id="History">
        <jsp:include page="history.jsp" />
      </div><!-- /.tab-pane -->
      

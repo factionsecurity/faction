@@ -1,0 +1,407 @@
+/* Modern Dark Dashboard Theme Enhancement */
+
+/* Enhanced Dark Theme Variables */
+:root {
+  --primary-dark: #0B1426;
+  --secondary-dark: #1A2332;
+  --accent-dark: #243447;
+  --primary-blue: #4A9EFF;
+  --secondary-blue: #64B5F6;
+  --success-green: #4CAF50;
+  --warning-orange: #FF9800;
+  --danger-red: #F44336;
+  --info-cyan: #00BCD4;
+  --text-primary: #E8EAF0;
+  --text-secondary: #B8C7CE;
+  --text-muted: #9CA3AF;
+  --border-color: #374151;
+  --shadow-light: rgba(0, 0, 0, 0.1);
+  --shadow-medium: rgba(0, 0, 0, 0.2);
+  --shadow-heavy: rgba(0, 0, 0, 0.3);
+}
+
+/* Modern Dashboard Layout */
+.modern-dashboard {
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary-dark) 100%);
+  min-height: 100vh;
+}
+
+/* Enhanced Content Header */
+.content-header {
+  background: transparent;
+  margin-bottom: 24px;
+  padding: 20px 24px;
+}
+
+.content-header h1 {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 28px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.content-header h1 i {
+  color: var(--primary-blue);
+  font-size: 24px;
+}
+
+/* Modern Dashboard Cards */
+.modern-card {
+  background: rgba(26, 35, 50, 0.8);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px var(--shadow-medium);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+
+.modern-card-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: linear-gradient(135deg, rgba(74, 158, 255, 0.1) 0%, rgba(100, 181, 246, 0.05) 100%);
+}
+
+.modern-card-header h3 {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 18px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modern-card-body {
+  padding: 24px;
+}
+
+/* Enhanced Create Button */
+.modern-create-btn {
+  background: linear-gradient(135deg, var(--primary-blue) 0%, var(--secondary-blue) 100%);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  padding: 12px 24px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(74, 158, 255, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modern-create-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(74, 158, 255, 0.4);
+  filter: brightness(1.1);
+}
+
+.modern-create-btn i {
+  font-size: 16px;
+}
+
+/* Enhanced Data Tables */
+.modern-table {
+  background: transparent !important;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.modern-table thead th {
+  background: rgba(74, 158, 255, 0.1) !important;
+  color: var(--text-primary) !important;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 16px 20px;
+  border: none !important;
+}
+
+.modern-table tbody tr {
+  background: transparent !important;
+  border-bottom: 1px solid var(--border-color) !important;
+  transition: all 0.2s ease;
+}
+
+.modern-table tbody tr:hover {
+  background: rgba(74, 158, 255, 0.1) !important;
+}
+
+.modern-table tbody td {
+  padding: 16px 20px;
+  color: var(--text-secondary) !important;
+  font-size: 14px;
+  border: none !important;
+  background: transparent !important;
+}
+
+/* DataTables specific overrides */
+table.dataTable {
+  background: transparent !important;
+}
+
+table.dataTable tbody tr {
+  background: transparent !important;
+}
+
+table.dataTable tbody tr:hover {
+  background: rgba(74, 158, 255, 0.1) !important;
+}
+
+table.dataTable thead th {
+  background: rgba(74, 158, 255, 0.1) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+table.dataTable tbody td {
+  background: transparent !important;
+  border-top: none !important;
+}
+
+/* DataTables wrapper styling */
+.dataTables_wrapper {
+  background: transparent !important;
+}
+
+.dataTables_wrapper .dataTables_paginate {
+  background: transparent !important;
+}
+
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_filter {
+  color: var(--text-secondary) !important;
+}
+
+.dataTables_wrapper .dataTables_filter input {
+  background: rgba(36, 52, 71, 0.8) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-color) !important;
+  border-radius: 6px;
+  padding: 6px 12px;
+}
+
+/* Status Indicators */
+.status-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.status-indicator.critical {
+  background: rgba(244, 67, 54, 0.2);
+  color: var(--danger-red);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.status-indicator.high {
+  background: rgba(255, 152, 0, 0.2);
+  color: var(--warning-orange);
+  border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.status-indicator.medium {
+  background: rgba(0, 188, 212, 0.2);
+  color: var(--info-cyan);
+  border: 1px solid rgba(0, 188, 212, 0.3);
+}
+
+.status-indicator.low {
+  background: rgba(76, 175, 80, 0.2);
+  color: var(--success-green);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+/* Modern Notifications Panel */
+.modern-notifications {
+  position: relative;
+}
+
+.notification-item {
+  background: rgba(26, 35, 50, 0.6);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.3s ease;
+}
+
+
+.notification-time {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.notification-message {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin: 4px 0;
+}
+
+.notification-delete {
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.notification-delete:hover {
+  color: var(--danger-red);
+}
+
+/* Clear All Button */
+.modern-clear-btn {
+  background: rgba(244, 67, 54, 0.1);
+  border: 1px solid rgba(244, 67, 54, 0.3);
+  color: var(--danger-red);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.modern-clear-btn:hover {
+  background: rgba(244, 67, 54, 0.2);
+  transform: translateY(-1px);
+}
+
+/* Your Week Section */
+.week-section {
+  background: rgba(26, 35, 50, 0.6);
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.week-item {
+  background: rgba(36, 52, 71, 0.8);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+  border-left: 4px solid var(--primary-blue);
+}
+
+.week-item h4 {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin: 0 0 8px 0;
+}
+
+.week-collaborators {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.week-notes {
+  background: rgba(11, 20, 38, 0.5);
+  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid var(--border-color);
+}
+
+/* Loading States */
+.loading-shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.1) 25%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.1) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .modern-card {
+    margin-bottom: 16px;
+    border-radius: 12px;
+  }
+  
+  .modern-card-header {
+    padding: 16px 20px 12px;
+  }
+  
+  .modern-card-body {
+    padding: 20px;
+  }
+  
+  .content-header {
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+  
+  .content-header h1 {
+    font-size: 24px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .modern-create-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: 12px;
+  }
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+.slide-up {
+  animation: slideUp 0.4s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { 
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Enhanced Scrollbars */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--primary-dark);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-dark);
+  border-radius: 4px;
+  transition: background 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-blue);
+}
