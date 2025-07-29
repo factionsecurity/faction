@@ -990,8 +990,8 @@ public class DocxUtils {
 		for(Image img : this.assessment.getImages()) {
 			String matchStr = matchPrefix + img.getGuid();
 			text = text.replaceAll( matchStr, img.getBase64Image());
-			text = text.replaceAll("<img", "<br/><div stype='overflow:hidden; width:100%;'><img");
-			text = text.replaceAll("</img>", "</img></div>");
+			//text = text.replaceAll("<img", "<br/><div stype='overflow:hidden; width:100%;'><img");
+			//text = text.replaceAll("</img>", "</img></div>");
 		}
 		return text;
 		
@@ -1473,6 +1473,8 @@ public class DocxUtils {
 	                String updatedTarget = updatedHyperlink;
 	                if(updatedTarget.contains("@")) {
 	                	updatedTarget = "mailto:" + updatedTarget;
+	                }else if(!updatedTarget.startsWith("http")) {
+	                	updatedTarget = "https://"+updatedTarget;
 	                }
 	                if(searchText.contains("cvssString link")) {
 	                	if(this.assessment.getType().isCvss31()){
