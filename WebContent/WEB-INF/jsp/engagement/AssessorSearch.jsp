@@ -76,7 +76,48 @@ div[id^='rtCust']{
 	  	<h3>Variables</h3>
 	  <hr>
 	  </bs:mco>
-	  <div id="variables"></div>
+	  <div id="variables">
+	  	<s:if test="currentAssessment != null">
+				<s:iterator value="currentAssessment.customFields">
+					<s:if test="type.fieldType < 3">
+						<div class="col-md-4">
+							<label class=""><s:property value="type.key"/></label>
+								<s:if test="type.fieldType == 0">
+									<input type="text" class="form-control" id="cust${type.id}"
+										value='<s:property value="value"/>'
+										<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> 
+										<s:if test="!type.readonly">readonly</s:if>
+										/>
+								</s:if>
+								<s:if test="type.fieldType == 1">
+									<br>
+									<input type="checkbox" class="icheckbox_minimal-blue"
+										style="width: 20px; height: 20px; margin-top: -30px"
+										id="cust<s:property value="type.id"/>"
+										<s:if test="value == 'true'">checked</s:if>
+										<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if>
+										<s:if test="!type.readonly">readonly</s:if>
+										 />
+								</s:if>
+								<s:if test="type.fieldType == 2">
+									<select class='form-control select2 ' style='width: 100%;'
+										id="cust<s:property value="type.id"/>"
+										<s:if test="currentAssessment.finalized">readonly</s:if>>
+										<s:if test="!type.readonly">readonly</s:if>
+										<s:iterator value="type.defaultValue.split(',')" var="option">
+											<s:set var="aOption" value="option" />
+											<option value="<s:property value="option"/>"
+												<s:if test="value.equals(#aOption)">selected</s:if>><s:property
+													value="option" /></option> 
+										</s:iterator>
+									</select>
+								</s:if>
+						</div>
+					</s:if>
+				</s:iterator>
+	  	</s:if>
+	  
+	  </div>
 		 
 	  </bs:row><!--  End of Top Row -->
 	  <!--  Add Distribution list section -->

@@ -145,8 +145,7 @@
         
        // this needs to loop through users
        <s:iterator value="currentAssessment.assessor">
-        $.post('../service/getAssessments','id=<s:property value="Id"/>').done(function(adata){
-			let json = JSON.parse(adata);
+        $.post('../service/getAssessments','id=<s:property value="Id"/>').done(function(json){
 			//console.log("Posted get Assessment");
 			let N=json.count;
 			for(let i=0;i<N; i++){

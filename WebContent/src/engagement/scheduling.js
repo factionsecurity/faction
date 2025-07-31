@@ -42,7 +42,10 @@ $(function() {
 		} else
 			$(".disabled-select", objs).remove();
 	}
-	createAllCustomFields();
+	//Support for edit page
+	if(typeof aid == 'undefined'){
+		createAllCustomFields();
+	}
 
 	//getAssessors();
 	calendar = new FullCalendar.Calendar(document.getElementById("calendar"), {

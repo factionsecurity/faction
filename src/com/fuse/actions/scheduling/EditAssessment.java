@@ -219,7 +219,6 @@ public class EditAssessment extends FSActionSupport {
 						}
 
 					}
-					JSONArray cfstuff = new JSONArray();
 					if (this.cf != null) {
 						JSONParser parse = new JSONParser();
 						JSONArray array = (JSONArray) parse.parse(cf);
@@ -234,6 +233,7 @@ public class EditAssessment extends FSActionSupport {
 							Long cfid = Long.parseLong("" + json.get("id"));
 
 							for (CustomField obj : am.getCustomFields()) {
+								System.out.println(cfid);
 								if (obj.getType().getId().equals(cfid)) {
 									cfObj = obj;
 									if(obj.getType().getFieldType() < 3) {
