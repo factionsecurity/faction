@@ -242,8 +242,19 @@ public class AssessmentView extends FSActionSupport {
 			return LOGIN;
 		User user = this.getSessionUser();
 		Long assessmentId = (Long)this.getSession("asmtid");
-		assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), assessmentId, AssessmentQueries.All);
-		if(assessment == null) {
+		if(this.isAcmanager()) {
+			assessment = AssessmentQueries.getAssessmentById(em, assessmentId);
+			if(assessment == null) {
+				List<Vulnerability> vulns = new ArrayList();
+				return "assessmentStats";
+			}
+		}else if(this.isAcassessor()) {
+			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), assessmentId, AssessmentQueries.All);
+			if(assessment == null) {
+				List<Vulnerability> vulns = new ArrayList();
+				return "assessmentStats";
+			}
+		}else {
 			List<Vulnerability> vulns = new ArrayList();
 			return "assessmentStats";
 		}
@@ -288,7 +299,8 @@ public class AssessmentView extends FSActionSupport {
 	}
 
 	@Action(value = "SetAssessment", results = {
-			@Result(name = "redirect", type = "redirect", location = "Assessment") })
+			@Result(name = "redirect", type = "redirect", location = "Assessment") 
+			})
 	public String setAssessment() {
 		if (!(this.isAcassessor() || this.isAcmanager()))
 			return LOGIN;
