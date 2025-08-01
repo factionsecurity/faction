@@ -1,5 +1,6 @@
 package com.fuse.reporting;
 
+import java.io.File;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
@@ -19,10 +20,17 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
+import org.docx4j.Docx4J;
 import org.docx4j.TextUtils;
 import org.docx4j.TraversalUtil;
 import org.docx4j.XmlUtils;
 import org.docx4j.convert.in.xhtml.XHTMLImporterImpl;
+import org.docx4j.convert.out.HTMLSettings;
+import org.docx4j.dml.CTShapeProperties;
+import org.docx4j.dml.Graphic;
+import org.docx4j.dml.GraphicData;
+import org.docx4j.dml.picture.Pic;
+import org.docx4j.dml.wordprocessingDrawing.Inline;
 import org.docx4j.jaxb.Context;
 import org.docx4j.jaxb.XPathBinderAssociationIsPartialException;
 import org.docx4j.model.datastorage.migration.VariablePrepare;
@@ -40,6 +48,7 @@ import org.docx4j.wml.BooleanDefaultTrue;
 import org.docx4j.wml.Br;
 import org.docx4j.wml.CTShd;
 import org.docx4j.wml.ContentAccessor;
+import org.docx4j.wml.Drawing;
 import org.docx4j.wml.Ftr;
 import org.docx4j.wml.Hdr;
 import org.docx4j.wml.ObjectFactory;
@@ -55,6 +64,8 @@ import org.docx4j.wml.Tc;
 import org.docx4j.wml.Text;
 import org.docx4j.wml.Tr;
 import org.docx4j.wml.CTTxbxContent;
+import org.w3c.dom.*;
+import javax.xml.bind.JAXBElement;
 
 import com.faction.reporting.ReportFeatures;
 import com.fuse.dao.Assessment;
@@ -546,13 +557,14 @@ public class DocxUtils {
 		return mlp;
 
 	}
-	
 
 	private List<Object> wrapHTML(String content, String customCSS,
 			String className) throws Docx4JException {
 		XHTMLImporterImpl xhtml = new XHTMLImporterImpl(mlp);
 		RFonts rfonts = Context.getWmlObjectFactory().createRFonts();
 		rfonts.setAscii(this.FONT);
+		XHTMLImporterImpl.addFontMapping("Arial", rfonts);
+		XHTMLImporterImpl.addFontMapping("arial", rfonts);
 		if(className == null) {
 			className = "";
 		}
@@ -977,6 +989,8 @@ public class DocxUtils {
 		
 		
 		//Fix images
+		content = content.replaceAll("<img", "<center><img");
+		content = content.replaceAll("alt=\"image.png\" contenteditable=\"false\"><br></p>", "></center></p>");
 		content = this.replaceImageLinks(content);
 		
 		//Run extensions
@@ -1365,7 +1379,6 @@ public class DocxUtils {
 		}
 		return -1;
 	}
-
 	/*
 	 * Utility function to find elements in the docx file
 	 */
