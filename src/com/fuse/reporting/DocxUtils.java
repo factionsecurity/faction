@@ -410,7 +410,8 @@ public class DocxUtils {
 									}
 								}
 							}
-							map2.put("${rec}", wrapHTML(rec, customCSS, "rec", widths.get("rec")));
+							//map2.put("${rec}", wrapHTML(rec, customCSS, "rec", widths.get("rec")));
+							map2.put("${rec}", wrapHTML(rec, customCSS, "rec"));
 						} else if (v.getRecommendation() != null) {
 							String rec = v.getRecommendation();
 							if (v.getCustomFields() != null) {
@@ -423,7 +424,8 @@ public class DocxUtils {
 									}
 								}
 							}
-							map2.put("${rec}", wrapHTML(rec, customCSS, "rec", widths.get("rec")));
+							//map2.put("${rec}", wrapHTML(rec, customCSS, "rec", widths.get("rec")));
+							map2.put("${rec}", wrapHTML(rec, customCSS, "rec" ));
 						} else {
 							map2.put("${rec}", wrapHTML("", customCSS, "rec"));
 						}
@@ -441,7 +443,8 @@ public class DocxUtils {
 									}
 								}
 							}
-							map2.put("${desc}", wrapHTML(desc, customCSS, "desc", widths.get("desc")));
+							//map2.put("${desc}", wrapHTML(desc, customCSS, "desc", widths.get("desc")));
+							map2.put("${desc}", wrapHTML(desc, customCSS, "desc"));
 						} else if (v.getDescription() != null) {
 							String desc = v.getDescription();
 							if (v.getCustomFields() != null) {
@@ -454,7 +457,8 @@ public class DocxUtils {
 									}
 								}
 							}
-							map2.put("${desc}", wrapHTML(desc, customCSS, "desc", widths.get("desc")));
+							//map2.put("${desc}", wrapHTML(desc, customCSS, "desc", widths.get("desc")));
+							map2.put("${desc}", wrapHTML(desc, customCSS, "desc"));
 						} else {
 							map2.put("${desc}", wrapHTML("", customCSS, "desc"));
 						}
@@ -473,7 +477,8 @@ public class DocxUtils {
 								}
 							}
 							details = details.replaceAll("\n", "<br />");
-							map2.put("${details}", wrapHTML(details, customCSS, "details", widths.get("details")));
+							//map2.put("${details}", wrapHTML(details, customCSS, "details", widths.get("details")));
+							map2.put("${details}", wrapHTML(details, customCSS, "details" ));
 						} else {
 							map2.put("${details}", wrapHTML("", customCSS, "details"));
 						}
@@ -553,8 +558,10 @@ public class DocxUtils {
 		}
 
 		content = replacement(content);
+		//fix extra spaces
 		content = content.replaceAll("\n", "<br />");
 		content = content.replaceAll("</p><p><br /></p><p>", "<br /></p><p>");
+		
 		return xhtml.convert(
 				"<!DOCTYPE html><html><head>"
 						+ "<style>html{padding:0;margin:0;margin-right:0px;}\r\nbody{padding:0;margin:0;font-family:"
@@ -580,8 +587,6 @@ public class DocxUtils {
 
 			List<Object> converted = xhtml.convert(
 							"<!DOCTYPE html><html><head>"
-						+ "  <meta charset=\"UTF-8\" />\r\n"
-						+ "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"/>"
 							+ "<style>html{padding:0;margin:0;margin-right:0px;}\r\nbody{padding:0;margin:0;font-family:"
 							+ this.FONT + ";}\r\n" + customCSS + "</style>" + "</head><body><div class='" + className
 							+ "'>" + value + "</div></body></html>",
@@ -928,6 +933,8 @@ public class DocxUtils {
 		SimpleDateFormat formatter;
 
 		formatter = new SimpleDateFormat("MM/dd/yyyy");
+		
+		
 
 		String assessors_nl = "";
 		String assessors_comma = "";
@@ -968,6 +975,8 @@ public class DocxUtils {
 		content = content.replaceAll("\\$\\{totalOpenVulns\\}", this.getTotalOpenVulns(this.assessment.getVulns()));
 		content = content.replaceAll("\\$\\{totalClosedVulns\\}", this.getTotalClosedVulns(this.assessment.getVulns()));
 		
+		
+		//Fix images
 		content = this.replaceImageLinks(content);
 		
 		//Run extensions
@@ -990,7 +999,7 @@ public class DocxUtils {
 		for(Image img : this.assessment.getImages()) {
 			String matchStr = matchPrefix + img.getGuid();
 			text = text.replaceAll( matchStr, img.getBase64Image());
-			//text = text.replaceAll("<img", "<br/><div stype='overflow:hidden; width:100%;'><img");
+			text = text.replaceAll("alt=\"image.png\" contenteditable=\"false\"><br></p>", "></p>");
 			//text = text.replaceAll("</img>", "</img></div>");
 		}
 		return text;
@@ -1258,7 +1267,7 @@ public class DocxUtils {
 			if (v.getCustomFields() != null) {
 				for (CustomField cf : v.getCustomFields()) {
 					if(cf.getType().getFieldType() == 3) {
-						map2.put("${cf" + cf.getType().getVariable() + "}", wrapHTML(cf.getValue(), customCSS, ""));
+						map2.put("${cf" + cf.getType().getVariable() + "}", wrapHTML(cf.getValue(), customCSS, cf.getType().getVariable()));
 					}
 				}
 			}
