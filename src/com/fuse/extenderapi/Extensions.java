@@ -51,6 +51,7 @@ import com.fuse.dao.AppStore;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.CheckListAnswers;
 import com.fuse.dao.CustomField;
+import com.fuse.dao.CustomType;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
 import com.fuse.dao.Verification;
@@ -121,50 +122,26 @@ public class Extensions {
 	private void persistVulnerabilities(EntityManager em,
 			List<com.faction.elements.Vulnerability> clonedVulnerabilities, List<Vulnerability> daoVulnerabilities) {
 		if (clonedVulnerabilities != null) {
-			for (com.faction.elements.Vulnerability cloneVuln : clonedVulnerabilities) {
-				for (Vulnerability daoVuln : daoVulnerabilities) {
-					if (cloneVuln.getId() == daoVuln.getId()) {
-						copy(cloneVuln, daoVuln);
-						List<CustomField> fields = daoVuln.getCustomFields();
-						fields = updateCustomFields(cloneVuln.getCustomFields(), fields);
-						HibHelper.getInstance().preJoin();
-						em.joinTransaction();
-						em.persist(daoVuln);
-						HibHelper.getInstance().commit();
-						break;
-					}
-				}
+			copyToVulnDao(clonedVulnerabilities, daoVulnerabilities);
+			for (Vulnerability daoVuln : daoVulnerabilities) {
+				HibHelper.getInstance().preJoin();
+				em.joinTransaction();
+				em.persist(daoVuln);
+				HibHelper.getInstance().commit();
 			}
 		}
 	}
 
 	private void persistAssessment(EntityManager em, com.faction.elements.Assessment clonedAssessment,
 			Assessment daoAssessment) {
-		List<com.faction.elements.CustomField> updatedFields = clonedAssessment.getCustomFields();
-		List<CustomField> fields = daoAssessment.getCustomFields();
-		copy(clonedAssessment, daoAssessment);
-		fields = updateCustomFields(updatedFields, fields);
-		daoAssessment.setCustomFields(fields);
-		HibHelper.getInstance().preJoin();
-		em.joinTransaction();
-		em.persist(daoAssessment);
-		HibHelper.getInstance().commit();
-	}
-
-	private List<CustomField> updateCustomFields(List<com.faction.elements.CustomField> clonedFields,
-			List<CustomField> daoFields) {
-		if (clonedFields != null && clonedFields.size() > 0) {
-			for (com.faction.elements.CustomField updatedField : clonedFields) {
-				for (CustomField originalField : daoFields) {
-					if (updatedField.getType().getId() == originalField.getType().getId()) {
-						originalField.setValue(updatedField.getValue());
-					}
-				}
-			}
+		if(clonedAssessment != null) {
+			copyToAssessmentDao(clonedAssessment, daoAssessment);
+			HibHelper.getInstance().preJoin();
+			em.joinTransaction();
+			em.persist(daoAssessment);
+			HibHelper.getInstance().commit();
 		}
-		return daoFields;
 	}
-	
 	private List<com.faction.elements.CheckList> cloneChecklists(Assessment assessment){
 			Map<String,com.faction.elements.CheckList> checklists = new HashMap<>(); // This is to make mapping easy
 			
@@ -533,6 +510,42 @@ public class Extensions {
 			BeanUtils.copyProperties(source, dest, nulls);
 		}
 	}
+	private static Assessment copyToAssessmentDao(com.faction.elements.Assessment ext, Assessment dao) {
+		if(ext != null) {
+			dao.setSummary(ext.getSummary());
+			dao.setRiskAnalysis(ext.getRiskAnalysis());
+			dao.setCustomFields(copyToCustomDao(ext.getCustomFields(), dao.getCustomFields()));
+		}
+		
+		return dao;
+	}
+	private static List<CustomField> copyToCustomDao(List<com.faction.elements.CustomField> ext, List<CustomField> dao) {
+		if(ext != null) {
+			for(com.faction.elements.CustomField extCF : ext) {
+				CustomField daoCF = dao.stream().filter( cf -> cf.getId().equals(extCF.getId())).findFirst().orElse(null);
+				if(daoCF != null) {
+					daoCF.setValue(extCF.getValue());
+				}
+			}
+		}
+		return dao;
+	}
+	
+	private static List<Vulnerability> copyToVulnDao(List<com.faction.elements.Vulnerability> ext, List<Vulnerability> dao) {
+		if(ext != null) {
+			for(com.faction.elements.Vulnerability extVuln : ext) {
+				Vulnerability daoVuln = dao.stream().filter( v -> extVuln.getId().equals(v.getId())).findFirst().orElse(null);
+				if(daoVuln != null) {
+					daoVuln.setDescription(extVuln.getDescription());
+					daoVuln.setRecommendation(extVuln.getRecommendation());
+					daoVuln.setDetails(extVuln.getDetails());
+					daoVuln.setCustomFields(copyToCustomDao(extVuln.getCustomFields(), daoVuln.getCustomFields()));
+				}
+			}
+		}
+		return dao;
+	}
+	
 
 	private URLClassLoader dynamicExtensionClassLoader(AppStore app) {
 		ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
