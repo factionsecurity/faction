@@ -5,6 +5,6 @@
 "notes" : [
 <s:iterator value="notes">
 <%if(isFirst){ isFirst=false;}else {%>,<%} %>
-{"date" : "<s:date name="created" format="yyyy-MM-dd hh:mm:ss"/>", "gid" : "<s:property value="uuid"/>",  "note" : "<s:property value="note" escapeJavaScript="true"/>", "creator" : "<s:property value="creatorObj.fname"/> <s:property value="creatorObj.lname"/>"}
+{"date" : "<s:date name="created" format="yyyy-MM-dd hh:mm:ss"/>", "gid" : "<s:property value="uuid"/>",  "note" : "<s:property value="note" />", "creator" : "<s:property value="creatorObj.fname"/> <s:property value="creatorObj.lname"/>"}
 </s:iterator>
 ]}
