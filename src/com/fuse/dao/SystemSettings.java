@@ -651,7 +651,7 @@ public class SystemSettings {
 		 config.setServiceProviderEntityId(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
 		 config.setAuthnRequestSigned(true);  // Azure requires signed Authn requests
 		 config.setWantsAssertionsSigned(true);
-		 config.setForceAuth(true);
+		 //config.setForceAuth(true);
 		 config.setAcceptedSkew(120);
 		 config.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
 		 config.init();
