@@ -9,8 +9,9 @@ import 'jquery-confirm';
     global.goTo = function goTo(id){
     	document.location="SetAssessment?id="+id;
     };
+   	
     $(function () {
-        $('#assessment_queue').DataTable({
+        global.assessmentTable=$('#assessment_queue').DataTable({
             "paging": true,
             "lengthChange": false,
             "searching": true,
@@ -19,7 +20,7 @@ import 'jquery-confirm';
             "autoWidth": true,
             "order": [[ 3, "asc" ]],
             columnDefs:[
-            	{"targets":[5,6],
+            	{"targets":[5,7],
             		"searchable":false,
             		"orderable":false}
             ]
@@ -55,6 +56,7 @@ import 'jquery-confirm';
   					prStyle = prStyle.replace("gray","green");
   					$(span[2]).attr('class', prStyle);
   				}
+  				$("#stringStatus" + d.id).html(d.status);
   				
               });
           });

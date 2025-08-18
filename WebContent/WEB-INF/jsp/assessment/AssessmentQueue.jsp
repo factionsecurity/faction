@@ -56,6 +56,7 @@ color:#f39c12;
                         <th>End</th>
                         <th width="300px">Findings</th>
                         <th width="120px">Status</th>
+                        <th width="120px"></th>
                       </tr>
                     </thead>
                     <tbody >
@@ -74,6 +75,7 @@ color:#f39c12;
 						<td>
 							<fs:vulncount asmt="${asmt}" levels="${levels }"></fs:vulncount>
 						</td>
+						<td><div id="stringStatus<s:property value="id"/>"></div></td>
 						<td id="status<s:property value="id"/>">
 								<span class="circle2 glyphicon glyphicon-book bg-gray circle2" title="Report Generated"></span>
 								<span class="circle2 glyphicon glyphicon-comment bg-gray" title="Report Submitted for Peer Review" ></span>
