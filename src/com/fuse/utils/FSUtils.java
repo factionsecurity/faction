@@ -17,6 +17,9 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.KeySpec;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -576,6 +579,85 @@ public class FSUtils {
 
 		return ics;
 	}
+	 /**
+     * Creates ICS content for a calendar event
+     */
+    public static String createICSContent(String title, String description, String location,
+                                         LocalDateTime startTime, LocalDateTime endTime,
+                                         String organizer, String[] attendees) {
+        
+        StringBuilder ics = new StringBuilder();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'");
+        
+        // Convert to UTC for ICS format
+        if(startTime == null) {
+        	startTime = LocalDateTime.now();
+        }
+        if(endTime == null) {
+        	endTime = LocalDateTime.now();
+        }
+        String startUTC = startTime.atZone(ZoneId.systemDefault())
+                                  .withZoneSameInstant(ZoneId.of("UTC"))
+                                  .format(formatter);
+        String endUTC = endTime.atZone(ZoneId.systemDefault())
+                              .withZoneSameInstant(ZoneId.of("UTC"))
+                              .format(formatter);
+        String nowUTC = LocalDateTime.now().atZone(ZoneId.systemDefault())
+                                          .withZoneSameInstant(ZoneId.of("UTC"))
+                                          .format(formatter);
+        
+        // Generate unique ID
+        String uid = UUID.randomUUID().toString() + "@factionsecurity.com";
+        
+        // Build ICS content
+        ics.append("BEGIN:VCALENDAR\r\n");
+        ics.append("VERSION:2.0\r\n");
+        ics.append("PRODID:-//FACTIONSECURITYLLC//FACTION//EN\r\n");
+        ics.append("METHOD:REQUEST\r\n");
+        ics.append("CALSCALE:GREGORIAN\r\n");
+        
+        ics.append("BEGIN:VEVENT\r\n");
+        ics.append("UID:").append(uid).append("\r\n");
+        ics.append("DTSTAMP:").append(nowUTC).append("\r\n");
+        ics.append("DTSTART:").append(startUTC).append("\r\n");
+        ics.append("DTEND:").append(endUTC).append("\r\n");
+        ics.append("SUMMARY:").append(escapeText(title)).append("\r\n");
+        ics.append("DESCRIPTION:").append(escapeText(description)).append("\r\n");
+        
+        if (location != null && !location.trim().isEmpty()) {
+            ics.append("LOCATION:").append(escapeText(location)).append("\r\n");
+        }
+        
+        ics.append("ORGANIZER:MAILTO:").append(organizer).append("\r\n");
+        
+        // Add attendees
+        if (attendees != null) {
+            for (String attendee : attendees) {
+                ics.append("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;")
+                   .append("RSVP=TRUE:MAILTO:").append(attendee).append("\r\n");
+            }
+        }
+        
+        ics.append("STATUS:CONFIRMED\r\n");
+        ics.append("SEQUENCE:0\r\n");
+        ics.append("REQUEST-STATUS:2.0;Success\r\n");
+        ics.append("END:VEVENT\r\n");
+        ics.append("END:VCALENDAR\r\n");
+        
+        return ics.toString();
+    }
+    
+    /**
+     * Escapes special characters in ICS text fields
+     */
+    private static String escapeText(String text) {
+        if (text == null) return "";
+        return text.replace("\\", "\\\\")
+                  .replace(",", "\\,")
+                  .replace(";", "\\;")
+                  .replace("\n", "\\n")
+                  .replace("\r", "");
+    }
 
 
 
@@ -732,6 +814,7 @@ public class FSUtils {
 			converted = converted.replaceAll("\\+\\+([^+]+)\\+\\+", "<u>$1</u>"); // Allow for custom underline markdown
 			converted += "<br/>";
 			converted = converted.replaceAll("<br>", "\r\n").replaceAll("<br/>","\r\n");
+			converted = converted.replaceAll("</p>\\s*<p>", "</p><p><br/></p><p>");
 			return converted;
 		} catch (Exception ex) {
 			ex.printStackTrace();

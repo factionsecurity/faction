@@ -1,5 +1,9 @@
 package com.fuse.utils;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -9,11 +13,15 @@ import java.util.regex.Pattern;
 
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
+import javax.mail.Authenticator;
 import javax.mail.BodyPart;
 import javax.mail.Message;
+import javax.mail.MessagingException;
 import javax.mail.Multipart;
+import javax.mail.PasswordAuthentication;
 import javax.mail.Session;
 import javax.mail.Transport;
+import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
@@ -218,5 +226,82 @@ public class SendEmail {
 			ex.printStackTrace();
 		}
 	}
+	
+	public void sendCalendarInviteInline(String toEmail, String fromEmail, String subject, 
+		String icsContent) throws AddressException, MessagingException{
+		Properties mailServerProperties = System.getProperties();
+		mailServerProperties.put("mail.smtp.port", emailSettings.getPort());
+		mailServerProperties.put("mail.smtp.host", emailSettings.getServer());
+
+		if (emailSettings.getEmailSSL()) {
+
+			mailServerProperties.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+			mailServerProperties.put("mail.smtp.ssl.socketFactory.port", emailSettings.getPort());
+			mailServerProperties.put("mail.smtp.socketFactory.fallback", "false");
+		} else {
+			mailServerProperties.remove("mail.smtp.socketFactory.class");
+			mailServerProperties.remove("mail.smtp.ssl.socketFactory.port");
+			mailServerProperties.remove("mail.smtp.socketFactory.fallback");
+		}
+
+		if (emailSettings.getTls()) {
+			mailServerProperties.put("mail.smtp.starttls.enable", "true");
+			mailServerProperties.setProperty("mail.smtp.ssl.protocols", "TLSv1.2");
+		} else {
+			mailServerProperties.put("mail.smtp.starttls.enable", "false");
+		}
+
+		if (emailSettings.getEmailAuth()) {
+			mailServerProperties.put("mail.smtp.auth", "true");
+		} else {
+			mailServerProperties.put("mail.smtp.auth", "false");
+		}
+
+        Session session = Session.getInstance(mailServerProperties, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+            	String emailPass = FSUtils.decryptPassword(emailSettings.getPassword());
+                return new PasswordAuthentication(emailSettings.getUname(), emailPass);
+            }
+        });
+
+		Message message = new MimeMessage(session);
+		message.setFrom(new InternetAddress(fromEmail));
+		message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+		message.setSubject(subject);
+
+		// Set calendar content directly as message content
+		message.setDataHandler(new DataHandler(new CalendarDataSource(icsContent)));
+		message.setHeader("Content-Disposition", "inline; filename=\"invite.ics\"");
+		Transport.send(message);
+
+	}
+	 private class CalendarDataSource implements DataSource {
+	        private final String content;
+	        
+	        public CalendarDataSource(String content) {
+	            this.content = content;
+	        }
+	        
+	        @Override
+	        public InputStream getInputStream() throws IOException {
+	            return new ByteArrayInputStream(content.getBytes("UTF-8"));
+	        }
+	        
+	        @Override
+	        public OutputStream getOutputStream() throws IOException {
+	            throw new IOException("Read-only data source");
+	        }
+	        
+	        @Override
+	        public String getContentType() {
+	            return "text/calendar; method=REQUEST";
+	        }
+	        
+	        @Override
+	        public String getName() {
+	            return "calendar.ics";
+	        }
+	    }
 
 }
