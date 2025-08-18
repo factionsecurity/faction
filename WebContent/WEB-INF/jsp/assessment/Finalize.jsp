@@ -116,7 +116,7 @@
        <div class="timeline-item">
 	       <h3 class="timeline-header no-border">Schedule Report Meeting</h3>
 	         <div class="timeline-body">
-	         	 <button class="btn btn-primary" id="openICS" <s:if test="finalized">disabled</s:if>>Open ICS file</button>
+	         	 <button class="btn btn-primary" id="openICS" <s:if test="finalized">disabled</s:if>>Create Meeting Invite</button>
 	         </div>
        </div>
      </li> 
