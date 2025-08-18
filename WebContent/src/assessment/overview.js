@@ -471,8 +471,10 @@ $(function() {
 	});
 
 	$("#openICS").click(function() {
-		document.getElementById('dlFrame').src = `Assessment?action=ics&id=${id}`;
-	})
+		$.get(`Assessment?action=ics&id=${id}`).done( resp => {
+			alertMessage(resp , "Invite Sent To Your Email")
+		});
+	});
 
 });
 
