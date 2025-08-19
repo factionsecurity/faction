@@ -11,7 +11,7 @@ import 'jquery-confirm';
     };
    	
     $(function () {
-        global.assessmentTable=$('#assessment_queue').DataTable({
+        $('#assessment_queue').DataTable({
             "paging": true,
             "lengthChange": false,
             "searching": true,
@@ -56,7 +56,6 @@ import 'jquery-confirm';
   					prStyle = prStyle.replace("gray","green");
   					$(span[2]).attr('class', prStyle);
   				}
-  				$("#stringStatus" + d.id).html(d.status);
   				
               });
           });
