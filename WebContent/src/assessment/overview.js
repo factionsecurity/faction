@@ -475,6 +475,9 @@ $(function() {
 			alertMessage(resp , "Invite Sent To Your Email")
 		});
 	});
+	$("#downloadICS").click(function() {
+		document.getElementById('dlFrame').src = `DownloadICS?id=${id}`;
+	});
 
 });
 

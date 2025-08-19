@@ -55,20 +55,11 @@ public class getStatus extends HttpServlet {
 			EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 			boolean isFirst=true;
 			try{
-				//List<Assessment> assessments = (List<Assessment>)em.createNativeQuery("{\"assessor\" : "+user.getId() +", completed : { $exists : false}}", Assessment.class).getResultList();
 				
 				List<Assessment> assessments = AssessmentQueries.getAllAssessments(em, user, AssessmentQueries.OnlyNonCompleted);
 				
 			
 				for(Assessment a : assessments){
-					String status = "Scheduled";
-					Date now = new Date();
-					if(now.after(a.getStart())) {
-						status = "In Progress";
-					}
-					if(now.after(a.getEnd())) {
-						status = "Past Due";
-					}
 					
 					String json ="";
 					if(isFirst){
@@ -85,7 +76,6 @@ public class getStatus extends HttpServlet {
 							.getResultList().stream().findFirst().orElse(null);
 					}catch(Exception ex){}
 					json += " 'submitted' : " + (pr != null ? "true" : "false")	 + " , " +
-							" 'status': '" + status + "'," + 
 							" 'prCompleted' : " + (pr != null && pr.getCompleted() != null && pr.getCompleted().getTime() != 0 ? "true" : "false") + " } ";
 					json = json.replaceAll("'", "\"");
 					out.write(json);
