@@ -45,16 +45,15 @@ public class SendEmail {
 		this.getDefaultSettings();
 	}
 
-
 	private void getDefaultSettings() {
 		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
 				.findFirst().orElse(null);
 		if (settings != null && !settings.getServer().equals("")) {
 			this.emailSettings = settings;
-		} else if(settings != null && settings.getServer().equals("")) {
+		} else if (settings != null && settings.getServer().equals("")) {
 			settings.initSMTPSettings();
 			this.emailSettings = settings;
-		}else {
+		} else {
 			settings = new SystemSettings();
 			settings.initSMTPSettings();
 			HibHelper.getInstance().preJoin();
@@ -226,9 +225,9 @@ public class SendEmail {
 			ex.printStackTrace();
 		}
 	}
-	
-	public void sendCalendarInviteInline(String toEmail, String fromEmail, String subject, 
-		String icsContent) throws AddressException, MessagingException{
+
+	public void sendCalendarInviteInline(String toEmail, String subject, String icsContent)
+			throws AddressException, MessagingException {
 		Properties mailServerProperties = System.getProperties();
 		mailServerProperties.put("mail.smtp.port", emailSettings.getPort());
 		mailServerProperties.put("mail.smtp.host", emailSettings.getServer());
@@ -257,51 +256,85 @@ public class SendEmail {
 			mailServerProperties.put("mail.smtp.auth", "false");
 		}
 
-        Session session = Session.getInstance(mailServerProperties, new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-            	String emailPass = FSUtils.decryptPassword(emailSettings.getPassword());
-                return new PasswordAuthentication(emailSettings.getUname(), emailPass);
-            }
-        });
+		Session session = Session.getInstance(mailServerProperties, new Authenticator() {
+			@Override
+			protected PasswordAuthentication getPasswordAuthentication() {
+				String emailPass = FSUtils.decryptPassword(emailSettings.getPassword());
+				return new PasswordAuthentication(emailSettings.getUname(), emailPass);
+			}
+		});
 
 		Message message = new MimeMessage(session);
-		message.setFrom(new InternetAddress(fromEmail));
+		message.setFrom(new InternetAddress(emailSettings.getFromAddress()));
 		message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
 		message.setSubject(subject);
 
-		// Set calendar content directly as message content
-		message.setDataHandler(new DataHandler(new CalendarDataSource(icsContent)));
-		message.setHeader("Content-Disposition", "inline; filename=\"invite.ics\"");
+		// Create multipart alternative for proper calendar invite recognition
+		MimeMultipart multipart = new MimeMultipart("alternative");
+
+		MimeBodyPart textPart = new MimeBodyPart();
+		textPart.setText("You have been invited to a meeting. Please check your calendar application to respond.");
+		multipart.addBodyPart(textPart);
+
+		// Add HTML body part as second alternative
+		MimeBodyPart htmlPart = new MimeBodyPart();
+		String htmlBody = "<html><body>"
+				+ "<p>You have been invited to a meeting. Please check your calendar application to respond.</p>"
+				+ "</body></html>";
+		htmlPart.setContent(htmlBody, "text/html; charset=UTF-8");
+		multipart.addBodyPart(htmlPart);
+
+		MimeBodyPart calendarPart = new MimeBodyPart();
+		calendarPart.setDataHandler(new DataHandler(new CalendarDataSource(icsContent)));
+
+		calendarPart.setHeader("Content-Class", "urn:content-classes:calendarmessage");
+		calendarPart.setHeader("Content-ID", "calendar_part");
+		calendarPart.setHeader("Content-Transfer-Encoding", "8bit");
+
+		// Add Outlook-specific headers for better cross-domain compatibility
+		calendarPart.setHeader("X-MS-OLK-FORCEINSPECTOROPEN", "TRUE");
+
+		multipart.addBodyPart(calendarPart);
+
+		// Set the multipart content
+		message.setContent(multipart);
+
+		// Add message-level headers for better Outlook compatibility
+		message.setHeader("X-MS-Has-Attach", "");
+		message.setHeader("X-Auto-Response-Suppress", "OOF, DR, RN, NRN");
+		message.setHeader("Priority", "Normal");
+		message.setHeader("Importance", "Normal");
+
 		Transport.send(message);
 
 	}
-	 private class CalendarDataSource implements DataSource {
-	        private final String content;
-	        
-	        public CalendarDataSource(String content) {
-	            this.content = content;
-	        }
-	        
-	        @Override
-	        public InputStream getInputStream() throws IOException {
-	            return new ByteArrayInputStream(content.getBytes("UTF-8"));
-	        }
-	        
-	        @Override
-	        public OutputStream getOutputStream() throws IOException {
-	            throw new IOException("Read-only data source");
-	        }
-	        
-	        @Override
-	        public String getContentType() {
-	            return "text/calendar; method=REQUEST";
-	        }
-	        
-	        @Override
-	        public String getName() {
-	            return "calendar.ics";
-	        }
-	    }
+
+	private class CalendarDataSource implements DataSource {
+		private final String content;
+
+		public CalendarDataSource(String content) {
+			this.content = content;
+		}
+
+		@Override
+		public InputStream getInputStream() throws IOException {
+			return new ByteArrayInputStream(content.getBytes("UTF-8"));
+		}
+
+		@Override
+		public OutputStream getOutputStream() throws IOException {
+			throw new IOException("Read-only data source");
+		}
+
+		@Override
+		public String getContentType() {
+			return "text/calendar; method=REQUEST; name=\"invite.ics\"";
+		}
+
+		@Override
+		public String getName() {
+			return "invite.ics";
+		}
+	}
 
 }

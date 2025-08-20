@@ -118,6 +118,8 @@
 	         <div class="timeline-body">
 	         	 <button class="btn btn-primary" id="openICS" <s:if test="finalized">disabled</s:if>><i class="fa-solid fa-envelope"></i> Send Meeting Invite</button>
 	         	 <button class="btn btn-primary" id="downloadICS" <s:if test="finalized">disabled</s:if>><i class="fa-solid fa-download"></i> Download Meeting Invite</button>
+	         	 <a class="btn btn-primary"  href="${OutlookLink}" target="_blank"><img style="height: 20px" src="../dist/img/outlook.png"/> Open in Outlook Web</a>
+	         	 <a class="btn btn-primary"  href="${GoogleLink}" target="_blank"><img style="height: 20px" src="../dist/img/google.png"/> Open in Google Calendar</a>
 	         </div>
        </div>
      </li> 

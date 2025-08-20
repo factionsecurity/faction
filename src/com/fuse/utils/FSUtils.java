@@ -26,6 +26,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.TreeMap;
@@ -555,30 +556,7 @@ public class FSUtils {
 
 	}
 
-	public static String generateICSFile(List<String> sendTo, String sendFrom, String Title, String Body) {
-		UUID uid = UUID.randomUUID();
-		String ics = "BEGIN:VCALENDAR\r\n";
-		ics += "VERSION:2.0\r\n";
-		ics += "PRODID:-//FuseSoftLLS/Faction//NONSGML v1.0//EN\r\n";
-		ics += "BEGIN:VEVENT\r\n";
-		ics += "CLASS:PUBLIC\r\n";
-		ics += "UID:" + uid.toString() + "\r\n";
-		for (String email : sendTo)
-			ics += "ATTENDEE;mailto:" + email + "\r\n";
-		ics += "X-ALT-DESC;FMTTYPE=text/html:<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\">\\n<HTML>\\n"
-				+ "<BODY>\\n" + Body.replace("\r", "").replace("\n", "\\\\n") + "</BODY></HTML>\r\n";
-		ics += "SUMMARY:" + Title + "\r\n";
-		// ics+="DESCRIPTION:" + Body.replace("\r", "").replace("\n", "\\\\n") + "\r\n";
-		ics += "BEGIN:VALARM\r\n";
-		ics += "TRIGGER:-PT15M\r\n";
-		ics += "ACTION:DISPLAY\r\n";
-		ics += "DESCRIPTION:Reminder\r\n";
-		ics += "END:VALARM\r\n";
-		ics += "END:VEVENT\r\n";
-		ics += "END:VCALENDAR\r\n";
-
-		return ics;
-	}
+	
 	 /**
      * Creates ICS content for a calendar event
      */
@@ -607,6 +585,7 @@ public class FSUtils {
                                           .format(formatter);
         
         // Generate unique ID
+        
         String uid = UUID.randomUUID().toString() + "@factionsecurity.com";
         
         // Build ICS content

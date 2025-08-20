@@ -2,6 +2,11 @@ package com.fuse.actions.assessment;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -82,6 +87,8 @@ public class AssessmentView extends FSActionSupport {
 	private InputStream icsStream;
 	LinkedHashMap<String, Integer> vulnMap = new LinkedHashMap<>();
 	LinkedHashMap<String, Integer> catMap = new LinkedHashMap<>();
+	private String vendor="";
+	private String calendarLink="";
 	
 
 	@Action(value = "Assessment", 
@@ -208,27 +215,29 @@ public class AssessmentView extends FSActionSupport {
 			for(User assessor : assessment.getAssessor()) {
 				emails.add(assessor.getEmail());
 			}
-			String HTML = "Hello Stakeholders,<br><br>";
-			HTML += "The purpose of this meeting is to discuss the assessment of <b><i>["
-					+ assessment.getAppId() + "] " + assessment.getName() + "</i></b>.<br>";
-			HTML += "The report will be distributed prior to the meeting.<br><br>";
-			HTML += "Thanks,<br>";
+			String HTML = "Hello Stakeholders,\n";
+			HTML += "The purpose of this meeting is to discuss the assessment of ["
+					+ assessment.getAppId() + "] " + assessment.getName() + ".\n";
+			HTML += "The report will be distributed prior to the meeting.\n\n";
+			HTML += "Thanks,\n";
 			HTML += assessment.getAssessor().get(0).getTeam().getTeamName();
 			filename = assessment.getAppId() + "-" + assessment.getName() + "-invite.ics";
+			LocalDateTime now = (LocalDateTime.now()).plusHours(1);
+			LocalDateTime end = now.plusHours(1);
 			
 			icsFile = FSUtils.createICSContent(
-					"Asssessment Review of [" + assessment.getAppId() + "] " + assessment.getName(),
+					"Assessment Review of [" + assessment.getAppId() + "] " + assessment.getName(),
 					HTML,
 					"",
-					null,
-					null,
+					now,
+					end,
 					user.getEmail(),
 					emails.toArray(new String[emails.size()])
 					);
 			
 			SendEmail sendEmail = new SendEmail(em);
 			try {
-				sendEmail.sendCalendarInviteInline(user.getEmail(), user.getEmail(), "Schedule Assessment", icsFile);
+				sendEmail.sendCalendarInviteInline(user.getEmail(), "Schedule Assessment", icsFile);
 			} catch (MessagingException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -291,36 +300,121 @@ public class AssessmentView extends FSActionSupport {
 		for(User assessor : assessment.getAssessor()) {
 			emails.add(assessor.getEmail());
 		}
-		String HTML = "Hello Stakeholders,<br><br>";
-		HTML += "The purpose of this meeting is to discuss the assessment of <b><i>["
-				+ assessment.getAppId() + "] " + assessment.getName() + "</i></b>.<br>";
-		HTML += "The report will be distributed prior to the meeting.<br><br>";
-		HTML += "Thanks,<br>";
+		String HTML = "Hello Stakeholders,\n";
+		HTML += "The purpose of this meeting is to discuss the assessment of ["
+				+ assessment.getAppId() + "] " + assessment.getName() + ".\n";
+		HTML += "The report will be distributed prior to the meeting.\n\n";
+		HTML += "Thanks,\n";
 		HTML += assessment.getAssessor().get(0).getTeam().getTeamName();
 		filename = assessment.getAppId() + "-" + assessment.getName() + "-invite.ics";
+		LocalDateTime now = (LocalDateTime.now()).plusHours(1);
+		LocalDateTime end = now.plusHours(1);
 		
 		icsFile = FSUtils.createICSContent(
 				"Asssessment Review of [" + assessment.getAppId() + "] " + assessment.getName(),
 				HTML,
 				"",
-				null,
-				null,
+				now,
+				end,
 				user.getEmail(),
 				emails.toArray(new String[emails.size()])
 				);
-		
-		SendEmail sendEmail = new SendEmail(em);
-		try {
-			sendEmail.sendCalendarInviteInline(user.getEmail(), user.getEmail(), "Schedule Assessment", icsFile);
-		} catch (MessagingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 				
 		icsStream = new ByteArrayInputStream(icsFile.getBytes());
 		return "ics";
 		
 	}
+	
+	public String createCalendarLink(String vendor) {
+		if (!(this.isAcassessor() || this.isAcmanager()))
+			return LOGIN;
+		User user = this.getSessionUser();
+		
+		if (this.id != null && !this.id.equals("")) {
+			this.setSession("asmtid", Long.parseLong(this.id));
+		}
+
+		if (this.getSession("asmtid") == null) {
+			this.setSession("asmtid", Long.parseLong(this.id));
+		} else {
+			this.id = "" + this.getSession("asmtid");
+		}
+
+		Long lid = Long.parseLong(this.id);
+		if (this.isAcmanager()) {
+			assessment = AssessmentQueries.getAssessmentById(em, lid);
+			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
+					.orElse(null);
+			if (mgrs == null)
+				this.notowner = true;
+
+		} else {
+			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
+		}
+
+		if (assessment == null)
+			return "";
+		
+		List<String> emails = new ArrayList<String>();
+		for (String email : assessment.getDistributionList().split(";")) {
+			emails.add(email);
+		}
+		for(User assessor : assessment.getAssessor()) {
+			emails.add(assessor.getEmail());
+		}
+		String HTML = "Hello Stakeholders,\n";
+		HTML += "The purpose of this meeting is to discuss the assessment of ["
+				+ assessment.getAppId() + "] " + assessment.getName() + ".\n";
+		HTML += "The report will be distributed prior to the meeting.\n\n";
+		HTML += "Thanks,\n";
+		HTML += assessment.getAssessor().get(0).getTeam().getTeamName();
+		filename = assessment.getAppId() + "-" + assessment.getName() + "-invite.ics";
+		
+		
+		String baseUrl = "https://calendar.google.com/calendar/render";
+		Map<String, String> params = new HashMap<>();
+		String title = "Asssessment Review of [" + assessment.getAppId() + "] " + assessment.getName();
+		if(vendor.equals("google")) {
+			baseUrl = "https://calendar.google.com/calendar/render";
+			params.put("action", "TEMPLATE");
+		    params.put("text", title);
+		    params.put("dates", "");
+		    params.put("details", HTML);
+		    params.put("add", String.join(",", emails));
+		}else if (vendor.equals("outlook")) {
+			baseUrl = "https://outlook.live.com/calendar/0/deeplink/compose";
+			params.put("subject", title);
+		    params.put("startdt", "");
+		    params.put("enddt", "");
+		    params.put("body", HTML);
+		    params.put("to", String.join(",", emails));
+		     
+		}
+		String calendarLink = buildUrl(baseUrl, params);
+		
+		
+		return calendarLink;
+		
+	}
+	private String buildUrl(String base, Map<String, String> params) {
+	    StringBuilder url = new StringBuilder(base + "?");
+	    
+	    for(String key :params.keySet()) {
+	    	url.append(key)
+	    		.append("=")
+	    		.append(URLEncoder.encode(params.get(key)))
+	    		.append("&");
+	    }
+	    return url.toString().replaceAll("&$", ""); // Remove trailing &
+	}
+	
+	public String getOutlookLink() {
+		return this.createCalendarLink("outlook");
+	}
+	public String getGoogleLink() {
+		return this.createCalendarLink("google");
+	}
+	
 	
 
 	private Long cfid;
