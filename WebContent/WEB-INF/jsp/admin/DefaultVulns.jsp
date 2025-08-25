@@ -237,9 +237,9 @@ span.Critical {
 
 		<jsp:include page="../footer.jsp" />
 		<script>
-			let vulnTypes = []
-<s:iterator value = "vulntypes" status="stat">
-			vulnTypes.push(${ id });
+			let customFields = []
+<s:iterator value = "customFields" status="stat">
+			customFields.push(${ id });
 </s:iterator >
 
 			function getValueFromId(id) {

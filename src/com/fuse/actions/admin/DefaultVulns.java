@@ -73,7 +73,7 @@ public class DefaultVulns  extends FSActionSupport{
 	private String riskName;
 	private List<String>duedate;
 	private List<String>warndate;
-	private List<CustomType> vulntypes = new ArrayList();
+	private List<CustomType> customFields = new ArrayList();
 	private List<CustomField> fields = new ArrayList();
 	private String cf;
 	private boolean active;
@@ -101,7 +101,7 @@ public class DefaultVulns  extends FSActionSupport{
 		else
 			this.verOption = 0l;
 		
-		vulntypes = em.createQuery("from CustomType where type = 1 and (deleted IS NULL or deleted = false)").getResultList();
+		customFields = em.createQuery("from CustomType where type = 1 and (deleted IS NULL or deleted = false)").getResultList();
 		if(this.isAcassessor() && action != null && action.equals("json") && terms != null ){
 
 			terms = FSUtils.sanitizeMongo(terms);
@@ -125,8 +125,6 @@ public class DefaultVulns  extends FSActionSupport{
 			return "vulnsearch";
 		}else if(this.isAcassessor() && action != null && action.equals("getvuln") && vulnId != null ){
 			
-			//DefaultVulnerability dv = (DefaultVulnerability)session.createQuery("from DefaultVulnerability where id = :id")
-			//		.setLong("id", vulnId).uniqueResult();
 			DefaultVulnerability dv = em.find(DefaultVulnerability.class, vulnId);
 			
 			this.name = dv.getName();
@@ -141,8 +139,13 @@ public class DefaultVulns  extends FSActionSupport{
 			this.cvss40Score = dv.getCvss40Score();
 			this.cvss31String = dv.getCvss31String();
 			this.cvss40String = dv.getCvss40String();
+			for(CustomField cf : dv.getCustomFields()) {
+				cf.setValue(URLEncoder.encode(Base64
+						.getEncoder()
+						.encodeToString(cf.getValue().getBytes()), "UTF-8")
+						);
+			}
 			this.fields = dv.getCustomFields();
-			//session.close();
 			return "getvuln";
 			
 			
@@ -256,6 +259,7 @@ public class DefaultVulns  extends FSActionSupport{
 				dv.setOverall(this.overall);
 				dv.setDescription(this.description);
 				dv.setActive(true);
+				this.updateCustomFields(this.cf, dv);
 				em.persist(dv);
 				AuditLog.audit(this,"Default Vulnerability Added",AuditLog.UserAction, AuditLog.CompDefaultVuln, dv.getId(),false);
 				HibHelper.getInstance().commit();
@@ -303,33 +307,7 @@ public class DefaultVulns  extends FSActionSupport{
 			dv.setImpact(this.impact);
 			dv.setLikelyhood(this.likelyhood);
 			dv.setOverall(this.overall);
-			if(cf != null && !cf.equals("")){
-				JSONParser parse = new JSONParser();
-				JSONArray array = (JSONArray)parse.parse(cf);
-				for(int i=0;i<array.size(); i++){
-					JSONObject obj = (JSONObject) array.get(i);
-					if(dv.getCustomFields() == null)
-						dv.setCustomFields(new ArrayList());
-					CustomField cf = null;
-					// find the CF in the DV if it exits
-					for(CustomField tmp : dv.getCustomFields()){
-						if(tmp.getType().getId().equals(Long.parseLong(""+obj.get("typeid")))){
-							cf = tmp;
-							break;
-						}
-					}
-					
-					//CF does not exist so we need to create it
-					if(cf == null){
-						cf = new CustomField();
-						CustomType ct = em.find(CustomType.class, Long.parseLong(""+obj.get("typeid")));
-						cf.setType(ct);
-					}
-					cf.setValue(""+obj.get("value"));
-					dv.getCustomFields().add(cf);
-					
-				}
-			}
+			this.updateCustomFields(this.cf, dv);
 				
 			em.persist(dv);
 			AuditLog.audit(this,"Default Vulnerability Updated",AuditLog.UserAction, AuditLog.CompDefaultVuln, dv.getId(),false);
@@ -617,6 +595,36 @@ public class DefaultVulns  extends FSActionSupport{
 				+ "] }", Category.class).getResultList();
 		return "catsearch";
 	}
+	private void updateCustomFields(String customFieldJSON, DefaultVulnerability vuln) throws ParseException, UnsupportedEncodingException {
+		if (customFieldJSON != null && !customFieldJSON.equals("")) {
+			JSONParser parse = new JSONParser();
+			JSONArray array = (JSONArray) parse.parse(customFieldJSON);
+			for (int i = 0; i < array.size(); i++) {
+				JSONObject obj = (JSONObject) array.get(i);
+				if (vuln.getCustomFields() == null)
+					vuln.setCustomFields(new ArrayList());
+				CustomField cf = null;
+				// find the CF in the DV if it exits
+				for (CustomField tmp : vuln.getCustomFields()) {
+					if (tmp.getType().getId().equals(Long.parseLong("" + obj.get("typeid")))) {
+						cf = tmp;
+						break;
+					}
+				}
+				// CF does not exist so we need to create it
+				if (cf == null) {
+					cf = new CustomField();
+					CustomType ct = em.find(CustomType.class, Long.parseLong("" + obj.get("typeid")));
+					cf.setType(ct);
+				}
+				String value = "" + obj.get("value");
+				String decoded = new String(Base64.getDecoder().decode(value.getBytes()), "UTF-8");
+				cf.setValue( decoded );
+				vuln.getCustomFields().add(cf);
+
+			}
+		}
+	}
 	
 	
 	public String getActiveVulns() {
@@ -785,11 +793,11 @@ public class DefaultVulns  extends FSActionSupport{
 	public void setWarndate(List<String> warndate) {
 		this.warndate = warndate;
 	}
-	public List<CustomType> getVulntypes() {
-		return vulntypes;
+	public List<CustomType> getCustomFields() {
+		return customFields;
 	}
-	public void setVulntypes(List<CustomType> vulntypes) {
-		this.vulntypes = vulntypes;
+	public void setCustomFields(List<CustomType> customFields) {
+		this.customFields = customFields;
 	}
 	public String getCf() {
 		return cf;
