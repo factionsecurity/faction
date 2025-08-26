@@ -208,7 +208,7 @@ export class FactionEditor {
 					}
 				},
 				change: () => {
-					if (this.editors[id].getCurrentModeEditor().editorType === 'wysiwyg') {
+					if (_this.editors[id].getCurrentModeEditor().editorType === 'wysiwyg') {
 						// Debounce the processing to avoid performance issues
 						clearTimeout(window.underlineTimeout);
 						window.underlineTimeout = setTimeout(() => {
@@ -223,7 +223,7 @@ export class FactionEditor {
 			this.editors[id].addHook( "addImageBlobHook", async (blob, callback, source) => {
 					const encodedImage = await imageToURL(blob)
 					let data = "encodedImage=" + encodeURIComponent(encodedImage);
-					data += "&assessmentId=" + this.assessmentId;
+					data += "&assessmentId=" + _this.assessmentId;
 					$.post("UploadImage", data).done(function(resp) {
 						let uuid = resp.message;
 						callback("getImage?id=" + uuid);
