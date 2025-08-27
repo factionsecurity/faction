@@ -323,7 +323,11 @@ public class DocxUtils {
 					nxml = nxml.replaceAll("\\$\\{loop\\}", "");
 					nxml = nxml.replaceAll("\\$\\{loop\\-[0-9]+\\}", "");
 					
-					nxml = nxml.replaceAll("\\$\\{sevId\\}", "" + v.getOverallStr().charAt(0)  + "V" + sevIndex);
+					if(v.getOverallStr() != null && !v.getOverallStr().equals("")) {
+						nxml = nxml.replaceAll("\\$\\{sevId\\}", "" + v.getOverallStr().charAt(0)  + "V" + sevIndex);
+					}else {
+						nxml = nxml.replaceAll("\\$\\{sevId\\}", "V" + sevIndex);
+					}
 					
 
 					if (v.getCustomFields() != null) {
@@ -994,6 +998,9 @@ public class DocxUtils {
 	private String replaceImageLinks(String text) {
 		Long aid= this.assessment.getId();
 		String matchPrefix = "getImage\\?id(=|&#61;)" + aid + ":";
+		String badImage = "<img src=\"getImage\\?id(=|&#61;)undefined\" >";
+		text = text.replaceAll(badImage, "");
+		
 		for(Image img : this.assessment.getImages()) {
 			String matchStr = matchPrefix + img.getGuid();
 			text = text.replaceAll( matchStr, img.getBase64Image());

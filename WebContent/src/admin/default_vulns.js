@@ -1,14 +1,7 @@
 require('select2/dist/css/select2.min.css')
 require('../scripts/fileupload/css/fileinput.css');
 require('../loading/css/jquery-loading.css');
-import Editor from '@toast-ui/editor'
-import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
-import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
-import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
-import '@toast-ui/editor/dist/toastui-editor.css';
-import 'tui-color-picker/dist/tui-color-picker.css';
-import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
-import '../loading/js/jquery-loading';
+import {FactionEditor} from '../utils/editor';
 import 'jquery';
 import 'datatables.net';
 import 'datatables.net-bs';
@@ -20,29 +13,29 @@ import 'select2';
 import '../scripts/jquery.autocomplete.min';
 import { marked } from 'marked';
 import CVSS from '../cvss'
-global.editors = {description:{}, recommendation:{}};
-global.editors.description = new Editor({
-		el: document.querySelector('#description'),
-		previewStyle: 'vertical',
-		height: '600px',
-		autofocus: false
-	});
-	
-global.editors.recommendation =  new Editor({
-		el: document.querySelector('#recommendation'),
-		previewStyle: 'vertical',
-		height: '600px',
-		autofocus: false
-	});
+global.editors = new FactionEditor(-1);
+global.editors.createEditor("description",false, ()=>{});
+global.editors.createEditor("recommendation",false, ()=>{});
+$('[id^="rtCust"]').each(function (_index, el) {
+	if(el.id.indexOf("_header") == -1){
+		global.editors.createEditor(el.id, "", false, ()=>{});
+	}
+});
+
 global.editVuln = function editVuln(id) {
 
 	$.get('DefaultVulns?vulnId=' + id + '&action=getvuln').done(function(data) {
-		global.editors.description.hide();
-		global.editors.recommendation.hide();
-		global.editors.description.setHTML(b64DecodeUnicode(data.desc), false);
-		global.editors.recommendation.setHTML(b64DecodeUnicode(data.rec),false);
-		global.editors.description.show(false);
-		global.editors.recommendation.show(false);
+        global.editors.recreateEditor("recommendation", data.rec, false, true);
+        global.editors.recreateEditor("description", data.desc, false, true);
+		
+        $('[id^="type"]').each((_index, el) => {
+                $(el).val("");
+		});
+        $('[id^="rtCust"]').each(function (_index, el) {
+			if(el.id.indexOf("_header") == -1){
+	        	global.editors.recreateEditor(el.id, "", false, true);
+			}
+        });
 
 		$("#title").val($("<div/>").html(data.name).text());
 		setIntVal(data.impact, "impact");
@@ -52,8 +45,22 @@ global.editVuln = function editVuln(id) {
 		$("#cvss40Score").val(data.cvss40Score);
 		$("#cvss31String").val(data.cvss31String);
 		$("#cvss40String").val(data.cvss40String);
-		$(data.cf).each(function(a, b) {
-			$("#type" + b.typeid).val(b.value);
+		$(data.cf).each(function (a, b) {
+			let el = $("#type" + b.typeid);
+			let rtEl = $("#rtCust" + b.typeid);
+			if (el.length != 0){
+				let value = b64DecodeUnicode(b.value)
+				if (el[0].type == 'checkbox' && value == 'true') {
+					$(el).prop('checked', true);
+				}
+				else if (el[0].type == 'checkbox' && value == 'false') {
+					$(el).prop('checked', false);
+				}
+				else
+					$(el).val(value).trigger('change');
+			}else if(rtEl.length != 0){
+				global.editors.recreateEditor("rtCust" + b.typeid, b.value, false,true)
+			}
 		});
 		$("#catNameSelect").val(data.category).trigger('change');
 		$("#vulnModal").modal({
@@ -63,8 +70,8 @@ global.editVuln = function editVuln(id) {
 		});
 		$("#saveVuln").unbind();
 		$(".saveVuln").click(function() {
-			let desc = global.editors.description.getHTML();
-			let rec = global.editors.recommendation.getHTML();
+			let desc = global.editors.getEditorText('description')
+			let rec = global.editors.getEditorText('recommendation')
 			let postData = "description=" + encodeURIComponent(desc);
 			postData += "&recommendation=" + encodeURIComponent(rec);
 			postData += "&name=" + $("#title").val();
@@ -78,13 +85,26 @@ global.editVuln = function editVuln(id) {
 			postData += "&category=" + $("#catNameSelect").select2("val");
 			postData += "&vulnId=" + id;
 			let fields = [];
-			for (let vulnId of vulnTypes) {
-				let val = $(`#type${vulnId}`).val();
-				if(`${val}` == "undefined"){
-					val=""
+			$('[id^="type"]').each(function(){
+				if(this.id.indexOf("_header") == -1){
+					let val = "";
+					if (this.type == 'checkbox') {
+						val = $(this).is(":checked");
+					} else {
+						val = $(this).val();
+					}
+					let fieldId = this.id.replace("type","");
+					fields.push(`{"typeid" : ${fieldId}, "value" : "${encodeURIComponent(b64EncodeUnicode(val))}"}`);
 				}
-				fields.push(`{"typeid" : ${vulnId}, "value" : "${val}"}`);
-			}
+			});
+			$('[id^="rtCust"]').each(function () {
+				if(this.id.indexOf("_header") == -1){
+					const rtId = this.id;
+					let contents = global.editors.getHTML(rtId)
+					let fieldId = this.id.replace("rtCust","");
+					fields.push(`{"typeid" : ${fieldId}, "value" : "${encodeURIComponent(b64EncodeUnicode(contents))}"}`);
+				}
+			});
 			postData += '&cf=[' + fields.join(",") + "]";
 			postData += "&action=savevuln";
 			postData += "&_token=" + _token;
@@ -238,8 +258,16 @@ $(function() {
 	});
 	$("#addVuln").click(function() {
 		
-		global.editors.description.reset();
-		global.editors.recommendation.reset();
+        global.editors.recreateEditor("recommendation", "", false, true);
+        global.editors.recreateEditor("description", "", false, true);
+        $('[id^="type"]').each((_index, el) => {
+                $(el).val("");
+		});
+        $('[id^="rtCust"]').each(function (_index, el) {
+			if(el.id.indexOf("_header") == -1){
+	        	global.editors.recreateEditor(el.id, "", false, true);
+			}
+        });
 		$("#title").val("");
 		const last_sev = $("#overall").children()[0].value;
 		$("#impact").val(last_sev).trigger('change')
@@ -257,8 +285,8 @@ $(function() {
 		});
 		$(".saveVuln").unbind();
 		$(".saveVuln").click(function() {
-			let desc = global.editors.description.getHTML();
-			let rec = global.editors.recommendation.getHTML();
+			let desc = global.editors.getEditorText('description')
+			let rec = global.editors.getEditorText('recommendation')
 			let data = "description=" + encodeURIComponent(desc);
 			data += "&recommendation=" + encodeURIComponent(rec);
 			data += "&name=" + $("#title").val();
@@ -271,13 +299,26 @@ $(function() {
 			data += "&cvss31Score=" + $("#cvss31Score").val();
 			data += "&cvss40Score=" + $("#cvss40Score").val();
 			let fields = [];
-			for (let vulnId of vulnTypes) {
-					let val = $(`#type${vulnId}`).val();
-					if(`${val}` == "undefined"){
-						val=""
+			$('[id^="type"]').each(function (event) {
+				if(this.id.indexOf("_header") == -1){
+					let val = "";
+					if (this.type == 'checkbox') {
+						val = $(this).is(":checked");
+					} else {
+						val = $(this).val();
 					}
-				fields.push(`{"typeid" : ${vulnId}, "value" : "${val}"}`);
-			}
+					let fieldId = this.id.replace("type","");
+					fields.push(`{"typeid" : ${fieldId}, "value" : "${encodeURIComponent(b64EncodeUnicode(val))}"}`);
+				}
+			});
+			$('[id^="rtCust"]').each(function () {
+				if(this.id.indexOf("_header") == -1){
+					const rtId = this.id;
+					let contents = global.editors.getHTML(rtId)
+					let fieldId = this.id.replace("rtCust","");
+					fields.push(`{"typeid" : ${fieldId}, "value" : "${encodeURIComponent(b64EncodeUnicode(contents))}"}`);
+				}
+			});
 			data += '&cf=[' + fields.join(",") + "]";
 			data += "&action=addvuln";
 			data += "&_token=" + _token;

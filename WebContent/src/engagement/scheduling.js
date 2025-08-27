@@ -241,6 +241,20 @@ $(function() {
 		
 		return html;
 	}
+	function createCustomRichTextVariableHTML(name,id, readOnly, defaultValue){
+		let html =`<div class="col-md-12">
+			 <div class="form-group">
+			     <label>${name}:</label>
+							<div id="rtCust${id}">`
+		if(readOnly){
+			html = `${html} disabled`;
+		}
+		html = `${html}>`
+		html = `${html} ${entityEncode(defaultValue)}`
+		html = `${html}</div></div></div>`
+		return html;
+	}
+	
 	function createCustomListVariableHTML(name,id, readOnly, defaultValue){
 		let html =`<div class="col-md-4">
 			 <div class="form-group">
@@ -268,6 +282,7 @@ $(function() {
 		$.post('getCustomTypes', `assessmentType=${assessmentType}&variableType=0`)
 		.done((json) =>{
 			$("#variables").html("");
+			$("#richTextVariables").html("");
 			
 			for( let type of json){
 				if(type.fieldType == 0){
@@ -279,7 +294,15 @@ $(function() {
 				else if(type.fieldType == 2){
 					$("#variables").append(createCustomListVariableHTML(type.name, type.id, finalized, type.defaultValue));
 				}
+				else if(type.fieldType == 3){
+					$("#richTextVariables").append(createCustomRichTextVariableHTML(type.name, type.id, finalized, type.defaultValue));
+				}
 			}
+			
+			$('[id^="rtCust"]').each( (_index,el)=>{
+				let id = el.id;
+				createEditor(id)
+			})
 		});
 	}
 	$('#assType').on('change', () =>{

@@ -214,18 +214,20 @@ div[id^='rtCust']{
      </bs:row>
      <br>
      <bs:row>
-	 <s:iterator value="custom">
-		<s:if test="fieldType == 3">
-		 <bs:mco colsize="12">
-			 <div class="form-group">
-				 <label><s:property value="key"/>:</label>
-					<div id="rtCust<s:property value="id"/>" <s:if test="currentAssessment.finalized">disabled</s:if> > 
-			       		<s:property value="defaultValue"/>
-					</div>
-			</div>
-		</bs:mco>
-		</s:if>
-		</s:iterator>
+	  <div id="richTextVariables">
+			<s:iterator value="custom">
+				<s:if test="fieldType == 3">
+			 		<bs:mco colsize="12">
+				 		<div class="form-group">
+					 		<label><s:property value="key"/>:</label>
+							<div id="rtCust<s:property value="id"/>" <s:if test="currentAssessment.finalized">disabled</s:if> > 
+								   <s:property value="defaultValue"/>
+							</div>
+						</div>
+					</bs:mco>
+				</s:if>
+			</s:iterator>
+		</div>
 		</bs:row>
 			 
 </bs:mco> <!--  End of Top col -->

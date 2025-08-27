@@ -56,6 +56,7 @@ color:#f39c12;
                         <th>End</th>
                         <th width="300px">Findings</th>
                         <th width="120px">Status</th>
+                        <th width="120px"></th>
                       </tr>
                     </thead>
                     <tbody >
@@ -73,6 +74,9 @@ color:#f39c12;
 						<td><s:date name="end" format="yyy-MM-dd"/></td>
 						<td>
 							<fs:vulncount asmt="${asmt}" levels="${levels }"></fs:vulncount>
+						</td>
+						<td>
+							<fs:AssessmentStatus asmt="${asmt}" ></fs:AssessmentStatus>
 						</td>
 						<td id="status<s:property value="id"/>">
 								<span class="circle2 glyphicon glyphicon-book bg-gray circle2" title="Report Generated"></span>

@@ -707,18 +707,27 @@ class VulnerabilityView {
                                             let overall = _this.cvss.convertCVSSSeverity(severity)
                                             $("#overall").val(overall);
                                             $($(".selected").children()[1]).attr('data-sort', data.cvss41Score)
+											_this.queue.push('vulnerability', _this.vulnId, "overall", overall)
+											_this.queue.push('vulnerability', _this.vulnId, "cvssString", $("#cvssString").val())
+											_this.queue.push('vulnerability', _this.vulnId, "cvssScore", data.cvss40Score)
                                         } else if (_this.is31 && data.cvss31String != "") {
                                             $("#cvssString").val($("<div/>").html(data.cvss31String).text()).trigger("change")
                                             severity = _this.cvss.getCVSSSeverity(data.cvss31Score);
                                             let overall = _this.cvss.convertCVSSSeverity(severity)
                                             $("#overall").val(overall);
                                             $($(".selected").children()[1]).attr('data-sort', data.cvss31Score)
+											_this.queue.push('vulnerability', _this.vulnId, "overall", overall)
+											_this.queue.push('vulnerability', _this.vulnId, "cvssString", $("#cvssString").val())
+											_this.queue.push('vulnerability', _this.vulnId, "cvssScore", data.cvss31Score)
                                         } else {
                                             _this.setIntVal(data.likelyhood, 'likelyhood');
                                             _this.setIntVal(data.impact, 'impact');
                                             _this.setIntVal(data.overall, 'overall');
                                             severity = $("#overall").select2('data')[0].text;
                                             $($(".selected").children()[1]).attr('data-sort', data.overall)
+											_this.queue.push('vulnerability', _this.vulnId, "overall", data.overall)
+											_this.queue.push('vulnerability', _this.vulnId, "impact", data.impact)
+											_this.queue.push('vulnerability', _this.vulnId, "likelyhood", data.likelyhood)
                                         }
                                         $(".selected").find(".severity")[0].innerHTML = severity;
                                         $(".selected").children()[0].className = `sev${severity}`
@@ -734,12 +743,15 @@ class VulnerabilityView {
                 								let value = b64DecodeUnicode(b.value)
 												if (el[0].type == 'checkbox' && value == 'true') {
 													$(el).prop('checked', true)
+                									_this.queue.push('vulnerability', _this.vulnId, el[0].id, b.value)
 												}
 												else if (el[0].type == 'checkbox' && value == 'false') {
 													$(el).prop('checked', false)
+                									_this.queue.push('vulnerability', _this.vulnId, el[0].id, b.value)
 												}
 												else {
 													$(el).val(value).trigger('change');
+                									_this.queue.push('vulnerability', _this.vulnId, el[0].id, b.value)
 												}
                                             }else if(rtEl.length != 0){
                                             	_this.editors.setEditorContents("rtCust" + b.typeid, b.value, true);
@@ -764,39 +776,55 @@ class VulnerabilityView {
                                 severity = _this.cvss.getCVSSSeverity(data.cvss40Score);
                                 let overall = _this.cvss.convertCVSSSeverity(severity)
                                 $("#overall").val(overall);
-                                $($(".selected").children()[1]).attr('data-sort', data.cvss41Score)
+                                $($(".selected").children()[1]).attr('data-sort', data.cvss40Score)
+                				_this.queue.push('vulnerability', _this.vulnId, "overall", overall)
+                				_this.queue.push('vulnerability', _this.vulnId, "cvssString", $("#cvssString").val())
+                				_this.queue.push('vulnerability', _this.vulnId, "cvssScore", data.cvss40Score)
                             } else if (_this.is31 && data.cvss31String != "") {
                                 $("#cvssString").val($("<div/>").html(data.cvss31String).text()).trigger("change")
                                 severity = _this.cvss.getCVSSSeverity(data.cvss31Score);
                                 let overall = _this.cvss.convertCVSSSeverity(severity)
                                 $("#overall").val(overall);
                                 $($(".selected").children()[1]).attr('data-sort', data.cvss31Score)
+                				_this.queue.push('vulnerability', _this.vulnId, "overall", overall)
+                				_this.queue.push('vulnerability', _this.vulnId, "cvssString", $("#cvssString").val())
+                				_this.queue.push('vulnerability', _this.vulnId, "cvssScore", data.cvss31Score)
                             } else {
                                 _this.setIntVal(data.likelyhood, 'likelyhood');
                                 _this.setIntVal(data.impact, 'impact');
                                 _this.setIntVal(data.overall, 'overall');
                                 severity = $("#overall").select2('data')[0].text;
                                 $($(".selected").children()[1]).attr('data-sort', data.overall)
+                				_this.queue.push('vulnerability', _this.vulnId, "overall", data.overall)
+                				_this.queue.push('vulnerability', _this.vulnId, "impact", data.impact)
+                				_this.queue.push('vulnerability', _this.vulnId, "likelyhood", data.likelyhood)
                             }
                             $(".selected").find(".severity")[0].innerHTML = severity;
                             $(".selected").children()[0].className = `sev${severity}`
                             _this.vulntable.row($(".selected")).invalidate()
                             _this.vulntable.order([1, 'desc']).draw();
                             _this.updateColors()
-                            $(data.cf).each(function (a, b) {
-                                let el = $("#type" + b.typeid);
-                                if (el.length == 0)
-                                    return;
-                                if (el[0].type == 'checkbox' && b.value == 'true') {
-                                    $(el).prop('checked', true)
-                                }
-                                else if (el[0].type == 'checkbox' && b.value == 'false') {
-                                    $(el).prop('checked', false)
-                                }
-                                else {
-                                    $(el).val(b.value).trigger('change');
-                                }
-                            });
+							$(data.cf).each(function (a, b) {
+								let el = $("#type" + b.typeid);
+								let rtEl = $("#rtCust" + b.typeid);
+								if (el.length != 0){
+									let value = b64DecodeUnicode(b.value)
+									if (el[0].type == 'checkbox' && value == 'true') {
+										$(el).prop('checked', true)
+                						_this.queue.push('vulnerability', _this.vulnId, el[0].id, b.value)
+									}
+									else if (el[0].type == 'checkbox' && value == 'false') {
+										$(el).prop('checked', false)
+                						_this.queue.push('vulnerability', _this.vulnId, el[0].id, b.value)
+									}
+									else {
+										$(el).val(value).trigger('change');
+                						_this.queue.push('vulnerability', _this.vulnId, el[0].id, b.value)
+									}
+								}else if(rtEl.length != 0){
+									_this.editors.setEditorContents("rtCust" + b.typeid, b.value, true);
+								}
+							});
                         });
                 }
             }

@@ -9,6 +9,7 @@ import 'jquery-confirm';
     global.goTo = function goTo(id){
     	document.location="SetAssessment?id="+id;
     };
+   	
     $(function () {
         $('#assessment_queue').DataTable({
             "paging": true,
@@ -19,7 +20,7 @@ import 'jquery-confirm';
             "autoWidth": true,
             "order": [[ 3, "asc" ]],
             columnDefs:[
-            	{"targets":[5,6],
+            	{"targets":[5,7],
             		"searchable":false,
             		"orderable":false}
             ]

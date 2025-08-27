@@ -42,8 +42,8 @@
 					<s:iterator value="vulnerabilities">
 						<tr>
 							<td id="vuln_title_${id}"><s:property value="name" /></td>
-							<td id="vuln_sev_${id}"><s:property value="updateRiskLevels()" /> <s:property
-									value="overallStr" /></td>
+							<td id="vuln_sev_${id}"><s:property
+									value="updateRiskLevels()" /> <s:property value="overallStr" /></td>
 							<td><input class="" type="checkbox"
 								onclick="toggleVuln(${id },${active == false ? 'false' : 'true'})"
 								${active == false ? '' : 'checked'}></input></td>
@@ -73,7 +73,7 @@
 			<div class="modal-header bg-red">
 				<button type="button" class="close" data-dismiss="modal"
 					aria-label="Close">
-					<span aria-hidden="true">&times;</span>
+					<span aria-hidden="true" style="color: white">&times;</span>
 				</button>
 				<h4 class="modal-title">
 					<b><i class="fa fa-bug"></i> Vulnerability Entry Form</b>
@@ -134,18 +134,18 @@
 							</div>
 							<!-- /.form-group -->
 							<div class="form-group">
-								<label for="cvss31String" class="col-sm-2 control-label">CVSS 3.1:
-									</label>
+								<label for="cvss31String" class="col-sm-2 control-label">CVSS
+									3.1: </label>
 								<div class="col-sm-4 control-label">
 									<input class="form-control" id="cvss31String"
 										placeholder="CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:N" />
 								</div>
 								<div class="col-sm-1 control-label">
-									<input class="form-control" id="cvss31Score"
-										placeholder="0.0" />
+									<input class="form-control" id="cvss31Score" placeholder="0.0" />
 								</div>
 								<div class="col-sm-1 control-label">
-									<span class="btn btn-primary" id="cvss31Calc"><i class="fa-solid fa-calculator"></i></span>
+									<span class="btn btn-primary" id="cvss31Calc"><i
+										class="fa-solid fa-calculator"></i></span>
 								</div>
 								<label for="title" class="col-sm-2 control-label">Likelihood
 									Severity: *</label>
@@ -162,36 +162,86 @@
 								</div>
 							</div>
 							<div class="form-group">
-								<label for="cvss40String" class="col-sm-2 control-label">CVSS 4.0:
-									</label>
+								<label for="cvss40String" class="col-sm-2 control-label">CVSS
+									4.0: </label>
 								<div class="col-sm-4 control-label">
 									<input class="form-control" id="cvss40String"
 										placeholder="CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:N/SI:N/SA:N" />
 								</div>
 								<div class="col-sm-1 control-label">
-									<input class="form-control" id="cvss40Score"
-										placeholder="0.0" />
+									<input class="form-control" id="cvss40Score" placeholder="0.0" />
 								</div>
 								<div class="col-sm-1 control-label">
-									<span class="btn btn-primary" id="cvss40Calc"><i class="fa-solid fa-calculator"></i></span>
+									<span class="btn btn-primary" id="cvss40Calc"><i
+										class="fa-solid fa-calculator"></i></span>
 								</div>
 							</div>
-						
+
 						</div>
-						<br>
-						
-						<!-- TODO: Add custom fields here -->
-						
+						<!-- Begin custom fields -->
 						<div class="row">
-								<div class="col-sm-8">
-								</div>
-								<div class="col-sm-4">
-									<button type="button" class="btn btn-primary saveVuln pull-right" id="saveVuln">
-										<i class="fa fa-save"></i> Save changes
-									</button>
-								</div>
+							<div class="col-sm-12">
+								<s:if test="customFields != null && customFields.size() >0">
+									<hr>
+								</s:if>
+							</div>
 						</div>
-						<br/>
+						<div class="row">
+							<s:iterator value="customFields">
+								<s:if test="fieldType != 3">
+									<div class="form-group col-md-3" style="padding-left: 25px">
+										<label class=""
+											title='Variable: &#x24;{cf<s:property value="variable"/>}'><s:property
+												value="key" /> <span id="type${id}_header"></span><br />
+										<small>Variable: &#x24;&#x7B;cf<s:property
+													value="variable" />&#x7D;
+										</small> </label>
+										<div class="" style="height: 50px">
+											<s:if test="fieldType == 0">
+												<input type="text" class="form-control pull-right"
+													id="type${id}" value='${defaultValue}'
+													data-default='${defaultValue}'
+													<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized || readOnly">disabled</s:if> />
+											</s:if>
+											<s:if test="fieldType == 1">
+												<input type="checkbox" class="icheckbox_minimal-blue"
+													style="width: 20px; height: 20px; margin-top: -13px"
+													data-default='${defaultValue}'
+													id="type<s:property value="id"/>"
+													<s:if test="defaultValue == 'true'">checked</s:if>
+													<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized || readonly">disabled</s:if> />
+											</s:if>
+											<s:if test="fieldType == 2">
+												<select class='form-control select2 ' style='width: 100%;'
+													id="type<s:property value="id"/>"
+													data-default='${defaultValue.split(",")[0]}'
+													<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized || readonly">disabled</s:if>>
+													<s:if test="currentAssessment.finalized">readonly</s:if>>
+													<s:iterator value="defaultValue.split(',')" var="option">
+														<option value="<s:property value="option"/>"
+															<s:if test="option == defaultValue">selected</s:if>><s:property
+																value="option" /></option>
+													</s:iterator>
+												</select>
+											</s:if>
+										</div>
+									</div>
+								</s:if>
+
+							</s:iterator>
+						</div>
+						<!-- End custom fields -->
+
+						<div class="row">
+							<div class="col-sm-8"></div>
+							<div class="col-sm-4">
+								<button type="button"
+									class="btn btn-primary saveVuln pull-right" id="saveVuln">
+									<i class="fa fa-save"></i> Save changes
+								</button>
+							</div>
+						</div>
+						<br />
 
 
 						<div class="row">
@@ -206,24 +256,23 @@
 									</div>
 									<!-- /.box-header -->
 									<div class="box-body pad">
-										<div id="description" name="description" rows="10"
-											cols="80"></div>
+										<div id="description" name="description" rows="10" cols="80"></div>
 									</div>
 								</div>
 								<!-- /.box -->
 							</div>
 						</div>
-						<br/>
+						<br />
 						<div class="row">
-								<div class="col-sm-8">
-								</div>
-								<div class="col-sm-4">
-									<button type="button" class="btn btn-primary saveVuln pull-right" id="saveVuln">
-										<i class="fa fa-save"></i> Save changes
-									</button>
-								</div>
+							<div class="col-sm-8"></div>
+							<div class="col-sm-4">
+								<button type="button"
+									class="btn btn-primary saveVuln pull-right" id="saveVuln">
+									<i class="fa fa-save"></i> Save changes
+								</button>
+							</div>
 						</div>
-						<br/>
+						<br />
 						<div class="row">
 							<!-- Vuln Recommendation Section -->
 							<div class="col-md-12">
@@ -243,6 +292,9 @@
 								<!-- /.box -->
 							</div>
 						</div>
+						<!-- Custom Forms -->
+						<jsp:include page="../assessment/VulnRichTextForms.jsp" />
+						<!--  Custom Forms -->
 					</div>
 				</form>
 			</div>

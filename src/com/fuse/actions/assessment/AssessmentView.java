@@ -1,5 +1,12 @@
 package com.fuse.actions.assessment;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -12,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.mail.MessagingException;
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpSession;
 import javax.transaction.NotSupportedException;
@@ -46,6 +54,7 @@ import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
 import com.fuse.utils.FSUtils;
 import com.fuse.utils.History;
+import com.fuse.utils.SendEmail;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/assessment/Assessment.jsp", params = { "contentType", "text/html" })
@@ -74,11 +83,30 @@ public class AssessmentView extends FSActionSupport {
 	private Boolean notowner;
 	private List<BoilerPlate> summaryTemplates;
 	private List<BoilerPlate> riskTemplates;
+	private String filename;
+	private InputStream icsStream;
 	LinkedHashMap<String, Integer> vulnMap = new LinkedHashMap<>();
 	LinkedHashMap<String, Integer> catMap = new LinkedHashMap<>();
+	private String vendor="";
+	private String calendarLink="";
+	
 
-	@Action(value = "Assessment", results = { @Result(name = "ics", location = "/WEB-INF/jsp/assessment/ics.jsp"),
-			@Result(name = "finerrorJson", location = "/WEB-INF/jsp/assessment/finerrorJson.jsp") })
+	@Action(value = "Assessment", 
+			results = { 
+				@Result(name = "finerrorJson", location = "/WEB-INF/jsp/assessment/finerrorJson.jsp"),
+				@Result(
+						name = "ics", 
+						type = "stream", 
+						params = { 
+								"inputName", "icsStream",
+								"contentType", "${contentType}", 
+								"bufferSize", "1024", 
+								"contentDisposition", "attachment;filename=\"${filename}\"" 
+								}
+						) 
+					
+				}
+	)
 	public String execute() throws NotSupportedException, SystemException {
 		if (!(this.isAcassessor() || this.isAcmanager()))
 			return AuditLog.notAuthorized(this, "User is not an Assessor or Manager", true);
@@ -184,20 +212,209 @@ public class AssessmentView extends FSActionSupport {
 			for (String email : assessment.getDistributionList().split(";")) {
 				emails.add(email);
 			}
-			String HTML = "Application Owners,<br><br>";
-			HTML += "The purpose of this meeting is to discuss the vulnerabilities and risk issues discovered durring the assessment of <b><i>["
-					+ assessment.getAppId() + "] " + assessment.getName() + "</i></b>.<br>";
-			HTML += "Please feel free to invite anyone mising from the distribution list prior to the meeting.<br><br>";
-			HTML += "The report will be distributed prior to the meeting. The data in the report is considered confidential and should be distributed only on a need-to-know basis.<br><br>";
-			HTML += "Thanks,<br>";
+			for(User assessor : assessment.getAssessor()) {
+				emails.add(assessor.getEmail());
+			}
+			String HTML = "Hello Stakeholders,\n";
+			HTML += "The purpose of this meeting is to discuss the assessment of ["
+					+ assessment.getAppId() + "] " + assessment.getName() + ".\n";
+			HTML += "The report will be distributed prior to the meeting.\n\n";
+			HTML += "Thanks,\n";
 			HTML += assessment.getAssessor().get(0).getTeam().getTeamName();
-			icsFile = FSUtils.generateICSFile(emails, "",
-					"Asssessment Review of [" + assessment.getAppId() + "] " + assessment.getName(), HTML);
-			return "ics";
+			filename = assessment.getAppId() + "-" + assessment.getName() + "-invite.ics";
+			LocalDateTime now = (LocalDateTime.now()).plusHours(1);
+			LocalDateTime end = now.plusHours(1);
+			
+			icsFile = FSUtils.createICSContent(
+					"Assessment Review of [" + assessment.getAppId() + "] " + assessment.getName(),
+					HTML,
+					"",
+					now,
+					end,
+					user.getEmail(),
+					emails.toArray(new String[emails.size()])
+					);
+			
+			SendEmail sendEmail = new SendEmail(em);
+			try {
+				sendEmail.sendCalendarInviteInline(user.getEmail(), "Schedule Assessment", icsFile);
+			} catch (MessagingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return this.SUCCESSJSON;
+			
 		}
 
 		return SUCCESS;
 	}
+	
+	@Action(value="DownloadICS",
+			results = { 
+				@Result(
+						name = "ics", 
+						type = "stream", 
+						params = { 
+								"inputName", "icsStream",
+								"contentType", "${contentType}", 
+								"bufferSize", "1024", 
+								"contentDisposition", "attachment;filename=\"${filename}\"" 
+								}
+						) 
+				}
+	)
+	public String downloadICS() {
+		if (!(this.isAcassessor() || this.isAcmanager()))
+			return LOGIN;
+		User user = this.getSessionUser();
+		
+		if (this.id != null && !this.id.equals("")) {
+			this.setSession("asmtid", Long.parseLong(this.id));
+		}
+
+		if (this.getSession("asmtid") == null) {
+			this.setSession("asmtid", Long.parseLong(this.id));
+		} else {
+			this.id = "" + this.getSession("asmtid");
+		}
+
+		Long lid = Long.parseLong(this.id);
+		if (this.isAcmanager()) {
+			assessment = AssessmentQueries.getAssessmentById(em, lid);
+			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
+					.orElse(null);
+			if (mgrs == null)
+				this.notowner = true;
+
+		} else {
+			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
+		}
+
+		if (assessment == null)
+			return SUCCESS;
+		
+		List<String> emails = new ArrayList<String>();
+		for (String email : assessment.getDistributionList().split(";")) {
+			emails.add(email);
+		}
+		for(User assessor : assessment.getAssessor()) {
+			emails.add(assessor.getEmail());
+		}
+		String HTML = "Hello Stakeholders,\n";
+		HTML += "The purpose of this meeting is to discuss the assessment of ["
+				+ assessment.getAppId() + "] " + assessment.getName() + ".\n";
+		HTML += "The report will be distributed prior to the meeting.\n\n";
+		HTML += "Thanks,\n";
+		HTML += assessment.getAssessor().get(0).getTeam().getTeamName();
+		filename = assessment.getAppId() + "-" + assessment.getName() + "-invite.ics";
+		LocalDateTime now = (LocalDateTime.now()).plusHours(1);
+		LocalDateTime end = now.plusHours(1);
+		
+		icsFile = FSUtils.createICSContent(
+				"Asssessment Review of [" + assessment.getAppId() + "] " + assessment.getName(),
+				HTML,
+				"",
+				now,
+				end,
+				user.getEmail(),
+				emails.toArray(new String[emails.size()])
+				);
+				
+		icsStream = new ByteArrayInputStream(icsFile.getBytes());
+		return "ics";
+		
+	}
+	
+	public String createCalendarLink(String vendor) {
+		if (!(this.isAcassessor() || this.isAcmanager()))
+			return LOGIN;
+		User user = this.getSessionUser();
+		
+		if (this.id != null && !this.id.equals("")) {
+			this.setSession("asmtid", Long.parseLong(this.id));
+		}
+
+		if (this.getSession("asmtid") == null) {
+			this.setSession("asmtid", Long.parseLong(this.id));
+		} else {
+			this.id = "" + this.getSession("asmtid");
+		}
+
+		Long lid = Long.parseLong(this.id);
+		if (this.isAcmanager()) {
+			assessment = AssessmentQueries.getAssessmentById(em, lid);
+			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
+					.orElse(null);
+			if (mgrs == null)
+				this.notowner = true;
+
+		} else {
+			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
+		}
+
+		if (assessment == null)
+			return "";
+		
+		List<String> emails = new ArrayList<String>();
+		for (String email : assessment.getDistributionList().split(";")) {
+			emails.add(email);
+		}
+		for(User assessor : assessment.getAssessor()) {
+			emails.add(assessor.getEmail());
+		}
+		String HTML = "Hello Stakeholders,\n";
+		HTML += "The purpose of this meeting is to discuss the assessment of ["
+				+ assessment.getAppId() + "] " + assessment.getName() + ".\n";
+		HTML += "The report will be distributed prior to the meeting.\n\n";
+		HTML += "Thanks,\n";
+		HTML += assessment.getAssessor().get(0).getTeam().getTeamName();
+		filename = assessment.getAppId() + "-" + assessment.getName() + "-invite.ics";
+		
+		
+		String baseUrl = "https://calendar.google.com/calendar/render";
+		Map<String, String> params = new HashMap<>();
+		String title = "Asssessment Review of [" + assessment.getAppId() + "] " + assessment.getName();
+		if(vendor.equals("google")) {
+			baseUrl = "https://calendar.google.com/calendar/render";
+			params.put("action", "TEMPLATE");
+		    params.put("text", title);
+		    params.put("dates", "");
+		    params.put("details", HTML);
+		    params.put("add", String.join(",", emails));
+		}else if (vendor.equals("outlook")) {
+			baseUrl = "https://outlook.live.com/calendar/0/deeplink/compose";
+			params.put("subject", title);
+		    params.put("startdt", "");
+		    params.put("enddt", "");
+		    params.put("body", HTML);
+		    params.put("to", String.join(",", emails));
+		     
+		}
+		String calendarLink = buildUrl(baseUrl, params);
+		
+		
+		return calendarLink;
+		
+	}
+	private String buildUrl(String base, Map<String, String> params) {
+	    StringBuilder url = new StringBuilder(base + "?");
+	    
+	    for(String key :params.keySet()) {
+	    	url.append(key)
+	    		.append("=")
+	    		.append(URLEncoder.encode(params.get(key)))
+	    		.append("&");
+	    }
+	    return url.toString().replaceAll("&$", ""); // Remove trailing &
+	}
+	
+	public String getOutlookLink() {
+		return this.createCalendarLink("outlook");
+	}
+	public String getGoogleLink() {
+		return this.createCalendarLink("google");
+	}
+	
 	
 
 	private Long cfid;
@@ -697,6 +914,13 @@ public class AssessmentView extends FSActionSupport {
 	
 	public List<String> getColors() {
 		return new ArrayList<String>(Arrays.asList("#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"));
+	}
+	
+	public String getFilename() {
+		return this.filename;
+	}
+	public InputStream getIcsStream() {
+		return this.icsStream;
 	}
 	
 	

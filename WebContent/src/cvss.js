@@ -59,19 +59,40 @@ export default class CVSS {
 	
 	getCVSSScore(){
 		if(this.is31()){
-			let score = this.vector.BaseScore();
-			const tmpScore = this.vector.TemporalScore();
 			const envScore = this.vector.EnvironmentalScore();
-			if(tmpScore != 0 && tmpScore < score){
-				score = tmpScore
-			}
-			if(envScore != 0 && envScore < score){
-				score = envScore
-			}
-			return score;
+			return this.roundup(envScore)
 		}else{
 			return this.vector.Score();
 		}
+	}
+	roundup(num) {
+	  // Convert to string to work with decimal places
+	  const str = num.toString();
+	  const decimalIndex = str.indexOf('.');
+	  
+	  // If no decimal point, add .0 and return
+	  if (decimalIndex === -1) {
+		return parseFloat(num).toFixed(1);
+	  }
+	  
+	  // If only one decimal place, return with .0 format
+	  if (str.length <= decimalIndex + 2) {
+		return parseFloat(num).toFixed(1);
+	  }
+	  
+	  // Get the second decimal digit
+	  const secondDecimal = parseInt(str[decimalIndex + 2]);
+	  
+	  // If second decimal is 0, return number with 1 decimal place (.0 format)
+	  if (secondDecimal === 0) {
+		return parseFloat((Math.round(num * 10) / 10).toFixed(1));
+	  }
+	  
+	  // If second decimal is greater than 0, round up the first decimal
+	  const firstDecimal = parseInt(str[decimalIndex + 1]);
+	  const integerPart = Math.floor(num);
+	  
+	  return parseFloat((integerPart + (firstDecimal + 1) / 10).toFixed(1));
 	}
 	
 	updateCVSSScore(){
