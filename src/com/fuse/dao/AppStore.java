@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.channels.FileChannel;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -58,6 +60,9 @@ public class AppStore {
 	private String base64JarFile;
 	private String hash;
 	private String configs;
+	private Boolean largeFile=false;
+	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<AppPart>parts = new ArrayList<>();
 	
 	public Long getId() {
 		return id;
@@ -150,11 +155,34 @@ public class AppStore {
 		this.inventoryEnabled = inventoryEnabled;
 	}
 	public String getBase64JarFile() {
-		return base64JarFile;
+		if(this.largeFile != null && this.largeFile) {
+			return this.combineChunks();
+		}else {
+			return base64JarFile;
+		}
 	}
 	public void setBase64JarFile(String base64JarFile) {
 		this.base64JarFile = base64JarFile;
 		this.hash = FSUtils.md5hash(base64JarFile);
+		
+		if(this.parts != null) {
+			this.parts.clear();
+		}
+		if(base64JarFile != null && base64JarFile.length() > 15_000_000) {
+			this.largeFile=true;
+			String [] chunks = this.chunk(base64JarFile);
+			this.base64JarFile="";
+			int index=0;
+			for(String c : chunks) {
+				AppPart frp = new AppPart();
+				frp.setIndex(index++);
+				frp.setBase64Part(c);
+				this.parts.add(frp);
+			}
+		}else {
+			this.largeFile=false;
+			this.base64JarFile = base64JarFile;
+		}
 	}
 	public String getVersion() {
 		return version;
@@ -385,6 +413,18 @@ public class AppStore {
 				+ "\"description\": \"" + this.getDescription() + "\"}"
 				+ "}";
 		return json;
+	}
+	@Transient	
+	private String[] chunk(String largeString){
+		int chunkSize = 15_000_000;
+		return largeString.split("(?<=\\G.{" + chunkSize + "})");
+	}
+	@Transient
+	private String combineChunks() {
+		StringBuilder b64report = new StringBuilder();
+		this.parts.sort(Comparator.comparingInt(AppPart::getIndex));
+		this.parts.forEach( part -> b64report.append(part.getBase64Part()));
+		return b64report.toString();
 	}
 	
 	

@@ -468,6 +468,16 @@
 			<artifactId>bcpkix-jdk15on</artifactId>
 			<version>1.70</version>
 		</dependency>
+		<dependency>
+			<groupId>org.libreoffice</groupId>
+			<artifactId>libreoffice</artifactId>
+			<version>24.2.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.libreoffice</groupId>
+			<artifactId>unoil</artifactId>
+			<version>24.2.3</version>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>
