@@ -1,6 +1,7 @@
 require('select2/dist/css/select2.min.css')
 require('../scripts/fileupload/css/fileinput.css');
 require('../loading/css/jquery-loading.css');
+import '../loading/js/jquery-loading';
 import {FactionEditor} from '../utils/editor';
 import 'jquery';
 import 'datatables.net';
