@@ -61,7 +61,7 @@ public class AppStore {
 	private String hash;
 	private String configs;
 	private Boolean largeFile=false;
-	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<AppPart>parts = new ArrayList<>();
 	
 	public Long getId() {
