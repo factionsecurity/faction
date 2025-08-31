@@ -287,7 +287,8 @@ public class AppStore {
 	@Transient 
 	public void setJarFile(byte [] jarFile) {
 		this.hash = FSUtils.md5hash(jarFile);
-		this.base64JarFile = Base64.getEncoder().encodeToString(jarFile);
+		String base64JarFile = Base64.getEncoder().encodeToString(jarFile);
+		this.setBase64JarFile(base64JarFile);
 	}
 	
 	@Transient 
