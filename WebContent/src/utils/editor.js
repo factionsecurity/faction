@@ -297,8 +297,10 @@ export class FactionEditor {
 		}
 		//contents = contents.replaceAll("<br />", "\n");
 		contents = contents.replace(/<u>([^<]+)<\/u>/g, '++$1++');
+		this.editors[id].hide();	
 		this.editors[id].setHTML(contents, false);
 		this.editors[id].moveCursorToStart(false);
+		this.editors[id].show();	
 	}
 	
 	recreateEditor(id, contents, offloadImages, isEncoded, callback){
