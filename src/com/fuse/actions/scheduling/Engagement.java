@@ -709,8 +709,9 @@ public class Engagement  extends FSActionSupport{
 			Matcher m = p.matcher(mail.toLowerCase().trim());
 			if(m.matches())
 				continue;
-			else
+			else {
 				addActionError("Email Address is not Valid");
+			}
 		}
 		
 	}

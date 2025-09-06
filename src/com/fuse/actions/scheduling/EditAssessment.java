@@ -77,25 +77,30 @@ public class EditAssessment extends FSActionSupport {
 		if (!(this.isAcengagement() || this.isAcmanager() || this.isAcassessor())) {
 			return LOGIN;
 		}
+		try {
 
-		custom = em.createQuery("from CustomType where type = 0 and (deleted IS NULL or deleted = false)").getResultList();
+			custom = em.createQuery("from CustomType where type = 0 and (deleted IS NULL or deleted = false)").getResultList();
 
-		users = em.createQuery("from User").getResultList();
-		teams = em.createQuery("from Teams").getResultList();
-		assessmentTypes = em.createQuery("from AssessmentType").getResultList();
-		assessors = em.createQuery("from User").getResultList();
-		campaigns = em.createQuery("from Campaign").getResultList();
-		List<User> tmp = new ArrayList(assessors);
-		for (User u : tmp) {
-			if (u.getPermissions() != null && !u.getPermissions().isAssessor())
-				assessors.remove(u);
+			users = em.createQuery("from User").getResultList();
+			teams = em.createQuery("from Teams").getResultList();
+			assessmentTypes = em.createQuery("from AssessmentType").getResultList();
+			assessors = em.createQuery("from User").getResultList();
+			campaigns = em.createQuery("from Campaign").getResultList();
+			List<User> tmp = new ArrayList(assessors);
+			for (User u : tmp) {
+				if (u.getPermissions() != null && !u.getPermissions().isAssessor())
+					assessors.remove(u);
+			}
+			SystemSettings ss = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
+					.orElse(null);
+			if (ss.getEnableRandAppId() != null)
+				this.randId = ss.getEnableRandAppId();
+			else
+				this.randId = true;
+		}catch(Exception ex) {
+			this._message = ex.getMessage();
+			return this.ERRORJSON;
 		}
-		SystemSettings ss = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
-				.orElse(null);
-		if (ss.getEnableRandAppId() != null)
-			this.randId = ss.getEnableRandAppId();
-		else
-			this.randId = true;
 
 		if (action != null && action.equals("get")) {
 			currentAssessment = AssessmentQueries.getAssessment(em, user, (long) this.aid);
@@ -115,46 +120,6 @@ public class EditAssessment extends FSActionSupport {
 			if (!this.testToken(false)) {
 				return this.ERRORJSON;
 			}
-			//Check that the user has permissions to edit the assessment
-			/// They must be either a manager, an admin, or an assessor of
-			/// the assessment
-			if( user.getPermissions().isAssessor() 
-					&&  !(user.getPermissions().isAdmin() || user.getPermissions().isManager())
-					&&  !assessors.stream().anyMatch( u -> u.getId() == user.getId() )
-			) {
-				this._message = "Not Authorized to Update This assessment. You must be a manager, admin, or contributer to the assessment";
-				return this.ERRORJSON;
-			}
-
-			List<User> assessors = new ArrayList<User>();
-			if (assessorId != null) {
-				for (Integer asid : assessorId) {
-
-					User assessor = em.find(User.class, asid.longValue());
-					if (assessor != null && assessor.getPermissions().isAssessor())
-						assessors.add(assessor);
-				}
-			}
-
-			User remediation = em.find(User.class, (long) remId);
-			if (remediation != null && !remediation.getPermissions().isRemediation())
-				remediation = null;
-
-			User engagement = em.find(User.class, (long) engId);
-			if (engagement != null && !engagement.getPermissions().isRemediation())
-				engagement = null;
-			AssessmentType Type = em.find(AssessmentType.class, (long) type);
-
-			Campaign camp = null;
-			if (campId != null && campId != -1) {
-				camp = em.find(Campaign.class, campId);
-			}
-			Assessment am = em.find(Assessment.class, (long) this.aid);
-
-			if (am == null) {
-				this._message = "Assessment is not Valid";
-				return this.ERRORJSON;
-			}
 			if (this.appid == null || this.appid.equals("")) {
 				this._message = "Application Id is missing.";
 				return this.ERRORJSON;
@@ -168,12 +133,51 @@ public class EditAssessment extends FSActionSupport {
 				this._message = "Start and End Dates Could Be Missing";
 				return this.ERRORJSON;
 			}
-
-
+			//Check that the user has permissions to edit the assessment
+			/// They must be either a manager, an admin, or an assessor of
+			/// the assessment
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
-
 			try {
+				if( user.getPermissions().isAssessor() 
+						&&  !(user.getPermissions().isAdmin() || user.getPermissions().isManager())
+						&&  !assessors.stream().anyMatch( u -> u.getId() == user.getId() )
+				) {
+					this._message = "Not Authorized to Update This assessment. You must be a manager, admin, or contributer to the assessment";
+					return this.ERRORJSON;
+				}
+				List<User> assessors = new ArrayList<User>();
+				if (assessorId != null) {
+					for (Integer asid : assessorId) {
+
+						User assessor = em.find(User.class, asid.longValue());
+						if (assessor != null && assessor.getPermissions().isAssessor())
+							assessors.add(assessor);
+					}
+				}
+
+				User remediation = em.find(User.class, (long) remId);
+				if (remediation != null && !remediation.getPermissions().isRemediation())
+					remediation = null;
+
+				User engagement = em.find(User.class, (long) engId);
+				if (engagement != null && !engagement.getPermissions().isRemediation())
+					engagement = null;
+				AssessmentType Type = em.find(AssessmentType.class, (long) type);
+
+				Campaign camp = null;
+				if (campId != null && campId != -1) {
+					camp = em.find(Campaign.class, campId);
+				}
+				Assessment am = em.find(Assessment.class, (long) this.aid);
+
+				if (am == null) {
+					this._message = "Assessment is not Valid";
+					return this.ERRORJSON;
+				}
+
+
+
 				if (am.isFinalized()) {
 					AuditLog.audit(this,
 							String.format("Assessment Updated after finalized. Was %s %s, now %s %s", am.getAppId(),
@@ -207,6 +211,8 @@ public class EditAssessment extends FSActionSupport {
 						/// this.JSESSION.put("Files", null);
 					} catch (Exception ex) {
 						ex.printStackTrace();
+						this._message = ex.getMessage();
+						return this.ERRORJSON;
 					}
 					// session.getTransaction().begin();
 					if (sessionfiles != null) {
@@ -233,7 +239,6 @@ public class EditAssessment extends FSActionSupport {
 							Long cfid = Long.parseLong("" + json.get("id"));
 
 							for (CustomField obj : am.getCustomFields()) {
-								System.out.println(cfid);
 								if (obj.getType().getId().equals(cfid)) {
 									cfObj = obj;
 									if(obj.getType().getFieldType() < 3) {
@@ -269,7 +274,7 @@ public class EditAssessment extends FSActionSupport {
 				if (!am.isFinalized())
 					AuditLog.audit(this, "Assessment Updated", AuditLog.UserAction, AuditLog.CompAssessment, am.getId(),
 							false);
-
+				
 				// Run All extensions
 				Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
 				amgr.execute(am, AssessmentManager.Operation.Update);
@@ -278,6 +283,8 @@ public class EditAssessment extends FSActionSupport {
 			}
 			return this.SUCCESSJSON;
 
+		}else {
+			
 		}
 		return SUCCESS;
 	}
@@ -590,7 +597,7 @@ public class EditAssessment extends FSActionSupport {
 		Pattern p = Pattern.compile(emailRegex);
 		String[] emails = this.distro.split(";");
 		for (String mail : emails) {
-			Matcher m = p.matcher(mail.trim());
+			Matcher m = p.matcher(mail.toLowerCase().trim());
 			if (m.matches())
 				continue;
 			else
