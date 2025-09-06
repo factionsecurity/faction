@@ -86,7 +86,7 @@ div[id^='rtCust']{
 									<input type="text" class="form-control" id="cust${type.id}"
 										value='<s:property value="value"/>'
 										<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> 
-										<s:if test="!type.readonly">readonly</s:if>
+										<s:if test="type.readonly">readonly</s:if>
 										/>
 								</s:if>
 								<s:if test="type.fieldType == 1">
@@ -96,14 +96,14 @@ div[id^='rtCust']{
 										id="cust<s:property value="type.id"/>"
 										<s:if test="value == 'true'">checked</s:if>
 										<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if>
-										<s:if test="!type.readonly">readonly</s:if>
+										<s:if test="type.readonly">readonly</s:if>
 										 />
 								</s:if>
 								<s:if test="type.fieldType == 2">
 									<select class='form-control select2 ' style='width: 100%;'
 										id="cust<s:property value="type.id"/>"
-										<s:if test="currentAssessment.finalized">readonly</s:if>>
-										<s:if test="!type.readonly">readonly</s:if>
+										<s:if test="currentAssessment.finalized">readonly</s:if> 
+										<s:if test="type.readonly">readonly</s:if>>
 										<s:iterator value="type.defaultValue.split(',')" var="option">
 											<s:set var="aOption" value="option" />
 											<option value="<s:property value="option"/>"
