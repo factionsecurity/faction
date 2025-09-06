@@ -245,7 +245,7 @@ $(function() {
 		let html =`<div class="col-md-12">
 			 <div class="form-group">
 			     <label>${name}:</label>
-							<div id="rtCust${id}">`
+							<div id="rtCust${id}"`
 		if(readOnly){
 			html = `${html} disabled`;
 		}
