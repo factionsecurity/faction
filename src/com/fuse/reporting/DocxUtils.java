@@ -385,6 +385,7 @@ public class DocxUtils {
 							this.replaceHyperlink(newrow, "${cf" + cf.getType().getVariable() + " link}", cf.getValue());
 						}
 					}
+					this.replaceHyperlink(newrow, "${cvssString link}", v.getCvssString());
 
 					/*
 					 * for(String match : cellMap.keySet()) changeColorOfCell(newrow, match,
@@ -480,6 +481,14 @@ public class DocxUtils {
 							map2.put("${details}", wrapHTML(details, customCSS, "details" ));
 						} else {
 							map2.put("${details}", wrapHTML("", customCSS, "details"));
+						}
+					}
+					
+					if (v.getCustomFields() != null) {
+						for (CustomField cf : v.getCustomFields()) {
+							if(cf.getType().getFieldType() == 3) {
+								map2.put("${cf" + cf.getType().getVariable() + "}", wrapHTML(cf.getValue(), customCSS, cf.getType().getVariable()));
+							}
 						}
 					}
 
@@ -649,9 +658,11 @@ public class DocxUtils {
 		map.put(getKey("asmtassessor_email"), "" + this.assessment.getAssessor().get(0).getEmail());
 
 		map.put(getKey("asmtassessors_comma"), assessors_comma);
-
-		map.put(getKey("remediation"), "" + this.assessment.getRemediation().getFname() + " " + this.assessment.getRemediation().getLname());
-
+		if(this.assessment.getRemediation() == null || this.assessment.getRemediation().getFname() == null || this.assessment.getRemediation().getLname() == null) {
+			map.put(getKey("remediation"), "" );
+		}else {
+			map.put(getKey("remediation"), "" + this.assessment.getRemediation().getFname() + " " + this.assessment.getRemediation().getLname());
+		}
 		map.put(getKey("asmtteam"),
 				this.assessment.getAssessor() == null ? ""
 						: this.assessment.getAssessor().get(0).getTeam() == null ? ""

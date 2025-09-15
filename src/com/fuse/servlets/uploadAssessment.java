@@ -192,8 +192,10 @@ public class uploadAssessment extends HttpServlet {
             	}
             	
             	for(Object key : json.keySet()){
-	            	CustomType ct = (CustomType)em.createQuery("from CustomType where variable = :value")
+	            	CustomType ct = (CustomType)em.createQuery("from CustomType where variable = :value and (deleted IS NULL or deleted = false)")
 							.setParameter("value", (String)key).getResultList().stream().findFirst().orElse(null);
+	            	if(ct==null)
+	            		continue;
 	            	
 	            	List<CustomField>fields = asmt.getCustomFields();
 	            	boolean found=false;
