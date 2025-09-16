@@ -76,7 +76,7 @@ color:#f39c12;
 							<fs:vulncount asmt="${asmt}" levels="${levels }"></fs:vulncount>
 						</td>
 						<td>
-							<fs:AssessmentStatus asmt="${asmt}" ></fs:AssessmentStatus>
+							<s:property value="status"/>
 						</td>
 						<td id="status<s:property value="id"/>">
 								<span class="circle2 glyphicon glyphicon-book bg-gray circle2" title="Report Generated"></span>

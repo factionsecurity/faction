@@ -26,7 +26,13 @@
 }
 .input-group-addon{
 	background-color: #030D1C !important;
+	border-top-left-radius: 4px !important;
+	border-bottom-left-radius: 4px !important;
 }
+.form-control{
+border-color: #030D1C !important;
+}
+
 </style>
 
 
@@ -108,14 +114,14 @@
 			<div class="form-horizontal">
 				<div class="box-body row">
 					<div class="col-sm-6">
-						<label class="control-label">Date Range</label>
+						<label class="">Date Range</label>
 							<div class="input-group">
-							<div class="input-group-addon ">
-								<i class="fa fa-calendar"></i>
-							</div>
-							<input disabled="" class="form-control pull-right"
-								id="reservation" type="text"
-								value='<s:property value="assessment.start"/> - <s:property value="assessment.end"/>'>
+								<div class="input-group-addon">
+									<i class="fa fa-calendar"></i>
+								</div>
+								<input disabled class="form-control pull-right"
+									id="reservation" type="text"
+									value='<s:property value="assessment.start"/> - <s:property value="assessment.end"/>'>
 							</div>
 						<!-- /.input group -->
 					</div>
