@@ -359,12 +359,33 @@ public class Assessment {
 		this.peerreview = peerreview;
 	}
 
+	@Transient
 	public String getStatus() {
-		return status;
+		String statusName = "Scheduled";
+		Date now = new Date();
+		if(now.after(this.start)) {
+			statusName = "In Progress";
+		}
+		if(now.after(this.end)) {
+			statusName = "Past Due";
+		}
+		if(this.status != null) {
+			statusName = this.status;
+		}
+		if(this.getCompleted() != null) {
+			statusName="Completed";
+		}
+		
+		return statusName;
 	}
 
 	public void setStatus(String status) {
 		this.status = status;
+	}
+	
+	@Transient
+	public void clearStatus() {
+		this.status = null;
 	}
 
 	public PeerReview getPeerReview() {

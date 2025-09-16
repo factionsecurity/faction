@@ -43,6 +43,7 @@ import com.fuse.dao.Files;
 import com.fuse.dao.Notification;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.RiskLevel;
+import com.fuse.dao.Status;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
@@ -89,6 +90,7 @@ public class AssessmentView extends FSActionSupport {
 	LinkedHashMap<String, Integer> catMap = new LinkedHashMap<>();
 	private String vendor="";
 	private String calendarLink="";
+	private List<Status> statuses = new ArrayList<>();
 	
 
 	@Action(value = "Assessment", 
@@ -149,6 +151,8 @@ public class AssessmentView extends FSActionSupport {
 		
 		riskTemplates = em.createQuery("from BoilerPlate where (user = :user or global = true) and type='risk' and active = true")
 				.setParameter("user", user).getResultList();
+		
+		statuses = em.createQuery("from Status").getResultList();
 
 		history = this.createHistory(assessment, levels);
 
@@ -921,6 +925,10 @@ public class AssessmentView extends FSActionSupport {
 	}
 	public InputStream getIcsStream() {
 		return this.icsStream;
+	}
+	
+	public List<Status> getStatuses(){
+		return this.statuses;
 	}
 	
 	
