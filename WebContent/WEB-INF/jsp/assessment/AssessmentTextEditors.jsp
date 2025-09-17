@@ -126,7 +126,7 @@ border-color: #030D1C !important;
 						<!-- /.input group -->
 					</div>
 					<div class="col-sm-6">
-						<label for="Distro" class="control-label">Status</label>
+						<label for="Distro" class="control-label">Status <span id="status_header"></span></label>
 							<div class="input-group">
 							<div class="input-group-addon ">
 								<i class="fa fa-circle-dot"></i>

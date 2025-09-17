@@ -369,11 +369,11 @@ public class Assessment {
 		if(now.after(this.end)) {
 			statusName = "Past Due";
 		}
-		if(this.status != null) {
-			statusName = this.status;
-		}
 		if(this.getCompleted() != null) {
 			statusName="Completed";
+		}
+		if(this.status != null) {
+			statusName = this.status;
 		}
 		
 		return statusName;

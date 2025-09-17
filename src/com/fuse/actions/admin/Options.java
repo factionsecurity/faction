@@ -17,6 +17,7 @@ import com.fuse.dao.Campaign;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.Status;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
 import com.fuse.dao.query.AssessmentQueries;
@@ -67,6 +68,7 @@ public class Options extends FSActionSupport {
 	private String clientid;
 	private String profile;
 	private String status;
+	private Long statusId;
 	private String selfPeerReview;
 	private String riskName;
 	private Long riskId;
@@ -74,6 +76,8 @@ public class Options extends FSActionSupport {
 	private Boolean selected;
 	private String asmtTypes;
 	private CustomType resultType;
+	private List<Status> statuses;
+	
 
 	@Action(value = "Options")
 	public String execute() {
@@ -89,6 +93,7 @@ public class Options extends FSActionSupport {
 		campaigns = (List<Campaign>) em.createQuery("from Campaign").getResultList();
 		EMS = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst().orElse(null);
 		custom = (List<CustomType>) em.createQuery("from CustomType where deleted = false or deleted IS NULL").getResultList();
+		statuses = em.createQuery("from Status").getResultList();
 		if (EMS != null) {
 			if(EMS.getServer() == null || EMS.getServer().equals("")) {
 				EMS.initSMTPSettings();
@@ -661,28 +666,12 @@ public class Options extends FSActionSupport {
 			this._message = "Status is Empty";
 			return this.ERRORJSON;
 		}
-		SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
-				.orElse(null);
-		if (ems == null) {
-			this._message = "No System Settings to update";
-			return this.SUCCESSJSON;
-		}
-
-		if (ems.getStatus().stream().anyMatch(s -> s.toLowerCase().equals(this.status.toLowerCase().trim()))) {
-			this._message = "Status Exists";
-			return this.ERRORJSON;
-		} else {
-			List<String> stats = ems.getStatus();
-			stats.add(this.status);
-			stats.sort(String.CASE_INSENSITIVE_ORDER);
-			ems.setStatus(stats);
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(ems);
-			AuditLog.audit(this, "User Added Status [" + this.status + "]", AuditLog.UserAction, null, null, false);
-			HibHelper.getInstance().commit();
-			return this.SUCCESSJSON;
-		}
+		Status s = new Status(this.status);
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		em.persist(s);
+		HibHelper.getInstance().commit();
+		return this.SUCCESSJSON;
 
 	}
 
@@ -693,30 +682,50 @@ public class Options extends FSActionSupport {
 		}
 		if (!this.testToken(false))
 			return this.ERRORJSON;
-		if (status == null || status.trim().equals("")) {
-			this._message = "Status is Empty";
-			return this.ERRORJSON;
-		}
-		SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
-				.orElse(null);
-		if (ems == null) {
-			this._message = "No System Settings to update";
-			return this.SUCCESSJSON;
-		}
-
-		if (ems.getStatus().stream().anyMatch(s -> s.equals(this.status.trim()))) {
-
-			List<String> stats = ems.getStatus();
-			stats.remove(this.status.trim());
-			stats.sort(String.CASE_INSENSITIVE_ORDER);
-			ems.setStatus(stats);
-			if (ems.getDefaultStatus().equals(this.status.trim()))
-				ems.setDefaultStatus("");
-
+		if(this.statusId != null) {
+			Status s = em.find(Status.class, this.statusId);
+			if(s.getBuiltin()) {
+				this._message = "Invalid Id";
+				return this.ERRORJSON;
+			}
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
-			em.persist(ems);
-			AuditLog.audit(this, "User Deleted Status [" + this.status + "]", AuditLog.UserAction, null, null, false);
+			em.remove(s);
+			AuditLog.audit(this, "User Deleted Status [" + this.statusId + "]", AuditLog.UserAction, null, null, false);
+			HibHelper.getInstance().commit();
+			return this.SUCCESSJSON;
+		} else {
+			this._message = "Status Does not Exist";
+			return this.ERRORJSON;
+		}
+
+	}
+	@Action("updateStatus")
+	public String updateStatus() {
+		if (!(this.isAcadmin())) {
+			return LOGIN;
+		}
+		if (!this.testToken(false))
+			return this.ERRORJSON;
+		if(this.statusId != null) {
+			Status s = em.find(Status.class, this.statusId);
+			if(s.getBuiltin()) {
+				this._message = "Invalid Id";
+				return this.ERRORJSON;
+			}
+			List<Status> exists = em.createQuery("from Status where name = :name")
+				.setParameter("name", this.status)
+				.getResultList();
+			
+			if(!exists.stream().anyMatch(z -> z.getId().equals(s.getId()))) {
+				this._message = "Name Exists";
+				return this.ERRORJSON;
+			}
+			s.setName(this.status);
+			HibHelper.getInstance().preJoin();
+			em.joinTransaction();
+			em.persist(s);
+			AuditLog.audit(this, "User Updated Status [" + this.statusId + "]", AuditLog.UserAction, null, null, false);
 			HibHelper.getInstance().commit();
 			return this.SUCCESSJSON;
 		} else {
@@ -726,39 +735,6 @@ public class Options extends FSActionSupport {
 
 	}
 
-	@Action("setDefaultStatus")
-	public String setDefaultStatus() {
-		if (!(this.isAcadmin())) {
-			return LOGIN;
-		}
-		if (!this.testToken(false))
-			return this.ERRORJSON;
-		if (status == null || status.trim().equals("")) {
-			this._message = "Status is Empty";
-			return this.ERRORJSON;
-		}
-		SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
-				.orElse(null);
-		if (ems == null) {
-			this._message = "No System Settings to update";
-			return this.ERRORJSON;
-		}
-
-		if (ems.getStatus().stream().anyMatch(s -> s.toLowerCase().equals(this.status.toLowerCase().trim()))) {
-
-			ems.setDefaultStatus(this.status.trim());
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(ems);
-			AuditLog.audit(this, "User Added Status [" + this.status + "]", AuditLog.UserAction, null, null, false);
-			HibHelper.getInstance().commit();
-			return this.SUCCESSJSON;
-		} else {
-			this._message = "This Status Does not Exist";
-			return this.ERRORJSON;
-		}
-
-	}
 
 	public String getActiveOptions() {
 		return "active";
@@ -1071,6 +1047,14 @@ public class Options extends FSActionSupport {
 	public CustomType getResultType() {
 		return this.resultType;
 	}
+	public List<Status> getStatuses(){
+		return this.statuses;
+	}
+	public void setStatusId(Long statusId) {
+		this.statusId = statusId;
+	}
+		
+	
 	
 
 }

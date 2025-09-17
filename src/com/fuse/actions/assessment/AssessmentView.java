@@ -91,6 +91,7 @@ public class AssessmentView extends FSActionSupport {
 	private String vendor="";
 	private String calendarLink="";
 	private List<Status> statuses = new ArrayList<>();
+	private Long status;
 	
 
 	@Action(value = "Assessment", 
@@ -208,6 +209,10 @@ public class AssessmentView extends FSActionSupport {
 				assessment.setRiskAnalysis(this.riskAnalysis);
 			if (this.summary != null)
 				assessment.setSummary(this.summary);
+			if (this.status != null) {
+				Status s = em.find(Status.class, this.status);
+				this.assessment.setStatus(s.getName());
+			}
 			AssessmentQueries.saveAssessment(this, em, assessment, "Assessment Summaries have been updated");
 
 			return this.SUCCESSJSON;
@@ -676,6 +681,7 @@ public class AssessmentView extends FSActionSupport {
 		}
 		AssessmentQueries.removeImages(assessment);
 		assessment.setCompleted(new Date());
+		assessment.setStatus("Complete");
 		assessment.setFinalized();
 		List<Vulnerability> vulns = assessment.getVulns();
 		for (Vulnerability v : vulns) {
@@ -929,6 +935,10 @@ public class AssessmentView extends FSActionSupport {
 	
 	public List<Status> getStatuses(){
 		return this.statuses;
+	}
+	
+	public void setStatus(Long status) {
+		this.status = status;
 	}
 	
 	

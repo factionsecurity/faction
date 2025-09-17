@@ -29,6 +29,9 @@ public class Status {
 	public Long getId() {
 		return this.id;
 	}
+	public void setName(String name) {
+		this.name = name;
+	}
 	public String getName() {
 		return this.name;
 	}

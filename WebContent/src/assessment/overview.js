@@ -129,14 +129,20 @@ function saveAllEditors(showLoadingScreen = false) {
 
 function saveEditor(type) {
 
-	let edits = editors.getEditorText(type);
+	let edits = "";
+	if(type == "status"){
+		edits = $("#status").val();
+	}else{
+		edits = editors.getEditorText(type);
+	}
 	let name = "";
 	let data = "";
 	if (type == "risk") {
 		data += "riskAnalysis=" + encodeURIComponent(edits);
-	}
-	else if (type == "summary") {
+	}else if (type == "summary") {
 		data += "summary=" + encodeURIComponent(edits);
+	}else if(type =="status"){
+		data += "status=" + encodeURIComponent(edits);
 	}
 	data += "&id=app" + $("#appid")[0].value
 	data += "&update=true";
@@ -170,6 +176,7 @@ function queueSave(type) {
 
 }
 
+
 $(function() {
 
 	global._token = $("#_token")[0].value;
@@ -183,6 +190,12 @@ $(function() {
 			queueSave("risk");
 		}
 	});
+	$("#status").on('input', function(event){
+		if (document.getElementById(`status_header`).innerHTML == "") {
+			queueSave("status");
+		}
+		
+	})
 	let initialNotes = editors.entityDecode($("#engagementnotes").html());
 	editors.createReadOnly("engagementnotes", initialNotes);
 	let errorMessageShown=false;
