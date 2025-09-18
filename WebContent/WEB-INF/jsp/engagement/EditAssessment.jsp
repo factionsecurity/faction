@@ -124,7 +124,12 @@
        let campName="<s:property value="currentAssessment.campaign.id"/>";
        let teamName="<s:property value="currentAssessment.assessor[0].team.id"/>";
        let assType="<s:property value="currentAssessment.type.id"/>";
-       let statName="<s:property value="currentAssessment.status"/>";
+       <s:if test="currentAssessment.realStatus == null">
+       	let statusSelectName="Automatic";
+	   </s:if>
+	   <s:else>
+       	let statusSelectName="<s:property value="currentAssessment.status"/>";
+       	</s:else>
        let aid="<s:property value="aid"/>";
 	   let initialPreviewDownloadUrl = 'GetEngFile?name={key}';
 	   let customFields = []

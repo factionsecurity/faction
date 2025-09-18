@@ -174,7 +174,17 @@ $(function() {
 	if(remName != '') $("#remName").val(remName).trigger("change");
 	if(campName != '') $("#campName").val(campName).trigger("change");
 	if(assType != '') $("#assType").val(assType).trigger("change");
-	if(statName != '') $("#statName").val(statName).trigger("change");
+	if(statusSelectName != ''){
+		let selectedValue = $(`select option:contains("${statusSelectName}")`).val()
+		if(typeof selectedValue != 'undefiend'){
+			$("#statusSelect").val(selectedValue).trigger("change");
+		}else{
+			$("#statusSelect").append($('<option>', {
+			    value: '-2',
+			    text: statusSelectName
+			}));
+		}
+	}
 	getAssessors();
 	if (finalized) {
 		readonly_select($(".select2"), true);
@@ -429,7 +439,10 @@ function confirmAndPostIt(messages, index, size) {
 						data += "&remId=" + $("#remName").val();
 						data += "&engId=" + $("#engName").val();
 						data += "&type=" + $("#assType").val();
-						data += "&statusName=" + $("#statName").val();
+						const statusId = $("#statusSelect").val();
+						if(statusId != -1){
+							data += "&statusId=" + $("#statusSelect").val();
+						}
 						let value3 = $("#assessorListSelect option");
 
 						index = 0;
@@ -564,7 +577,9 @@ $(function() {
 				   "assessorId": $("#search_assessorid").val(),
 				   "engId": $("#search_engagementid").val(),
 				   "appName": $("#search_appname").val(),
-				   "statusName": $("#statusSearch").val(),
+				   "statusId": $("#statusSearch").val(),
+				   "sdate": $("#search_start").val(),
+				   "edate": $("#search_end").val(),
 				   "action": "search",
 				   "max": 10
 				 } );
@@ -637,6 +652,7 @@ $(function() {
 			$("#assType").val(json.type).trigger("change");
 			$("#engName").val(json.engId).trigger("change");
 			$("#remName").val(json.remediationId).trigger("change");
+			$("#statusSelect").val("-1").trigger("change");
 			$("[id^=cust]").val("");
 			$("[id^=rtCust]").val("");
 			setTimeout( () => {

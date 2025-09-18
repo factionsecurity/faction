@@ -28,6 +28,7 @@ import com.fuse.dao.CustomType;
 import com.fuse.dao.Files;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Permissions;
+import com.fuse.dao.Status;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
@@ -69,6 +70,8 @@ public class EditAssessment extends FSActionSupport {
 	private List<AuditLog> logs;
 	private String updatedText = "";
 	private String back;
+	private List<Status> statuses;
+	private Long statusId;
 
 	@Action(value = "EditAssessment")
 	public String execute() throws ParseException {
@@ -86,6 +89,7 @@ public class EditAssessment extends FSActionSupport {
 			assessmentTypes = em.createQuery("from AssessmentType").getResultList();
 			assessors = em.createQuery("from User").getResultList();
 			campaigns = em.createQuery("from Campaign").getResultList();
+			statuses = em.createQuery("from Status").getResultList();
 			List<User> tmp = new ArrayList(assessors);
 			for (User u : tmp) {
 				if (u.getPermissions() != null && !u.getPermissions().isAssessor())
@@ -104,6 +108,7 @@ public class EditAssessment extends FSActionSupport {
 
 		if (action != null && action.equals("get")) {
 			currentAssessment = AssessmentQueries.getAssessment(em, user, (long) this.aid);
+			
 			files = (List<Files>) em.createQuery("from Files where entityId = :id").setParameter("id", (long) this.aid)
 					.getResultList();
 			assessors = currentAssessment.getAssessor();
@@ -169,6 +174,10 @@ public class EditAssessment extends FSActionSupport {
 				if (campId != null && campId != -1) {
 					camp = em.find(Campaign.class, campId);
 				}
+				Status status = null;
+				if(statusId != null) {
+					status = em.find(Status.class, statusId);
+				}
 				Assessment am = em.find(Assessment.class, (long) this.aid);
 
 				if (am == null) {
@@ -186,6 +195,13 @@ public class EditAssessment extends FSActionSupport {
 				}
 				am.setAppId(this.appid);
 				am.setName(this.appName);
+				if(status!= null) {
+					am.setStatus(status.getName());
+				}else if(statusId != null && !statusId.equals(-2l)) { //-2 means we had a deleted status and we kept it on update
+					am.setStatus(null);
+				}else if(statusId == null) {
+					am.setStatus(null);
+				}
 
 				// If assessment is finalized this info is locked
 				if (!am.isFinalized()) {
@@ -608,6 +624,16 @@ public class EditAssessment extends FSActionSupport {
 
 	public String getUpdatedText() {
 		return this.updatedText;
+	}
+	
+	public List<Status> getStatuses(){
+		return this.statuses;
+	}
+	public void setStatusId(Long statusId) {
+		this.statusId = statusId;
+	}
+	public Long getStatusId() {
+		return this.statusId;
 	}
 
 }

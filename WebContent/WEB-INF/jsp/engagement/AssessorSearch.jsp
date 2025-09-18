@@ -70,6 +70,12 @@ div[id^='rtCust']{
 	            </s:if>
 	        </s:iterator>
 		 </bs:select>
+		<bs:select name="Status:" colsize="4" id="statusSelect">
+				 <option value="-1">Automatic</option>
+				 <s:iterator value="statuses">
+						  <option value="<s:property value="id"/>"><s:property value="name"/></option>
+				</s:iterator>
+		</bs:select>
 	  </bs:row><!--  End of Top Row -->
 	  <bs:row>
 	  <bs:mco colsize="12">

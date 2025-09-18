@@ -109,7 +109,7 @@ label{
 	let customFields = []
 	let sDate= moment(new Date).format("MM-DD-YYYY")
 	let eDate= moment(new Date).format("MM-DD-YYYY")
-	let statName = "${defaultStatus}"
+	let statusSelect = "-1"
 	let engName = ''
 	let remName = ''
 	let campName =''

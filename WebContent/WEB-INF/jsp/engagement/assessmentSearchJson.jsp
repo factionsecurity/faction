@@ -12,7 +12,7 @@ boolean first =true;
  	 <% if(first){first=false;}else{ %> , <% } %>
 	 ["<s:property value="appId" />", 
 	 "<s:property value="name"/>", 
-     "<s:if test="completed==null">Open</s:if><s:else>Completed</s:else>",
+	 "<s:property value="status"/>", 
 	 "<s:iterator value="assessor"><s:property value="fname" /> <s:property value="lname" />; </s:iterator>",
 	 "<s:property value="type.type"/>", 
 	 "<s:property value="campaign.name"/>", 

@@ -1,4 +1,5 @@
 package com.fuse.actions.scheduling;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
@@ -36,6 +37,7 @@ import com.fuse.dao.HibHelper;
 import com.fuse.dao.Note;
 import com.fuse.dao.OOO;
 import com.fuse.dao.PeerReview;
+import com.fuse.dao.Status;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
@@ -91,6 +93,8 @@ public class Engagement  extends FSActionSupport{
 	private String defaultRating;
 	private String back;
 	private List<Object> order;
+	private Long statusId;
+	private List<Status> statuses;
 	
 
 	
@@ -108,6 +112,7 @@ public class Engagement  extends FSActionSupport{
 		teams = em.createQuery("from Teams").getResultList();
 		assessmentTypes = em.createQuery("from AssessmentType").getResultList();
 		campaigns = em.createQuery("from Campaign").getResultList();
+		statuses = em.createQuery("from Status").getResultList();
 		SystemSettings ss = (SystemSettings)em.createQuery("from SystemSettings").getResultList().stream().findFirst().orElse(null);
 		if(ss.getEnableRandAppId() != null)
 			this.randId = ss.getEnableRandAppId();
@@ -323,6 +328,7 @@ public class Engagement  extends FSActionSupport{
 			String comma = "";
 			boolean first=true;
 			String mongoQuery = "{ ";
+			String statusName="";
 			if(appName != null && !appName.equals("") && !appName.equals("-1")){
 				if (first )
 					first = false;
@@ -357,17 +363,67 @@ public class Engagement  extends FSActionSupport{
 					first = false;
 				mongoQuery += comma + " 'appId' : '" + this.appid + "' ";
 			}
-			if(statusName != null && !statusName.equals("")) {
+			if(sdate != null && !sdate.equals("") && edate != null && !edate.equals("")) {
 				if( !first ){
 					comma = ",";
 				}else
 					first = false;
-				if(statusName.equals("Open")) {
-					mongoQuery += comma + " 'completed' : { '$exists': false } ";
-					
-				}else if(statusName.equals("Completed")) {
-					mongoQuery += comma + " 'completed' : { '$exists': true } ";
-					
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ssZ");
+				mongoQuery += comma + " 'start': { '$gte': ISODate('"+sdf.format(sdate)+"'), '$lte': ISODate('"+sdf.format(edate)+"')} ";
+				
+			}
+			if(statusId != null) {
+				Status status = em.find(Status.class, this.statusId);
+				statusName = status.getName();
+				if( !first ){
+					comma = ",";
+				}else
+					first = false;
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ssZ");
+				String now = sdf.format(new Date());
+				if( statusName.equals("Scheduled")) {
+					mongoQuery += comma + " '$or': ["
+							+ " { '$and': ["
+								+ " { 'start': { '$gte': ISODate('"+now +"')} },"
+								+ " { 'status': { '$exists': false } }"
+								+ "]"
+							+ "}, "
+							+ " { 'status' : '"+statusName+"' } "
+							+ "]";
+				}
+				else if( statusName.equals("In Progress")) {
+					mongoQuery += comma + " '$or': ["
+							+ " { '$and': ["
+								+ " { 'start': { '$lte': ISODate('"+now +"')} },"
+								+ " { 'end': { '$gte': ISODate('"+now +"')} },"
+								+ " { 'status': { '$exists': false } }"
+								+ "]"
+							+ "}, "
+							+ " { 'status' : '"+statusName+"' } "
+							+ "]";
+				}
+				else if( statusName.equals("Past Due")) {
+					mongoQuery += comma + " '$or': ["
+							+ " { '$and': ["
+								+ " { 'end': { '$lte': ISODate('"+now +"')} },"
+								+ " { 'status': { '$exists': false } }"
+								+ "]"
+							+ "}, "
+							+ " { 'status' : '"+statusName+"' } "
+							+ "]";
+				}
+				else if( statusName.equals("Completed")) {
+					mongoQuery += comma + " '$or': ["
+							+ " { '$and': ["
+								+ " { 'completed': { '$exists': true } },"
+								+ " { 'status': { '$exists': false } }"
+								+ "]"
+							+ "}, "
+							+ " { 'status' : '"+statusName+"' } "
+							+ "]";
+				}
+				else {
+					mongoQuery += comma + " 'status': '" + statusName +"' ";
 				}
 				
 			}
@@ -376,7 +432,6 @@ public class Engagement  extends FSActionSupport{
 			
 			String colNum = request.getParameter("order[0][column]");
 			mongoQuery += " }";
-			//EntityManager em = HibHelper.getEM();
 			String CountQuery = "db.Assessment.count(" + mongoQuery + ")";
 			this.count = ((Long)em.createNativeQuery(CountQuery).getSingleResult()).intValue();
 			String sortedQuery = "db.Assessment.find({ '$query' :" + mongoQuery + ", "
@@ -739,5 +794,13 @@ public class Engagement  extends FSActionSupport{
 	public void setStatusName(String statusName) {
 		this.statusName = statusName;
 	}
+	public void setStatusId(Long statusId) {
+		this.statusId = statusId;
+	}
+	
+	public List<Status> getStatuses(){
+		return this.statuses;
+	}
+	
 
 }

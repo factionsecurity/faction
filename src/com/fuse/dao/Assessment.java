@@ -378,6 +378,10 @@ public class Assessment {
 		
 		return statusName;
 	}
+	@Transient
+	public String getRealStatus() {
+		return this.status;
+	}
 
 	public void setStatus(String status) {
 		this.status = status;
