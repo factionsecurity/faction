@@ -11,12 +11,13 @@ ___Faction is now an OWASP Project! You can find more information [here](https:/
 
 ## Sponsors
 ### Premium Sponsors 
+
 <table style="background:white">
  <tr>
- <td>
+ <td align="center">
  <a href="https://www.otto-js.com"><img style="width:100px; margin-right:30%; margin-left: 30%" src="https://www.otto-js.com/assets/otto-blue-logo.jpg"/></a><br/><a href="https://www.otto-js.com">otto-js - PCI and Client Side Security</a> 
  </td>
- <td>
+ <td align="center">
  <a href="https://secninjaz.com/">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="backers/white-horizontal.svg">
