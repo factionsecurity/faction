@@ -204,7 +204,7 @@ public class vulnerabilities {
 			this.cvss31String = cvss31String;
 		}
 		public String getCvss40Score() {
-			return cvss31Score;
+			return cvss40Score;
 		}
 
 		public void setCvss40Score(String cvss40Score) {
@@ -228,6 +228,14 @@ public class vulnerabilities {
 			return null;
 		}
 		
+	}
+
+	private boolean isSeverityValid(Integer severity) {
+		if (severity == null)
+			return false;
+		if (severity >= 0 && severity <= 9)
+			return true;
+		return false;
 	}
 	
 	///uses Reflection to create a JSON object out of a class
@@ -439,6 +447,9 @@ public class vulnerabilities {
 						if(catId == null && catName == null) {
 							return Response.status(400).entity(String.format(this.ERROR,"Must Specifiy a Category Id or Category Name on line " + index)).build();
 						}
+						if(!isSeverityValid(sevId) && cvss31Score == null && cvss40Score == null) {
+							return Response.status(400).entity(String.format(this.ERROR,"At least one between Severity, CVSS3.1 score and CVSS4.0 score must be specified")).build();
+						}
 						DefaultVulnerability dv = new DefaultVulnerability();
 						if(id != null) {
 							dv = em.find(DefaultVulnerability.class, id);
@@ -446,7 +457,7 @@ public class vulnerabilities {
 						dv.setName(name);
 						dv.setDescription(description);
 						dv.setRecommendation(recommendation);
-						dv.setOverall(sevId);
+						dv.setOverall(sevId == null ? -1 : sevId);
 						dv.setLikelyhood(likelihoodId);
 						dv.setImpact(impactId);
 						dv.setActive(active);
@@ -534,6 +545,9 @@ public class vulnerabilities {
 						if(gv.getCategoryId() == null && (gv.getCategoryName() == null || gv.getCategoryName().trim().equals("")) ) {
 							return Response.status(400).entity(String.format(this.ERROR,"Must Specifiy a Category Id or Category Name")).build();
 						}
+						if(!isSeverityValid(gv.getSeverityId()) && gv.getCvss31Score() == "" && gv.getCvss40Score() == "") {
+							return Response.status(400).entity(String.format(this.ERROR,"At least one between Severity, CVSS3.1 score and CVSS4.0 score must be specified")).build();
+						}
 						DefaultVulnerability newVuln = new DefaultVulnerability();
 						if(gv.getId() != null) {
 							newVuln = em.find(DefaultVulnerability.class, gv.getId());
@@ -545,7 +559,7 @@ public class vulnerabilities {
 						String recommendation = FSUtils.convertFromMarkDown(gv.getRecommendation());
 						recommendation = FSUtils.sanitizeHTML(recommendation);
 						newVuln.setRecommendation(recommendation);
-						newVuln.setOverall(gv.getSeverityId());
+						newVuln.setOverall(gv.getSeverityId() == null ? -1 : gv.getSeverityId());
 						newVuln.setLikelyhood(gv.getLikelihoodId());
 						newVuln.setImpact(gv.getImpactId());
 						newVuln.setActive(gv.getActive());
