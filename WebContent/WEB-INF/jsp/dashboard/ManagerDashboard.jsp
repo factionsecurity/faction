@@ -7,6 +7,10 @@
 <jsp:include page="../header.jsp" />
 <script src="../dist/js/manager_dashboard.js"></script>
 <style>
+.circle {
+	border-radius: 50%;
+	padding:3px;
+}
 /* Modern Stats Card Design */
 .stats-card {
     background: #192338;
@@ -440,13 +444,17 @@
                 <div class="form-group">
                   <label>Status:</label>
                   <s:select name="status"
-                    list="#{'All':'-- All Statuses --', 'Open':'Open', 'In Progress':'In Progress', 'Completed':'Completed', 'Cancelled':'Cancelled'}"
+                    list="statuses"
+                    listKey="name"
+                    listValue="name"
+                    headerKey="0"
+                    headerValue="-- All Statuses --"
                     cssClass="form-control"/>
                 </div>
               </bs:mco>
             </bs:row>
             <bs:row>
-              <bs:mco colsize="3" offset="9">
+              <bs:mco colsize="3">
                 <div class="form-group">
                   <button type="submit" class="btn btn-primary form-control">
                     <i class="glyphicon glyphicon-search"></i> Search
@@ -556,7 +564,7 @@ function updateColors() {
    
     severityOrder.forEach(function(severity, index) {
         if (index < colors.length) {
-            severityColors[severity.name] = colors[9-index];
+            severityColors[severity.name] = colors[index];
         }
     });
     

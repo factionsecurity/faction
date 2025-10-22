@@ -21,9 +21,11 @@ import com.fuse.dao.Assessment;
 import com.fuse.dao.AssessmentType;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.RiskLevel;
+import com.fuse.dao.Status;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
+import java.util.stream.Collectors;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/dashboard/ManagerDashboard.jsp")
@@ -47,6 +49,7 @@ public class ManagerDashboard extends FSActionSupport {
     private List<AssessmentType> assessmentTypes;
     private List<Teams> teams;
     private List<RiskLevel> riskLevels;
+    private List<Status> statuses;
     
     // Statistics data
     private int weeklyAssessments;
@@ -87,7 +90,8 @@ public class ManagerDashboard extends FSActionSupport {
     private void loadDropdownData() {
         assessmentTypes = em.createQuery("from AssessmentType order by type").getResultList();
         teams = em.createQuery("from Teams order by TeamName").getResultList();
-        riskLevels = em.createQuery("from RiskLevel order by riskId").getResultList();
+        riskLevels = em.createQuery("from RiskLevel order by riskId desc").getResultList();
+        statuses = em.createQuery("from Status order by name").getResultList();
     }
 
     private void calculateAssessmentStatistics() {
@@ -284,46 +288,61 @@ public class ManagerDashboard extends FSActionSupport {
         // Build assessment type condition
         if (typeId != null && typeId > 0) {
             if (hasConditions) query.append(", ");
-            // Convert typeId to hex string for MongoDB ObjectId
-            String hexId = String.format("%024x", typeId);
-            query.append("\"type.$id\": ObjectId(\"").append(hexId).append("\")");
+            query.append("\"type_id\": ").append(typeId);
             hasConditions = true;
         }
         
         // Build team condition - need to check if any assessor belongs to the team
         if (teamId != null && teamId > 0) {
-            // First, get all users in the team
-            List<User> teamUsers = em.createQuery("from User where team.id = :teamId")
-                .setParameter("teamId", teamId)
-                .getResultList();
+            // First, get the team entity
+            Teams team = em.find(Teams.class, teamId);
             
-            if (!teamUsers.isEmpty()) {
-                if (hasConditions) query.append(", ");
-                query.append("\"assessor.$id\": {$in: [");
-                boolean first = true;
-                for (User user : teamUsers) {
-                    if (!first) query.append(", ");
-                    // Convert user ID to hex string for MongoDB ObjectId
-                    String userHexId = String.format("%024x", user.getId());
-                    query.append("ObjectId(\"").append(userHexId).append("\")");
-                    first = false;
+            if (team != null) {
+                // Use a native MongoDB query to find users with this team
+                String userQuery = "{\"team_id\": " + teamId + "}";
+                List<User> teamUsers = em.createNativeQuery(userQuery, User.class).getResultList();
+                
+                if (!teamUsers.isEmpty()) {
+                    if (hasConditions) query.append(", ");
+                    query.append("\"assessor\": {$in: [");
+                    boolean first = true;
+                    for (User user : teamUsers) {
+                        if (!first) query.append(", ");
+                        query.append(user.getId());
+                        first = false;
+                    }
+                    query.append("]}");
+                    hasConditions = true;
                 }
-                query.append("]}");
-                hasConditions = true;
             }
         }
-        
+       /* 
         // Build status condition
-        if (status != null && !status.isEmpty() && !status.equals("All")) {
+        if (status != null && !status.isEmpty() && !status.equals("0")) {
             if (hasConditions) query.append(", ");
-            query.append("\"status\": \"").append(status).append("\"");
-            hasConditions = true;
-        }
+            // Find the status name by ID
+            for (Status s : statuses) {
+                if (s.getId().toString().equals(status)) {
+                    query.append("\"status\": \"").append(s.getName()).append("\"");
+                    hasConditions = true;
+                    break;
+                }
+            }
+        }*/
         
         query.append("}");
-        
         // Execute the native MongoDB query
-        searchResults = em.createNativeQuery(query.toString(), Assessment.class).getResultList();
+        List<Assessment> mongoResults = em.createNativeQuery(query.toString(), Assessment.class).getResultList();
+        
+        // Filter Results based on status
+        if (status != null && !status.isEmpty() && !status.equals("0")) {
+            searchResults = mongoResults.stream()
+                    .filter(a -> status.equals(a.getStatus()))
+                    .collect(Collectors.toList());
+        }else {
+            searchResults = mongoResults;
+        }
+        	
         
         // Sort by start date descending (MongoDB doesn't guarantee order)
         Collections.sort(searchResults, new Comparator<Assessment>() {
@@ -506,19 +525,28 @@ public class ManagerDashboard extends FSActionSupport {
         this.status = status;
     }
     
+    public List<Status> getStatuses() {
+        return statuses;
+    }
+
+    public void setStatuses(List<Status> statuses) {
+        this.statuses = statuses;
+    }
+    
     public List<String> getColors() {
         // Colors ordered from highest severity to lowest
         // Critical/Highest = Red shades, Medium = Orange/Yellow, Low = Green/Blue
         return Arrays.asList(
             "#dd4b39",  // Red (Critical/Highest)
             "#f39c12",  // Orange (High)
-            "#f0ad4e",  // Orange-Yellow (Medium-High)
-            "#f7c244",  // Yellow (Medium)
-            "#5bc0de",  // Light Blue (Medium-Low)
-            "#00c0ef",  // Cyan (Low)
-            "#00a65a",  // Green (Low)
-            "#39cccc",  // Teal (Info)
-            "#95A5A6"   // Gray (Minimal/Info)
+            "#00c0ef",  // Orange-Yellow (Medium-High)
+            "#39cccc",  // Yellow (Medium)
+            "#00a65a",  // Light Blue (Medium-Low)
+            "#95A5A6",  // Cyan (Low)
+            "#34495E",  // Green (Low)
+            "#2C3E50",  // Teal (Info)
+            "#9B59B6",   // Gray (Minimal/Info)
+            "#8E44AD"
         );
     }
     

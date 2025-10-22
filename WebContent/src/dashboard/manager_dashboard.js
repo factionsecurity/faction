@@ -4,9 +4,13 @@ import 'datatables.net-bs';
 import 'bootstrap';
 import 'jquery-ui';
 import 'jquery-confirm';
+import moment from 'moment';
 import 'daterangepicker';
-import 'moment';
+import 'daterangepicker/daterangepicker.css';
 import Chart from 'chart.js/auto';
+
+// Make moment available globally for daterangepicker
+window.moment = moment;
 
 $(function() {
     // Initialize DataTables
