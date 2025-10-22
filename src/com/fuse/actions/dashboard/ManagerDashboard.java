@@ -25,6 +25,7 @@ import com.fuse.dao.Status;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
+import com.fuse.dao.Campaign;
 import java.util.stream.Collectors;
 
 @Namespace("/portal")
@@ -37,12 +38,25 @@ public class ManagerDashboard extends FSActionSupport {
     private List<Assessment> searchResults = new ArrayList<>();
     private List<Vulnerability> recentVulnerabilities = new ArrayList<>();
     
+    // Filtered data statistics
+    private Map<String, Integer> filteredSeverityStats = new LinkedHashMap<>();
+    private Map<String, Integer> filteredStatusStats = new LinkedHashMap<>();
+    private Map<String, Integer> filteredAssessorStats = new LinkedHashMap<>();
+    private Map<String, String> severityColorMap = new LinkedHashMap<>();
+    
+    // Totals for filtered stats
+    private int totalFilteredVulns = 0;
+    private int totalFilteredAssessments = 0;
+    private int totalCompletedAssessments = 0;
+    
     // Search parameters
     private Date startDate;
     private Date endDate;
     private Long typeId;
     private Long teamId;
     private String status;
+    private Long assessorId;
+    private String campaign;
     private String searchAction = "";
     
     // Lists for dropdowns
@@ -50,6 +64,8 @@ public class ManagerDashboard extends FSActionSupport {
     private List<Teams> teams;
     private List<RiskLevel> riskLevels;
     private List<Status> statuses;
+    private List<User> assessors;
+    private List<Campaign> campaigns;
     
     // Statistics data
     private int weeklyAssessments;
@@ -76,13 +92,11 @@ public class ManagerDashboard extends FSActionSupport {
         calculateAssessmentStatistics();
         calculateVulnerabilityStatistics();
         
-        // Load recent vulnerabilities
-        loadRecentVulnerabilities();
+        // Always load assessments (search or default view)
+        performAssessmentSearch();
         
-        // If search action, perform search
-        if ("search".equals(searchAction)) {
-            performAssessmentSearch();
-        }
+        // Calculate statistics for filtered data
+        calculateFilteredStatistics();
 
         return SUCCESS;
     }
@@ -92,6 +106,14 @@ public class ManagerDashboard extends FSActionSupport {
         teams = em.createQuery("from Teams order by TeamName").getResultList();
         riskLevels = em.createQuery("from RiskLevel order by riskId desc").getResultList();
         statuses = em.createQuery("from Status order by name").getResultList();
+        // Get all users with assessor permission
+        assessors = em.createQuery("from User order by lname, fname", User.class)
+                .getResultList()
+                .stream()
+                .filter(a -> a.getPermissions() != null && a.getPermissions().isAssessor())
+                .collect(Collectors.toList());
+        // Get all campaigns
+        campaigns = em.createQuery("from Campaign order by name").getResultList();
     }
 
     private void calculateAssessmentStatistics() {
@@ -260,20 +282,117 @@ public class ManagerDashboard extends FSActionSupport {
         return "Unassigned";
     }
 
-    private void loadRecentVulnerabilities() {
-        // Load recent vulnerabilities sorted by creation date
-        recentVulnerabilities = em.createQuery(
-            "from Vulnerability order by created desc")
-            .setMaxResults(100)
-            .getResultList();
+    // Remove loadRecentVulnerabilities method - no longer needed
+    
+    private void calculateFilteredStatistics() {
+        // Initialize maps
+        filteredSeverityStats.clear();
+        filteredStatusStats.clear();
+        filteredAssessorStats.clear();
+        severityColorMap.clear();
         
-        // Update risk levels for display
-        for (Vulnerability vuln : recentVulnerabilities) {
-            vuln.setLevels(riskLevels);
+        // Initialize severity stats with risk levels and build color map
+        List<String> colors = getColors();
+        int colorIndex = 0;
+        for (RiskLevel level : riskLevels) {
+            if (level.getRisk() != null && !level.getRisk().trim().isEmpty()) {
+                filteredSeverityStats.put(level.getRisk(), 0);
+                // Map severity to color (highest severity gets first color)
+                if (colorIndex < colors.size()) {
+                    severityColorMap.put(level.getRisk(), colors.get(colorIndex));
+                    colorIndex++;
+                }
+            }
         }
+        
+        // Initialize status stats
+        for (Status s : statuses) {
+            filteredStatusStats.put(s.getName(), 0);
+        }
+        
+        // Process each assessment in search results
+        for (Assessment assessment : searchResults) {
+            // Count by status
+            String status = assessment.getStatus();
+            if (status != null) {
+                filteredStatusStats.put(status, filteredStatusStats.getOrDefault(status, 0) + 1);
+            }
+            
+            // For completed assessments, count by assessor
+            if ("Completed".equals(status) && assessment.getAssessor() != null) {
+                for (User assessor : assessment.getAssessor()) {
+                    String assessorName = assessor.getFname() + " " + assessor.getLname();
+                    filteredAssessorStats.put(assessorName,
+                        filteredAssessorStats.getOrDefault(assessorName, 0) + 1);
+                }
+            }
+            
+            // Get vulnerabilities for this assessment
+            List<Vulnerability> vulns = em.createQuery(
+                "from Vulnerability where assessmentId = :aid", Vulnerability.class)
+                .setParameter("aid", assessment.getId())
+                .getResultList();
+            
+            // Count vulnerabilities by severity
+            for (Vulnerability vuln : vulns) {
+                if (vuln.getOverall() != null) {
+                    String severityName = getRiskLevelName(vuln.getOverall());
+                    if (severityName != null && !severityName.equals("Unassigned")) {
+                        filteredSeverityStats.put(severityName,
+                            filteredSeverityStats.getOrDefault(severityName, 0) + 1);
+                    }
+                }
+            }
+        }
+        
+        // Sort assessor stats by count (descending)
+        filteredAssessorStats = filteredAssessorStats.entrySet()
+            .stream()
+            .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+            .collect(Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue,
+                (e1, e2) -> e1,
+                LinkedHashMap::new
+            ));
+        
+        // Calculate totals
+        totalFilteredVulns = filteredSeverityStats.values().stream().mapToInt(Integer::intValue).sum();
+        totalFilteredAssessments = searchResults.size();
+        totalCompletedAssessments = filteredAssessorStats.values().stream().mapToInt(Integer::intValue).sum();
     }
 
     private void performAssessmentSearch() {
+        List<Assessment> results;
+        
+        // If not searching, get current month's assessments
+        if (!"search".equals(searchAction)) {
+            // Get current month date range
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.DAY_OF_MONTH, 1);
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            Date monthStart = cal.getTime();
+            
+            cal.add(Calendar.MONTH, 1);
+            cal.add(Calendar.DAY_OF_MONTH, -1);
+            cal.set(Calendar.HOUR_OF_DAY, 23);
+            cal.set(Calendar.MINUTE, 59);
+            cal.set(Calendar.SECOND, 59);
+            Date monthEnd = cal.getTime();
+            
+            // Query assessments for current month
+            results = em.createQuery("from Assessment where start >= :monthStart and start <= :monthEnd order by start desc", Assessment.class)
+                .setParameter("monthStart", monthStart)
+                .setParameter("monthEnd", monthEnd)
+                .getResultList();
+            searchResults = results;
+            return;
+        }
+        
+        // Build MongoDB query for search mode
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
         StringBuilder query = new StringBuilder("{");
         boolean hasConditions = false;
@@ -316,19 +435,21 @@ public class ManagerDashboard extends FSActionSupport {
                 }
             }
         }
-       /* 
-        // Build status condition
-        if (status != null && !status.isEmpty() && !status.equals("0")) {
-            if (hasConditions) query.append(", ");
-            // Find the status name by ID
-            for (Status s : statuses) {
-                if (s.getId().toString().equals(status)) {
-                    query.append("\"status\": \"").append(s.getName()).append("\"");
-                    hasConditions = true;
-                    break;
-                }
-            }
-        }*/
+            
+		// Build assessor condition
+		if (assessorId != null && assessorId > 0) {
+			if (hasConditions) query.append(", ");
+			query.append("\"assessor\": ").append(assessorId);
+			hasConditions = true;
+		}
+		
+		// Build campaign condition
+		if (campaign != null && !campaign.trim().isEmpty()) {
+			if (hasConditions) query.append(", ");
+			// Use regex for case-insensitive partial match
+			query.append("\"campaign\": {$regex: \"").append(campaign).append("\", $options: \"i\"}");
+			hasConditions = true;
+		}
         
         query.append("}");
         // Execute the native MongoDB query
@@ -336,13 +457,26 @@ public class ManagerDashboard extends FSActionSupport {
         
         // Filter Results based on status
         if (status != null && !status.isEmpty() && !status.equals("0")) {
-            searchResults = mongoResults.stream()
-                    .filter(a -> status.equals(a.getStatus()))
-                    .collect(Collectors.toList());
-        }else {
+            // Find the status name by ID
+            String statusName = null;
+            for (Status s : statuses) {
+                if (s.getId().toString().equals(status)) {
+                    statusName = s.getName();
+                    break;
+                }
+            }
+            
+            if (statusName != null) {
+                final String finalStatusName = statusName;
+                searchResults = mongoResults.stream()
+                        .filter(a -> finalStatusName.equals(a.getStatus()))
+                        .collect(Collectors.toList());
+            } else {
+                searchResults = mongoResults;
+            }
+        } else {
             searchResults = mongoResults;
         }
-        	
         
         // Sort by start date descending (MongoDB doesn't guarantee order)
         Collections.sort(searchResults, new Comparator<Assessment>() {
@@ -548,6 +682,94 @@ public class ManagerDashboard extends FSActionSupport {
             "#9B59B6",   // Gray (Minimal/Info)
             "#8E44AD"
         );
+    }
+    
+    public Map<String, Integer> getFilteredSeverityStats() {
+        return filteredSeverityStats;
+    }
+
+    public void setFilteredSeverityStats(Map<String, Integer> filteredSeverityStats) {
+        this.filteredSeverityStats = filteredSeverityStats;
+    }
+
+    public Map<String, Integer> getFilteredStatusStats() {
+        return filteredStatusStats;
+    }
+
+    public void setFilteredStatusStats(Map<String, Integer> filteredStatusStats) {
+        this.filteredStatusStats = filteredStatusStats;
+    }
+
+    public Map<String, Integer> getFilteredAssessorStats() {
+        return filteredAssessorStats;
+    }
+
+    public void setFilteredAssessorStats(Map<String, Integer> filteredAssessorStats) {
+        this.filteredAssessorStats = filteredAssessorStats;
+    }
+    
+    public Map<String, String> getSeverityColorMap() {
+        return severityColorMap;
+    }
+
+    public void setSeverityColorMap(Map<String, String> severityColorMap) {
+        this.severityColorMap = severityColorMap;
+    }
+
+    public int getTotalFilteredVulns() {
+        return totalFilteredVulns;
+    }
+
+    public void setTotalFilteredVulns(int totalFilteredVulns) {
+        this.totalFilteredVulns = totalFilteredVulns;
+    }
+
+    public int getTotalFilteredAssessments() {
+        return totalFilteredAssessments;
+    }
+
+    public void setTotalFilteredAssessments(int totalFilteredAssessments) {
+        this.totalFilteredAssessments = totalFilteredAssessments;
+    }
+
+    public int getTotalCompletedAssessments() {
+        return totalCompletedAssessments;
+    }
+
+    public void setTotalCompletedAssessments(int totalCompletedAssessments) {
+        this.totalCompletedAssessments = totalCompletedAssessments;
+    }
+
+    public Long getAssessorId() {
+        return assessorId;
+    }
+
+    public void setAssessorId(Long assessorId) {
+        this.assessorId = assessorId;
+    }
+
+    public String getCampaign() {
+        return campaign;
+    }
+
+    public void setCampaign(String campaign) {
+        this.campaign = campaign;
+    }
+
+    public List<User> getAssessors() {
+        return assessors;
+    }
+
+    public void setAssessors(List<User> assessors) {
+        this.assessors = assessors;
+    }
+    
+    public List<Campaign> getCampaigns() {
+        return campaigns;
+    }
+
+    public void setCampaigns(List<Campaign> campaigns) {
+        this.campaigns = campaigns;
     }
     
 }

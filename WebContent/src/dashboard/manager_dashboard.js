@@ -34,24 +34,6 @@ $(function() {
         });
     }
     
-    // Initialize recent vulnerabilities table
-    $('#recentVulns').DataTable({
-        "paging": true,
-        "lengthChange": false,
-        "searching": true,
-        "ordering": true,
-        "info": true,
-        "autoWidth": false,
-        "order": [[0, "desc"]], // Sort by creation date
-        "pageLength": 10,
-        "columnDefs": [
-            {
-                "targets": [0],
-                "type": "date"
-            }
-        ]
-    });
-    
     // Date range picker configuration
     var start = moment().subtract(29, 'days');
     var end = moment();
@@ -155,10 +137,6 @@ function refreshStatistics() {
                     }
                 });
                 
-                // Colors will be reapplied by updateColors function
-                if (typeof updateColors === 'function') {
-                    updateColors();
-                }
             }
         },
         error: function(xhr, status, error) {

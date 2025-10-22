@@ -95,7 +95,6 @@
     background-clip: text;
 }
 .stats-section-header {
-    color: #333;
     font-weight: 600;
     margin-bottom: 25px;
     display: flex;
@@ -103,90 +102,9 @@
 }
 .stats-section-header i {
     margin-right: 10px;
-    color: #666;
-}
-
-/* Severity Distribution Cards */
-.severity-distribution-card {
-    background: #192338;
-    border-radius: 20px;
-    padding: 20px;
-    height: 100%;
-    position: relative;
-    overflow: hidden;
-}
-.severity-distribution-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%);
-    pointer-events: none;
-}
-.severity-period-title {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 16px;
-    font-weight: 600;
-    margin-bottom: 15px;
-    text-align: center;
-}
-.severity-item {
-    margin: 10px 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 15px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    transition: all 0.3s ease;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    position: relative;
-    overflow: hidden;
-}
-.severity-item::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: currentColor;
-    opacity: 0.6;
-}
-.severity-item:hover {
-    transform: translateX(5px);
-    border-color: rgba(255, 255, 255, 0.1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-.severity-label {
-    font-size: 14px;
-    font-weight: 600;
-    text-transform: capitalize;
-    color: rgba(255, 255, 255, 0.9);
-}
-.severity-count {
-    font-size: 18px;
-    font-weight: 700;
-    color: rgba(255, 255, 255, 0.9);
-}
-/* Chart canvas container */
-#weeklyChart canvas,
-#monthlyChart canvas,
-#yearlyChart canvas,
-#totalChart canvas {
-    max-height: 200px;
 }
 
 /* Other Styles */
-.severity-badge {
-    border-radius: 50%;
-    padding: 3px 8px;
-    font-size: small;
-    font-weight: bold;
-    margin: 2px;
-}
 .search-section {
     margin-bottom: 20px;
     padding: 20px;
@@ -333,68 +251,6 @@
       </bs:mco>
     </bs:row>
     
-    <!-- Vulnerability Distribution by Severity -->
-    <bs:row>
-      <bs:mco colsize="12">
-        <bs:box type="info" title="Vulnerability Distribution by Severity">
-          <bs:row>
-            <bs:mco colsize="3">
-              <div class="severity-distribution-card">
-                <h5 class="severity-period-title">This Week</h5>
-                <div id="weeklyChart">
-                  <s:iterator value="vulnerabilityStats['weekly']">
-                    <div class="severity-item">
-                      <span class="severity-label">${key}</span>
-                      <span class="severity-count">${value}</span>
-                    </div>
-                  </s:iterator>
-                </div>
-              </div>
-            </bs:mco>
-            <bs:mco colsize="3">
-              <div class="severity-distribution-card">
-                <h5 class="severity-period-title">This Month</h5>
-                <div id="monthlyChart">
-                  <s:iterator value="vulnerabilityStats['monthly']">
-                    <div class="severity-item">
-                      <span class="severity-label">${key}</span>
-                      <span class="severity-count">${value}</span>
-                    </div>
-                  </s:iterator>
-                </div>
-              </div>
-            </bs:mco>
-            <bs:mco colsize="3">
-              <div class="severity-distribution-card">
-                <h5 class="severity-period-title">This Year</h5>
-                <div id="yearlyChart">
-                  <s:iterator value="vulnerabilityStats['yearly']">
-                    <div class="severity-item">
-                      <span class="severity-label">${key}</span>
-                      <span class="severity-count">${value}</span>
-                    </div>
-                  </s:iterator>
-                </div>
-              </div>
-            </bs:mco>
-            <bs:mco colsize="3">
-              <div class="severity-distribution-card">
-                <h5 class="severity-period-title">All Time</h5>
-                <div id="totalChart">
-                  <s:iterator value="vulnerabilityStats['total']">
-                    <div class="severity-item">
-                      <span class="severity-label">${key}</span>
-                      <span class="severity-count">${value}</span>
-                    </div>
-                  </s:iterator>
-                </div>
-              </div>
-            </bs:mco>
-          </bs:row>
-        </bs:box>
-      </bs:mco>
-    </bs:row>
-    
     <!-- Search Section -->
     <bs:row>
       <bs:mco colsize="12">
@@ -445,7 +301,7 @@
                   <label>Status:</label>
                   <s:select name="status"
                     list="statuses"
-                    listKey="name"
+                    listKey="id"
                     listValue="name"
                     headerKey="0"
                     headerValue="-- All Statuses --"
@@ -456,7 +312,32 @@
             <bs:row>
               <bs:mco colsize="3">
                 <div class="form-group">
-                  <button type="submit" class="btn btn-primary form-control">
+                  <label>Assessor:</label>
+                  <s:select name="assessorId"
+                    list="assessors"
+                    listKey="id"
+                    listValue="fname + ' ' + lname"
+                    headerKey="0"
+                    headerValue="-- All Assessors --"
+                    cssClass="form-control"/>
+                </div>
+              </bs:mco>
+              <bs:mco colsize="3">
+                <div class="form-group">
+                  <label>Campaign:</label>
+                  <s:select name="campaign"
+                    list="campaigns"
+                    listKey="name"
+                    listValue="name"
+                    headerKey=""
+                    headerValue="-- All Campaigns --"
+                    cssClass="form-control"/>
+                </div>
+              </bs:mco>
+              <bs:mco colsize="3">
+                <div class="form-group">
+                  <label>&nbsp;</label>
+                  <button type="submit" class="btn btn-block btn-primary btn-md">
                     <i class="glyphicon glyphicon-search"></i> Search
                   </button>
                 </div>
@@ -467,59 +348,157 @@
       </bs:mco>
     </bs:row>
     
-    <!-- Search Results -->
-    <s:if test="searchAction == 'search'">
-      <bs:row>
-        <bs:mco colsize="12">
-          <bs:box type="success" title="Search Results">
-            <bs:datatable columns="AppId,Name,Type,Team,Assessor,Start,End,Status,Findings" classname="table-striped" id="searchResults">
-              <s:iterator value="searchResults" status="stat" var="asmt">
+    <!-- Filtered Statistics -->
+    <bs:row>
+      <!-- Vulnerability Severity Breakdown -->
+      <bs:mco colsize="4">
+        <bs:box type="danger" title="Vulnerability Severity Breakdown">
+          <div style="max-height: 300px; overflow-y: auto;">
+            <table class="table table-condensed">
+              <thead>
                 <tr>
-                  <td><s:property value="appId"/></td>
-                  <td><s:property value="name"/></td>
-                  <td><s:property value="type.type"/></td>
-                  <td>
-                    <s:iterator value="assessor" status="assessorStat">
-                      <s:if test="#assessorStat.index == 0 && team != null">
-                        <s:property value="team.teamName"/>
-                      </s:if>
-                    </s:iterator>
-                  </td>
-                  <td>
-                    <s:iterator value="assessor" status="assessorStat">
-                      <s:if test="#assessorStat.index > 0">, </s:if>
-                      <s:property value="fname"/> <s:property value="lname"/>
-                    </s:iterator>
-                  </td>
-                  <td><s:date name="start" format="yyyy-MM-dd"/></td>
-                  <td><s:date name="end" format="yyyy-MM-dd"/></td>
-                  <td><s:property value="status"/></td>
-                  <td>
-                    <fs:vulncount asmt="${asmt}" levels="${riskLevels}"></fs:vulncount>
+                  <th>Severity</th>
+                  <th class="text-right">Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <s:iterator value="filteredSeverityStats">
+                  <s:if test="value > 0">
+                    <tr>
+                      <td><strong><s:property value="key"/></strong></td>
+                      <td class="text-right">
+                        <span class="badge" style="background-color: <s:property value='severityColorMap[key]'/>; color: white; padding: 3px 8px; font-weight: bold; font-size: 12px;">
+                          <s:property value="value"/>
+                        </span>
+                      </td>
+                    </tr>
+                  </s:if>
+                </s:iterator>
+                <s:if test="filteredSeverityStats.isEmpty() || filteredSeverityStats.values().stream().allMatch(v -> v == 0)">
+                  <tr>
+                    <td colspan="2" class="text-center text-muted">No vulnerabilities found</td>
+                  </tr>
+                </s:if>
+              </tbody>
+              <tfoot>
+                <tr style="background-color: #030d1c7a; font-weight: bold;">
+                  <td>Total</td>
+                  <td class="text-right">
+                    <span class="badge bg-gray">${totalFilteredVulns}</span>
                   </td>
                 </tr>
-              </s:iterator>
-            </bs:datatable>
-          </bs:box>
-        </bs:mco>
-      </bs:row>
-    </s:if>
+              </tfoot>
+            </table>
+          </div>
+        </bs:box>
+      </bs:mco>
+      
+      <!-- Assessment Status Breakdown -->
+      <bs:mco colsize="4">
+        <bs:box type="warning" title="Assessment Status Breakdown">
+          <div style="max-height: 300px; overflow-y: auto;">
+            <table class="table table-condensed">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th class="text-right">Count</th>
+                </tr>
+              </thead>
+              <tbody>
+                <s:iterator value="filteredStatusStats">
+                  <s:if test="value > 0">
+                    <tr>
+                      <td><strong><s:property value="key"/></strong></td>
+                      <td class="text-right"><span class="badge bg-yellow"><s:property value="value"/></span></td>
+                    </tr>
+                  </s:if>
+                </s:iterator>
+                <s:if test="filteredStatusStats.isEmpty() || filteredStatusStats.values().stream().allMatch(v -> v == 0)">
+                  <tr>
+                    <td colspan="2" class="text-center text-muted">No assessments found</td>
+                  </tr>
+                </s:if>
+              </tbody>
+              <tfoot>
+                <tr style="background-color: #030d1c7a; font-weight: bold;">
+                  <td>Total</td>
+                  <td class="text-right">
+                    <span class="badge bg-yellow">${totalFilteredAssessments}</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </bs:box>
+      </bs:mco>
+      
+      <!-- Completed Assessments by Assessor -->
+      <bs:mco colsize="4">
+        <bs:box type="success" title="Completed Assessments by Assessor">
+          <div style="max-height: 400px; overflow-y: auto;">
+            <table class="table table-condensed">
+              <thead>
+                <tr>
+                  <th>Assessor</th>
+                  <th class="text-right">Completed</th>
+                </tr>
+              </thead>
+              <tbody>
+                <s:iterator value="filteredAssessorStats">
+                  <tr>
+                    <td><strong><s:property value="key"/></strong></td>
+                    <td class="text-right"><span class="badge bg-green"><s:property value="value"/></span></td>
+                  </tr>
+                </s:iterator>
+                <s:if test="filteredAssessorStats.isEmpty()">
+                  <tr>
+                    <td colspan="2" class="text-center text-muted">No completed assessments found</td>
+                  </tr>
+                </s:if>
+              </tbody>
+              <tfoot>
+                <tr style="background-color: #030d1c7a; font-weight: bold;">
+                  <td>Total</td>
+                  <td class="text-right">
+                    <span class="badge bg-green">${totalCompletedAssessments}</span>
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </bs:box>
+      </bs:mco>
+    </bs:row>
     
-    <!-- Recent Vulnerabilities -->
+    <!-- Assessments Table (Always shown) -->
     <bs:row>
       <bs:mco colsize="12">
-        <bs:box type="danger" title="Recently Added Vulnerabilities">
-          <bs:datatable columns="Created,Assessment,Vulnerability Name,Severity,Category,Tracking" classname="table-striped" id="recentVulns">
-            <s:iterator value="recentVulnerabilities">
+        <bs:box type="primary" title="Assessments">
+          <bs:datatable columns="AppId,Name,Type,Team,Assessor,Start,End,Status,Findings" classname="table-striped" id="searchResults">
+            <s:iterator value="searchResults" status="stat" var="asmt">
               <tr>
-                <td><s:date name="created" format="yyyy-MM-dd HH:mm"/></td>
-                <td>Assessment #<s:property value="assessmentId"/></td>
+                <td><s:property value="appId"/></td>
                 <td><s:property value="name"/></td>
-                <td class="severity-cell" data-severity="<s:property value='overall'/>">
-                  <s:property value="overallStr"/>
+                <td><s:property value="type.type"/></td>
+                <td>
+                  <s:iterator value="assessor" status="assessorStat">
+                    <s:if test="#assessorStat.index == 0 && team != null">
+                      <s:property value="team.teamName"/>
+                    </s:if>
+                  </s:iterator>
                 </td>
-                <td><s:property value="category.name"/></td>
-                <td><s:property value="tracking"/></td>
+                <td>
+                  <s:iterator value="assessor" status="assessorStat">
+                    <s:if test="#assessorStat.index > 0">, </s:if>
+                    <s:property value="fname"/> <s:property value="lname"/>
+                  </s:iterator>
+                </td>
+                <td><s:date name="start" format="yyyy-MM-dd"/></td>
+                <td><s:date name="end" format="yyyy-MM-dd"/></td>
+                <td><s:property value="status"/></td>
+                <td>
+                  <fs:vulncount asmt="${asmt}" levels="${riskLevels}"></fs:vulncount>
+                </td>
               </tr>
             </s:iterator>
           </bs:datatable>
@@ -534,99 +513,6 @@
 
 <jsp:include page="../footer.jsp" />
 
-<script>
-// Apply color coding to severity levels
-function updateColors() {
-    // Get colors array from server (supports up to 10 custom severity levels)
-    let colors = [<s:iterator value="colors" status="stat" var="c"><s:if test="!#stat.first">,</s:if>"<s:property value="c" escapeJavaScript="true"/>"</s:iterator>];
-    
-    console.log('Colors from server:', colors);
-    
-    // Build severity-to-color mapping based on risk level order
-    // Colors are ordered from highest severity (first color) to lowest
-    var severityColors = {};
-    var severityOrder = [];
-    <s:iterator value="riskLevels" status="stat">
-        <s:if test="risk != null && risk.trim() != ''">
-            severityOrder.push({
-                name: "<s:property value='risk' escapeJavaScript='true'/>",
-                id: <s:property value="riskId"/>
-            });
-        </s:if>
-    </s:iterator>
-    
-    // Sort by riskId to ensure proper ordering (lower ID = higher severity)
-    severityOrder.sort(function(a, b) {
-        return b.id - a.id;
-    });
-    
-    // Assign colors based on sorted order
-   
-    severityOrder.forEach(function(severity, index) {
-        if (index < colors.length) {
-            severityColors[severity.name] = colors[index];
-        }
-    });
-    
-    console.log('Severity color mapping:', severityColors);
-    
-    // Apply colors to severity items in distribution cards
-    $('.severity-item').each(function() {
-        var severityLabel = $(this).find('.severity-label').text();
-        if (severityColors[severityLabel]) {
-            $(this).find('.severity-label').css({
-                'color': severityColors[severityLabel],
-                'font-weight': 'bold'
-            });
-            $(this).find('.severity-count').css({
-                'color': severityColors[severityLabel],
-                'font-weight': 'bold'
-            });
-            // Update the left border color indicator
-            $(this).css('border-left-color', severityColors[severityLabel]);
-        }
-    });
-    
-    // Apply colors to table cells containing severity values
-    $('td.severity-cell').each(function() {
-        var text = $(this).text().trim();
-        if (severityColors[text]) {
-            $(this).css({
-                'color': severityColors[text],
-                'font-weight': 'bold'
-            });
-        }
-    });
-    
-    // Apply background colors to severity items on hover
-    $('.severity-item').hover(
-        function() {
-            var severityLabel = $(this).find('.severity-label').text();
-            if (severityColors[severityLabel]) {
-                // Convert hex to rgba for transparency
-                var color = severityColors[severityLabel];
-                var r = parseInt(color.slice(1, 3), 16);
-                var g = parseInt(color.slice(3, 5), 16);
-                var b = parseInt(color.slice(5, 7), 16);
-                $(this).css('background-color', 'rgba(' + r + ',' + g + ',' + b + ', 0.15)');
-            }
-        },
-        function() {
-            $(this).css('background-color', 'rgba(255, 255, 255, 0.05)');
-        }
-    );
-    
-}
-
-$(document).ready(function() {
-    updateColors();
-    
-    // Reapply colors after a short delay to ensure DOM is fully rendered
-    setTimeout(function() {
-        updateColors();
-    }, 500);
-});
-</script>
 
 </body>
 </html>
