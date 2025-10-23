@@ -187,7 +187,7 @@ $(function() {
 	}
 	getAssessors();
 	if (finalized) {
-		readonly_select($(".select2"), true);
+		readonly_select($(".select_ro"), true);
 	}
 	createEditor("notes")
 	$('[id^="rtCust"]').each( (_index,el)=>{

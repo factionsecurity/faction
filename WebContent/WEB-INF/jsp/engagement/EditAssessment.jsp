@@ -20,6 +20,17 @@
    right:0;
    left:0;
 }
+.select2-container--disabled{
+   background-color:#d5d5d5;
+   opacity:0.5;
+   border-radius:4px;
+}
+.form-control[disabled]{
+   background-color:#d5d5d5;
+   opacity:0.5;
+   border-radius:4px;
+}
+
 .breadcrumb {
 	background-color: #030d1c !important;
 </style>

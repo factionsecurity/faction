@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/dashboard/ManagerDashboard.jsp")
 public class ManagerDashboard extends FSActionSupport {
-
+	
     // Properties for statistics
     private Map<String, Integer> assessmentStats = new HashMap<>();
     private Map<String, Map<String, Integer>> vulnerabilityStats = new HashMap<>();
@@ -771,5 +771,9 @@ public class ManagerDashboard extends FSActionSupport {
     public void setCampaigns(List<Campaign> campaigns) {
         this.campaigns = campaigns;
     }
+    
+	public String getActiveMDB() {
+		return "active";
+	}
     
 }

@@ -202,45 +202,40 @@ public class EditAssessment extends FSActionSupport {
 				}else if(statusId == null) {
 					am.setStatus(null);
 				}
+				am.setEngagement(engagement);
+				am.setRemediation(remediation);
+				if (camp != null)
+					am.setCampaign(camp);
+				am.setDistributionList(this.distro);
+				Map<String, Files> sessionfiles = null;
+				try {
+					sessionfiles = (Map<String, Files>) ServletActionContext.getRequest().getSession()
+							.getAttribute("Files");
+					ServletActionContext.getRequest().getSession().setAttribute("Files", null);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					this._message = ex.getMessage();
+					return this.ERRORJSON;
+				}
+				// session.getTransaction().begin();
+				if (sessionfiles != null) {
+					for (Files f : sessionfiles.values()) {
+						f.setCreator(this.getSessionUser());
+						f.setEntityId(am.getId());
+						f.setType(Files.ASSESSMENT);
+						// session.save(f);
+						em.persist(f);
+					}
+
+				}
 
 				// If assessment is finalized this info is locked
 				if (!am.isFinalized()) {
 					am.setStart(this.sdate);
 					am.setEnd(this.edate);
-					am.setEngagement(engagement);
-					am.setRemediation(remediation);
 					am.setAssessor(assessors);
 					am.setType(Type);
 					am.setAccessNotes(this.notes);
-					am.setDistributionList(this.distro);
-					Map<String, Files> sessionfiles = null;
-					if (camp != null)
-						am.setCampaign(camp);
-					try {
-						// HttpSession sess = this.request.getSession();
-						// sessionfiles = (Map<String, Files>) sess.getAttribute("Files");
-						sessionfiles = (Map<String, Files>) ServletActionContext.getRequest().getSession()
-								.getAttribute("Files");
-						ServletActionContext.getRequest().getSession().setAttribute("Files", null);
-						// sessionfiles = (Map<String, Files>) this.JSESSION.get("Files");
-						// sess.setAttribute("Files",null);
-						/// this.JSESSION.put("Files", null);
-					} catch (Exception ex) {
-						ex.printStackTrace();
-						this._message = ex.getMessage();
-						return this.ERRORJSON;
-					}
-					// session.getTransaction().begin();
-					if (sessionfiles != null) {
-						for (Files f : sessionfiles.values()) {
-							f.setCreator(this.getSessionUser());
-							f.setEntityId(am.getId());
-							f.setType(Files.ASSESSMENT);
-							// session.save(f);
-							em.persist(f);
-						}
-
-					}
 					if (this.cf != null) {
 						JSONParser parse = new JSONParser();
 						JSONArray array = (JSONArray) parse.parse(cf);

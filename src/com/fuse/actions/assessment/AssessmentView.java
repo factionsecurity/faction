@@ -390,8 +390,16 @@ public class AssessmentView extends FSActionSupport {
 		    params.put("dates", "");
 		    params.put("details", HTML);
 		    params.put("add", String.join(",", emails));
-		}else if (vendor.equals("outlook")) {
+		}else if (vendor.equals("live")) {
 			baseUrl = "https://outlook.live.com/calendar/0/deeplink/compose";
+			params.put("subject", title);
+		    params.put("startdt", "");
+		    params.put("enddt", "");
+		    params.put("body", HTML);
+		    params.put("to", String.join(",", emails));
+		     
+		}else if (vendor.equals("outlook")) {
+			baseUrl = "https://outlook.office.com/calendar/0/deeplink/compose";
 			params.put("subject", title);
 		    params.put("startdt", "");
 		    params.put("enddt", "");
@@ -422,6 +430,9 @@ public class AssessmentView extends FSActionSupport {
 	}
 	public String getGoogleLink() {
 		return this.createCalendarLink("google");
+	}
+	public String getLiveLink() {
+		return this.createCalendarLink("live");
 	}
 	
 	

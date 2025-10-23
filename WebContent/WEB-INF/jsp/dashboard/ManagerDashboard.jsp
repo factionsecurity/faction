@@ -131,7 +131,7 @@
       <!-- Assessment Statistics -->
       <bs:mco colsize="6">
         <h4 class="stats-section-header">
-          <i class="glyphicon glyphicon-th-list"></i> Assessment Statistics
+          <i class="glyphicon glyphicon-th-list"></i> Completed Assessment Statistics
         </h4>
         <bs:row>
           <bs:mco colsize="6">
@@ -263,7 +263,7 @@
                 <div class="form-group">
                   <label>Date Range:</label>
                   <div class="input-group">
-                    <button type="button" class="btn btn-default pull-right" id="daterange-btn">
+                    <button type="button" class="btn btn-primary pull-right" id="daterange-btn">
                       <i class="fa fa-calendar"></i> <span id="daterange-text">Select Date Range</span>
                       <i class="fa fa-caret-down"></i>
                     </button>
@@ -474,9 +474,14 @@
     <bs:row>
       <bs:mco colsize="12">
         <bs:box type="primary" title="Assessments">
-          <bs:datatable columns="AppId,Name,Type,Team,Assessor,Start,End,Status,Findings" classname="table-striped" id="searchResults">
+          <bs:datatable columns="Action,AppId,Name,Type,Team,Assessor,Start,End,Completed,Status,Findings" classname="table-striped" id="searchResults">
             <s:iterator value="searchResults" status="stat" var="asmt">
               <tr>
+                <td>
+                  <a target="_blank" href="EditAssessment?action=get&aid=<s:property value='id'/>" class="" title="Edit Assessment">
+                    <i class="fa fa-pencil"></i>
+                  </a>
+                </td>
                 <td><s:property value="appId"/></td>
                 <td><s:property value="name"/></td>
                 <td><s:property value="type.type"/></td>
@@ -495,6 +500,7 @@
                 </td>
                 <td><s:date name="start" format="yyyy-MM-dd"/></td>
                 <td><s:date name="end" format="yyyy-MM-dd"/></td>
+                <td><s:date name="completed" format="yyyy-MM-dd"/></td>
                 <td><s:property value="status"/></td>
                 <td>
                   <fs:vulncount asmt="${asmt}" levels="${riskLevels}"></fs:vulncount>

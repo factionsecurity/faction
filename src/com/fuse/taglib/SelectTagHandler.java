@@ -24,7 +24,7 @@ public class SelectTagHandler extends TagSupport {
 					+ this.name + "</label>" + "<select class='form-control select2 " + this.cssClass
 					+ "' style='width: 100%;' id='" + this.id + "'";
 			if (readOnly) {
-				html += " readonly>";
+				html += " readonly disabled>";
 			} else {
 				html += ">";
 			}
