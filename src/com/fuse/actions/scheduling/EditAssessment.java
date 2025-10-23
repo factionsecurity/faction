@@ -1,5 +1,6 @@
 package com.fuse.actions.scheduling;
 
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -7,8 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.Base64;
+import java.util.stream.Collectors;
 
+import java.util.Base64;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
@@ -27,11 +29,13 @@ import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.Files;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.OOO;
 import com.fuse.dao.Permissions;
 import com.fuse.dao.Status;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
+import com.fuse.dao.Verification;
 import com.fuse.dao.query.AssessmentQueries;
 import com.faction.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
@@ -42,12 +46,13 @@ public class EditAssessment extends FSActionSupport {
 
 	private List<CustomType> custom;
 	private List<CustomField> fields;
-	private List<User> users;
 	private List<Teams> teams;
 	private String action;
 	private Date sdate;
 	private Date edate;
+	private List<User> users;
 	private List<User> assessors = new ArrayList<User>();
+	private List<User> remediation = new ArrayList<User>();
 	private String appid;
 	private String appName;
 	private List<Integer> assessorId;
@@ -74,17 +79,34 @@ public class EditAssessment extends FSActionSupport {
 	private Long statusId;
 
 	@Action(value = "EditAssessment")
-	public String execute() throws ParseException {
+	public String execute() throws ParseException, UnsupportedEncodingException {
 		//TODO: Update this method into separate methods for each function
-		User user = this.getSessionUser();
 		if (!(this.isAcengagement() || this.isAcmanager() || this.isAcassessor())) {
 			return LOGIN;
 		}
+        User user = this.getSessionUser();
+        Teams restrictedToTeam = (user.getPermissions().getAccessLevel().equals(Permissions.AccessLevelTeamOnly))
+            ? user.getTeam(): null;
 		try {
 
 			custom = em.createQuery("from CustomType where type = 0 and (deleted IS NULL or deleted = false)").getResultList();
 
-			users = em.createQuery("from User").getResultList();
+            if(restrictedToTeam != null) {
+                String userQuery = "{\"team_id\": " + restrictedToTeam.getId() + "}";
+                users = em.createNativeQuery(userQuery, User.class).getResultList();
+
+                teams = em.createQuery("from Teams where id = :teamId")
+                    .setParameter("teamId", restrictedToTeam.getId())
+                    .getResultList();
+            } else {
+                users = em.createQuery("from User").getResultList();
+                teams = em.createQuery("from Teams").getResultList();
+            }
+            remediation = em.createQuery("from User", User.class).getResultList()
+                .stream()
+                .filter( u -> u.getPermissions() != null && u.getPermissions().isRemediation())
+                .collect(Collectors.toList());
+
 			teams = em.createQuery("from Teams").getResultList();
 			assessmentTypes = em.createQuery("from AssessmentType").getResultList();
 			assessors = em.createQuery("from User").getResultList();
@@ -115,11 +137,6 @@ public class EditAssessment extends FSActionSupport {
 
 			logs = AssessmentQueries.getLogs(em, currentAssessment);
 
-		} else if (action != null && action.equals("dateSearch")) {
-			assessors = users;
-
-			// session.close();
-			return "assessorJSON";
 		} else if (action != null && action.equals("update")) {
 
 			if (!this.testToken(false)) {
@@ -166,7 +183,7 @@ public class EditAssessment extends FSActionSupport {
 					remediation = null;
 
 				User engagement = em.find(User.class, (long) engId);
-				if (engagement != null && !engagement.getPermissions().isRemediation())
+				if (engagement != null && !engagement.getPermissions().isEngagement())
 					engagement = null;
 				AssessmentType Type = em.find(AssessmentType.class, (long) type);
 
@@ -255,9 +272,9 @@ public class EditAssessment extends FSActionSupport {
 									if(obj.getType().getFieldType() < 3) {
 										cfObj.setValue("" + json.get("text"));
 									}else {
-										byte [] decodedBytes = Base64.getDecoder().decode(""+json.get("text"));
-										String decodedString = new String(decodedBytes);
-										cfObj.setValue(decodedString);
+										String jsonText = ""+json.get("text");
+										String decoded = new String(Base64.getDecoder().decode(jsonText.getBytes()), "UTF-8");
+										cfObj.setValue(decoded);
 									}
 									break;
 								}
@@ -270,9 +287,9 @@ public class EditAssessment extends FSActionSupport {
 								if(cfObj.getType().getFieldType() < 3) {
 									cfObj.setValue("" + json.get("text"));
 								}else {
-									byte [] decodedBytes = Base64.getDecoder().decode(""+json.get("text"));
-									String decodedString = new String(decodedBytes);
-									cfObj.setValue(decodedString);
+									String jsonText = ""+json.get("text");
+									String decoded = new String(Base64.getDecoder().decode(jsonText.getBytes()), "UTF-8");
+									cfObj.setValue(decoded);
 								}
 								am.getCustomFields().add(cfObj);
 							}
@@ -361,13 +378,7 @@ public class EditAssessment extends FSActionSupport {
 	}
 
 	public List<User> getRemediation() {
-		List<User> rem = new ArrayList<User>();
-		for (User u : users) {
-			if (u.getPermissions().isRemediation()) {
-				rem.add(u);
-			}
-		}
-		return rem;
+        return remediation;
 	}
 
 	public List<Teams> getTeams() {

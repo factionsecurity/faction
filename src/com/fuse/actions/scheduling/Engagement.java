@@ -7,17 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import javax.persistence.EntityManager;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
-import org.hibernate.Query;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -37,6 +34,7 @@ import com.fuse.dao.HibHelper;
 import com.fuse.dao.Note;
 import com.fuse.dao.OOO;
 import com.fuse.dao.PeerReview;
+import com.fuse.dao.Permissions;
 import com.fuse.dao.Status;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
@@ -47,7 +45,6 @@ import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.TaskQueueExecutor;
 import com.fuse.utils.FSUtils;
-import com.opensymphony.xwork2.ActionContext;
 
 
 @Namespace("/portal")
@@ -56,13 +53,14 @@ public class Engagement  extends FSActionSupport{
 	
 	private List<CustomType> custom;
 	private List<User> users;
+	private List<User> remediation;
 	private List<User> eng_users;
 	private List<User> asmt_users;
+	private List<User>assessors = new ArrayList<User>();
 	private List<Teams>teams;
 	private String action="";
 	private Date sdate;
 	private Date edate;
-	private List<User>assessors = new ArrayList<User>();
 	private String appid="-1";
 	private String appName;
 	private List<Integer> assessorId;
@@ -107,17 +105,39 @@ public class Engagement  extends FSActionSupport{
 		if(!(this.isAcengagement() || this.isAcmanager())){
 			return AuditLog.notAuthorized(this, "User is not Engagment or Manager", true);
 		}
+		
+		User user = this.getSessionUser();
+	    Teams restrictedToTeam = (user.getPermissions().getAccessLevel().equals(Permissions.AccessLevelTeamOnly))
+		    ? user.getTeam(): null;
+		
 		custom = em.createQuery("from CustomType where type = 0 and (deleted IS NULL or deleted = false)").getResultList();
-		users = em.createQuery("from User").getResultList();
-		teams = em.createQuery("from Teams").getResultList();
+
+        if(restrictedToTeam != null) {
+			String userQuery = "{\"team_id\": " + restrictedToTeam.getId() + "}";
+			users = em.createNativeQuery(userQuery, User.class).getResultList();
+
+            teams = em.createQuery("from Teams where id = :teamId")
+                .setParameter("teamId", restrictedToTeam.getId())
+                .getResultList();
+        } else {
+            users = em.createQuery("from User").getResultList();
+		    teams = em.createQuery("from Teams").getResultList();
+        }
+        remediation = em.createQuery("from User", User.class).getResultList()
+            .stream()
+            .filter( u -> u.getPermissions() != null && u.getPermissions().isRemediation())
+            .collect(Collectors.toList());
+
 		assessmentTypes = em.createQuery("from AssessmentType").getResultList();
 		campaigns = em.createQuery("from Campaign").getResultList();
 		statuses = em.createQuery("from Status").getResultList();
+
 		SystemSettings ss = (SystemSettings)em.createQuery("from SystemSettings").getResultList().stream().findFirst().orElse(null);
 		if(ss.getEnableRandAppId() != null)
 			this.randId = ss.getEnableRandAppId();
 		else
 			this.randId = true;
+
 		this.ratings = ss.getRatings();
 		this.defaultRating = ss.getDefaultRating();
 		
@@ -139,6 +159,14 @@ public class Engagement  extends FSActionSupport{
 					.setParameter("start", this.sdate)
 					.setParameter("end", this.edate)
 					.getResultList();
+			
+			if(restrictedToTeam != null) {
+				asmts = asmts.stream()
+					.filter(a -> a.getAssessor().stream()
+						.anyMatch(u -> u.getTeam() != null && u.getTeam().getId().equals(restrictedToTeam.getId())))
+					.collect(Collectors.toList());
+
+			}
 			List<OOO> ooos = em
 					.createQuery("from OOO as a where (a.start >= :start and a.start <= :start) or (a.end >= :start and a.end <= :end)")
 					.setParameter("start", this.sdate)
@@ -185,6 +213,13 @@ public class Engagement  extends FSActionSupport{
 					.setParameter("start", sdate)
 					.setParameter("end", edate)
 					.getResultList();
+
+			if(restrictedToTeam != null) {
+				asmts = asmts.stream()
+					.filter(a -> a.getAssessor().stream()
+						.anyMatch(u -> u.getTeam() != null && u.getTeam().getId().equals(restrictedToTeam.getId())))
+					.collect(Collectors.toList());
+			}
 			
 			List<User>hackers = new ArrayList<User>();
 			if(assessorId != null) {
@@ -217,8 +252,7 @@ public class Engagement  extends FSActionSupport{
 				return this.ERRORJSON;
 			}
 			
-			if(sdate == null || edate == null)
-			 {
+			if(sdate == null || edate == null){
 				this._message = "Start and End Dates Could Be Missing";
 				return this.ERRORJSON;
 			}
@@ -255,7 +289,6 @@ public class Engagement  extends FSActionSupport{
 			defaultNote.setUpdated(new Date());
 			am.addNoteToList(defaultNote);
 			
-			JSONArray cfstuff = new JSONArray();
 			if(this.cf != null){
 				JSONParser parse = new JSONParser();
 				JSONArray array = (JSONArray) parse.parse(cf);
@@ -325,6 +358,7 @@ public class Engagement  extends FSActionSupport{
 			
 			
 		}else if(action != null && action.equals("search") ){
+			
 			String comma = "";
 			boolean first=true;
 			String mongoQuery = "{ ";
@@ -425,8 +459,28 @@ public class Engagement  extends FSActionSupport{
 				else {
 					mongoQuery += comma + " 'status': '" + statusName +"' ";
 				}
-				
 			}
+            if(restrictedToTeam != null) {
+				if( !first ){
+					comma = ",";
+				}else
+					first = false;
+                
+                String userQuery = "{\"team_id\": " + restrictedToTeam.getId() + "}";
+                List<User> teamUsers = em.createNativeQuery(userQuery, User.class).getResultList();
+                
+                if (!teamUsers.isEmpty()) {
+                    mongoQuery += comma + "'assessor': { '$in': [";
+                    boolean firstUser = true;
+                    for (User u : teamUsers) {
+                        if (!firstUser) mongoQuery += ", ";
+                        mongoQuery += ""+ u.getId();
+                        firstUser = false;
+                    }
+                    mongoQuery += "]}";
+                }
+            }
+				
 			
 			String dir = request.getParameter("order[0][dir]");
 			
@@ -569,13 +623,7 @@ public class Engagement  extends FSActionSupport{
 	}
 	
 	public List<User> getRemediation(){
-		List<User> rem = new ArrayList<User>();
-		for(User u : users){
-			if(u.getPermissions().isRemediation()){
-				rem.add(u);
-			}
-		}
-		return rem;
+        return remediation;
 	}
 	public List<Teams> getTeams() {
 		return teams;

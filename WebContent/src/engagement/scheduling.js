@@ -469,7 +469,8 @@ function confirmAndPostIt(messages, index, size) {
 						$('[id^="rtCust"]').each( (_index,el)=>{
 							let id = el.id;
 							id = id.replace('rtCust',"");
-							let val = encodeURIComponent(btoa(getEditorText("rtCust" + id)));
+							//let val = encodeURIComponent(btoa(getEditorText("rtCust" + id)));
+							let val = encodeURIComponent(b64EncodeUnicode(getEditorText("rtCust" + id)));
 							let field = `{"id" : ${id}, "text" : "${val}"}`;
 							fields.push(field);
 						})

@@ -20,6 +20,7 @@ import com.fuse.dao.Permissions;
 import com.fuse.dao.User;
 //import com.fuse.dao.VTImage;
 import com.fuse.dao.Verification;
+import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.reporting.GenerateReport;
 import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
@@ -68,7 +69,8 @@ public class getReport extends HttpServlet {
 			if(request.getParameter("id") != null){
 				try {
 					Long id = Long.parseLong(request.getParameter("id"));
-					assessment = (Assessment) em.createQuery("from Assessment where id = :id").setParameter("id",id).getResultList().stream().findFirst().orElse(null);
+					assessment = AssessmentQueries.getAssessment(em, user, id);
+					//assessment = (Assessment) em.createQuery("from Assessment where id = :id").setParameter("id",id).getResultList().stream().findFirst().orElse(null);
 					
 					if(assessment == null) {
 						return;
@@ -131,11 +133,18 @@ public class getReport extends HttpServlet {
 				
 				String guid = request.getParameter("guid");
 				finalreport = (FinalReport) em.createQuery("from FinalReport where filename = :guid").setParameter("guid",guid).getResultList().stream().findFirst().orElse(null);
-				b64Rpt = finalreport.getBase64EncodedPdf();
 				
+				assessment = (Assessment) em.createQuery("from Assessment where finalReport = :reportId", Assessment.class)
+					.setParameter("reportId", finalreport)
+					.getResultList().stream().findFirst().orElse(null);
+				
+				if(AssessmentQueries.canAccessAssessment(user, assessment)) {
+					b64Rpt = finalreport.getBase64EncodedPdf();
+				}else {
+					return;
+				}
 			}
-			else return;
-			
+				
 			byte[] report;
 			try {
 				if(b64Rpt == null || b64Rpt.equals("")){

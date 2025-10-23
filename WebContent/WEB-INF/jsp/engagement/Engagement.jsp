@@ -114,6 +114,7 @@ label{
 	let remName = ''
 	let campName =''
 	let assType = ''
+	let statusSelectName = 'Automatic';	
 	<s:iterator value="currentAssessment.CustomFields">
 		customFields.push(${type.id});
 	</s:iterator>

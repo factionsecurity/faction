@@ -247,20 +247,35 @@ public class AssessmentQueries {
 			return assessments;
 		
 	}
+	public static boolean canAccessAssessment(User user, Assessment asmt) {
+		// User has team only and assessment not in team 
+		if(user.getPermissions().getAccessLevel() == Permissions.AccessLevelTeamOnly) {
+			if(!hasTeam(user,asmt))
+				return false;
+		}
+		// User can only access their own assessments
+		if(user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
+			if(!asmt.getAssessor().stream().anyMatch(u -> u.getId() == user.getId())) {
+				return false;
+			}
+		}
+		
+		//Users allowed to access
+		if(user.getPermissions().isEngagement() || user.getPermissions().isManager() || user.getPermissions().isAssessor() || user.getPermissions().isRemediation()) {
+			return true;
+		}
+		
+		
+		return false;
+		
+	}
 	
 	public static Assessment getAssessment(EntityManager em, User user, Long AssessmentId) {
 		Assessment asmt = em.find(Assessment.class, AssessmentId);
-		if(!user.getPermissions().isManager() || user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
-			if(!asmt.getAssessor().stream().anyMatch(u -> u.getId() == user.getId())) {
-				return null;
-			}
+		if(canAccessAssessment(user, asmt)) {
+			return asmt;
 		}
-		if(user.getPermissions().getAccessLevel() == Permissions.AccessLevelTeamOnly) {
-			if(!hasTeam(user,asmt))
-				return null;
-		}
-		
-		return asmt;
+		return null;
 		
 	}
 	
@@ -356,7 +371,7 @@ public class AssessmentQueries {
 	
 	
 	
-	private static boolean hasTeam(User user, Assessment asmt) {
+	public static boolean hasTeam(User user, Assessment asmt) {
 		if(asmt == null || asmt.getAssessor().size() == 0)
 			return false;
 		if(asmt.getAssessor() == null || asmt.getAssessor().size() == 0) {
