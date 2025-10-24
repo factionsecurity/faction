@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
@@ -13,7 +14,10 @@ import javax.ws.rs.core.Response;
 
 import org.json.simple.JSONObject;
 
+import com.faction.elements.CustomField;
+import com.fuse.api.dto.CustomFieldDTO;
 import com.fuse.dao.APIKeys;
+import com.fuse.dao.CustomType;
 import com.fuse.dao.User;
 import com.fuse.utils.FSUtils;
 
@@ -48,7 +52,7 @@ public class Support {
 							 dmethod.getReturnType().equals(Integer.class) ||
 							 dmethod.getReturnType().equals(Long.class) ||
 							 dmethod.getReturnType().equals(String.class) ||
-							 dmethod.getReturnType().equals(Date.class)
+							 dmethod.getReturnType().equals(Date.class) 
 							 )){
 				 try {
 					 Object o = dmethod.invoke(obj,  null);
@@ -91,4 +95,5 @@ public class Support {
 	public static String getTier(){
 		return FSUtils.getEnv("FACTION_TIER");
 	}
+	
 }

@@ -3,7 +3,9 @@ package com.fuse.api;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.persistence.EntityManager;
@@ -21,18 +23,27 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.docx4j.dml.spreadsheetdrawing.CTAbsoluteAnchor;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fuse.api.dto.CustomFieldDTO;
+import com.fuse.api.dto.DefaultVulnerabilityDTO;
+import com.fuse.api.dto.VulnerabilityDTO;
 import com.fuse.dao.APIKeys;
 import com.fuse.dao.Category;
+import com.fuse.dao.CustomField;
+import com.fuse.dao.CustomType;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
+import com.fuse.api.util.Support;
 import com.fuse.utils.FSUtils;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
@@ -220,15 +231,7 @@ public class vulnerabilities {
 	}
 	
 	
-	private User getUser(EntityManager em, String apiKey){
-		APIKeys keys = (APIKeys)em.createQuery("from APIKeys where key = :key").setParameter("key", apiKey).getResultList().stream().findFirst().orElse(null);
-		if ( keys != null){
-			return keys.getUser();
-		}else{
-			return null;
-		}
-		
-	}
+	// Remove this method since we'll use Support.getUser() instead
 	
 	///uses Reflection to create a JSON object out of a class
 	private JSONObject dao2JSON(Object obj, Class cls){
@@ -275,9 +278,9 @@ public class vulnerabilities {
 	
 	@GET
 	@ApiOperation(
-		    value = "Gets All Default Vulnerabilities Stored in the System in a JSON format.", 
-		    notes = "",
-		    response = Vulnerability.class,
+		    value = "Gets All Default Vulnerabilities Stored in the System in a JSON format.",
+		    notes = "Returns vulnerability templates with custom fields support",
+		    response = DefaultVulnerabilityDTO.class,
 		    responseContainer = "List"
 		    )
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
@@ -290,35 +293,44 @@ public class vulnerabilities {
 			){
 		
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+		List<DefaultVulnerabilityDTO> dtos = new ArrayList<>();
 		
-		JSONArray jarray = new JSONArray();
-		List<Vulnerability> vulns = new ArrayList<>();
 		try{
-			User u = this.getUser(em, apiKey);
+			User u = Support.getUser(em, apiKey);
 			if(u != null){
 				
 				try{
+					// Get all vulnerability custom types (no assessment type filter for templates)
+					List<CustomType> vulnCustomTypes = em.createQuery(
+							"from CustomType where type = :type and deleted = false", CustomType.class)
+							.setParameter("type", CustomType.ObjType.VULN.getValue())
+							.getResultList();
+					
 					List<DefaultVulnerability> defaults = (List<DefaultVulnerability>)em.createQuery("from DefaultVulnerability").getResultList();
 					for(DefaultVulnerability v : defaults){
-						GenericVulnerability vuln = new GenericVulnerability(v);
-						jarray.add(this.dao2JSON(vuln, GenericVulnerability.class));
+						v.updateRiskLevels(em);
+						DefaultVulnerabilityDTO dto = DefaultVulnerabilityDTO.fromEntity(v, vulnCustomTypes);
+						dtos.add(dto);
 					}
+					
+					// Serialize using Jackson
+					ObjectMapper mapper = new ObjectMapper();
+					String json = mapper.writeValueAsString(dtos);
+					return Response.status(200).entity(json).build();
+					
+				}catch(JsonProcessingException e) {
+					return Response.status(500).entity(String.format(Support.ERROR, "Failed to serialize response")).build();
 				}catch(Exception ex){
-					
 					ex.printStackTrace();
-					return Response.status(400).entity(String.format(this.ERROR,"Unknown Error. Check logs.")).build();
-					
+					return Response.status(400).entity(String.format(Support.ERROR,"Unknown Error. Check logs.")).build();
 				}
 				
-				
-				
 			}else{
-				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
+				return Response.status(401).entity(String.format(Support.ERROR,"Not Authorized")).build();
 			}
 		}finally{
 			em.close();
 		}
-		return Response.status(200).entity(jarray.toJSONString()).build();
 	}
 	
 	@GET
@@ -339,27 +351,53 @@ public class vulnerabilities {
 		try{
 			StringWriter stringWriter = new StringWriter();
 			CSVWriter csvWriter = new CSVWriter(stringWriter);
-			User u = this.getUser(em, apiKey);
+			User u = Support.getUser(em, apiKey);
 			if(u != null){
+				String [] titleLine = {
+						"Id",
+						"Name",
+						"CategoryId",
+						"CategoryName",
+						"Description",
+						"Recommendation",
+						"SeverityId",
+						"ImpactId",
+						"LikelihoodId",
+						"isActive",
+						"CVSS31Score",
+						"CVSS31String",
+						"CVSS40Score",
+						"CVSS40String",
+						"CustomFields"
+				};
+				csvWriter.writeNext(titleLine);
 				
 				try{
+					List<CustomType> vulnCustomTypes = em.createQuery(
+							"from CustomType where type = :type and deleted = false", CustomType.class)
+							.setParameter("type", CustomType.ObjType.VULN.getValue())
+							.getResultList();
 					List<DefaultVulnerability> defaults = (List<DefaultVulnerability>)em.createQuery("from DefaultVulnerability").getResultList();
 					for(DefaultVulnerability v : defaults){
+						DefaultVulnerabilityDTO dto = DefaultVulnerabilityDTO.fromEntity(v, vulnCustomTypes);
+						ObjectMapper mapper = new ObjectMapper();
+						String jsonFields = mapper.writeValueAsString(dto.getCustomFields());
 						String [] line = { 
 								""+v.getId(), 
 								v.getName(), 
 								""+v.getCategory().getId(), 
 								v.getCategory().getName(),
-								v.getDescription(),
-								v.getRecommendation(),
+								v.getDescription().replace("\r", "\\r").replace("\n", "\\n"),
+								v.getRecommendation().replace("\r", "\\r").replace("\n", "\\n"),
 								""+v.getOverall(),
 								""+v.getImpact(),
 								""+v.getLikelyhood(),
-								""+v.getActive(),
+								v.getActive() == null? "true": ""+v.getActive(),
 								v.getCvss31Score(),
 								v.getCvss31String(),
 								v.getCvss40Score(),
-								v.getCvss40String()
+								v.getCvss40String(),
+								jsonFields
 							};
 						csvWriter.writeNext(line);
 					}
@@ -370,8 +408,6 @@ public class vulnerabilities {
 					return Response.status(400).entity(String.format(this.ERROR,"Unknown Error. Check logs.")).build();
 					
 				}
-				
-				
 				
 			}else{
 				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
@@ -405,7 +441,7 @@ public class vulnerabilities {
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		
 		try{
-			User u = this.getUser(em, apiKey);
+			User u = Support.getUser(em, apiKey);
 			if(u != null){
 				
 				try{
@@ -501,68 +537,80 @@ public class vulnerabilities {
 	}
 	@POST
 	@ApiOperation(
-		    value = "Upload Default Vulnerabilties to Faction in JSON format", 
+		    value = "Upload Default Vulnerabilties to Faction in JSON format",
 		    notes = "Below is an example JSON. Note that some parameters are optional.\n "
 		    		+ "If the ID is empty then a new vulnerability will be created. If the ID is populated then it will overwrite the vulnerability with the same id.\n\n "
 		    		+ "If the categoryId is missing then categoryName is required. If a category with the same name exists then the existing category will be used. "
 		    		+ "If the categoryName does not match an existing category then a new category will be created. \n\n"
-		    		+ "If the categoryId is populated then categoryName field is ignored."
+		    		+ "If the categoryId is populated then categoryName field is ignored.\n\n"
+		    		+ "Custom fields are supported via the 'CustomFields' property as a key-value map."
 		    )
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 400, message = "Unknown Error"),
-			@ApiResponse(code = 200, message = "All Default Vulnerabilites Returned")})
+			@ApiResponse(code = 200, message = "Default Vulnerabilites Created/Updated")})
 	@Produces(MediaType.APPLICATION_JSON)
 	@Consumes(MediaType.APPLICATION_JSON)
 	@Path("/default")
 	public Response uploadDefaultJSONVulns(
 			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
-			@ApiParam(value = "JSON List of Default Vulnerabilities", required = true) 
-			 List<GenericVulnerability> vulnList
+			@ApiParam(value = "JSON List of Default Vulnerabilities", required = true)
+			 List<DefaultVulnerabilityDTO> vulnList
 			){
 		
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		
 		try{
-			User u = this.getUser(em, apiKey);
+			User u = Support.getUser(em, apiKey);
 			if(u != null){
 				
 				try{
-					for(GenericVulnerability gv : vulnList) {
-						if(gv.getName() == null || gv.getName().trim().equals("")) {
-							return Response.status(400).entity(String.format(this.ERROR,"Name is invalid")).build();
+					// Get all vulnerability custom types (no assessment type filter for templates)
+					List<CustomType> vulnCustomTypes = em.createQuery(
+							"from CustomType where type = :type and deleted = false", CustomType.class)
+							.setParameter("type", CustomType.ObjType.VULN.getValue())
+							.getResultList();
+					
+					for(DefaultVulnerabilityDTO dto : vulnList) {
+						if(dto.getName() == null || dto.getName().trim().equals("")) {
+							return Response.status(400).entity(String.format(Support.ERROR,"Name is invalid")).build();
 						}
-						if(gv.getCategoryId() == null && (gv.getCategoryName() == null || gv.getCategoryName().trim().equals("")) ) {
-							return Response.status(400).entity(String.format(this.ERROR,"Must Specifiy a Category Id or Category Name")).build();
+						if(dto.getCategoryId() == null && (dto.getCategoryName() == null || dto.getCategoryName().trim().equals("")) ) {
+							return Response.status(400).entity(String.format(Support.ERROR,"Must Specifiy a Category Id or Category Name")).build();
 						}
 						DefaultVulnerability newVuln = new DefaultVulnerability();
-						if(gv.getId() != null) {
-							newVuln = em.find(DefaultVulnerability.class, gv.getId());
+						if(dto.getId() != null) {
+							newVuln = em.find(DefaultVulnerability.class, dto.getId());
+							if(newVuln == null) {
+								newVuln = new DefaultVulnerability();
+							}
 						}
-						newVuln.setName(gv.getName());
-						String description = FSUtils.convertFromMarkDown(gv.getDescription());
+						newVuln.setName(dto.getName());
+						String description = FSUtils.convertFromMarkDown(dto.getDescription());
 						description = FSUtils.sanitizeHTML(description);
 						newVuln.setDescription(description);
-						String recommendation = FSUtils.convertFromMarkDown(gv.getRecommendation());
+						String recommendation = FSUtils.convertFromMarkDown(dto.getRecommendation());
 						recommendation = FSUtils.sanitizeHTML(recommendation);
 						newVuln.setRecommendation(recommendation);
-						newVuln.setOverall(gv.getSeverityId());
-						newVuln.setLikelyhood(gv.getLikelihoodId());
-						newVuln.setImpact(gv.getImpactId());
-						newVuln.setActive(gv.getActive());
-						newVuln.setCvss31Score(gv.getCvss31Score());
-						newVuln.setCvss31String(gv.getCvss31String());
-						newVuln.setCvss40Score(gv.getCvss40Score());
-						newVuln.setCvss40String(gv.getCvss40String());
-						if(gv.getCategoryId() == null) {
+						newVuln.setOverall(dto.getSeverityId());
+						newVuln.setLikelyhood(dto.getLikelihoodId());
+						newVuln.setImpact(dto.getImpactId());
+						newVuln.setActive(dto.getActive());
+						newVuln.setCvss31Score(dto.getCvss31Score());
+						newVuln.setCvss31String(dto.getCvss31String());
+						newVuln.setCvss40Score(dto.getCvss40Score());
+						newVuln.setCvss40String(dto.getCvss40String());
+						
+						// Handle category
+						if(dto.getCategoryId() == null) {
 							Category cat = (Category) em.createQuery("from Category where name = :name ")
-									.setParameter("name", gv.getCategoryName())
+									.setParameter("name", dto.getCategoryName())
 									.getResultList()
 									.stream()
 									.findFirst()
 									.orElse(null);
 							if(cat == null) {
 								cat = new Category();
-								cat.setName(gv.getCategoryName());
+								cat.setName(dto.getCategoryName());
 								HibHelper.getInstance().preJoin();
 								em.joinTransaction();
 								em.persist(cat);
@@ -570,40 +618,95 @@ public class vulnerabilities {
 							}
 							newVuln.setCategory(cat);
 						}else {
-							Category cat = em.find(Category.class, gv.getCategoryId());
+							Category cat = em.find(Category.class, dto.getCategoryId());
 							if(cat != null) {
 								newVuln.setCategory(cat);
 							}else {
-								return Response.status(400).entity(String.format(this.ERROR,"Category ID does not exist")).build();
+								return Response.status(400).entity(String.format(Support.ERROR,"Category ID does not exist")).build();
+							}
+						}
+						
+						// Handle custom fields
+						if(dto.getCustomFields() != null && !dto.getCustomFields().isEmpty()) {
+							// Get existing custom fields
+							List<CustomField> existingFields = newVuln.getCustomFields();
+							if (existingFields == null) {
+								existingFields = new ArrayList<>();
+								newVuln.setCustomFields(existingFields);
 							}
 							
+							// Create map for easier lookup
+							Map<String, CustomField> existingFieldsMap = new HashMap<>();
+							for (CustomField cf : existingFields) {
+								if (cf.getType() != null) {
+									existingFieldsMap.put(cf.getType().getKey(), cf);
+								}
+							}
+							// Update or add custom fields
+							for ( CustomFieldDTO entry : dto.getCustomFields()) {
+								String key = entry.getKey();
+								String value = entry.getValue();
+								
+								// Find the matching custom type
+								CustomType matchingType = null;
+								for (CustomType ct : vulnCustomTypes) {
+									if (ct.getKey().equals(key)) {
+										matchingType = ct;
+										break;
+									}
+								}
+								
+								if (matchingType != null) {
+									// Check if field already exists
+									CustomField existingField = existingFieldsMap.get(key);
+									
+									HibHelper.getInstance().preJoin();
+									em.joinTransaction();
+									
+									if (existingField != null) {
+										// Update existing field
+										existingField.setValue(value);
+										em.persist(existingField);
+									} else {
+										// Create new field
+										CustomField cf = new CustomField();
+										cf.setType(matchingType);
+										cf.setValue(value);
+										existingFields.add(cf);
+										em.persist(cf);
+									}
+									
+									HibHelper.getInstance().commit();
+								}
+							}
 						}
+						
 						HibHelper.getInstance().preJoin();
 						em.joinTransaction();
 						em.persist(newVuln);
 						HibHelper.getInstance().commit();
-						
 					}
+					
+					return Response.status(200).entity(Support.SUCCESS).build();
 					
 				}catch(Exception ex){
 					ex.printStackTrace();
-					return Response.status(400).entity(String.format(this.ERROR,"Unknown Error. Check logs.")).build();
+					return Response.status(400).entity(String.format(Support.ERROR,"Unknown Error. Check logs.")).build();
 				}
 				
 			}else{
-				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
+				return Response.status(401).entity(String.format(Support.ERROR,"Not Authorized")).build();
 			}
 		}finally{
 			em.close();
 		}
-		return Response.status(200).build();
 	}
 	
 	@GET
 	@ApiOperation(
-		    value = "Search for default vulnerbilities based on vulnerability name. ", 
-		    notes = "Performs partial matching on the name parameter.",
-		    response = Vulnerability.class,
+		    value = "Search for default vulnerbilities based on vulnerability name. ",
+		    notes = "Performs partial matching on the name parameter. Returns vulnerability templates with custom fields support",
+		    response = DefaultVulnerabilityDTO.class,
 		    responseContainer = "List"
 		    )
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
@@ -611,13 +714,13 @@ public class vulnerabilities {
 			@ApiResponse(code = 200, message = "All Matching Vulnerabilites Returned")})
 	@Produces(MediaType.APPLICATION_JSON)
 	@Path("/default/{name}")
-	public Response getalldefault(
+	public Response searchdefault(
 			@ApiParam(value = "Authentication Header", required = true)  @HeaderParam("FACTION-API-KEY") String apiKey,
-			@ApiParam(value = "Vulnerability name to search", required = true)  @PathParam("name") String name) 
+			@ApiParam(value = "Vulnerability name to search", required = true)  @PathParam("name") String name)
 	{
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
-		JSONArray jarray = new JSONArray();
-		User u = this.getUser(em, apiKey);
+		List<DefaultVulnerabilityDTO> dtos = new ArrayList<>();
+		User u = Support.getUser(em, apiKey);
 		try{
 			if(u != null){
 				
@@ -630,23 +733,84 @@ public class vulnerabilities {
 							.getResultList();
 					for(DefaultVulnerability v : vulns){
 						v.updateRiskLevels(em);
-						jarray.add(this.dao2JSON(v, DefaultVulnerability.class));	
+						List<CustomType> vulnCustomTypes = em.createQuery(
+								"from CustomType where type = :type and deleted = false", CustomType.class)
+								.setParameter("type", CustomType.ObjType.VULN.getValue())
+								.getResultList();
+						DefaultVulnerabilityDTO dto = DefaultVulnerabilityDTO.fromEntity(v, vulnCustomTypes);
+						
+						
+						dtos.add(dto);
 					}
-				}catch(Exception ex){
 					
+					// Serialize using Jackson
+					ObjectMapper mapper = new ObjectMapper();
+					String json = mapper.writeValueAsString(dtos);
+					return Response.status(200).entity(json).build();
+					
+				}catch(JsonProcessingException e) {
+					return Response.status(500).entity(String.format(Support.ERROR, "Failed to serialize response")).build();
+				}catch(Exception ex){
 					ex.printStackTrace();
-					return Response.status(400).entity(String.format(this.ERROR,"Unknown Error. Check logs.")).build();
+					return Response.status(400).entity(String.format(Support.ERROR,"Unknown Error. Check logs.")).build();
 				}
 				
-				
-				
 			}else{
-				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
+				return Response.status(401).entity(String.format(Support.ERROR,"Not Authorized")).build();
 			}
 		}finally{
 			em.close();
 		}
-		return Response.status(200).entity(jarray.toJSONString()).build();
+	}
+	@GET
+	@ApiOperation(
+		    value = "Search for default vulnerability based on default vulnerability id. ",
+		    response = DefaultVulnerabilityDTO.class
+		    )
+	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
+			@ApiResponse(code = 400, message = "Unknown Error"),
+			@ApiResponse(code = 200, message = "Matching Vulnerability Template Returned")})
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/default/getvuln/{id}")
+	public Response getDefaultVulnById(
+			@ApiParam(value = "Authentication Header", required = true)  @HeaderParam("FACTION-API-KEY") String apiKey,
+			@ApiParam(value = "Default Vulnerability Id", required = true)  @PathParam("id") Long defaultVulnId)
+	{
+		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+		User u = Support.getUser(em, apiKey);
+		try{
+			if(u != null){
+				
+				try{
+					DefaultVulnerability dv = em.find(DefaultVulnerability.class, defaultVulnId);
+					if(dv == null) {
+						return Response.status(400).entity(String.format(Support.ERROR,"Invalid Vulnerability Template")).build();
+					}
+					dv.updateRiskLevels(em);
+					List<CustomType> vulnCustomTypes = em.createQuery(
+							"from CustomType where type = :type and deleted = false", CustomType.class)
+							.setParameter("type", CustomType.ObjType.VULN.getValue())
+							.getResultList();
+					DefaultVulnerabilityDTO dto = DefaultVulnerabilityDTO.fromEntity(dv, vulnCustomTypes);
+						
+					// Serialize using Jackson
+					ObjectMapper mapper = new ObjectMapper();
+					String json = mapper.writeValueAsString(dto);
+					return Response.status(200).entity(json).build();
+					
+				}catch(JsonProcessingException e) {
+					return Response.status(500).entity(String.format(Support.ERROR, "Failed to serialize response")).build();
+				}catch(Exception ex){
+					ex.printStackTrace();
+					return Response.status(400).entity(String.format(Support.ERROR,"Unknown Error. Check logs.")).build();
+				}
+				
+			}else{
+				return Response.status(401).entity(String.format(Support.ERROR,"Not Authorized")).build();
+			}
+		}finally{
+			em.close();
+		}
 	}
 	@GET
 	@ApiOperation(
@@ -666,7 +830,7 @@ public class vulnerabilities {
 			){
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		try{
-			User u = this.getUser(em, apiKey);
+			User u = Support.getUser(em, apiKey);
 			if(u == null || !(u.getPermissions().isRemediation() || u.getPermissions().isManager()))
 				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
 			Vulnerability vuln = em.find(Vulnerability.class, vulnid);
@@ -677,7 +841,6 @@ public class vulnerabilities {
 			
 			vuln.updateRiskLevels(em);
 			return Response.status(200).entity(this.dao2JSON(vuln, Vulnerability.class).toJSONString()).build();
-			//return this.dao2JSON(vuln, Vulnerability.class).toJSONString();	
 		}finally{
 			em.close();
 		}
@@ -698,7 +861,7 @@ public class vulnerabilities {
 			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey){
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		try{
-			User u = this.getUser(em, apiKey);
+			User u = Support.getUser(em, apiKey);
 			if(u == null )
 				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
 			
@@ -733,7 +896,7 @@ public class vulnerabilities {
 			){
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		try{
-			User u = this.getUser(em, apiKey);
+			User u = Support.getUser(em, apiKey);
 			if(u == null || !(u.getPermissions().isRemediation() || u.getPermissions().isManager()))
 				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
 			
@@ -767,7 +930,7 @@ public class vulnerabilities {
 			){
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		try{
-			User u = this.getUser(em, apiKey);
+			User u = Support.getUser(em, apiKey);
 			if(u == null || !(u.getPermissions().isRemediation() || u.getPermissions().isManager()))
 				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
 			Vulnerability vuln = em.find(Vulnerability.class, vulnid);
@@ -808,7 +971,7 @@ public class vulnerabilities {
 	{
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		try{
-			User u = this.getUser(em, apiKey);
+			User u = Support.getUser(em, apiKey);
 			if(u == null || !(u.getPermissions().isRemediation() || u.getPermissions().isManager()))
 				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
 			
@@ -859,8 +1022,8 @@ public class vulnerabilities {
 	}
 	@POST
 	@ApiOperation(
-		    value = "Get All Vulnerabilities for the specified timeframe.", 
-		    notes = ""
+		    value = "Get All Vulnerabilities for the specified timeframe.",
+		    notes = "Returns vulnerabilities with custom fields support"
 		    )
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 400, message = "Unknown Error"),
@@ -870,14 +1033,14 @@ public class vulnerabilities {
 	public Response getall(
 			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
 			@ApiParam(value = "Start Date of Search (MM/DD/YYYY)", required = true) @FormParam("start") String start,
-			@ApiParam(value = "End Date of Search (MM/DD/YYYY)", required = true) @FormParam("end") String end) 
+			@ApiParam(value = "End Date of Search (MM/DD/YYYY)", required = false) @FormParam("end") String end)
 	{
 		
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
-		JSONArray jarray = new JSONArray();
+		List<VulnerabilityDTO> dtos = new ArrayList<>();
 		try{
 		
-			User u = this.getUser(em, apiKey);
+			User u = Support.getUser(em, apiKey);
 			SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
 			if(u!=null && (u.getPermissions().isAssessor() || u.getPermissions().isManager() || u.getPermissions().isRemediation())){
 				
@@ -896,17 +1059,32 @@ public class vulnerabilities {
 				for(Vulnerability v : vulns){
 					v.updateRiskLevels(em);
 					AssessmentQueries.updateImages(em, v);
-					jarray.add(this.dao2JSON(v, Vulnerability.class));	
+					VulnerabilityDTO dto = VulnerabilityDTO.fromEntity(v);
+					
+					// Add custom fields if any
+					if (v.getCustomFields() != null) {
+						dto.setCustomFieldsFromEntity(v.getCustomFields());
+					}
+					
+					dtos.add(dto);
 				}
+				
+				// Serialize using Jackson
+				ObjectMapper mapper = new ObjectMapper();
+				String json = mapper.writeValueAsString(dtos);
+				return Response.status(200).entity(json).build();
+				
 			}else{
-				return Response.status(401).entity(String.format(this.ERROR,"Not Authorized")).build();
+				return Response.status(401).entity(String.format(Support.ERROR,"Not Authorized")).build();
 			}
 		} catch (ParseException e) {
 			e.printStackTrace();
+			return Response.status(400).entity(String.format(Support.ERROR,"Invalid date format")).build();
+		}catch (JsonProcessingException e) {
+			return Response.status(500).entity(String.format(Support.ERROR, "Failed to serialize response")).build();
 		}finally{
 			em.close();
 		}
-		return Response.status(200).entity(jarray.toJSONString()).build();
 	}
 	
 	
