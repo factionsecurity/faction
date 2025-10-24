@@ -561,6 +561,7 @@ public class vulnerabilities {
 		
 		try{
 			User u = Support.getUser(em, apiKey);
+			List<String> createdIds = new ArrayList<>();
 			if(u != null){
 				
 				try{
@@ -685,9 +686,12 @@ public class vulnerabilities {
 						em.joinTransaction();
 						em.persist(newVuln);
 						HibHelper.getInstance().commit();
+						createdIds.add(""+newVuln.getId());
 					}
 					
-					return Response.status(200).entity(Support.SUCCESS).build();
+					String returnMsg = String.format(Support.SUCCESSMSG, "\"vids\": [" +
+							String.join(",", createdIds) +"]");
+					return Response.status(200).entity(returnMsg).build();
 					
 				}catch(Exception ex){
 					ex.printStackTrace();
