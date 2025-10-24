@@ -25,6 +25,7 @@ import javax.ws.rs.core.Response;
 import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONArray;
 
+import com.faction.reporting.ReportFeatures;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fuse.api.dto.AssessmentDTO;
@@ -44,6 +45,7 @@ import com.fuse.dao.PeerReview;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
+import com.fuse.dao.query.VulnerabilityQueries;
 import com.fuse.utils.FSUtils;
 
 import io.swagger.annotations.Api;
@@ -638,6 +640,7 @@ public class assessments {
             @ApiParam(value = "Likelihood (0-9)", required = false) @FormParam("likelihood") Long likelihood,
             @ApiParam(value = "CVSS Score", required = false) @FormParam("cvssScore") String cvssScore,
             @ApiParam(value = "CVSS String", required = false) @FormParam("cvssString") String cvssString,
+            @ApiParam(value = "Section (Enterprise Feature)", required = false) @FormParam("section") String section,
             @ApiParam(value = "Custom Fields (JSON object with key-value pairs)", required = false) @FormParam("customFields") String customFieldsJson) {
         EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
         try {
@@ -801,6 +804,17 @@ public class assessments {
                     return Response.status(400)
                             .entity(String.format(Support.ERROR, "Severity Cannot Be Blank")).build();
 				}
+				if(section != null) {
+					if(ReportFeatures.allowSections()) {
+						if(VulnerabilityQueries.isValidSection(em, section))
+							v.setSection(section);
+						else {
+						return Response.status(400)
+								.entity(String.format(Support.ERROR, "Not a Valid Section")).build();
+							
+						}
+					}
+				}
 
 				// Parse user-provided custom field values if any
 				Map<String, String> userProvidedValues = null;
@@ -862,9 +876,10 @@ public class assessments {
             @ApiParam(value = "Likelihood (0-9)", required = false) @FormParam("likelihood") Long likelihood,
             @ApiParam(value = "CVSS Score", required = false) @FormParam("cvssScore") String cvssScore,
             @ApiParam(value = "CVSS String", required = false) @FormParam("cvssString") String cvssString,
+            @ApiParam(value = "Section (Enterprise Feature)", required = false) @FormParam("section") String section,
             @ApiParam(value = "Custom Fields (JSON object with key-value pairs)", required = false) @FormParam("customFields") String customFieldsJson,
             @ApiParam(value = "Vulnerability Template ID", required = true) @PathParam("vuln_template_id") Long defaultVulnId) {
-    	return this.addNewVuln(apiKey, aid, name, defaultVulnId,null,null,null,null,severity,impact, likelihood,cvssScore,cvssString, customFieldsJson);
+    	return this.addNewVuln(apiKey, aid, name, defaultVulnId,null,null,null,null,severity,impact, likelihood,cvssScore,cvssString, section, customFieldsJson);
 
     }
     
@@ -884,8 +899,9 @@ public class assessments {
     public Response addTemplatedVulnNoBody(
             @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
             @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
-            @ApiParam(value = "Vulnerability Template ID", required = true) @PathParam("vuln_template_id") Long defaultVulnId) {
-     return this.addNewVuln(apiKey, aid, null, defaultVulnId, null, null, null, null, null, null, null, null, null, null);
+            @ApiParam(value = "Vulnerability Template ID", required = true) @PathParam("vuln_template_id") Long defaultVulnId,
+            @ApiParam(value = "Section (Enterprise Feature)", required = false) @FormParam("section") String section) {
+     return this.addNewVuln(apiKey, aid, null, defaultVulnId, null, null, null, null, null, null, null, null, null, section, null);
     }
 
     /*
@@ -1383,7 +1399,7 @@ public class assessments {
      * updateVulnerability - Update a vulnerability including custom fields
      */
     @POST
-    @ApiOperation(value = "Update vulnerability fields", notes = "Updates vulnerability fields including custom fields with partial update support", response = String.class)
+    @ApiOperation(value = "Update vulnerability ", notes = "Updates a vulnerability including custom fields", response = String.class)
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Bad Request."),
@@ -1404,6 +1420,7 @@ public class assessments {
             @ApiParam(value = "CVSS Score", required = false) @FormParam("cvssScore") String cvssScore,
             @ApiParam(value = "CVSS String", required = false) @FormParam("cvssString") String cvssString,
             @ApiParam(value = "Vulnerability Category", required = false) @FormParam("categoryId") Long categoryId,
+            @ApiParam(value = "Section (Enterprise Feature)", required = false) @FormParam("section") String section,
             @ApiParam(value = "Custom Fields (JSON object with key-value pairs)", required = false) @FormParam("customFields") String customFieldsJson) {
 
         EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
@@ -1501,6 +1518,17 @@ public class assessments {
                 if (details != null) {
                     vuln.setDetails(decodeAndSanitize(details));
                     updated = true;
+                }
+                if(section != null) {
+					if(ReportFeatures.allowSections()) {
+						if(VulnerabilityQueries.isValidSection(em, section))
+							vuln.setSection(section);
+						else {
+						return Response.status(400)
+								.entity(String.format(Support.ERROR, "Not a Valid Section")).build();
+							
+						}
+					}
                 }
 
 				// If severity is provided, use it as the base
