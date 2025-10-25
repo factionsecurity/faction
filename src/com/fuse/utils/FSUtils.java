@@ -143,7 +143,7 @@ public class FSUtils {
 				.allowAttributes("style", "class", "colspan").onElements("a", "label", "h1", "h2", "h3", "h4", "h5", "h6", "p", "i", "b", "u", "strong", "em",
 						"small", "big", "pre", "code", "cite", "samp", "sub", "sup", "strike", "center", "blockquote",
 						"hr", "br", "col", "font", "div", "img", "ul", "ol", "li", "dd", "dt", "dl", "tbody", "thead",
-						"tfoot", "table", "td", "th", "tr", "colgroup", "fieldset", "legend", "span")
+						"tfoot", "table", "td", "th", "tr", "colgroup", "fieldset", "legend", "span", "backquote")
 				.allowAttributes("data-changedata", "data-cid", "data-last-change-time", "data-time", "data-userid",
 						"data-username", "title").onElements("span")
 				.allowAttributes("border", "cellpadding", "cellspacing", "style", "class", "colspan").onElements("table")
