@@ -1,10 +1,13 @@
 package com.fuse.reporting;
 
+import java.awt.Color;
+import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -62,6 +65,7 @@ import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.utils.FSUtils;
+import com.fuse.utils.ImageBorderUtil;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
@@ -410,6 +414,7 @@ public class DocxUtils {
 									}
 								}
 							}
+							rec = this.replaceFigureVariables(rec, count);
 							//map2.put("${rec}", wrapHTML(rec, customCSS, "rec", widths.get("rec")));
 							map2.put("${rec}", wrapHTML(rec, customCSS, "rec"));
 						} else if (v.getRecommendation() != null) {
@@ -424,6 +429,7 @@ public class DocxUtils {
 									}
 								}
 							}
+							rec = this.replaceFigureVariables(rec, count);
 							//map2.put("${rec}", wrapHTML(rec, customCSS, "rec", widths.get("rec")));
 							map2.put("${rec}", wrapHTML(rec, customCSS, "rec" ));
 						} else {
@@ -444,6 +450,7 @@ public class DocxUtils {
 								}
 							}
 							//map2.put("${desc}", wrapHTML(desc, customCSS, "desc", widths.get("desc")));
+							desc = this.replaceFigureVariables(desc, count);
 							map2.put("${desc}", wrapHTML(desc, customCSS, "desc"));
 						} else if (v.getDescription() != null) {
 							String desc = v.getDescription();
@@ -458,6 +465,7 @@ public class DocxUtils {
 								}
 							}
 							//map2.put("${desc}", wrapHTML(desc, customCSS, "desc", widths.get("desc")));
+							desc = this.replaceFigureVariables(desc, count);
 							map2.put("${desc}", wrapHTML(desc, customCSS, "desc"));
 						} else {
 							map2.put("${desc}", wrapHTML("", customCSS, "desc"));
@@ -477,6 +485,7 @@ public class DocxUtils {
 								}
 							}
 							details = details.replaceAll("\n", "<br />");
+							details = this.replaceFigureVariables(details, count);
 							//map2.put("${details}", wrapHTML(details, customCSS, "details", widths.get("details")));
 							map2.put("${details}", wrapHTML(details, customCSS, "details" ));
 						} else {
@@ -569,7 +578,10 @@ public class DocxUtils {
 		content = replacement(content);
 		//fix extra spaces
 		//content = content.replaceAll("\n", "<br />");
-		content = content.replaceAll("</p><p><br /></p><p>", "<br /></p><p>");
+		//content = content.replaceAll("</p><p><br /></p><p>", "<br /></p><p>");//replace extra space
+		content = content.replaceAll("<p><br /></p>", "");//replace extra space
+		content = content.replaceAll("<blockquote>", "<center class='figure'>");
+		content = content.replaceAll("</blockquote>", "</center>");
 		
 		return xhtml.convert(
 				"<!DOCTYPE html><html><head>"
@@ -828,50 +840,6 @@ public class DocxUtils {
 		return "assessment.nothing";
 	}
 
-	// Replacement for vulns
-	private void replacement(Vulnerability v, String customCSS)
-			throws Docx4JException, JAXBException {
-		HashMap<String, String> map = new HashMap();
-		map.put("vulName", v.getName());
-		map.put("severity", v.getOverallStr());
-		map.put("likelihood", v.getLikelyhoodStr());
-		map.put("impact", v.getImpactStr());
-		map.put("cvssString", v.getCvssString());
-		map.put("cvssScore", v.getCvssScore());
-		try {
-			map.put("vid", "" + v.getId());
-		} catch (Exception ex) {
-		}
-		map.put("tracking", "" + v.getTracking());
-
-		HashMap<String, List<Object>> map2 = new HashMap();
-
-		if (v.getDescription() == null && v.getDefaultVuln() != null) {
-			map2.put("${desc}", wrapHTML( v.getDefaultVuln().getDescription(), customCSS, "desc"));
-		} else if (v.getDescription() != null) {
-			map2.put("${desc}", wrapHTML( v.getDescription(), customCSS, "desc"));
-		} else {
-			map2.put("${desc}", wrapHTML( "", customCSS, "desc"));
-		}
-		if (v.getRecommendation() == null && v.getDefaultVuln() != null) {
-			map2.put("${rec}", wrapHTML( v.getDefaultVuln().getRecommendation(), customCSS, "rec"));
-		} else if (v.getRecommendation() != null) {
-			map2.put("${rec}", wrapHTML( v.getRecommendation(), customCSS, "rec"));
-		} else {
-			map2.put("${rec}", wrapHTML( "", customCSS, "rec"));
-		}
-		
-		if (v.getDetails() != null) {
-			map2.put("${details}", wrapHTML( v.getDetails(), customCSS, "details"));
-		} else {
-			map2.put("${details}", wrapHTML( "", customCSS, "details"));
-		}
-
-		replacementHyperlinks(mlp.getMainDocumentPart(),map);
-		replacementText(map);
-		replaceHTML(mlp.getMainDocumentPart(), map2);
-
-	}
 	
 	//replace simple text in hyperlinks
 	private void replacementHyperlinks(Object document, Map<String,String> map) {
@@ -988,8 +956,6 @@ public class DocxUtils {
 		
 		
 		//Fix images
-		content = content.replaceAll("<img", "<center><img");
-		content = content.replaceAll("alt=\"image.png\" contenteditable=\"false\"><br></p>", "></center></p>");
 		content = this.replaceImageLinks(content);
 		
 		//Run extensions
@@ -1007,6 +973,7 @@ public class DocxUtils {
 	}
 	
 	private String replaceImageLinks(String text) {
+		text = this.centerImages(text);
 		Long aid= this.assessment.getId();
 		String matchPrefix = "getImage\\?id(=|&#61;)" + aid + ":";
 		String badImage = "<img src=\"getImage\\?id(=|&#61;)undefined\" >";
@@ -1014,9 +981,21 @@ public class DocxUtils {
 		
 		for(Image img : this.assessment.getImages()) {
 			String matchStr = matchPrefix + img.getGuid();
-			text = text.replaceAll( matchStr, img.getBase64Image());
-			text = text.replaceAll("alt=\"image.png\" contenteditable=\"false\"><br></p>", "></p>");
-			//text = text.replaceAll("</img>", "</img></div>");
+
+			try {
+				String[] parts = img.getBase64Image().split(",");
+				String file_dataContentType = parts[0].split(";")[0].replace("data:", "");
+				byte[] imageData = Base64.getDecoder().decode(parts[1]);
+				imageData = ImageBorderUtil.addBorder(imageData, 1, Color.GRAY);
+				String borderedImage = Base64.getEncoder().encodeToString(imageData);
+				borderedImage = "data:" + file_dataContentType +";base64,"+ borderedImage;
+				text = text.replaceAll( matchStr, borderedImage);
+				
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				text = text.replaceAll( matchStr, img.getBase64Image());
+			}
 		}
 		return text;
 		
@@ -1225,6 +1204,7 @@ public class DocxUtils {
 
 		// Add the vulnerability description and recommandations.
 		// update custom fields inside the html before inserting into the document.
+		int count = 1;
 		for (Vulnerability v : filteredVulns) {
 			HashMap<String, List<Object>> map2 = new HashMap();
 
@@ -1235,6 +1215,7 @@ public class DocxUtils {
 						desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
+				desc = this.replaceFigureVariables(desc, count);
 				map2.put("${desc}", wrapHTML(desc, customCSS, "desc"));
 			} else if (v.getDescription() != null) {
 				String desc = v.getDescription();
@@ -1243,6 +1224,7 @@ public class DocxUtils {
 						desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
+				desc = this.replaceFigureVariables(desc, count);
 				map2.put("${desc}", wrapHTML(desc, customCSS, "desc"));
 			} else {
 				map2.put("${desc}", wrapHTML("", customCSS, "desc"));
@@ -1255,6 +1237,7 @@ public class DocxUtils {
 						rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
+				rec = this.replaceFigureVariables(rec, count);
 				map2.put("${rec}", wrapHTML(rec, customCSS, "rec"));
 			} else if (v.getRecommendation() != null) {
 				String rec = v.getRecommendation();
@@ -1263,6 +1246,7 @@ public class DocxUtils {
 						rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
+				rec = this.replaceFigureVariables(rec, count);
 				map2.put("${rec}", wrapHTML(rec, customCSS, "rec"));
 			} else {
 				map2.put("${rec}", wrapHTML("", customCSS, "rec"));
@@ -1275,6 +1259,7 @@ public class DocxUtils {
 						details = details.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
 					}
 				}
+				details = this.replaceFigureVariables(details, count);
 				map2.put("${details}", wrapHTML(details, customCSS, "details"));
 			} else {
 				map2.put("${details}", wrapHTML("", customCSS, "details"));
@@ -1290,18 +1275,7 @@ public class DocxUtils {
 			
 			
 			replaceHTML(mlp.getMainDocumentPart(), map2, true);
-			/*
-			HashMap<String, String> map1 = new HashMap();
-			if (v.getCustomFields() != null) {
-				for (CustomField cf : v.getCustomFields()) {
-					if(cf.getType().getFieldType() < 3) {
-						map1.put("cf" + cf.getType().getVariable(), cf.getValue());
-					}
-				}
-			}
-
-			replacementText(map1);
-			*/
+			count++;
 			
 		}
 
@@ -1567,6 +1541,23 @@ public class DocxUtils {
 	    
 	    hyperlink.getContent().add(run);
 	}
+	//This function is needed to get better processing around images
+	// that can used to center them
+	private String centerImages(String content) {
+		
+		int index = content.indexOf("<img ");
+		while(index !=-1) {
+			String first = content.substring(0,index);
+			String second = content.substring(index,content.length());
+			second = second.replaceFirst("/>", "></img>");
+			content = first + second;
+			index = content.indexOf("<img ", index+1);
+			
+		}
+		content = content.replaceAll("<p><img", "<center><img");
+		content = content.replaceAll("</img><br /></p>", "</img></center>");
+		return content;
+	}
 	
 	
 	
@@ -1676,6 +1667,22 @@ public class DocxUtils {
 		
 		}
 	}
+    public String replaceFigureVariables(String text, int index) {
+        // Pattern to match ${Figure#.X} where X is one or more digits
+        Pattern pattern = Pattern.compile("\\$\\{Figure#\\.(\\d+)\\}");
+        Matcher matcher = pattern.matcher(text);
+        
+        StringBuffer result = new StringBuffer();
+        
+        while (matcher.find()) {
+            String subNumber = matcher.group(1);
+            String replacement = "Figure " + index + "." + subNumber;
+            matcher.appendReplacement(result, replacement);
+        }
+        
+        matcher.appendTail(result);
+        return result.toString();
+    }
 	
 	private List<Object> getUpdatableElements(P paragraph){
 		if (paragraph.getParent() instanceof Tc) {
