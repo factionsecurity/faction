@@ -56,7 +56,7 @@ public class ManagerDashboard extends FSActionSupport {
     private Long teamId;
     private String status;
     private Long assessorId;
-    private String campaign;
+    private Long campaignId;
     private String searchAction = "";
     
     // Lists for dropdowns
@@ -319,7 +319,7 @@ public class ManagerDashboard extends FSActionSupport {
             }
             
             // For completed assessments, count by assessor
-            if ("Completed".equals(status) && assessment.getAssessor() != null) {
+            if ( ("Completed".equals(status) || status == null && assessment.getCompleted() != null || status == "Open" && assessment.getCompleted() != null) && assessment.getAssessor() != null) {
                 for (User assessor : assessment.getAssessor()) {
                     String assessorName = assessor.getFname() + " " + assessor.getLname();
                     filteredAssessorStats.put(assessorName,
@@ -444,10 +444,9 @@ public class ManagerDashboard extends FSActionSupport {
 		}
 		
 		// Build campaign condition
-		if (campaign != null && !campaign.trim().isEmpty()) {
+		if (campaignId != null && campaignId > 0) {
 			if (hasConditions) query.append(", ");
-			// Use regex for case-insensitive partial match
-			query.append("\"campaign\": {$regex: \"").append(campaign).append("\", $options: \"i\"}");
+			query.append("\"campaign_id\": ").append(campaignId);
 			hasConditions = true;
 		}
         
@@ -748,12 +747,12 @@ public class ManagerDashboard extends FSActionSupport {
         this.assessorId = assessorId;
     }
 
-    public String getCampaign() {
-        return campaign;
+    public Long getCampaignId() {
+        return campaignId;
     }
 
-    public void setCampaign(String campaign) {
-        this.campaign = campaign;
+    public void setCampaignId(Long campaignId) {
+        this.campaignId = campaignId;
     }
 
     public List<User> getAssessors() {

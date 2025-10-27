@@ -325,11 +325,11 @@
               <bs:mco colsize="3">
                 <div class="form-group">
                   <label>Campaign:</label>
-                  <s:select name="campaign"
+                  <s:select name="campaignId"
                     list="campaigns"
-                    listKey="name"
+                    listKey="id"
                     listValue="name"
-                    headerKey=""
+                    headerKey="0"
                     headerValue="-- All Campaigns --"
                     cssClass="form-control"/>
                 </div>

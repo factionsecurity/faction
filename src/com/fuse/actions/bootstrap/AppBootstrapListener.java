@@ -3,8 +3,12 @@ package com.fuse.actions.bootstrap;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
+import javax.persistence.EntityManager;
+import java.util.List;
 
 import com.fuse.dao.Status;
+import com.fuse.dao.Assessment;
+import com.fuse.dao.HibHelper;
 
 
 @WebListener
@@ -14,6 +18,7 @@ public class AppBootstrapListener implements ServletContextListener {
     public void contextInitialized(ServletContextEvent sce) {
         System.out.println("Application starting - checking for defaults");
         createDefautlStatusIfNeeded();
+        fixAssessmentStatuses();
     }
     
     @Override
@@ -27,6 +32,52 @@ public class AppBootstrapListener implements ServletContextListener {
         } catch (Exception e) {
             System.err.println("Error creating defaults: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+    
+    private void fixAssessmentStatuses() {
+        EntityManager em = null;
+        try {
+            System.out.println("Running assessment status migration...");
+            em = HibHelper.getInstance().getEMF().createEntityManager();
+            
+            // Find all assessments with status "Open" and a non-null completed date
+            List<Assessment> assessmentsToFix = em.createQuery(
+                "from Assessment where status = :status and completed is not null",
+                Assessment.class)
+                .setParameter("status", "Open")
+                .getResultList();
+            
+            if (!assessmentsToFix.isEmpty()) {
+                System.out.println("Found " + assessmentsToFix.size() + " assessments to fix");
+                
+                HibHelper.getInstance().preJoin();
+                em.joinTransaction();
+                
+                for (Assessment assessment : assessmentsToFix) {
+                    assessment.setStatus("Completed");
+                    em.persist(assessment);
+                    System.out.println("Fixed assessment ID " + assessment.getId() +
+                        " - changed status from Open to Completed (completed date: " +
+                        assessment.getCompleted() + ")");
+                }
+                
+                HibHelper.getInstance().commit();
+                System.out.println("Assessment status migration completed successfully");
+            } else {
+                System.out.println("No assessments found requiring status fix");
+            }
+            
+        } catch (Exception e) {
+            System.err.println("Error fixing assessment statuses: " + e.getMessage());
+            e.printStackTrace();
+            if (em != null && em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+        } finally {
+            if (em != null && em.isOpen()) {
+                em.close();
+            }
         }
     }
 }
