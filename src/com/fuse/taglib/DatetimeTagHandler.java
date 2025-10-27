@@ -45,7 +45,7 @@ public class DatetimeTagHandler extends TagSupport{
             JspWriter out = pageContext.getOut();
             String html="";
             if(readOnly) {
-            	html+="' readonly />";
+            	html+="' readonly disabled/>";
             
             }else {
             		html+="'/>";

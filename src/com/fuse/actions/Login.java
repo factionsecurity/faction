@@ -88,6 +88,7 @@ public class Login extends FSActionSupport {
 			@Result(name = "redirect_to_oauth", location = "/oauth"),
 			@Result(name = "redirect_to_saml2", location = "saml2"),
 			@Result(name = "assessorQueue", type = "redirectAction", location = "portal/Dashboard"),
+			@Result(name = "managerDash", type = "redirectAction", location = "portal/ManagerDashboard"),
 			@Result(name = "engagement", type = "redirectAction", location = "portal/Engagement"),
 			@Result(name = "admin", type = "redirectAction", location = "portal/Users"),
 			@Result(name = "calendar", type = "redirectAction", location = "portal/Calendar"),
@@ -389,17 +390,16 @@ public class Login extends FSActionSupport {
 	}
 
 	private String redirectIt(User user) {
-		if (user.getPermissions().isAssessor())
+		if (user.getPermissions().isManager())
+			return "managerDash";
+		else if (user.getPermissions().isAssessor())
 			return "assessorQueue";
 		else if (user.getPermissions().isEngagement())
 			return "engagement";
 		else if (user.getPermissions().isRemediation())
-
 			return "remediation";
 		else if (user.getPermissions().isAdmin())
 			return "admin";
-		else if (user.getPermissions().isManager())
-			return "calendar";
 		return "login";
 	}
 

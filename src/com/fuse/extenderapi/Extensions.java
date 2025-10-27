@@ -271,6 +271,7 @@ public class Extensions {
 				tmpAssessment.setType(localAssessment.getType().getType());
 			}
 			for (ReportManager mgr : this.reportManagers) {
+				
 				String updatedText = mgr.reportCreate(tmpAssessment, tmpVulns,reportText);
 				if(updatedText != null) {
 					reportText = updatedText;
@@ -575,7 +576,7 @@ public class Extensions {
 				try {
 					Thread.currentThread().setContextClassLoader(extensionLoader);
 					for (AssessmentManager asmtMgr : ServiceLoader.load(AssessmentManager.class, extensionLoader)) {
-						if (asmtMgr != null && app.getAssessmentEnabled()) {
+						if (asmtMgr != null && app.getAssessmentEnabled() && app.getEnabled()) {
 							asmtMgr.setConfigs(app.getHashMapConfig());
 							assessmentManagers.add(asmtMgr);
 						}
@@ -591,7 +592,7 @@ public class Extensions {
 				try {
 					Thread.currentThread().setContextClassLoader(extensionLoader);
 					for (ReportManager reportMgr : ServiceLoader.load(ReportManager.class, extensionLoader)) {
-						if (reportMgr != null && app.getReportEnabled()) {  ///eventually need to make this report enabled and have a sep section in app store
+						if (reportMgr != null && app.getReportEnabled() && app.getEnabled()) {  ///eventually need to make this report enabled and have a sep section in app store
 							reportMgr.setConfigs(app.getHashMapConfig());
 							reportManagers.add(reportMgr);
 						}
@@ -608,7 +609,7 @@ public class Extensions {
 				try {
 					Thread.currentThread().setContextClassLoader(extensionLoader);
 					for (VulnerabilityManager vulnMgr : ServiceLoader.load(VulnerabilityManager.class, extensionLoader)) {
-						if (vulnMgr != null && app.getVulnerabilityEnabled()) {
+						if (vulnMgr != null && app.getVulnerabilityEnabled() && app.getEnabled()) {
 							vulnMgr.setConfigs(app.getHashMapConfig());
 							vulnerabilityManagers.add(vulnMgr);
 						}
@@ -625,7 +626,7 @@ public class Extensions {
 				try {
 					Thread.currentThread().setContextClassLoader(extensionLoader);
 					for (VerificationManager verMgr : ServiceLoader.load(VerificationManager.class, extensionLoader)) {
-						if (verMgr != null && app.getVerificationEnabled()) {
+						if (verMgr != null && app.getVerificationEnabled() && app.getEnabled()) {
 							verMgr.setConfigs(app.getHashMapConfig());
 							verificationManagers.add(verMgr);
 						}
@@ -642,7 +643,7 @@ public class Extensions {
 				try {
 					Thread.currentThread().setContextClassLoader(extensionLoader);
 					for (ApplicationInventory invMgr : ServiceLoader.load(ApplicationInventory.class, extensionLoader)) {
-						if (invMgr != null && app.getInventoryEnabled()) {
+						if (invMgr != null && app.getInventoryEnabled() && app.getEnabled()) {
 							invMgr.setConfigs(app.getHashMapConfig());
 							inventoryManagers.add(invMgr);
 						}

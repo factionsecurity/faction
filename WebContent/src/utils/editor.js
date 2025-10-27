@@ -11,6 +11,7 @@ import TurndownService from 'turndown'
 let html2md = new TurndownService()
 import markdownit from 'markdown-it';
 import DOMPurify from 'dompurify';
+require('./editor.css')
 
 export class FactionEditor {
 	constructor(assessmentId){
@@ -25,7 +26,7 @@ export class FactionEditor {
 			ALLOWED_TAGS: [
 				'u', 'ins', 'b', 'i', 'strong', 'em', 'p', 'br', 'h1', 'h2', 'h3', 'h4',
 				'ul', 'ol', 'li', 'a', 'img', 'code', 'pre', 'table', 'thead', 'tbody', 'tr', 'th', 'td',
-				'span', 'hr', 's', 'del', 'blockquote'
+				'span', 'hr', 's', 'del', 'blockquote', 'center'
 				// Add other tags Toast UI uses
 			],
 			ALLOWED_ATTR: ['href', 'src', 'alt', 'class', 'style', 'text-decoration', 'colspan'], // Optional
@@ -168,9 +169,12 @@ export class FactionEditor {
 		if(typeof onChangeCallback == 'undefined'){
 			onChangeCallback = function(){}
 		}
-		this.initialHTML[id] = entityDecode($(`#${id}`).html());
+		this.initialHTML[id] = entityDecode($(`#${id}`).html()).replace(/<u>([^<]+)<\/u>/g, '++$1++');
 		$(`#${id}`).html("");
 		let _this = this;
+		Editor.setLanguage('en-US', {
+		  'Blockquote': 'Center'
+		});
 		this.editors[id] = new Editor({
 			el: document.querySelector(`#${id}`),
 			previewStyle: 'vertical',
@@ -179,26 +183,32 @@ export class FactionEditor {
 			height: '560px',
 			plugins: [colorSyntax, tableMergedCell],
 			toolbarItems: [
-            ['heading', 'bold', 'italic',
-                {
-                    el: this.createUnderlineButton(id),
-                    name: 'underline',
-                    tooltip: 'Underline (Ctrl+U / Cmd+U)'
-                }
-            ],
-            ['hr', 'quote'],
-            ['ul', 'ol', 'task', 'indent', 'outdent'],
-            ['table', 'image', 'link'],
-            ['code', 'codeblock'],
-            ['scrollSync']
-        ],
+				['heading', 'bold', 'italic',
+					{
+						el: this.createUnderlineButton(id),
+						name: 'underline',
+						tooltip: 'Underline'
+					},
+					'quote'
+				],
+				['hr', 'ul', 'ol', 'indent', 'outdent'],
+				['table', 'image', 'link'],
+				['code', 'codeblock'],
+				['scrollSync']
+        	],
+			i18n: {
+			    'Blockquote': 'Center',
+			    'Quote': 'Center',
+			},
 			customHTMLSanitizer: this.customHTMLSanitizer,
 			events: {
 				beforePreviewRender: (html) => {
-					return html.replace(/\+\+([^+\n]+)\+\+/g, '<u>$1</u>');
+					html = html.replace(/\+\+([^+\n]+)\+\+/g, '<u>$1</u>');
+					return html;
 				},
 				beforeConvertWysiwygToMarkdown: (html) => {
-					return html.replace(/<u>([^<]+)<\/u>/g, '++$1++');
+					html = html.replace(/<u>([^<]+)<\/u>/g, '++$1++');
+					return html;
 				},
 				changeMode: (mode) => {
 					if (mode === 'wysiwyg') {
@@ -265,12 +275,12 @@ export class FactionEditor {
 	}
 	getHTML(id){
         let content = this.editors[id].getHTML();
-        return content.replace(/\+\+([^+\n]+)\+\+/g, '<u>$1</u>');
+        content = content.replace(/\+\+([^+\n]+)\+\+/g, '<u>$1</u>');
+		return content
 	}
 	getEditorText(id) {
 		let html = this.editors[id].getHTML();
         html = html.replace(/\+\+([^+\n]+)\+\+/g, '<u>$1</u>');
-		//return Array.from($(html)).filter(a => a.innerHTML != "<br>").map(a => a.outerHTML).join("")
 		return html
 	}
 	changeOff(id){
@@ -297,8 +307,10 @@ export class FactionEditor {
 		}
 		//contents = contents.replaceAll("<br />", "\n");
 		contents = contents.replace(/<u>([^<]+)<\/u>/g, '++$1++');
+		this.editors[id].hide();	
 		this.editors[id].setHTML(contents, false);
 		this.editors[id].moveCursorToStart(false);
+		this.editors[id].show();	
 	}
 	
 	recreateEditor(id, contents, offloadImages, isEncoded, callback){

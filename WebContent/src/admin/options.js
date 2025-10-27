@@ -21,7 +21,15 @@ import 'select2';
 import '../scripts/jquery.autocomplete.min';
 
     global.deleteStatus = function deleteStatus(status){
-    	let data = "status=" +status;
+    	let data = "statusId=" +status;
+		data +="&_token=" + _token;
+		$.post("deleteStatus",data).done(function(resp){
+			alertRedirect(resp);
+		});
+    };
+    global.editStatus = function editStatus(statusId,status){
+    	let data = "statusId=" +statusId;
+    	data += "status=" +status;
 		data +="&_token=" + _token;
 		$.post("deleteStatus",data).done(function(resp){
 			alertRedirect(resp);

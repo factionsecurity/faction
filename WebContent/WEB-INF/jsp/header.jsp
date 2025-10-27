@@ -155,8 +155,11 @@
           <ul class="sidebar-menu">
             
 
-             <s:if test="acassessor || acmanager">
+             <s:if test="acassessor">
             	<li class="<s:property value="activeDB"/>"><a href="Dashboard"><i class="glyphicon glyphicon-dashboard"></i> <span>Dashboard</span></a></li>
+            </s:if>
+             <s:if test="acmanager">
+            	<li class="<s:property value="activeMDB"/>"><a href="ManagerDashboard"><i class="glyphicon glyphicon-dashboard"></i> <span>Manager Dashboard</span></a></li>
             </s:if>
             <s:if test="acassessor || acmanager">
             	<li class="<s:property value="activeAQ"/>">

@@ -37,68 +37,16 @@ import io.swagger.annotations.ApiResponses;
 @Path("/verifications")
 public class verifications {
 	
-	
-	@GET
-	@ApiOperation(
-    value = "Gets the the Verification Queue for the user associated with the FACTION-API-KEY token header.", 
-    notes = "Must have assessor permission. This returns only verificaitons assigned to the user. Will not show passed/failed verifications.",
-    response = Verification.class,
-    responseContainer = "List"
-    )
-	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
-			@ApiResponse(code = 200, message = "Assessor Queue Returned")})
-	@Produces(MediaType.APPLICATION_JSON)
-	@Path("/queue")
-	public Response getVerifications(@HeaderParam("FACTION-API-KEY") String apiKey){
-		
-		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
-		try{
-			User u = Support.getUser(em, apiKey);
-			JSONArray jarray = new JSONArray();
-			if(u != null && (u.getPermissions().isAssessor() || u.getPermissions().isManager()) && !Support.getTier().equals("consultant")){
-				
-				
-				List<Verification> ver = (List<Verification>)em.createNativeQuery(
-					"{\"assessor_Id\" : "+u.getId() + ",\"completed\" : ISODate(\"1970-01-01T00:00:00Z\")}"
-					, Verification.class).getResultList();
-				for(Verification v  : ver){
-					v.getVerificationItems().get(0).getVulnerability().updateRiskLevels(em);
-					JSONObject obj = Support.dao2JSON(v.getVerificationItems().get(0).getVulnerability(), Vulnerability.class);
-					obj.put("Start", "" + v.getStart().getTime());
-					obj.put("End", "" + v.getEnd().getTime());
-					obj.put("AppId", v.getAssessment().getAppId());
-					obj.put("AssessmentName", v.getAssessment().getName());
-					String tracking = v.getVerificationItems().get(0).getVulnerability().getTracking();
-					obj.put("Tracking", tracking==null ? "":tracking);
-					obj.put("VerificationId", v.getId());
-					obj.put("Completed", v.getCompleted() == null? "":""+v.getCompleted().getTime());
-					obj.put("RemediationCompleted", v.getRemediationCompleted() == null? "": ""+v.getRemediationCompleted().getTime());
-					obj.put("WorkFlowStatus", v.getWorkflowStatus());
-					jarray.add(obj);	
-				}
-				
-				
-				return Response.status(200).entity(jarray.toJSONString()).build();
-				
-			}else{
-				return Support.autherror();
-			}
-		}finally{
-			em.close();
-		}
-		
-		
-	}
-	
 	@POST
 	@ApiOperation(
-    value = "Gets all verifications/retests in the system.", 
-    notes = "Must have remeidation permission. This will return all open verifications, including passed/failed items. If a date"
-    		+ " range is entered then it will only return passed/failed items for that date range."
-    		+ "The API will also return all non-completed verifications reguardless of daterange.",
-    response = Verification.class,
-    responseContainer = "List"
-    )
+	   value = "Gets all verifications/retests in the system.",
+	   notes = "Must have remeidation permission. This will return all open verifications, including passed/failed items. If a date"
+	   		+ " range is entered then it will only return passed/failed items for that date range."
+	   		+ "The API will also return all non-completed verifications reguardless of daterange.",
+	   response = Verification.class,
+	   responseContainer = "List",
+	   position = 10
+	   )
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 200, message = "All Retest Queues Returned")})
 	@Produces(MediaType.APPLICATION_JSON)
@@ -166,14 +114,69 @@ public class verifications {
 		
 	}
 	
+	
+	@GET
+	@ApiOperation(
+	   value = "Gets the the Verification Queue for the user associated with the FACTION-API-KEY token header.",
+	   notes = "Must have assessor permission. This returns only verificaitons assigned to the user. Will not show passed/failed verifications.",
+	   response = Verification.class,
+	   responseContainer = "List",
+	   position = 40
+	   )
+	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
+			@ApiResponse(code = 200, message = "Assessor Queue Returned")})
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/queue")
+	public Response getVerifications(@HeaderParam("FACTION-API-KEY") String apiKey){
+		
+		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+		try{
+			User u = Support.getUser(em, apiKey);
+			JSONArray jarray = new JSONArray();
+			if(u != null && (u.getPermissions().isAssessor() || u.getPermissions().isManager()) && !Support.getTier().equals("consultant")){
+				
+				
+				List<Verification> ver = (List<Verification>)em.createNativeQuery(
+					"{\"assessor_Id\" : "+u.getId() + ",\"completed\" : ISODate(\"1970-01-01T00:00:00Z\")}"
+					, Verification.class).getResultList();
+				for(Verification v  : ver){
+					v.getVerificationItems().get(0).getVulnerability().updateRiskLevels(em);
+					JSONObject obj = Support.dao2JSON(v.getVerificationItems().get(0).getVulnerability(), Vulnerability.class);
+					obj.put("Start", "" + v.getStart().getTime());
+					obj.put("End", "" + v.getEnd().getTime());
+					obj.put("AppId", v.getAssessment().getAppId());
+					obj.put("AssessmentName", v.getAssessment().getName());
+					String tracking = v.getVerificationItems().get(0).getVulnerability().getTracking();
+					obj.put("Tracking", tracking==null ? "":tracking);
+					obj.put("VerificationId", v.getId());
+					obj.put("Completed", v.getCompleted() == null? "":""+v.getCompleted().getTime());
+					obj.put("RemediationCompleted", v.getRemediationCompleted() == null? "": ""+v.getRemediationCompleted().getTime());
+					obj.put("WorkFlowStatus", v.getWorkflowStatus());
+					jarray.add(obj);	
+				}
+				
+				
+				return Response.status(200).entity(jarray.toJSONString()).build();
+				
+			}else{
+				return Support.autherror();
+			}
+		}finally{
+			em.close();
+		}
+		
+		
+	}
+	
 	@POST
 	@ApiOperation(
-    value = "Gets all verifications/retests for a certian user.", 
-    notes = "Must have remediation permission. Returns all Open verifications, even verifications that are passed/failed. "
-    		+ "Date range searched completed Verifications but the API will return all non-completed verifications reguardless of daterange.",
-    response = Verification.class,
-    responseContainer = "List"
-    )
+	   value = "Gets all verifications/retests for a certian user.",
+	   notes = "Must have remediation permission. Returns all Open verifications, even verifications that are passed/failed. "
+	   		+ "Date range searched completed Verifications but the API will return all non-completed verifications reguardless of daterange.",
+	   response = Verification.class,
+	   responseContainer = "List",
+	   position = 50
+	   )
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 200, message = "All Retest Queues Returned")})
 	@Produces(MediaType.APPLICATION_JSON)
@@ -252,8 +255,9 @@ public class verifications {
 	
 	@POST
 	@ApiOperation(
-		    value = "Pass or Fail a verification/retest.", 
-		    notes = "."
+		    value = "Pass or Fail a verification/retest.",
+		    notes = ".",
+		    position = 20
 		    )
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			 @ApiResponse(code = 400, message = "Bad Request."),
@@ -328,8 +332,9 @@ public class verifications {
 			
 	@POST
 	@ApiOperation(
-		    value = "Schedule a Retest.", 
-		    notes = "You can assign assessors based user id. Vulnerabilities can be assigned based on the Vulnerability ID or the Tracking ID."
+		    value = "Schedule a Retest.",
+		    notes = "You can assign assessors based user id. Vulnerabilities can be assigned based on the Vulnerability ID or the Tracking ID.",
+		    position = 30
 		    )
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			 @ApiResponse(code = 400, message = "Bad Request."),

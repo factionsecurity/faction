@@ -20,6 +20,17 @@
    right:0;
    left:0;
 }
+.select2-container--disabled{
+   background-color:#d5d5d5;
+   opacity:0.5;
+   border-radius:4px;
+}
+.form-control[disabled]{
+   background-color:#d5d5d5;
+   opacity:0.5;
+   border-radius:4px;
+}
+
 .breadcrumb {
 	background-color: #030d1c !important;
 </style>
@@ -124,7 +135,12 @@
        let campName="<s:property value="currentAssessment.campaign.id"/>";
        let teamName="<s:property value="currentAssessment.assessor[0].team.id"/>";
        let assType="<s:property value="currentAssessment.type.id"/>";
-       let statName="<s:property value="currentAssessment.status"/>";
+       <s:if test="currentAssessment.realStatus == null">
+       	let statusSelectName="Automatic";
+	   </s:if>
+	   <s:else>
+       	let statusSelectName="<s:property value="currentAssessment.status"/>";
+       	</s:else>
        let aid="<s:property value="aid"/>";
 	   let initialPreviewDownloadUrl = 'GetEngFile?name={key}';
 	   let customFields = []

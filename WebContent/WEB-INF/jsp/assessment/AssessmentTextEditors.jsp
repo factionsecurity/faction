@@ -24,6 +24,15 @@
 #engagmentnotes{
 	background-color:white;
 }
+.input-group-addon{
+	background-color: #030D1C !important;
+	border-top-left-radius: 4px !important;
+	border-bottom-left-radius: 4px !important;
+}
+.form-control{
+border-color: #030D1C !important;
+}
+
 </style>
 
 
@@ -39,47 +48,51 @@
 			<!-- /.box-header -->
 			<!-- form start -->
 			<form class="form-horizontal">
-				<div class="box-body">
-					<div class="form-group">
-						<label for="assessor" class="col-sm-2 control-label">Assessor(s)</label>
-						<div class="col-sm-10">
+				<div class="box-body row">
+						<div class="col-sm-12">
+							<label for="assessor" class="control-label">Assessor(s)</label>
+							
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-user-group"></i>
+							</div>
 							<input type="text" disabled="" class="form-control" id="assessor"
 								value="<s:iterator value="assessment.assessor" ><s:property value="fname"/>&nbsp;<s:property value="lname"/>; </s:iterator>">
+								</div>
 
 						</div>
-					</div>
-					<div class="form-group">
-						<label for="engagement" class="col-sm-2 control-label">Project
-							Manager</label>
-						<div class="col-sm-10">
+						<div class="col-sm-6">
+						<label for="engagement" class="control-label">Project Manager</label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-user"></i>
+							</div>
 							<input type="text" disabled="" class="form-control"
 								id="engagement"
 								value="<s:property value="assessment.engagement.fname"/>&nbsp;<s:property value="assessment.engagement.lname"/>">
+								</div>
 						</div>
-					</div>
-					<div class="form-group">
-						<label for="remediation" class="col-sm-2 control-label">Remediation</label>
-						<div class="col-sm-10">
+						<div class="col-sm-6">
+						<label for="remediation" class="control-label">Remediation</label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-user"></i>
+							</div>
 							<input type="text" disabled="" class="form-control"
 								id="remediation"
 								value="<s:property value="assessment.remediation.fname"/>&nbsp;<s:property value="assessment.remediation.lname"/>">
+								</div>
 						</div>
-					</div>
-					<div class="form-group">
-						<label for="Distro" class="col-sm-2 control-label">Distro</label>
-						<div class="col-sm-10">
+						<div class="col-sm-12">
+						<label for="Distro" class="control-label">Distro</label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-envelope"></i>
+							</div>
 							<input type="text" disabled="" class="form-control" id="Distro"
 								value="<s:property value="assessment.distributionList"/>">
+								</div>
 						</div>
-					</div>
-					<!--  <div class="form-group">
-						<label for="Distro" class="col-sm-2 control-label">Status</label>
-						<div class="col-sm-10">
-							<input type="text" disabled="" class="form-control" id="status"
-								value="<s:property value="assessment.status"/>">
-						</div>
-					</div>-->
-
 
 				</div>
 			<!-- /.box-body -->
@@ -99,42 +112,66 @@
 			<!-- /.box-header -->
 			<!-- form start -->
 			<div class="form-horizontal">
-				<div class="box-body">
-					<div class="form-group">
-						<label for="type" class="col-sm-2 control-label">Type</label>
-						<div class="col-sm-10">
-							<input type="text" disabled="" class="form-control" id="type"
-								value="<s:property value="assessment.type.type"/>">
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="team" class="col-sm-2 control-label">Team</label>
-						<div class="col-sm-10">
-							<input type="text" disabled="" class="form-control" id="team"
-								value="<s:property value="assessment.assessor[0].team.teamName"/>">
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="campaign" disabled="" class="col-sm-2 control-label">Campaign</label>
-						<div class="col-sm-10">
-							<input type="text" disabled="" class="form-control" id="campaign"
-								value="<s:property value="assessment.campaign.name"/>">
-						</div>
-					</div>
-					<div class="form-group">
-						<label class="col-sm-2 control-label">Date range</label>
-						<div class="col-sm-10">
-							<div class="input-group ">
-								<div class="input-group-addon ">
+				<div class="box-body row">
+					<div class="col-sm-6">
+						<label class="">Date Range</label>
+							<div class="input-group">
+								<div class="input-group-addon">
 									<i class="fa fa-calendar"></i>
 								</div>
-								<input disabled="" class="form-control pull-right"
+								<input disabled class="form-control pull-right"
 									id="reservation" type="text"
 									value='<s:property value="assessment.start"/> - <s:property value="assessment.end"/>'>
 							</div>
-							<!-- /.input group -->
+						<!-- /.input group -->
+					</div>
+					<div class="col-sm-6">
+						<label for="Distro" class="control-label">Status <span id="status_header"></span></label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-circle-dot"></i>
+							</div>
+						<select class='form-control select2 ' style='width: 100%;'
+							id="status"
+							<s:if test="currentAssessment.finalized">readonly</s:if>>
+							<s:iterator value="statuses" var="status">
+								<option value="<s:property value="#status.id"/>"
+									<s:if test="#status.name.equals(assessment.status)">selected</s:if>><s:property
+										value="#status.name" /> </option> 
+							</s:iterator>
+						</select>
 						</div>
 					</div>
+					<div class="col-sm-6">
+						<label for="type" class="control-label">Type</label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-gem"></i>
+							</div>
+							<input type="text" disabled="" class="form-control" id="type"
+								value="<s:property value="assessment.type.type"/>">
+								</div>
+					</div>
+					<div class="col-sm-6">
+						<label for="team" class="control-label">Team</label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-user-group"></i>
+							</div>
+							<input type="text" disabled="" class="form-control" id="team"
+								value="<s:property value="assessment.assessor[0].team.teamName"/>">
+								</div>
+						</div>
+					<div class="col-sm-6">
+						<label for="campaign" disabled="" class="control-label">Campaign</label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-flag"></i>
+							</div>
+							<input type="text" disabled="" class="form-control" id="campaign"
+								value="<s:property value="assessment.campaign.name"/>">
+								</div>
+						</div>
 				</div>
 				<!-- /.box-body -->
 

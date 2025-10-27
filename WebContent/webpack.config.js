@@ -32,7 +32,8 @@ module.exports = {
 		templates: path.resolve(__dirname, './src/templates/templates.js'),
 		assessment_stats: path.resolve(__dirname, './src/assessment/assessment_stats.js'),
 		appstore: path.resolve(__dirname, './src/appstore/appstore.js'),
-		install_extension: path.resolve(__dirname, './src/appstore/install_extension.js')
+		install_extension: path.resolve(__dirname, './src/appstore/install_extension.js'),
+		manager_dashboard: path.resolve(__dirname, './src/dashboard/manager_dashboard.js')
 		
 	},
 	output: {

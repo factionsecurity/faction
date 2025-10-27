@@ -177,20 +177,27 @@
 						<br>
 						<br>
 						<bs:mco colsize="12">
-							<bs:datatable columns="Status,Default,Delete" classname="" id="">
-								<s:iterator value="EMS.status" var="stat">
+							<bs:datatable columns="Status,Actions" classname="" id="">
+								<s:iterator value="statuses" var="stat">
 									<tr>
-										<td><s:property value="stat" /></td>
-										<td width="50px" status="<s:property value="stat"/>"><s:if
-												test="#stat == EMS.defaultStatus">
-												<input type="checkbox" class="statuscheck" checked>
-											</s:if> <s:else>
-												<input type="checkbox" class="statuscheck">
-											</s:else></td>
-										<td width="50px"><span
+										<td><s:property value="name" /></td>
+										<td width="50px">
+										<s:if test="builtin">
+										<span
+											class="vulnControl vulnControl-delete"><i
+												class="fa fa-lock"></i></span>
+										</s:if>
+										<s:else>
+										<span
+											class="vulnControl vulnControl-edit"
+											onClick="editStatusModal('<s:property value="id"/>')"><i
+												class="fa fa-edit"></i></span>
+										<span
 											class="vulnControl vulnControl-delete"
-											onClick="deleteStatus('<s:property value="stat"/>')"><i
-												class="fa fa-trash"></i></span></td>
+											onClick="deleteStatus('<s:property value="id"/>')"><i
+												class="fa fa-trash"></i></span>
+										</s:else>
+										</td>
 									</tr>
 								</s:iterator>
 							</bs:datatable>

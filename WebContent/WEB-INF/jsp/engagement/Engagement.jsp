@@ -109,11 +109,12 @@ label{
 	let customFields = []
 	let sDate= moment(new Date).format("MM-DD-YYYY")
 	let eDate= moment(new Date).format("MM-DD-YYYY")
-	let statName = "${defaultStatus}"
+	let statusSelect = "-1"
 	let engName = ''
 	let remName = ''
 	let campName =''
 	let assType = ''
+	let statusSelectName = 'Automatic';	
 	<s:iterator value="currentAssessment.CustomFields">
 		customFields.push(${type.id});
 	</s:iterator>

@@ -199,7 +199,7 @@ td:first-child {
 										id="title_header"></span></label>
 									<div class="col-sm-10">
 										<input type="text" class="form-control" id="title"
-											placeholder="Vulnerbility Name">
+											placeholder="Search for Vulnerability Title, CVE id, or Enter Custom Name">
 									</div>
 								</div>
 							</bs:row>

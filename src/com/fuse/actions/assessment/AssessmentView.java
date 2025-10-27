@@ -43,6 +43,7 @@ import com.fuse.dao.Files;
 import com.fuse.dao.Notification;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.RiskLevel;
+import com.fuse.dao.Status;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
@@ -89,6 +90,8 @@ public class AssessmentView extends FSActionSupport {
 	LinkedHashMap<String, Integer> catMap = new LinkedHashMap<>();
 	private String vendor="";
 	private String calendarLink="";
+	private List<Status> statuses = new ArrayList<>();
+	private Long status;
 	
 
 	@Action(value = "Assessment", 
@@ -149,6 +152,8 @@ public class AssessmentView extends FSActionSupport {
 		
 		riskTemplates = em.createQuery("from BoilerPlate where (user = :user or global = true) and type='risk' and active = true")
 				.setParameter("user", user).getResultList();
+		
+		statuses = em.createQuery("from Status").getResultList();
 
 		history = this.createHistory(assessment, levels);
 
@@ -204,6 +209,10 @@ public class AssessmentView extends FSActionSupport {
 				assessment.setRiskAnalysis(this.riskAnalysis);
 			if (this.summary != null)
 				assessment.setSummary(this.summary);
+			if (this.status != null) {
+				Status s = em.find(Status.class, this.status);
+				this.assessment.setStatus(s.getName());
+			}
 			AssessmentQueries.saveAssessment(this, em, assessment, "Assessment Summaries have been updated");
 
 			return this.SUCCESSJSON;
@@ -381,8 +390,16 @@ public class AssessmentView extends FSActionSupport {
 		    params.put("dates", "");
 		    params.put("details", HTML);
 		    params.put("add", String.join(",", emails));
-		}else if (vendor.equals("outlook")) {
+		}else if (vendor.equals("live")) {
 			baseUrl = "https://outlook.live.com/calendar/0/deeplink/compose";
+			params.put("subject", title);
+		    params.put("startdt", "");
+		    params.put("enddt", "");
+		    params.put("body", HTML);
+		    params.put("to", String.join(",", emails));
+		     
+		}else if (vendor.equals("outlook")) {
+			baseUrl = "https://outlook.office.com/calendar/0/deeplink/compose";
 			params.put("subject", title);
 		    params.put("startdt", "");
 		    params.put("enddt", "");
@@ -413,6 +430,9 @@ public class AssessmentView extends FSActionSupport {
 	}
 	public String getGoogleLink() {
 		return this.createCalendarLink("google");
+	}
+	public String getLiveLink() {
+		return this.createCalendarLink("live");
 	}
 	
 	
@@ -672,6 +692,7 @@ public class AssessmentView extends FSActionSupport {
 		}
 		AssessmentQueries.removeImages(assessment);
 		assessment.setCompleted(new Date());
+		assessment.setStatus("Complete");
 		assessment.setFinalized();
 		List<Vulnerability> vulns = assessment.getVulns();
 		for (Vulnerability v : vulns) {
@@ -921,6 +942,14 @@ public class AssessmentView extends FSActionSupport {
 	}
 	public InputStream getIcsStream() {
 		return this.icsStream;
+	}
+	
+	public List<Status> getStatuses(){
+		return this.statuses;
+	}
+	
+	public void setStatus(Long status) {
+		this.status = status;
 	}
 	
 	
