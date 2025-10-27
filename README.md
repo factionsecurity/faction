@@ -33,6 +33,13 @@ ___Faction is now an OWASP Project! You can find more information [here](https:/
 ### Become a Sponsor ❤️
 If you like the project and would like to see it advance then consider being a sponsor. All sponsors get access to the Faction discord server and will have bug reports prioritized. Just click the sponsor links at the top of this repo or contact us at info[at]factionsecurity.com
 
+### Community, Getting Involved, and Updates
+[Join the OWASP Slack Community](https://owasp.org/slack/invite) and and follow #project-faction! Be sure to follow us on [BlueSky](https://bsky.app/profile/factionsecurity.com) and our [Blog](https://medium.com/@we-are-faction) to get the latest updates.
+
+
+### Contributing
+Please see our [contributing guidelines](CONTRIBUTING.md) for details and standards on contributing before considering or submitting a pull request.
+
 # Introduction
 
 FACTION is your entire assessment workflow in a box. With FACTION you can:
