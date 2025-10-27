@@ -51,18 +51,19 @@ public class AppBootstrapListener implements ServletContextListener {
             if (!assessmentsToFix.isEmpty()) {
                 System.out.println("Found " + assessmentsToFix.size() + " assessments to fix");
                 
-                HibHelper.getInstance().preJoin();
-                em.joinTransaction();
+                // Begin transaction using EntityManager's built-in transaction management
+                em.getTransaction().begin();
                 
                 for (Assessment assessment : assessmentsToFix) {
                     assessment.setStatus("Completed");
-                    em.persist(assessment);
+                    em.merge(assessment);  // Use merge instead of persist for existing entities
                     System.out.println("Fixed assessment ID " + assessment.getId() +
                         " - changed status from Open to Completed (completed date: " +
                         assessment.getCompleted() + ")");
                 }
                 
-                HibHelper.getInstance().commit();
+                // Commit the transaction
+                em.getTransaction().commit();
                 System.out.println("Assessment status migration completed successfully");
             } else {
                 System.out.println("No assessments found requiring status fix");
@@ -71,7 +72,7 @@ public class AppBootstrapListener implements ServletContextListener {
         } catch (Exception e) {
             System.err.println("Error fixing assessment statuses: " + e.getMessage());
             e.printStackTrace();
-            if (em != null && em.getTransaction().isActive()) {
+            if (em != null && em.getTransaction() != null && em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
         } finally {
