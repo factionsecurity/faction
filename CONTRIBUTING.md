@@ -17,7 +17,6 @@ We support and encourage contributions to Faction. This project was built out of
   - [Suggesting Enhancements](#suggesting-enhancements)
   - [Submitting Extensions](#submitting-extensions)
   - [Pull Requests](#pull-requests)
-- [Development Setup](#development-setup)
 - [Coding Guidelines](#coding-guidelines)
 - [Extension Development](#extension-development)
 - [Contact](#contact)
