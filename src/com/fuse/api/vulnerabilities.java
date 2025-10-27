@@ -70,211 +70,6 @@ public class vulnerabilities {
     private String SUCCESSMSG = "[{ \"result\" : \"SUCCESS\": %s}]";
     private String ERROR = "[{ \"result\" : \"ERROR\", \"message\": \"%s\"}]";
 
-    public static class GenericVulnerability {
-        @JsonProperty("Id")
-        public Long id;
-        @JsonProperty("Name")
-        public String name;
-        @JsonProperty("CategoryId")
-        public Long categoryId;
-        @JsonProperty("CategoryName")
-        public String categoryName;
-        @JsonProperty("Description")
-        public String description;
-        @JsonProperty("Recommendation")
-        public String recommendation;
-        @JsonProperty("SeverityId")
-        public Integer severityId;
-        @JsonProperty("LikelihoodId")
-        public Integer likelihoodId;
-        @JsonProperty("ImpactId")
-        public Integer impactId;
-        @JsonProperty("Active")
-        public Boolean active;
-        @JsonProperty("Cvss31Score")
-        public String cvss31Score = "";
-        @JsonProperty("Cvss31String")
-        public String cvss31String = "";
-        @JsonProperty("Cvss40Score")
-        public String cvss40Score = "";
-        @JsonProperty("Cvss40String")
-        public String cvss40String = "";
-
-        public GenericVulnerability() {
-        }
-
-        public GenericVulnerability(DefaultVulnerability defaultVuln) {
-            this.id = defaultVuln.getId();
-            this.name = defaultVuln.getName();
-            this.categoryId = defaultVuln.getCategory().getId();
-            this.categoryName = defaultVuln.getCategory().getName();
-            this.description = defaultVuln.getDescription();
-            this.recommendation = defaultVuln.getRecommendation();
-            this.severityId = defaultVuln.getOverall();
-            this.likelihoodId = defaultVuln.getLikelyhood();
-            this.impactId = defaultVuln.getImpact();
-            this.active = defaultVuln.getActive();
-            this.cvss31Score = defaultVuln.getCvss31Score() == null ? "" : defaultVuln.getCvss31Score();
-            this.cvss31String = defaultVuln.getCvss31String() == null ? "" : defaultVuln.getCvss31String();
-            this.cvss40Score = defaultVuln.getCvss40Score() == null ? "" : defaultVuln.getCvss40Score();
-            this.cvss40String = defaultVuln.getCvss40String() == null ? "" : defaultVuln.getCvss40String();
-
-        }
-
-        public Long getId() {
-            return id;
-        }
-
-        public void setId(Long id) {
-            this.id = id;
-        }
-
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public Long getCategoryId() {
-            return categoryId;
-        }
-
-        public void setCategoryId(Long categoryId) {
-            this.categoryId = categoryId;
-        }
-
-        public String getCategoryName() {
-            return categoryName;
-        }
-
-        public void setCategoryName(String categoryName) {
-            this.categoryName = categoryName;
-        }
-
-        public String getDescription() {
-            return description;
-        }
-
-        public void setDescription(String description) {
-            this.description = description;
-        }
-
-        public String getRecommendation() {
-            return recommendation;
-        }
-
-        public void setRecommendation(String recommendation) {
-            this.recommendation = recommendation;
-        }
-
-        public Integer getSeverityId() {
-            return severityId;
-        }
-
-        public void setSeverityId(Integer severityId) {
-            this.severityId = severityId;
-        }
-
-        public Integer getLikelihoodId() {
-            return likelihoodId;
-        }
-
-        public void setLikelihoodId(Integer likelihoodId) {
-            this.likelihoodId = likelihoodId;
-        }
-
-        public Integer getImpactId() {
-            return impactId;
-        }
-
-        public void setImpactId(Integer impactId) {
-            this.impactId = impactId;
-        }
-
-        public Boolean getActive() {
-            return active;
-        }
-
-        public void setActive(Boolean active) {
-            this.active = active;
-        }
-
-        public String getCvss31Score() {
-            return cvss31Score;
-        }
-
-        public void setCvss31Score(String cvss31Score) {
-            this.cvss31Score = cvss31Score;
-        }
-
-        public String getCvss31String() {
-            return cvss31String;
-        }
-
-        public void setCvss31String(String cvss31String) {
-            this.cvss31String = cvss31String;
-        }
-
-        public String getCvss40Score() {
-            return cvss31Score;
-        }
-
-        public void setCvss40Score(String cvss40Score) {
-            this.cvss40Score = cvss40Score;
-        }
-
-        public String getCvss40String() {
-            return cvss40String;
-        }
-
-        public void setCvss40String(String cvss40String) {
-            this.cvss40String = cvss40String;
-        }
-    }
-
-    // Remove this method since we'll use Support.getUser() instead
-
-    /// uses Reflection to create a JSON object out of a class
-    private JSONObject dao2JSON(Object obj, Class cls) {
-        JSONObject json = new JSONObject();
-        Method[] declaredMethods = cls.getDeclaredMethods();
-        for (Method dmethod : declaredMethods) {
-
-            if (dmethod.getName().startsWith("get") &&
-                    (dmethod.getReturnType().equals(Integer.TYPE) ||
-                            dmethod.getReturnType().equals(Long.TYPE) ||
-                            dmethod.getReturnType().equals(Integer.class) ||
-                            dmethod.getReturnType().equals(Long.class) ||
-                            dmethod.getReturnType().equals(String.class) ||
-                            dmethod.getReturnType().equals(Date.class) ||
-                            dmethod.getReturnType().equals(Boolean.class))) {
-                try {
-                    Object o = dmethod.invoke(obj, null);
-                    if (o != null) {
-                        String name = dmethod.getName().replace("get", "");
-                        if (dmethod.getReturnType().equals(Date.class))
-                            json.put(name, "" + o);
-                        else
-                            json.put(name, o);
-                    }
-                } catch (IllegalAccessException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (IllegalArgumentException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                } catch (InvocationTargetException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-            }
-
-        }
-        return json;
-
-    }
 
     @GET 
     @ApiOperation(value="Gets All Default Vulnerabilities Stored in the System in a JSON format.",notes="Returns vulnerability templates with custom fields support",response=DefaultVulnerabilityDTO.class,responseContainer="List",position=50)@ApiResponses(value={
@@ -807,7 +602,7 @@ public class vulnerabilities {
     }
 
     @GET
-    @ApiOperation(value = "Get a vulnerability based on its vuln id. ", notes = "", response = Vulnerability.class, responseContainer = "List", position = 80)
+    @ApiOperation(value = "Get a vulnerability based on its vuln id. ", notes = "Returns vulnerability with custom fields support", response = VulnerabilityDTO.class, position = 80)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Unknown Error"),
             @ApiResponse(code = 200, message = "Matching Vulnerability Returned") })
@@ -820,14 +615,27 @@ public class vulnerabilities {
         try {
             User u = Support.getUser(em, apiKey);
             if (u == null || !(u.getPermissions().isRemediation() || u.getPermissions().isManager()))
-                return Response.status(401).entity(String.format(this.ERROR, "Not Authorized")).build();
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            
             Vulnerability vuln = em.find(Vulnerability.class, vulnid);
-
             if (vuln == null)
-                return Response.status(400).entity(String.format(this.ERROR, "No Matching Result for vulnid.")).build();
+                return Response.status(400).entity(String.format(Support.ERROR, "No Matching Result for vulnid.")).build();
 
             vuln.updateRiskLevels(em);
-            return Response.status(200).entity(this.dao2JSON(vuln, Vulnerability.class).toJSONString()).build();
+            AssessmentQueries.updateImages(em, vuln);
+            VulnerabilityDTO dto = VulnerabilityDTO.fromEntity(vuln);
+            
+            // Add custom fields if any
+            if (vuln.getCustomFields() != null) {
+                dto.setCustomFieldsFromEntity(vuln.getCustomFields());
+            }
+            
+            ObjectMapper mapper = new ObjectMapper();
+            String json = mapper.writeValueAsString(dto);
+            return Response.status(200).entity(json).build();
+            
+        } catch (JsonProcessingException e) {
+            return Response.status(500).entity(String.format(Support.ERROR, "Failed to serialize response")).build();
         } finally {
             em.close();
         }
@@ -863,7 +671,7 @@ public class vulnerabilities {
     }
 
     @GET
-    @ApiOperation(value = "Get Vulnerability Info based on it's assigned tracking id. ", notes = "", response = Vulnerability.class, responseContainer = "List", position = 70)
+    @ApiOperation(value = "Get Vulnerability Info based on it's assigned tracking id. ", notes = "Returns vulnerability with custom fields support", response = VulnerabilityDTO.class, position = 70)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Unknown Error"),
             @ApiResponse(code = 200, message = "Matching Vulnerability Returned") })
@@ -876,18 +684,29 @@ public class vulnerabilities {
         try {
             User u = Support.getUser(em, apiKey);
             if (u == null || !(u.getPermissions().isRemediation() || u.getPermissions().isManager()))
-                return Response.status(401).entity(String.format(this.ERROR, "Not Authorized")).build();
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
 
             Vulnerability vuln = (Vulnerability) em.createQuery("from Vulnerability where tracking = :track")
                     .setParameter("track", tracking)
                     .getResultList().stream().findFirst().orElse(null);
             if (vuln == null)
-                return Response.status(400).entity(String.format(this.ERROR, "No Matching Result for tracking id."))
-                        .build();
+                return Response.status(400).entity(String.format(Support.ERROR, "No Matching Result for tracking id.")).build();
 
             vuln.updateRiskLevels(em);
-            // return this.dao2JSON(vuln, Vulnerability.class).toJSONString();
-            return Response.status(200).entity(this.dao2JSON(vuln, Vulnerability.class).toJSONString()).build();
+            AssessmentQueries.updateImages(em, vuln);
+            VulnerabilityDTO dto = VulnerabilityDTO.fromEntity(vuln);
+            
+            // Add custom fields if any
+            if (vuln.getCustomFields() != null) {
+                dto.setCustomFieldsFromEntity(vuln.getCustomFields());
+            }
+            
+            ObjectMapper mapper = new ObjectMapper();
+            String json = mapper.writeValueAsString(dto);
+            return Response.status(200).entity(json).build();
+            
+        } catch (JsonProcessingException e) {
+            return Response.status(500).entity(String.format(Support.ERROR, "Failed to serialize response")).build();
         } finally {
             em.close();
         }
