@@ -17,8 +17,7 @@ We support and encourage contributions to Faction. This project was built out of
   - [Suggesting Enhancements](#suggesting-enhancements)
   - [Submitting Extensions](#submitting-extensions)
   - [Pull Requests](#pull-requests)
-- [Coding Guidelines](#coding-guidelines)
-- [Extension Development](#extension-development)
+  - [Submitting Security Issues](#submitting-security-issues)
 - [Contact](#contact)
 
 ## Code of Conduct
@@ -78,7 +77,7 @@ When suggesting an enhancement, please include:
 4. Fill in the details
 5. Add appropriate labels (e.g., `enhancement`, `feature-request`)
 
-### Submitting Faction App Extensions
+### Submitting Extensions
 
 Faction supports custom extensions to expand functionality, similar to Burp Extender. If you've developed an extension that you'd like to be officially recognized and listed on our site:
 
@@ -145,6 +144,8 @@ We actively welcome pull requests for bug fixes, enhancements, and documentation
 - Ensure your code compiles and runs without errors
 - Be patient - Reviews may take time depending on complexity
 
+### Submitting Security Issues
+Please submit security issues to us privately via info@factionsecurity.com. When submitting a security issue be sure to provide clear reproducible steps and a suggested severity for the finding. 
 
 ## Contact
 
