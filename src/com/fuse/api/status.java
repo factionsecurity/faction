@@ -26,8 +26,9 @@ import io.swagger.annotations.ApiResponses;
 @Path("/")
 public class status {
     @GET
-	@ApiOperation(
-    value = "Gets the Status of Faction."
+ @ApiOperation(
+    value = "Gets the Status of Faction.",
+    position = 10
     )
 	@ApiResponses(value = { 
 			 @ApiResponse(code = 404, message = "Service is not online"),

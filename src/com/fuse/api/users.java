@@ -38,7 +38,7 @@ public class users {
 	@POST
 	@ApiOperation(value = "Add a user to Faction.", notes = "This call will give you the ability to create a user in Faction. If the user already exists then"
 			+ " an error will be returned. You can choose to send the user an email confirmation link or create "
-			+ " an account with an empty password. The later is mostly used with SSO type integrations.")
+			+ " an account with an empty password. The later is mostly used with SSO type integrations.", position = 10)
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 400, message = "Error Occured. User most likely already exists."),
 			@ApiResponse(code = 200, message = "Request Successfull") })
@@ -140,7 +140,7 @@ public class users {
 
 	@POST
 	@ApiOperation(value = "Disable A Faction User.", notes = "This operation will set any user into the inactive state. They will not be"
-			+ " able to log back in to the system untill the account is reset. ")
+			+ " able to log back in to the system untill the account is reset. ", position = 20)
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 400, message = "Error Occured. User most likely already exists."),
 			@ApiResponse(code = 200, message = "Request Successfull") })
@@ -181,7 +181,7 @@ public class users {
 	}
 
 	@POST
-	@ApiOperation(value = "Unlock A Faction User.", notes = "This operation will set any user into back into the acitive state.")
+	@ApiOperation(value = "Unlock A Faction User.", notes = "This operation will set any user into back into the acitive state.", position = 30)
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 400, message = "Error Occured. User most likely already exists."),
 			@ApiResponse(code = 200, message = "Request Successfull") })

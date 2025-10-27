@@ -15,6 +15,7 @@ import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -58,7 +59,7 @@ import io.swagger.annotations.ApiResponses;
 @Path("/assessments")
 public class assessments {
     @GET
-    @ApiOperation(value = "Gets the the Assessment Queue for the user associated with the FACTION-API-KEY token header.", notes = "Gets the the Assessment Queue for the user associated with the FACTION-API-KEY token header.", response = Assessment.class, responseContainer = "List")
+    @ApiOperation(value = "Gets the the Assessment Queue for the user associated with the FACTION-API-KEY token header.", notes = "Gets the the Assessment Queue for the user associated with the FACTION-API-KEY token header.", response = Assessment.class, responseContainer = "List", position = 100)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 200, message = "Assessor Queue Returned") })
     @Produces(MediaType.APPLICATION_JSON)
@@ -112,7 +113,7 @@ public class assessments {
      * getAssessment - get assessment details by ID
      */
     @GET
-    @ApiOperation(value = "Gets assessment details by ID", notes = "Returns full assessment information including custom fields", response = AssessmentDTO.class)
+    @ApiOperation(value = "Gets assessment details by ID", notes = "Returns full assessment information including custom fields", response = AssessmentDTO.class, position = 140)
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Assessment Does not exist."),
@@ -190,7 +191,7 @@ public class assessments {
      * updateAssessment - update assessment fields
      */
     @POST
-    @ApiOperation(value = "Update assessment fields", notes = "Updates allowed assessment fields including custom fields", response = String.class)
+    @ApiOperation(value = "Update assessment fields", notes = "Updates allowed assessment fields including custom fields", response = String.class, position = 150)
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Bad Request."),
@@ -388,7 +389,7 @@ public class assessments {
      */
 
     @GET
-    @ApiOperation(value = "Gets the the Vulnererabilies for the Application.", notes = "Application ID is not the same as Assessment ID. An Application ID can span multiple assessments.", response = Vulnerability.class, responseContainer = "List")
+    @ApiOperation(value = "Gets the the Vulnererabilies for the Application.", notes = "Application ID is not the same as Assessment ID. An Application ID can span multiple assessments.", response = Vulnerability.class, responseContainer = "List", position = 130)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Application Does not exist."),
             @ApiResponse(code = 200, message = "Returns json array of vulnerbilities") })
@@ -445,7 +446,7 @@ public class assessments {
      */
 
     @GET
-    @ApiOperation(value = "Gets the the Vulnererabilies for the Application.", notes = "Application ID is not the same as Assessment ID. An Application ID can span multiple assessments.", response = Vulnerability.class, responseContainer = "List")
+    @ApiOperation(value = "Gets the the Vulnererabilies for the Application.", notes = "Application ID is not the same as Assessment ID. An Application ID can span multiple assessments.", response = Vulnerability.class, responseContainer = "List", position = 80)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Assessment Does not exist."),
             @ApiResponse(code = 200, message = "Returns json array of vulnerbilities") })
@@ -502,7 +503,7 @@ public class assessments {
      */
 
     @POST
-    @ApiOperation(value = "Update the Assessment Notes.", notes = "Application ID is not the same as Assessment ID. An Application ID can span multiple assessments.")
+    @ApiOperation(value = "Update the Assessment Notes.", notes = "Application ID is not the same as Assessment ID. An Application ID can span multiple assessments.", position = 90)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Assessment Does not exist."),
             @ApiResponse(code = 200, message = "Request Successfull") })
@@ -548,7 +549,7 @@ public class assessments {
      */
 
     @GET
-    @ApiOperation(value = "Gets details for a specific vulnerability.", notes = "Pulls add details and exploits steps for a vulnerability id.", response = Vulnerability.class, responseContainer = "List")
+    @ApiOperation(value = "Gets details for a specific vulnerability.", notes = "Pulls add details and exploits steps for a vulnerability id.", response = Vulnerability.class, responseContainer = "List", position = 110)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Bad Request."),
             @ApiResponse(code = 200, message = "Returns Vulnerability and Exploit Step Information") })
@@ -620,7 +621,7 @@ public class assessments {
      */
 
     @POST
-    @ApiOperation(value = "Add a new vulnerability to the assessment. All Base64 encoded inputs supoort HTML and Markdown syntax", notes = "Suports HTML and MarkDown Syntax", response = Assessment.class, responseContainer = "List")
+    @ApiOperation(value = "Add a new vulnerability to the assessment. All Base64 encoded inputs supoort HTML and Markdown syntax", notes = "Suports HTML and MarkDown Syntax", response = Assessment.class, responseContainer = "List", position = 30)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Bad Request."),
             @ApiResponse(code = 200, message = "Returns the ID of the newly created vulnerability.") })
@@ -684,169 +685,169 @@ public class assessments {
                             .entity(String.format(Support.ERROR, "Assessment Locked for Peer Review")).build();
                 }
 
-				HibHelper.getInstance().preJoin();
-				em.joinTransaction();
-				Category category = em.createQuery("from Category where name = 'Uncategorized'", Category.class)
-						.getResultList().stream().findFirst().orElse(null);
-				
-				if(categoryId != null) {
-					category = em.createQuery("from Category where id = :id", Category.class)
-							.setParameter("id", categoryId)
-							.getResultList().stream().findFirst().orElse(null);
-					if(category == null) {
-						return Response.status(400)
-								.entity(String.format(Support.ERROR, "Invalid Category Id")).build();
-					}
-					
-				}
-				Vulnerability v = new Vulnerability();
-				DefaultVulnerability dv = null;
-				
-				//Set Up Vuln with a Vulnerability Template
-				if (defaultVulnId != null) {
-					dv = (DefaultVulnerability) em
-							.createQuery("from DefaultVulnerability where id = :id")
-							.setParameter("id", defaultVulnId).getResultList().stream().findFirst().orElse(null);
-					if(dv == null) {
-						return Response.status(400)
-								.entity(String.format(Support.ERROR, "Invalid Vulnerability Template Id")).build();
-					}
-					v.setName(dv.getName());
-					v.setDefaultVuln(dv);
-					v.setDescription(dv.getDescription());
-					v.setRecommendation(dv.getRecommendation());
-					v.setCategory(dv.getCategory());
-					v.setOverall((long) dv.getOverall());
-					v.setImpact((long) dv.getImpact());
-					v.setLikelyhood((long) dv.getLikelyhood());
-					if(a.getType().isCvss31()) {
-						v.setCvssString(dv.getCvss31String());
-						v.setCvssScore(dv.getCvss31Score());
-					}else if (a.getType().isCvss40()) {
-						v.setCvssString(dv.getCvss40String());
-						v.setCvssScore(dv.getCvss40Score());
-					}
-				} else {
-					// Don't use a vulnerability template and just add a generic vulnerability
-					dv = em.createQuery("from DefaultVulnerability where name = 'Generic Vulnerability'",
-							DefaultVulnerability.class).getResultList().stream().findFirst().orElse(null);
-					Category cat = em.createQuery("from Category where name = 'Uncategorized'", Category.class)
-							.getResultList().stream().findFirst().orElse(null);
-					if (cat == null) {
-						cat = new Category();
-						cat.setName("Uncategorized");
-						HibHelper.getInstance().preJoin();
-						em.joinTransaction();
-						em.persist(cat);
-						em.persist(dv);
-						HibHelper.getInstance().commit();
-					}
-					if (dv == null) {
-						dv = new DefaultVulnerability();
-						dv.setActive(true);
-						dv.setCategory(cat);
-						dv.setName("Generic Vulnerability");
-						dv.setLikelyhood(4);
-						dv.setOverall(4);
-						dv.setImpact(4);
-						dv.setDescription("");
-						dv.setRecommendation("");
-						HibHelper.getInstance().preJoin();
-						em.joinTransaction();
-						em.persist(cat);
-						em.persist(dv);
-						HibHelper.getInstance().commit();
-					}
-					v.setDefaultVuln(dv);
-					v.setCategory(cat);
-				}
-				
-				if(name != null)
-					v.setName(name);
-				
-				if(v.getName() == null || v.getName() == "") {
+                HibHelper.getInstance().preJoin();
+                em.joinTransaction();
+                Category category = em.createQuery("from Category where name = 'Uncategorized'", Category.class)
+                        .getResultList().stream().findFirst().orElse(null);
+
+                if (categoryId != null) {
+                    category = em.createQuery("from Category where id = :id", Category.class)
+                            .setParameter("id", categoryId)
+                            .getResultList().stream().findFirst().orElse(null);
+                    if (category == null) {
+                        return Response.status(400)
+                                .entity(String.format(Support.ERROR, "Invalid Category Id")).build();
+                    }
+
+                }
+                Vulnerability v = new Vulnerability();
+                DefaultVulnerability dv = null;
+
+                // Set Up Vuln with a Vulnerability Template
+                if (defaultVulnId != null) {
+                    dv = (DefaultVulnerability) em
+                            .createQuery("from DefaultVulnerability where id = :id")
+                            .setParameter("id", defaultVulnId).getResultList().stream().findFirst().orElse(null);
+                    if (dv == null) {
+                        return Response.status(400)
+                                .entity(String.format(Support.ERROR, "Invalid Vulnerability Template Id")).build();
+                    }
+                    v.setName(dv.getName());
+                    v.setDefaultVuln(dv);
+                    v.setDescription(dv.getDescription());
+                    v.setRecommendation(dv.getRecommendation());
+                    v.setCategory(dv.getCategory());
+                    v.setOverall((long) dv.getOverall());
+                    v.setImpact((long) dv.getImpact());
+                    v.setLikelyhood((long) dv.getLikelyhood());
+                    if (a.getType().isCvss31()) {
+                        v.setCvssString(dv.getCvss31String());
+                        v.setCvssScore(dv.getCvss31Score());
+                    } else if (a.getType().isCvss40()) {
+                        v.setCvssString(dv.getCvss40String());
+                        v.setCvssScore(dv.getCvss40Score());
+                    }
+                } else {
+                    // Don't use a vulnerability template and just add a generic vulnerability
+                    dv = em.createQuery("from DefaultVulnerability where name = 'Generic Vulnerability'",
+                            DefaultVulnerability.class).getResultList().stream().findFirst().orElse(null);
+                    Category cat = em.createQuery("from Category where name = 'Uncategorized'", Category.class)
+                            .getResultList().stream().findFirst().orElse(null);
+                    if (cat == null) {
+                        cat = new Category();
+                        cat.setName("Uncategorized");
+                        HibHelper.getInstance().preJoin();
+                        em.joinTransaction();
+                        em.persist(cat);
+                        em.persist(dv);
+                        HibHelper.getInstance().commit();
+                    }
+                    if (dv == null) {
+                        dv = new DefaultVulnerability();
+                        dv.setActive(true);
+                        dv.setCategory(cat);
+                        dv.setName("Generic Vulnerability");
+                        dv.setLikelyhood(4);
+                        dv.setOverall(4);
+                        dv.setImpact(4);
+                        dv.setDescription("");
+                        dv.setRecommendation("");
+                        HibHelper.getInstance().preJoin();
+                        em.joinTransaction();
+                        em.persist(cat);
+                        em.persist(dv);
+                        HibHelper.getInstance().commit();
+                    }
+                    v.setDefaultVuln(dv);
+                    v.setCategory(cat);
+                }
+
+                if (name != null)
+                    v.setName(name);
+
+                if (v.getName() == null || v.getName() == "") {
                     return Response.status(400)
                             .entity(String.format(Support.ERROR, "Vulnerability Name Cannot Be Blank")).build();
-				}
-				
-				if(severity != null)
-					v.setOverall(severity);
-				// If impact is not explicitly provided, use severity
-				if (impact == null) {
-					v.setImpact(v.getOverall());
-				} else {
-					v.setImpact(impact);
-				}
-				// If likelihood is not explicitly provided, use severity
-				if (likelihood == null) {
-					v.setLikelyhood(v.getOverall());
-				} else {
-					v.setLikelyhood(likelihood);
-				}
-				v.setAssessmentId(a.getId());
-				if (description != null)
-					v.setDescription(decodeAndSanitize(description));
-				if (recommendation != null)
-					v.setRecommendation(decodeAndSanitize(recommendation));
-				if (details != null)
-					v.setDetails(decodeAndSanitize(details));
+                }
 
-				if (cvssScore != null && !cvssScore.trim().isEmpty()) {
-					v.setCvssScore(cvssScore);
-				}
+                if (severity != null)
+                    v.setOverall(severity);
+                // If impact is not explicitly provided, use severity
+                if (impact == null) {
+                    v.setImpact(v.getOverall());
+                } else {
+                    v.setImpact(impact);
+                }
+                // If likelihood is not explicitly provided, use severity
+                if (likelihood == null) {
+                    v.setLikelyhood(v.getOverall());
+                } else {
+                    v.setLikelyhood(likelihood);
+                }
+                v.setAssessmentId(a.getId());
+                if (description != null)
+                    v.setDescription(decodeAndSanitize(description));
+                if (recommendation != null)
+                    v.setRecommendation(decodeAndSanitize(recommendation));
+                if (details != null)
+                    v.setDetails(decodeAndSanitize(details));
 
-				if (cvssString != null && !cvssString.trim().isEmpty()) {
-					v.setCvssString(cvssString);
-				}
-				
-				//Check that overall got set either manually or by the cvss score
-				if(v.getOverall() == null) {
+                if (cvssScore != null && !cvssScore.trim().isEmpty()) {
+                    v.setCvssScore(cvssScore);
+                }
+
+                if (cvssString != null && !cvssString.trim().isEmpty()) {
+                    v.setCvssString(cvssString);
+                }
+
+                // Check that overall got set either manually or by the cvss score
+                if (v.getOverall() == null) {
                     return Response.status(400)
                             .entity(String.format(Support.ERROR, "Severity Cannot Be Blank")).build();
-				}
-				if(section != null) {
-					if(ReportFeatures.allowSections()) {
-						if(VulnerabilityQueries.isValidSection(em, section))
-							v.setSection(section);
-						else {
-						return Response.status(400)
-								.entity(String.format(Support.ERROR, "Not a Valid Section")).build();
-							
-						}
-					}
-				}
+                }
+                if (section != null) {
+                    if (ReportFeatures.allowSections()) {
+                        if (VulnerabilityQueries.isValidSection(em, section))
+                            v.setSection(section);
+                        else {
+                            return Response.status(400)
+                                    .entity(String.format(Support.ERROR, "Not a Valid Section")).build();
 
-				// Parse user-provided custom field values if any
-				Map<String, String> userProvidedValues = null;
-				if (customFieldsJson != null && !customFieldsJson.trim().isEmpty()) {
-					try {
-						ObjectMapper mapper = new ObjectMapper();
-						userProvidedValues = mapper.readValue(customFieldsJson,
-								new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {
-								});
-					} catch (Exception e) {
-						// Log error but continue with empty user values
-						e.printStackTrace();
-					}
-				}
+                        }
+                    }
+                }
 
-				// Use helper to handle custom fields - create all fields with defaults
-				handleVulnerabilityCustomFields(em, v, a.getType(), userProvidedValues, true);
+                // Parse user-provided custom field values if any
+                Map<String, String> userProvidedValues = null;
+                if (customFieldsJson != null && !customFieldsJson.trim().isEmpty()) {
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+                        userProvidedValues = mapper.readValue(customFieldsJson,
+                                new com.fasterxml.jackson.core.type.TypeReference<Map<String, String>>() {
+                                });
+                    } catch (Exception e) {
+                        // Log error but continue with empty user values
+                        e.printStackTrace();
+                    }
+                }
 
-				if (a.getVulns() == null) {
-					List<Vulnerability> vs = new ArrayList<Vulnerability>();
-					vs.add(v);
-					a.setVulns(vs);
-				} else {
-					a.getVulns().add(v);
-				}
+                // Use helper to handle custom fields - create all fields with defaults
+                handleVulnerabilityCustomFields(em, v, a.getType(), userProvidedValues, true);
 
-				em.persist(a);
-				HibHelper.getInstance().commit();
+                if (a.getVulns() == null) {
+                    List<Vulnerability> vs = new ArrayList<Vulnerability>();
+                    vs.add(v);
+                    a.setVulns(vs);
+                } else {
+                    a.getVulns().add(v);
+                }
 
-				// Return the vulnerability ID of the newly created Vuln.
-				String returnMsg = String.format(Support.SUCCESSMSG, "\"vid\":" + v.getId());
-				return Response.status(200).entity(returnMsg).build();
+                em.persist(a);
+                HibHelper.getInstance().commit();
+
+                // Return the vulnerability ID of the newly created Vuln.
+                String returnMsg = String.format(Support.SUCCESSMSG, "\"vid\":" + v.getId());
+                return Response.status(200).entity(returnMsg).build();
 
             } else {
                 return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
@@ -857,15 +858,13 @@ public class assessments {
 
     }
 
-
     @POST
-    @Deprecated
-    @ApiOperation(value = "This method is identical to `/addTemplatedVuln/{aid}/{vuln_template_id}\"`. The name was changed to make it easier to understand what this does. Its kept for backward compatability. This API adds a new vulnerability to the assessment based on the internal database vulnerability templates.", notes = "Auto populates all non-required fields based on the vulnerability template database", response = Assessment.class, responseContainer = "List")
+    @ApiOperation(value = "This API adds a new vulnerability to the assessment based on the internal database vulnerability templates.", notes = "Auto populates all non-required fields based on the vulnerability template database", response = Assessment.class, responseContainer = "List", position = 20)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Bad Request."),
             @ApiResponse(code = 200, message = "Post Successful.") })
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/addDefaultVuln/{aid}/{vuln_template_id}")
+    @Path("/addDefaultVuln/{aid}/{id}")
     public Response addTemplatedVuln(
             @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
             @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
@@ -878,37 +877,17 @@ public class assessments {
             @ApiParam(value = "CVSS String", required = false) @FormParam("cvssString") String cvssString,
             @ApiParam(value = "Section (Enterprise Feature)", required = false) @FormParam("section") String section,
             @ApiParam(value = "Custom Fields (JSON object with key-value pairs)", required = false) @FormParam("customFields") String customFieldsJson,
-            @ApiParam(value = "Vulnerability Template ID", required = true) @PathParam("vuln_template_id") Long defaultVulnId) {
-    	return this.addNewVuln(apiKey, aid, name, defaultVulnId,null,null,null,null,severity,impact, likelihood,cvssScore,cvssString, section, customFieldsJson);
+            @ApiParam(value = "Vulnerability Template ID", required = true) @PathParam("id") Long defaultVulnId) {
+        return this.addNewVuln(apiKey, aid, name, defaultVulnId, null, null, details, null, severity, impact, likelihood,
+                cvssScore, cvssString, section, customFieldsJson);
 
-    }
-    
-    /*
-     * addTemplatedVulnNoBody - Creates a new vulnerability using only template defaults, no request body required
-     */
-    @POST
-    @ApiOperation(value = "Add a new templated vulnerability using only defaults from the template. No request body required.",
-        notes = "Creates a vulnerability using all defaults from the template. This endpoint accepts POST with empty body.",
-        response = String.class)
-    @ApiResponses(value = {
-        @ApiResponse(code = 401, message = "Not Authorized"),
-        @ApiResponse(code = 400, message = "Bad Request."),
-        @ApiResponse(code = 200, message = "Returns the ID of the newly created vulnerability.") })
-    @Produces(MediaType.APPLICATION_JSON)
-    @Path("/addTemplatedVulnNoBody/{aid}/{vuln_template_id}")
-    public Response addTemplatedVulnNoBody(
-            @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
-            @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
-            @ApiParam(value = "Vulnerability Template ID", required = true) @PathParam("vuln_template_id") Long defaultVulnId,
-            @ApiParam(value = "Section (Enterprise Feature)", required = false) @FormParam("section") String section) {
-     return this.addNewVuln(apiKey, aid, null, defaultVulnId, null, null, null, null, null, null, null, null, null, section, null);
     }
 
     /*
      * addVuln adds exploit steps to an existing vulnerability.
      */
     @POST
-    @ApiOperation(value = "Add Exploit Details to an existing vulnerability.", notes = "Vulnerability must already exist.", response = Assessment.class, responseContainer = "List")
+    @ApiOperation(value = "Add Exploit Details to an existing vulnerability.", notes = "Vulnerability must already exist.", response = Assessment.class, responseContainer = "List", position = 40)
     @Deprecated
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Bad Request."),
@@ -991,7 +970,7 @@ public class assessments {
     }
 
     @POST
-    @ApiOperation(value = "Creates an Assessment Record and schedules it to an assessor or assessors.", notes = "It can auto create user's and teams if they are not in the system. If a User's email address is not in the system it will create the account and send an email notification to the user to register with Faction.")
+    @ApiOperation(value = "Creates an Assessment Record and schedules it to an assessor or assessors.", notes = "It can auto create user's and teams if they are not in the system. If a User's email address is not in the system it will create the account and send an email notification to the user to register with Faction.", position = 70)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Bad Request."),
             @ApiResponse(code = 200, message = "Post Successful.") })
@@ -1118,7 +1097,7 @@ public class assessments {
     }
 
     @POST
-    @ApiOperation(value = "Gets All Completed Assessments by Date", notes = "Gets all assessments by Date range", response = Assessment.class, responseContainer = "List")
+    @ApiOperation(value = "Gets All Completed Assessments by Date", notes = "Gets all assessments by Date range", response = Assessment.class, responseContainer = "List", position = 50)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Bad Request."),
             @ApiResponse(code = 200, message = "Returns Vulnerability and Exploit Step Information") })
@@ -1179,7 +1158,7 @@ public class assessments {
      * getCustomFieldTypes - Get allowed custom field types for an assessment
      */
     @GET
-    @ApiOperation(value = "Gets the allowed custom field types for an assessment", notes = "Returns both Assessment and Vulnerability custom field types that are allowed based on the assessment type", response = String.class)
+    @ApiOperation(value = "Gets the allowed custom field types for an assessment", notes = "Returns both Assessment and Vulnerability custom field types that are allowed based on the assessment type", response = String.class, position = 60)
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Assessment Does not exist."),
@@ -1256,7 +1235,7 @@ public class assessments {
      * updateVulnCustomFields - Update custom fields for an existing vulnerability
      */
     @POST
-    @ApiOperation(value = "Update custom fields for an existing vulnerability.", notes = "Updates only the custom fields for a vulnerability. Custom field keys must match allowed types for the assessment.", response = String.class)
+    @ApiOperation(value = "Update custom fields for an existing vulnerability.", notes = "Updates only the custom fields for a vulnerability. Custom field keys must match allowed types for the assessment.", response = String.class, position = 125)
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Bad Request."),
@@ -1399,7 +1378,7 @@ public class assessments {
      * updateVulnerability - Update a vulnerability including custom fields
      */
     @POST
-    @ApiOperation(value = "Update vulnerability ", notes = "Updates a vulnerability including custom fields", response = String.class)
+    @ApiOperation(value = "Update vulnerability ", notes = "Updates a vulnerability including custom fields", response = String.class, position = 120)
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Bad Request."),
@@ -1486,12 +1465,12 @@ public class assessments {
                             .entity(String.format(Support.ERROR, "Assessment Locked for Peer Review")).build();
                 }
                 Category cat = null;
-                if(categoryId != null) {
-                	cat = em.find(Category.class, categoryId);
-                	if(cat == null) {
-						return Response.status(400)
-								.entity(String.format(Support.ERROR, "Invalid Category Id")).build();
-                	}
+                if (categoryId != null) {
+                    cat = em.find(Category.class, categoryId);
+                    if (cat == null) {
+                        return Response.status(400)
+                                .entity(String.format(Support.ERROR, "Invalid Category Id")).build();
+                    }
                 }
 
                 // Update fields
@@ -1519,43 +1498,43 @@ public class assessments {
                     vuln.setDetails(decodeAndSanitize(details));
                     updated = true;
                 }
-                if(section != null) {
-					if(ReportFeatures.allowSections()) {
-						if(VulnerabilityQueries.isValidSection(em, section))
-							vuln.setSection(section);
-						else {
-						return Response.status(400)
-								.entity(String.format(Support.ERROR, "Not a Valid Section")).build();
-							
-						}
-					}
+                if (section != null) {
+                    if (ReportFeatures.allowSections()) {
+                        if (VulnerabilityQueries.isValidSection(em, section))
+                            vuln.setSection(section);
+                        else {
+                            return Response.status(400)
+                                    .entity(String.format(Support.ERROR, "Not a Valid Section")).build();
+
+                        }
+                    }
                 }
 
-				// If severity is provided, use it as the base
-				if (severity != null) {
-					vuln.setOverall(severity);
-					// If impact is not explicitly provided, use severity
-					if (impact == null) {
-						vuln.setImpact(severity);
-					} else {
-						vuln.setImpact(impact);
-					}
-					// If likelihood is not explicitly provided, use severity
-					if (likelihood == null) {
-						vuln.setLikelyhood(severity);
-					} else {
-						vuln.setLikelyhood(likelihood);
-					}
-				} else {
-					// If severity is not provided but impact or likelihood are
-					if (impact != null) {
-						vuln.setImpact(impact);
-					}
-					if (likelihood != null) {
-						vuln.setLikelyhood(likelihood);
-					}
-				}
-				updated = true;
+                // If severity is provided, use it as the base
+                if (severity != null) {
+                    vuln.setOverall(severity);
+                    // If impact is not explicitly provided, use severity
+                    if (impact == null) {
+                        vuln.setImpact(severity);
+                    } else {
+                        vuln.setImpact(impact);
+                    }
+                    // If likelihood is not explicitly provided, use severity
+                    if (likelihood == null) {
+                        vuln.setLikelyhood(severity);
+                    } else {
+                        vuln.setLikelyhood(likelihood);
+                    }
+                } else {
+                    // If severity is not provided but impact or likelihood are
+                    if (impact != null) {
+                        vuln.setImpact(impact);
+                    }
+                    if (likelihood != null) {
+                        vuln.setLikelyhood(likelihood);
+                    }
+                }
+                updated = true;
 
                 if (cvssScore != null && !cvssScore.trim().isEmpty()) {
                     vuln.setCvssScore(cvssScore);
@@ -1616,31 +1595,34 @@ public class assessments {
 
     /**
      * Helper function to handle custom fields for vulnerabilities
-     * @param em EntityManager instance
-     * @param vuln The vulnerability to add custom fields to
-     * @param assessmentType The assessment type to filter custom fields by
-     * @param userProvidedValues Map of user-provided custom field values (can be null or empty)
-     * @param createAllFields If true, creates all available fields with defaults; if false, only updates provided fields
+     * 
+     * @param em                 EntityManager instance
+     * @param vuln               The vulnerability to add custom fields to
+     * @param assessmentType     The assessment type to filter custom fields by
+     * @param userProvidedValues Map of user-provided custom field values (can be
+     *                           null or empty)
+     * @param createAllFields    If true, creates all available fields with
+     *                           defaults; if false, only updates provided fields
      */
     private void handleVulnerabilityCustomFields(EntityManager em, Vulnerability vuln, AssessmentType assessmentType,
             Map<String, String> userProvidedValues, boolean createAllFields) {
-        
+
         // Get allowed custom types for vulnerabilities
         List<CustomType> vulnCustomTypes = em.createQuery(
                 "from CustomType where type = :type and deleted = false", CustomType.class)
                 .setParameter("type", CustomType.ObjType.VULN.getValue())
                 .getResultList();
-        
+
         if (createAllFields) {
             // Create all custom fields with defaults (for new vulnerabilities)
             List<CustomField> customFields = new ArrayList<>();
-            
+
             for (CustomType ct : vulnCustomTypes) {
                 // Check if this custom type applies to the assessment type
                 if (ct.getAssessmentTypes().isEmpty() || ct.getAssessmentTypes().contains(assessmentType)) {
                     CustomField cf = new CustomField();
                     cf.setType(ct);
-                    
+
                     // Check if user provided a value for this field
                     if (userProvidedValues != null && userProvidedValues.containsKey(ct.getKey())) {
                         cf.setValue(userProvidedValues.get(ct.getKey()));
@@ -1653,25 +1635,25 @@ public class assessments {
                             String defaultValue = ct.getDefaultValue();
                             if (defaultValue != null && !defaultValue.trim().isEmpty()) {
                                 String[] optionArray = defaultValue.split(",");
-								if (optionArray.length > 0) {
-									cf.setValue(optionArray[0].trim());
-								} else {
-									cf.setValue("");
-								}
+                                if (optionArray.length > 0) {
+                                    cf.setValue(optionArray[0].trim());
+                                } else {
+                                    cf.setValue("");
+                                }
                             } else {
-								cf.setValue("");
+                                cf.setValue("");
                             }
                         } else {
                             // For String type, use default value or empty string
                             cf.setValue(ct.getDefaultValue() != null ? ct.getDefaultValue() : "");
                         }
                     }
-                    
+
                     customFields.add(cf);
                     em.persist(cf);
                 }
             }
-            
+
             vuln.setCustomFields(customFields);
         } else {
             // Partial update - only update provided fields (for existing vulnerabilities)
@@ -1680,7 +1662,7 @@ public class assessments {
                 existingFields = new ArrayList<>();
                 vuln.setCustomFields(existingFields);
             }
-            
+
             // Create map for easier lookup
             Map<String, CustomField> existingFieldsMap = new HashMap<>();
             for (CustomField cf : existingFields) {
@@ -1688,27 +1670,28 @@ public class assessments {
                     existingFieldsMap.put(cf.getType().getKey(), cf);
                 }
             }
-            
+
             // Update or add custom fields
             if (userProvidedValues != null) {
                 for (Map.Entry<String, String> entry : userProvidedValues.entrySet()) {
                     String key = entry.getKey();
                     String value = entry.getValue();
-                    
+
                     // Find the matching custom type
                     CustomType matchingType = null;
                     for (CustomType ct : vulnCustomTypes) {
                         if (ct.getKey().equals(key) &&
-                                (ct.getAssessmentTypes().isEmpty() || ct.getAssessmentTypes().contains(assessmentType))) {
+                                (ct.getAssessmentTypes().isEmpty()
+                                        || ct.getAssessmentTypes().contains(assessmentType))) {
                             matchingType = ct;
                             break;
                         }
                     }
-                    
+
                     if (matchingType != null) {
                         // Check if field already exists
                         CustomField existingField = existingFieldsMap.get(key);
-                        
+
                         if (existingField != null) {
                             // Update existing field
                             existingField.setValue(value);
