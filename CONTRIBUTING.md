@@ -92,7 +92,7 @@ Faction supports custom extensions to expand functionality, similar to Burp Exte
    - Usage examples
    - Screenshots (if applicable)
    - Requirements and dependencies
-4. **Email us** - Send an email to **extensions@factionsecurity.com** with:
+4. **Email us** - Send an email to **develop@factionsecurity.com** with:
    - Link to your GitHub repository
    - Brief description of what the extension does (2-3 sentences)
    - Your contact information
@@ -149,7 +149,7 @@ We actively welcome pull requests for bug fixes, enhancements, and documentation
 ## Contact
 
 - **General inquiries:** [OWASP Slack Community](https://owasp.org/slack/invite) (#project-faction)
-- **Extension submissions:** extensions@factionsecurity.com
+- **Extension submissions:** develop@factionsecurity.com
 - **Security issues:** Please report security vulnerabilities privately to info@factionsecurity.com
 
 ## Sponsorship
