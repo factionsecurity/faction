@@ -1,7 +1,6 @@
-version: "3.7"
 services:
   faction-mongo:
-    image: mongo:latest
+    image: mongo:8.0
     ports:
       - "27017:27017"
     volumes:
