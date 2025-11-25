@@ -88,6 +88,7 @@ public class DocxUtils {
 		this.mlp = mlp;
 		this.reportExtension = new Extensions(entityManagerFactory, Extensions.EventType.REPORT_MANAGER);
 		this.assessment = assessment;
+		this.outlineImages();
 		this.vulns = assessment.getVulns();
 		this.setupReportSections(entityManagerFactory);
 	}
@@ -96,6 +97,7 @@ public class DocxUtils {
 		this.mlp = mlp;
 		this.reportExtension = new Extensions(HibHelper.getInstance().getEMF(), Extensions.EventType.REPORT_MANAGER);
 		this.assessment = assessment;
+		this.outlineImages();
 		this.vulns = assessment.getVulns();
 		this.setupReportSections(HibHelper.getInstance().getEMF());
 	}
@@ -981,7 +983,14 @@ public class DocxUtils {
 		
 		for(Image img : this.assessment.getImages()) {
 			String matchStr = matchPrefix + img.getGuid();
-
+			text = text.replaceAll( matchStr, img.getBase64Image());
+		}
+		return text;
+		
+	}
+	
+	private void outlineImages() {
+		for(Image img : this.assessment.getImages()) {
 			try {
 				String[] parts = img.getBase64Image().split(",");
 				String file_dataContentType = parts[0].split(";")[0].replace("data:", "");
@@ -989,16 +998,13 @@ public class DocxUtils {
 				imageData = ImageBorderUtil.addBorder(imageData, 1, Color.GRAY);
 				String borderedImage = Base64.getEncoder().encodeToString(imageData);
 				borderedImage = "data:" + file_dataContentType +";base64,"+ borderedImage;
-				text = text.replaceAll( matchStr, borderedImage);
+				img.setBase64Image(borderedImage);
 				
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
-				text = text.replaceAll( matchStr, img.getBase64Image());
 			}
 		}
-		return text;
-		
 	}
 
 	private void setFindings(String section, String customCSS)
