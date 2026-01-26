@@ -41,6 +41,7 @@ public class AssessmentQueries {
 			query += "'assessor' : "+user.getId() + "," ;
 		}
 		
+		
 		if(user.getPermissions().getAccessLevel() == Permissions.AccessLevelTeamOnly) {
 			query+="'users.team_id': " + user.getTeam().getId() + " , ";
 		}

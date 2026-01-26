@@ -690,7 +690,8 @@ public class AssessmentView extends FSActionSupport {
 				return result;
 
 		}
-		AssessmentQueries.removeImages(assessment);
+		//TODO: ADD this BACK
+		//AssessmentQueries.removeImages(assessment);
 		assessment.setCompleted(new Date());
 		assessment.setStatus("Complete");
 		assessment.setFinalized();

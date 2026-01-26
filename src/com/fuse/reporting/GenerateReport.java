@@ -24,6 +24,7 @@ import com.fuse.dao.Teams;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.utils.FSUtils;
+import com.fuse.utils.MethodProfiler;
 import com.fuse.utils.reporttemplate.ReportTemplate;
 import com.fuse.utils.reporttemplate.ReportTemplateFactory;
 
@@ -180,9 +181,6 @@ public class GenerateReport {
 			for (Vulnerability v : a.getVulns()) {
 				v.updateRiskLevels(em);
 			}
-			for (Vulnerability v : a.getVulns()) {
-				System.out.println(v.getOverallStr());
-			}
 
 			String mongoQuery = "{ 'type_id' : " + a.getType().getId() + ", 'team_id' : "
 					+ a.getAssessor().get(0).getTeam().getId() + ", 'retest' : " + isRetest +" }";
@@ -202,7 +200,10 @@ public class GenerateReport {
 
 			DocxUtils gendoc = new DocxUtils(mlp, a);
 			gendoc.FONT = RPO.getFont();
+			MethodProfiler.setEnabled(true);
 			mlp = gendoc.generateDocx(customCSS);
+			MethodProfiler.printReport();
+			MethodProfiler.clearStats();
 			gendoc.tocGenerator(mlp);
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			mlp.save(baos);

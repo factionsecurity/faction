@@ -15,6 +15,8 @@ import org.apache.struts2.convention.annotation.Namespace;
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.Image;
+import com.fuse.dao.PeerReview;
+import com.fuse.dao.ReportTemplates;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.utils.ImageBorderUtil;
 
@@ -35,16 +37,26 @@ public class GetImage extends FSActionSupport {
 		String assessmentId = id.split(":")[0];
 		String imageId = id.split(":")[1];
 		Assessment assessment = AssessmentQueries.getAssessment(em, getSessionUser(), Long.parseLong(assessmentId));
-		Image image = assessment.getImages().stream().filter(i -> i.getGuid().equals(imageId)).findAny().orElse(null);
+		if(assessment==null) {
+			return ERROR;
+		}
+		try {
+			//Image image = assessment.getImages().stream().filter(i -> i.getGuid().equals(imageId)).findAny().orElse(null);
+			Image image = (Image) em.createQuery("from Image where guid = :id")
+					.setParameter("id", imageId).getResultList().stream().findFirst().orElse(null);
 
-		String[] parts = image.getBase64Image().split(",");
-		file_dataContentType = parts[0].split(";")[0].replace("data:", "");
+			String[] parts = image.getBase64Image().split(",");
+			file_dataContentType = parts[0].split(";")[0].replace("data:", "");
 
-		byte[] imageData = Base64.getDecoder().decode(parts[1]);
-		imageData = ImageBorderUtil.addBorder(imageData, 1, Color.GRAY);
+			byte[] imageData = Base64.getDecoder().decode(parts[1]);
+			imageData = ImageBorderUtil.addBorder(imageData, 1, Color.GRAY);
 
-		stream = new ByteArrayInputStream(imageData);
-		return SUCCESS;
+			stream = new ByteArrayInputStream(imageData);
+			return SUCCESS;
+		}catch(Exception ex) {
+			ex.printStackTrace();
+			return ERROR;
+		}
 	}
 
 	public void setId(String id) {
