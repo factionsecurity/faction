@@ -39,6 +39,7 @@ import com.fuse.dao.Verification;
 import com.fuse.dao.query.AssessmentQueries;
 import com.faction.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
+import com.fuse.utils.FSUtils;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/engagement/EditAssessment.jsp")
@@ -136,6 +137,7 @@ public class EditAssessment extends FSActionSupport {
 
 		if (action != null && action.equals("get")) {
 			currentAssessment = AssessmentQueries.getAssessment(em, user, (long) this.aid);
+			FSUtils.CheckForUpdatedCustomFields(currentAssessment, em);
 			
 			files = (List<Files>) em.createQuery("from Files where entityId = :id").setParameter("id", (long) this.aid)
 					.getResultList();

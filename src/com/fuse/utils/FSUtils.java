@@ -23,6 +23,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +35,7 @@ import java.util.UUID;
 import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -58,11 +60,14 @@ import org.w3c.tidy.Tidy;
 
 import com.fuse.dao.Assessment;
 import com.fuse.dao.Category;
+import com.fuse.dao.CustomField;
+import com.fuse.dao.CustomType;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.ReportOptions;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.Vulnerability;
+import com.fuse.dao.CustomType;
 
 import org.commonmark.Extension;
 import org.commonmark.ext.autolink.AutolinkExtension;
@@ -845,6 +850,69 @@ public class FSUtils {
 				color,
 				icon,
 				title);
+	}
+	
+	public static void CheckForUpdatedCustomFields(Assessment assessment, EntityManager em) {
+		List<CustomType> types = em
+				.createQuery("from CustomType where type = :variableType and (deleted IS NULL or deleted = false)")
+				.setParameter("variableType", CustomType.ObjType.ASMT.getValue())
+				.getResultList();
+
+
+		if(CustomType.FieldType.values().length > 3) {
+			types = types
+				.stream()
+				.filter( vType ->
+					vType.getAssessmentTypes()
+						.stream()
+						.anyMatch( aType ->
+							aType.getId().equals(assessment.getType().getId())
+						))
+				.collect(Collectors.toList());
+		}
+		final List<CustomField> fields = assessment.getCustomFields();
+
+		final List<CustomType> filteredTypes = types;
+
+		// Identify CustomFields that should be removed (no longer enabled for the assessment type)
+		List<CustomField> fieldsToRemove = fields.stream()
+				.filter( f -> !filteredTypes.stream().anyMatch(t -> t.equals( f.getType() )))
+				.collect(Collectors.toList());
+
+		// Find New Fields we need to add
+		List<CustomType> newTypes = filteredTypes.stream()
+				.filter( t -> !fields.stream().anyMatch(f -> f.getType().equals(t) ) )
+				.collect(Collectors.toList());
+
+		System.out.println("CustomFields to remove: " + fieldsToRemove.size());
+		System.out.println("Found new CustomTypes to add : " + newTypes.size() );
+
+		// Just return if there are no changes
+		if(fieldsToRemove.isEmpty() && newTypes.isEmpty()) {
+			System.out.println("No Custom Field Changes Found");
+			return;
+		}
+
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+
+		// Remove fields that are no longer applicable - modify the existing collection in-place
+		fields.removeAll(fieldsToRemove);
+
+		// Create and add new fields directly to the existing collection
+		for(CustomType type : newTypes) {
+			CustomField newField = new CustomField();
+			newField.setType(type);
+			newField.setValue(type.getDefaultValue());
+			em.persist(newField);
+			fields.add(newField);
+		}
+
+		// Persist the assessment - the collection is already modified in-place
+		em.persist(assessment);
+		HibHelper.getInstance().commit();
+
+		System.out.println("CustomFields Updated to " + fields.size() + " fields");
 	}
 
 }

@@ -160,6 +160,7 @@ public class AssessmentView extends FSActionSupport {
 		history = this.createHistory(assessment, levels);
 
 		avulns = (List<Vulnerability>) assessment.getVulns();
+		
 		for (int i = 0; i < 10; i++) {
 			counts.put(i, 0);
 		}
@@ -257,6 +258,7 @@ public class AssessmentView extends FSActionSupport {
 			
 		}
 
+		FSUtils.CheckForUpdatedCustomFields(assessment, em);
 		return SUCCESS;
 	}
 	
