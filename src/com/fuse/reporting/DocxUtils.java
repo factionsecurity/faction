@@ -4,6 +4,9 @@ import java.awt.Color;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -22,6 +25,7 @@ import java.util.stream.Collectors;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 
+import org.apache.commons.lang.StringUtils;
 import org.docx4j.TextUtils;
 import org.docx4j.TraversalUtil;
 import org.docx4j.XmlUtils;
@@ -47,6 +51,7 @@ import org.docx4j.wml.Hdr;
 import org.docx4j.wml.ObjectFactory;
 import org.docx4j.wml.P;
 import org.docx4j.wml.PPrBase.Ind;
+import org.dom4j.CDATA;
 import org.docx4j.wml.R;
 import org.docx4j.wml.RFonts;
 import org.docx4j.wml.RPr;
@@ -88,6 +93,7 @@ public class DocxUtils {
     private List<Vulnerability> vulns;
     private final WordprocessingMLPackage mlp;
     private String[] reportSections = new String[0];
+    private HashMap<String, List<Object>> nodeMap = new HashMap<>();
 
     public DocxUtils(EntityManagerFactory entityManagerFactory, WordprocessingMLPackage mlp, Assessment assessment) {
         MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "DocxUtils");
@@ -95,7 +101,7 @@ public class DocxUtils {
             this.mlp = mlp;
             this.reportExtension = new Extensions(entityManagerFactory, Extensions.EventType.REPORT_MANAGER);
             this.assessment = assessment;
-            // this.outlineImages();
+            //this.outlineImages();
             this.vulns = assessment.getVulns();
             this.setupReportSections(entityManagerFactory);
         } finally {
@@ -160,35 +166,40 @@ public class DocxUtils {
 
     }
 
+    @ProfileMethod("Search and Sort Vulns")
     private List<Vulnerability> getFilteredVulns(String section) {
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "getFilteredVulns");
+        try {
 
-        if (section == null) {
-            section = "Default";
-        } else if (section.isEmpty()) {
-            section = "Default";
-        }
+			if (section == null) {
+				section = "Default";
+			} else if (section.isEmpty()) {
+				section = "Default";
+			}
 
-        List<Vulnerability> filteredVulns = new ArrayList<>();
-        if (section.equals("Default")) {
-            filteredVulns = this.vulns.stream()
-                    .filter(vuln -> vuln.getSection() == null
-                            || vuln.getSection().isEmpty()
-                            || vuln.getSection().equals("Default")
-                            || !sectionExists(vuln.getSection()))
-                    .collect(Collectors.toList());
-        } else {
-            final String query = section;
-            filteredVulns = this.vulns.stream()
-                    .filter(
-                            vuln -> vuln.getSection().equals(query))
-                    .collect(Collectors.toList());
-        }
+			List<Vulnerability> filteredVulns = new ArrayList<>();
+			if (section.equals("Default")) {
+				filteredVulns = this.vulns.stream()
+						.filter(vuln -> vuln.getSection() == null
+								|| vuln.getSection().isEmpty()
+								|| vuln.getSection().equals("Default")
+								|| !sectionExists(vuln.getSection()))
+						.collect(Collectors.toList());
+			} else {
+				final String query = section;
+				filteredVulns = this.vulns.stream()
+						.filter(
+								vuln -> vuln.getSection().equals(query))
+						.collect(Collectors.toList());
+			}
 
-        return filteredVulns;
-
+			return filteredVulns;
+        }finally {
+        	context.end();
+    	}
     }
 
-    private String CData(String text) {
+    private static String CData(String text) {
         return "<![CDATA[" + text + "]]>";
     }
 
@@ -200,10 +211,14 @@ public class DocxUtils {
             List<Vulnerability> filteredVulns = this.getFilteredVulns(section);
 
             List<Object> tables = getAllElementFromObject(mlp.getMainDocumentPart(), Tbl.class);
+            System.out.println("Num Tables: " + tables.size());
             for (Object table : tables) {
+            	MethodProfiler.ProfileContext context2 = MethodProfiler.start("DocxUtils", "sectionTest");
                 List<Object> paragraphs = getAllElementFromObject(table, P.class);
+                System.out.println("Num Paragraphs: " + paragraphs.size());
                 // This is to get a list of widths to ensure elements in tables behave
                 List<Object> cells = getAllElementFromObject(table, Tc.class);
+                System.out.println("Num Cells: " + cells.size());
                 Map<String, BigInteger> widths = new HashMap<>();
                 for (Object cell : cells) {
                     Tc tc = (Tc) cell;
@@ -280,7 +295,7 @@ public class DocxUtils {
                 }
                 if (index == -1)
                     continue;
-
+                // Create an XML array or table rows
                 List<String> xmls = new LinkedList<>();
                 for (int i = 0; i <= rowsPlus; i++) {
                     Tr row = (Tr) ((Tbl) table).getContent().get(index + i);
@@ -292,7 +307,7 @@ public class DocxUtils {
                 for (int i = rowsPlus; i >= 0; i--) {
                     ((Tbl) table).getContent().remove(index);
                 }
-
+                context2.end();
                 // now we have a row.. we need to iterate through all issues
                 // and replace variables
                 SimpleDateFormat formatter;
@@ -309,106 +324,7 @@ public class DocxUtils {
                     }
                     // Change Colors if need be
                     for (String xml : xmls) {
-                        String nxml = xml.replaceAll("\\$\\{vulnName\\}", CData(v.getName()));
-                        nxml = nxml.replaceAll("\\$\\{severity\\}", CData(v.getOverallStr()));
-                        nxml = nxml.replaceAll("\\$\\{impact\\}", CData(v.getImpactStr()));
-                        nxml = nxml.replaceAll("\\$\\{cvssScore\\}", CData(v.getCvssScore()));
-                        nxml = nxml.replaceAll("\\$\\{cvssString\\}", CData(v.getCvssString()));
-                        nxml = nxml.replaceAll("\\$\\{tracking\\}", CData(v.getTracking()));
-                        if (v.getOpened() != null) {
-                            nxml = nxml.replaceAll("\\$\\{openedAt\\}", formatter.format(v.getOpened()));
-                        } else {
-                            nxml = nxml.replaceAll("\\$\\{openedAt\\}", "");
-                        }
-                        if (v.getClosed() != null) {
-                            nxml = nxml.replaceAll("\\$\\{closedAt\\}", formatter.format(v.getClosed()));
-                        } else {
-                            nxml = nxml.replaceAll("\\$\\{closedAt\\}", "");
-                        }
-                        if (v.getDevClosed() != null) {
-                            nxml = nxml.replaceAll("\\$\\{closedInDevAt\\}", formatter.format(v.getDevClosed()));
-                        } else {
-                            nxml = nxml.replaceAll("\\$\\{closedInDevAt\\}", "");
-                        }
-                        try {
-                            nxml = nxml.replaceAll("\\$\\{vid\\}", "" + v.getId());
-                        } catch (Exception ex) {
-                        }
-                        nxml = nxml.replaceAll("\\$\\{likelihood\\}", v.getLikelyhoodStr());
-                        nxml = nxml.replaceAll("\\$\\{category\\}",
-                                v.getCategory() == null ? "UnCategorized" : CData(v.getCategory().getName()));
-                        if (v.getClosed() == null)
-                            nxml = nxml.replaceAll("\\$\\{remediationStatus\\}", "Open");
-                        else
-                            nxml = nxml.replaceAll("\\$\\{remediationStatus\\}", "Closed");
-                        nxml = nxml.replaceAll("\\$\\{count\\}", "" + count);
-                        nxml = nxml.replaceAll("\\$\\{loop\\}", "");
-                        nxml = nxml.replaceAll("\\$\\{loop\\-[0-9]+\\}", "");
-
-                        if (v.getOverallStr() != null && !v.getOverallStr().equals("")) {
-                            nxml = nxml.replaceAll("\\$\\{sevId\\}", "" + v.getOverallStr().charAt(0) + "V" + sevIndex);
-                        } else {
-                            nxml = nxml.replaceAll("\\$\\{sevId\\}", "V" + sevIndex);
-                        }
-
-                        if (v.getCustomFields() != null) {
-                            for (CustomField cf : v.getCustomFields()) {
-                                // Only perform this action if the variable is plain text and not a hyperlink
-                                /*
-                                 * Boolean isHyperlink = nxml.matches(
-                                 * ".*<w:hyperlink w:history=\"true\" r:id=\".*\"><w:r><w:rPr><w:rStyle w:val=\"Hyperlink\"/></w:rPr><w:t>\\$\\{cf"
-                                 * +cf.getType().getVariable()+"\\}.*");
-                                 * if(cf.getType().getFieldType() < 3 && !isHyperlink) {
-                                 */
-
-                                if (cf.getType().getFieldType() < 3) {
-                                    nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-                                            CData(cf.getValue()));
-                                    if (customFieldMap.containsKey(cf.getType().getVariable())
-                                            && colorMap.containsKey(cf.getValue())) {
-                                        String colorMatch = customFieldMap.get(cf.getType().getVariable());
-                                        String color = colorMap.get(cf.getValue());
-                                        if (colorMatch != null && colorMatch != "" && color != null && color != "") {
-                                            // Change Custom Field Font Colors
-                                            nxml = nxml.replaceAll("w:val=\"" + colorMatch + "\"",
-                                                    "w:val=\"" + color + "\"");
-                                        }
-                                    }
-                                    if (customFieldMap.containsKey(cf.getType().getVariable())
-                                            && cellMap.containsKey(cf.getValue())) {
-                                        String colorMatch = customFieldMap.get(cf.getType().getVariable());
-                                        String color = cellMap.get(cf.getValue());
-                                        if (colorMatch != null && colorMatch != "" && color != null && color != "") {
-                                            // Change Custom Field background Colors
-                                            nxml = nxml.replaceAll("w:fill=\"" + colorMatch + "\"",
-                                                    "w:fill=\"" + color + "\"");
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
-                        // change border colors:
-                        nxml = nxml.replaceAll("w:color=\"FAC701\"",
-                                "w:color=\"" + colorMap.get(v.getOverallStr()) + "\"");
-                        nxml = nxml.replaceAll("w:color=\"FAC702\"",
-                                "w:color=\"" + colorMap.get(v.getLikelyhoodStr()) + "\"");
-                        nxml = nxml.replaceAll("w:color=\"FAC703\"",
-                                "w:color=\"" + colorMap.get(v.getImpactStr()) + "\"");
-
-                        // Fill Cells
-                        nxml = nxml.replaceAll("w:fill=\"FAC701\"",
-                                "w:fill=\"" + cellMap.get(v.getOverallStr()) + "\"");
-                        nxml = nxml.replaceAll("w:fill=\"FAC702\"",
-                                "w:fill=\"" + cellMap.get(v.getLikelyhoodStr()) + "\"");
-                        nxml = nxml.replaceAll("w:fill=\"FAC703\"", "w:fill=\"" + cellMap.get(v.getImpactStr()) + "\"");
-
-                        // Change font colors:
-                        nxml = nxml.replaceAll("w:val=\"FAC701\"", "w:val=\"" + colorMap.get(v.getOverallStr()) + "\"");
-                        nxml = nxml.replaceAll("w:val=\"FAC702\"",
-                                "w:val=\"" + colorMap.get(v.getLikelyhoodStr()) + "\"");
-                        nxml = nxml.replaceAll("w:val=\"FAC703\"", "w:val=\"" + colorMap.get(v.getImpactStr()) + "\"");
-
+                    	String nxml = replaceXml(xml, v, customFieldMap, colorMap, cellMap, null, count, sevIndex); 
                         Tr newrow = (Tr) XmlUtils.unmarshalString(nxml);
 
                         // Replace Hyperlinks
@@ -427,118 +343,35 @@ public class DocxUtils {
                          * colorMap.get(match)); }
                          */
 
-                        ((Tbl) table).getContent().add(newrow);
-
-                        HashMap<String, List<Object>> map2 = new HashMap<>();
+                        HashMap<String, List<Object>> detailsMap = new HashMap<>();
                         if (xml.contains("${rec}")) {
-                            if (v.getRecommendation() == null && v.getDefaultVuln() != null) {
-                                String rec = v.getDefaultVuln().getRecommendation();
-                                if (v.getCustomFields() != null) {
-                                    for (CustomField cf : v.getCustomFields()) {
-                                        try {
-                                            rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-                                                    cf.getValue());
-                                        } catch (Exception ex) {
-                                            ex.printStackTrace();
-                                        }
-                                    }
-                                }
-                                rec = this.replaceFigureVariables(rec, count);
-                                // map2.put("${rec}", wrapHTML(rec, customCSS, "rec", widths.get("rec")));
-                                map2.put("${rec}", wrapHTML(rec, customCSS, "rec"));
-                            } else if (v.getRecommendation() != null) {
-                                String rec = v.getRecommendation();
-                                if (v.getCustomFields() != null) {
-                                    for (CustomField cf : v.getCustomFields()) {
-                                        try {
-                                            rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-                                                    cf.getValue());
-                                        } catch (Exception ex) {
-                                            ex.printStackTrace();
-                                        }
-                                    }
-                                }
-                                rec = this.replaceFigureVariables(rec, count);
-                                // map2.put("${rec}", wrapHTML(rec, customCSS, "rec", widths.get("rec")));
-                                map2.put("${rec}", wrapHTML(rec, customCSS, "rec"));
-                            } else {
-                                map2.put("${rec}", wrapHTML("", customCSS, "rec"));
-                            }
+                        	String rec = getRecommendation(v);
+							rec = this.replaceFigureVariables(rec, count);
+							detailsMap.put("${rec}", wrapHTML(rec, customCSS, "rec"));
                         }
                         if (xml.contains("${desc}")) {
-                            if (v.getDescription() == null && v.getDefaultVuln() != null) {
-                                String desc = v.getDefaultVuln().getDescription();
-                                if (v.getCustomFields() != null) {
-                                    for (CustomField cf : v.getCustomFields()) {
-                                        try {
-                                            desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-                                                    cf.getValue());
-                                        } catch (Exception ex) {
-                                            ex.printStackTrace();
-                                        }
-                                    }
-                                }
-                                // map2.put("${desc}", wrapHTML(desc, customCSS, "desc", widths.get("desc")));
-                                desc = this.replaceFigureVariables(desc, count);
-                                map2.put("${desc}", wrapHTML(desc, customCSS, "desc"));
-                            } else if (v.getDescription() != null) {
-                                String desc = v.getDescription();
-                                if (v.getCustomFields() != null) {
-                                    for (CustomField cf : v.getCustomFields()) {
-                                        try {
-                                            desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-                                                    cf.getValue());
-                                        } catch (Exception ex) {
-                                            ex.printStackTrace();
-                                        }
-                                    }
-                                }
-                                // map2.put("${desc}", wrapHTML(desc, customCSS, "desc", widths.get("desc")));
-                                desc = this.replaceFigureVariables(desc, count);
-                                map2.put("${desc}", wrapHTML(desc, customCSS, "desc"));
-                            } else {
-                                map2.put("${desc}", wrapHTML("", customCSS, "desc"));
-                            }
+                        	String desc = getDescription(v);
+							desc = this.replaceFigureVariables(desc, count);
+							detailsMap.put("${desc}", wrapHTML(desc, customCSS, "desc"));
                         }
                         if (xml.contains("${details}")) {
-                            if (v.getDetails() != null) {
-                                String details = v.getDetails();
-                                if (v.getCustomFields() != null) {
-                                    for (CustomField cf : v.getCustomFields()) {
-                                        try {
-                                            details = details.replaceAll(
-                                                    "\\$\\{cf" + cf.getType().getVariable() + "\\}",
-                                                    cf.getValue());
-                                        } catch (Exception ex) {
-                                            ex.printStackTrace();
-                                        }
-                                    }
-                                }
-                                details = details.replaceAll("\n", "<br />");
-                                details = this.replaceFigureVariables(details, count);
-                                // map2.put("${details}", wrapHTML(details, customCSS, "details",
-                                // widths.get("details")));
-                                map2.put("${details}", wrapHTML(details, customCSS, "details"));
-                            } else {
-                                map2.put("${details}", wrapHTML("", customCSS, "details"));
-                            }
+                        	String details = getDetails(v);
+							details = this.replaceFigureVariables(details, count);
+							detailsMap.put("${details}", wrapHTML(details, customCSS, "details"));
                         }
 
                         if (v.getCustomFields() != null) {
                             for (CustomField cf : v.getCustomFields()) {
                                 if (cf.getType().getFieldType() == 3) {
-                                    map2.put("${cf" + cf.getType().getVariable() + "}",
+                                    detailsMap.put("${cf" + cf.getType().getVariable() + "}",
                                             wrapHTML(cf.getValue(), customCSS, cf.getType().getVariable()));
                                 }
                             }
                         }
-
-                        replaceHTML(table, map2);
-
+                        replaceHTML(newrow, detailsMap);
+                        ((Tbl) table).getContent().add(newrow);
                     }
-
                     count++;
-
                 }
                 // If no issues are discovered then we just blank out the table.
                 if (filteredVulns == null || filteredVulns.size() == 0) {
@@ -576,6 +409,7 @@ public class DocxUtils {
 
             // Convert all tables and match and replace values
             checkTables("vulnTable", "Default", customCSS);
+            // look for findings areas {fiBegin/fiEnd}
             setFindings("Default", customCSS);
             if (ReportFeatures.allowSections()) {
                 for (String section : this.reportSections) {
@@ -584,7 +418,6 @@ public class DocxUtils {
                 }
             }
 
-            // look for findings areass {fiBegin/fiEnd}
             HashMap<String, List<Object>> map = new HashMap();
 
             map.put("${summary1}",
@@ -608,86 +441,42 @@ public class DocxUtils {
             String className) throws Docx4JException {
         MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "wrapHTML");
         try {
-            XHTMLImporterImpl xhtml = new XHTMLImporterImpl(mlp);
-            RFonts rfonts = Context.getWmlObjectFactory().createRFonts();
-            rfonts.setAscii(this.FONT);
-            XHTMLImporterImpl.addFontMapping("Arial", rfonts);
-            XHTMLImporterImpl.addFontMapping("arial", rfonts);
+            
             if (className == null) {
                 className = "";
             }
+            if(!content.isEmpty()) {
+				content = replacement(content);
+				// fix extra spaces
+				// content = content.replaceAll("\n", "<br />");
+				// content = content.replaceAll("</p><p><br /></p><p>", "<br
+				// /></p><p>");//replace extra space
+				content = content.replaceAll("<p><br /></p>", "");// replace extra space
+				content = content.replaceAll("<blockquote>", "<center class='figure'>");
+				content = content.replaceAll("</blockquote>", "</center>");
+            }
+			LoggingConfig.configureOpenHTMLTopDFLogging();
+			String html = "<!DOCTYPE html><html><head>"
+					+ "<style>html{padding:0;margin:0;margin-right:0px;}\r\nbody{padding:0;margin:0;font-family:"
+					+ this.FONT + ";}\r\n" + customCSS + "</style>" + "</head><body><div class='" + className + "'>"
+					+ content + "</div></body></html>";
 
-            content = replacement(content);
-            // fix extra spaces
-            // content = content.replaceAll("\n", "<br />");
-            // content = content.replaceAll("</p><p><br /></p><p>", "<br
-            // /></p><p>");//replace extra space
-            content = content.replaceAll("<p><br /></p>", "");// replace extra space
-            content = content.replaceAll("<blockquote>", "<center class='figure'>");
-            content = content.replaceAll("</blockquote>", "</center>");
-            LoggingConfig.configureOpenHTMLTopDFLogging();
-            return xhtml.convert(
-                    "<!DOCTYPE html><html><head>"
-                            + "<style>html{padding:0;margin:0;margin-right:0px;}\r\nbody{padding:0;margin:0;font-family:"
-                            + this.FONT + ";}\r\n" + customCSS + "</style>" + "</head><body><div class='" + className
-                            + "'>"
-                            + content + "</div></body></html>",
-                    null);
+            String md5 = toMD5(html);
+            if (nodeMap.containsKey(md5)) {
+                return nodeMap.get(md5);
+            } else {
+				XHTMLImporterImpl xhtml = new XHTMLImporterImpl(mlp);
+				RFonts rfonts = Context.getWmlObjectFactory().createRFonts();
+				rfonts.setAscii(this.FONT);
+				XHTMLImporterImpl.addFontMapping("Arial", rfonts);
+				XHTMLImporterImpl.addFontMapping("arial", rfonts);
+                List<Object> converted = xhtml.convert(html, null);
+                nodeMap.put(md5, converted);
+                return converted;       
+            }
         } finally {
             context.end();
         }
-    }
-
-    private List<Object> wrapHTML(String value, String customCSS, String className, BigInteger maxWidth)
-            throws Docx4JException {
-        XHTMLImporterImpl xhtml = new XHTMLImporterImpl(mlp);
-        RFonts rfonts = Context.getWmlObjectFactory().createRFonts();
-        rfonts.setAscii(this.FONT);
-        XHTMLImporterImpl.addFontMapping("Arial", rfonts);
-        XHTMLImporterImpl.addFontMapping("arial", rfonts);
-
-        // Fix bad html
-        value = FSUtils.jtidy(value);
-        try {
-            value = value.replaceAll("\n", "<br />");
-            value = value.replaceAll("</p><p><br /></p><p>", "<br /></p><p>");
-            value = this.replaceImageLinks(value);
-            LoggingConfig.configureOpenHTMLTopDFLogging();
-            List<Object> converted = xhtml.convert(
-                    "<!DOCTYPE html><html><head>"
-                            + "<style>html{padding:0;margin:0;margin-right:0px;}\r\nbody{padding:0;margin:0;font-family:"
-                            + this.FONT + ";}\r\n" + customCSS + "</style>" + "</head><body><div class='" + className
-                            + "'>" + value + "</div></body></html>",
-                    null);
-            for (Object o : converted) {
-                if (o instanceof P) {
-                    P p = (P) o;
-                    /// this is looking for pre elements to ensure they stay inside tables
-                    if (p.getPPr() != null && p.getPPr().getShd() != null && p.getPPr().getPBdr() != null
-                            && p.getPPr().getInd() != null) {
-                        Ind indent = p.getPPr().getInd();
-                        BigInteger indValue = indent.getLeft();
-                        indent.setRight(indValue);
-                        p.getPPr().setInd(indent);
-                    }
-                }
-
-                if (maxWidth.intValue() > -1 && o instanceof Tbl) {
-                    Tbl t = (Tbl) o;
-                    if (t.getTblPr() != null && t.getTblPr().getTblW() != null) {
-                        t.getTblPr().getTblW().setType("dxa");
-                        t.getTblPr().getTblW().setW(maxWidth);
-                    }
-                }
-            }
-            return converted;
-
-        } catch (Exception ex) {
-
-            ex.printStackTrace();
-            return null;
-        }
-
     }
 
     @ProfileMethod("Replace assessment data variables throughout document")
@@ -743,43 +532,25 @@ public class DocxUtils {
             map.put(getKey("totalclosedvulns"), this.getTotalClosedVulns(this.assessment.getVulns()));
             map.putAll(getVulnMap());
 
-            // Fetch CustomFields with a fresh EntityManager to avoid lazy loading issues
-            List<CustomField> customFields = null;
-            EntityManager em = HibHelper.getInstance().getEM();
-            try {
-                customFields = em.createQuery(
-                        "SELECT cf FROM CustomField cf WHERE cf IN " +
-                                "(SELECT ccf FROM Assessment a JOIN a.CustomFields ccf WHERE a.id = :assessmentId)",
-                        CustomField.class)
-                        .setParameter("assessmentId", this.assessment.getId())
-                        .getResultList();
-            } catch (Exception e) {
-                // Handle any query exceptions gracefully
-                customFields = null;
-            } finally {
-                em.close();
-            }
+    		if (this.assessment.getCustomFields() != null) {
+    			for (CustomField cf : this.assessment.getCustomFields()) {
+    				if(cf.getType().getFieldType() < 3) {
+    					map.put("cf" + cf.getType().getVariable(), cf.getValue());
+    				}
+    			}
+    		}
+    		replacementHyperlinks(mlp.getMainDocumentPart(),map);
+    		replacementText(map);
 
-            if (customFields != null) {
-                for (CustomField cf : customFields) {
-                    if (cf.getType().getFieldType() < 3) {
-                        map.put("cf" + cf.getType().getVariable(), cf.getValue());
-                    }
-                }
-            }
-            replacementHyperlinks(mlp.getMainDocumentPart(), map);
-            replacementText(map);
-
-            // replavce all cusotm varables
-            Map<String, List<Object>> cfMap = new HashMap<>();
-            if (customFields != null) {
-                for (CustomField cf : customFields) {
-                    if (cf.getType().getFieldType() == 3) {
-                        cfMap.put("${cf" + cf.getType().getVariable() + "}",
-                                wrapHTML(cf.getValue(), customCSS, cf.getType().getVariable()));
-                    }
-                }
-            }
+    		// replavce all cusotm varables
+    		Map<String, List<Object>> cfMap = new HashMap<>();
+    		if (this.assessment.getCustomFields() != null) {
+    			for (CustomField cf : this.assessment.getCustomFields()) {
+    				if(cf.getType().getFieldType() == 3) {
+    					cfMap.put("${cf" + cf.getType().getVariable() +"}", wrapHTML(cf.getValue(), customCSS, cf.getType().getVariable()));
+    				}
+    			}
+    		} 
 
             // replace with HTML content
             Map<String, List<Object>> map2 = new HashMap<>();
@@ -824,23 +595,6 @@ public class DocxUtils {
         return content;
     }
 
-    private int[] getVulnCount() {
-        // C,H,M,L,I,R
-        int[] results = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        // 9,8,7,6,5,4,3,2,1,0
-        if (this.vulns == null)
-            return results;
-        else {
-            for (Vulnerability v : this.vulns) {
-                if (v.getOverall() == null || v.getOverall() == -1l)
-                    continue;
-
-                results[v.getOverall().intValue()]++;
-            }
-            return results;
-        }
-
-    }
 
     private String getVulnCount(String content) {
         // C,H,M,L,I,R
@@ -863,7 +617,7 @@ public class DocxUtils {
     }
 
     private Map<String, String> getVulnMap() {
-        Map<String, String> maps = new HashMap();
+        Map<String, String> maps = new HashMap<>();
         // C,H,M,L,I,R
         int[] results = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         // 9,8,7,6,5,4,3,2,1,0
@@ -884,25 +638,6 @@ public class DocxUtils {
         return maps;
     }
 
-    private Map<String, List<Object>> getVulnMap(String customCSS)
-            throws Docx4JException {
-        Map<String, List<Object>> maps = new HashMap();
-        // C,H,M,L,I,R
-        int[] results = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        // 9,8,7,6,5,4,3,2,1,0
-        if (this.vulns != null) {
-            for (Vulnerability v : vulns) {
-                if (v.getOverall() == null || v.getOverall().intValue() == -1)
-                    continue;
-                results[v.getOverall().intValue()]++;
-            }
-        }
-        for (int i = 0; i < 10; i++) {
-            maps.put("${riskCount" + i + "}", wrapHTML("" + results[i], customCSS, ""));
-
-        }
-        return maps;
-    }
 
     private String getKey(String key) {
         for (String word : keywords) {
@@ -926,8 +661,11 @@ public class DocxUtils {
             throws JAXBException, Docx4JException {
         String xml = XmlUtils.marshaltoString(mlp.getMainDocumentPart().getContents(), false, false);
         for (String key : map.keySet()) {
-            xml = xml.replaceAll("\\$\\{" + key + "\\}",
-                    map.get(key) == null ? "" : "<![CDATA[" + map.get(key) + "]]>");
+        	xml = replaceAll(
+        			xml, 
+        			key,
+        			""+ map.get(key) == null ? "" : map.get(key),
+        			true);
         }
         mlp.getMainDocumentPart().setContents((org.docx4j.wml.Document) XmlUtils.unmarshalString(xml));
 
@@ -984,68 +722,74 @@ public class DocxUtils {
 
     // replace text/html content
     private String replacement(String content) {
-        SimpleDateFormat formatter;
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "replacement");
+        try {
+			SimpleDateFormat formatter;
 
-        formatter = new SimpleDateFormat("MM/dd/yyyy");
+			formatter = new SimpleDateFormat("MM/dd/yyyy");
 
-        String assessors_nl = "";
-        String assessors_comma = "";
-        String assessors_bullets = "<ul>";
-        boolean isfirst = true;
-        for (User hacker : this.assessment.getAssessor()) {
-            assessors_nl += hacker.getFname() + " " + hacker.getLname() + "<br/>";
-            assessors_comma += (isfirst ? "" : ", ") + hacker.getFname() + " " + hacker.getLname();
-            assessors_bullets += "<li class='bullets'>" + hacker.getFname() + " " + hacker.getLname() + "</li>";
-            isfirst = false;
+			String assessors_nl = "";
+			String assessors_comma = "";
+			String assessors_bullets = "<ul>";
+			boolean isfirst = true;
+			for (User hacker : this.assessment.getAssessor()) {
+				assessors_nl += hacker.getFname() + " " + hacker.getLname() + "<br/>";
+				assessors_comma += (isfirst ? "" : ", ") + hacker.getFname() + " " + hacker.getLname();
+				assessors_bullets += "<li class='bullets'>" + hacker.getFname() + " " + hacker.getLname() + "</li>";
+				isfirst = false;
+			}
+			assessors_bullets += "</ul>";
+
+			content = content.replaceAll("\\$\\{asmtName\\}",
+					this.assessment.getName() == null ? "" : this.assessment.getName());
+			content = content.replaceAll("\\$\\{asmtId\\}",
+					this.assessment.getId() == null ? "" : "" + this.assessment.getId());
+			content = content.replaceAll("\\$\\{asmtAppId\\}", "" + this.assessment.getAppId());
+			content = content.replaceAll("\\$\\{asmtAssessor\\}", this.assessment.getAssessor() == null ? ""
+					: (this.assessment.getAssessor().get(0).getFname() + " "
+							+ this.assessment.getAssessor().get(0).getLname()));
+			content = content.replaceAll("\\$\\{asmtAssessor_Email\\}",
+					this.assessment.getAssessor() == null ? "" : (this.assessment.getAssessor().get(0).getEmail()));
+			content = content.replaceAll("\\$\\{asmtAssessors_Lines\\}",
+					this.assessment.getAssessor() == null ? "" : assessors_nl);
+			content = content.replaceAll("\\$\\{asmtAssessors_Comma\\}",
+					this.assessment.getAssessor() == null ? "" : assessors_comma);
+			content = content.replaceAll("\\$\\{asmtAssessors_Bullets\\}",
+					this.assessment.getAssessor() == null ? "" : assessors_bullets);
+			content = content.replaceAll("\\$\\{remediation\\}", this.assessment.getRemediation() == null ? ""
+					: (this.assessment.getRemediation().getFname() + " " + this.assessment.getRemediation().getLname()));
+			content = getVulnCount(content);
+
+			content = content.replaceAll("\\$\\{asmtTeam\\}",
+					this.assessment.getAssessor() == null ? ""
+							: this.assessment.getAssessor().get(0).getTeam() == null ? ""
+									: this.assessment.getAssessor().get(0).getTeam().getTeamName().trim());
+			content = content.replaceAll("\\$\\{asmtType\\}",
+					this.assessment.getType() == null ? "" : this.assessment.getType().getType().trim());
+			// content = content.replaceAll("\\$\\{today\\}", formatter.format(new Date()));
+			content = replaceDateVariable(content, "today", new Date());
+			content = content.replaceAll("\\$\\{asmtStandND\\}", formatter.format(this.assessment.getEnd()));
+			content = content.replaceAll("\\$\\{asmtAccessKey\\}", this.assessment.getGuid());
+			content = content.replaceAll("\\$\\{totalOpenVulns\\}", this.getTotalOpenVulns(this.assessment.getVulns()));
+			content = content.replaceAll("\\$\\{totalClosedVulns\\}", this.getTotalClosedVulns(this.assessment.getVulns()));
+
+
+			// Run extensions
+			if (this.reportExtension.isExtended()) {
+				content = this.reportExtension.updateReport(this.assessment, content);
+			}
+
+			content = loopReplace(content);
+
+			// Fix any html weirdness
+			
+			content = FSUtils.jtidy(content);
+			// Fix images
+			content = this.replaceImageLinks(content);
+			return content;
+        }finally {
+        	context.end();
         }
-        assessors_bullets += "</ul>";
-
-        content = content.replaceAll("\\$\\{asmtName\\}",
-                this.assessment.getName() == null ? "" : this.assessment.getName());
-        content = content.replaceAll("\\$\\{asmtId\\}",
-                this.assessment.getId() == null ? "" : "" + this.assessment.getId());
-        content = content.replaceAll("\\$\\{asmtAppId\\}", "" + this.assessment.getAppId());
-        content = content.replaceAll("\\$\\{asmtAssessor\\}", this.assessment.getAssessor() == null ? ""
-                : (this.assessment.getAssessor().get(0).getFname() + " "
-                        + this.assessment.getAssessor().get(0).getLname()));
-        content = content.replaceAll("\\$\\{asmtAssessor_Email\\}",
-                this.assessment.getAssessor() == null ? "" : (this.assessment.getAssessor().get(0).getEmail()));
-        content = content.replaceAll("\\$\\{asmtAssessors_Lines\\}",
-                this.assessment.getAssessor() == null ? "" : assessors_nl);
-        content = content.replaceAll("\\$\\{asmtAssessors_Comma\\}",
-                this.assessment.getAssessor() == null ? "" : assessors_comma);
-        content = content.replaceAll("\\$\\{asmtAssessors_Bullets\\}",
-                this.assessment.getAssessor() == null ? "" : assessors_bullets);
-        content = content.replaceAll("\\$\\{remediation\\}", this.assessment.getRemediation() == null ? ""
-                : (this.assessment.getRemediation().getFname() + " " + this.assessment.getRemediation().getLname()));
-        content = getVulnCount(content);
-
-        content = content.replaceAll("\\$\\{asmtTeam\\}",
-                this.assessment.getAssessor() == null ? ""
-                        : this.assessment.getAssessor().get(0).getTeam() == null ? ""
-                                : this.assessment.getAssessor().get(0).getTeam().getTeamName().trim());
-        content = content.replaceAll("\\$\\{asmtType\\}",
-                this.assessment.getType() == null ? "" : this.assessment.getType().getType().trim());
-        // content = content.replaceAll("\\$\\{today\\}", formatter.format(new Date()));
-        content = replaceDateVariable(content, "today", new Date());
-        content = content.replaceAll("\\$\\{asmtStandND\\}", formatter.format(this.assessment.getEnd()));
-        content = content.replaceAll("\\$\\{asmtAccessKey\\}", this.assessment.getGuid());
-        content = content.replaceAll("\\$\\{totalOpenVulns\\}", this.getTotalOpenVulns(this.assessment.getVulns()));
-        content = content.replaceAll("\\$\\{totalClosedVulns\\}", this.getTotalClosedVulns(this.assessment.getVulns()));
-
-        // Fix images
-        content = this.replaceImageLinks(content);
-
-        // Run extensions
-        if (this.reportExtension.isExtended()) {
-            content = this.reportExtension.updateReport(this.assessment, content);
-        }
-
-        content = loopReplace(content);
-
-        // Fix any html weirdness
-        content = FSUtils.jtidy(content);
-        return content;
 
     }
 
@@ -1053,8 +797,11 @@ public class DocxUtils {
     private String replaceImageLinks(String text) {
         MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "replaceImageLinks");
         try {
-            if (text.equals("") && !text.contains("getImage")) {
+            if (text.equals("")) {
                 return text;
+            }
+            if(!text.contains("getImage")) {
+            	return text;
             }
             text = this.centerImages(text);
             Long aid = this.assessment.getId();
@@ -1111,7 +858,7 @@ public class DocxUtils {
 
                 if (base64Image != null) {
                     // Replace with complete img tag containing base64 data
-                    String newImgTag = "<img src=\"" + base64Image + "\" />";
+                    String newImgTag = "<img src=\"" + base64Image + "\" >"; //image tag with </img>
                     matcher.appendReplacement(result, Matcher.quoteReplacement(newImgTag));
                 } else {
                     // Remove the image link entirely
@@ -1258,86 +1005,11 @@ public class DocxUtils {
                     if (xml == "") {
                         continue;
                     }
-                    String nxml = xml.replaceAll("\\$\\{vulnName\\}", CData(v.getName()));
-                    nxml = nxml.replaceAll("\\$\\{severity\\}", CData(v.getOverallStr()));
-                    nxml = nxml.replaceAll("\\$\\{impact\\}", v.getImpactStr());
-                    nxml = nxml.replaceAll("\\$\\{cvssString\\}", v.getCvssString());
-                    nxml = nxml.replaceAll("\\$\\{cvssScore\\}", v.getCvssScore());
-                    nxml = nxml.replaceAll("\\$\\{tracking\\}", v.getTracking());
-                    if (v.getOpened() != null) {
-                        nxml = nxml.replaceAll("\\$\\{openedAt\\}", formatter.format(v.getOpened()));
-                    } else {
-                        nxml = nxml.replaceAll("\\$\\{openedAt\\}", "");
-                    }
-                    if (v.getClosed() != null) {
-                        nxml = nxml.replaceAll("\\$\\{closedAt\\}", formatter.format(v.getClosed()));
-                    } else {
-                        nxml = nxml.replaceAll("\\$\\{closedAt\\}", "");
-                    }
-                    if (v.getDevClosed() != null) {
-                        nxml = nxml.replaceAll("\\$\\{closedInDevAt\\}", formatter.format(v.getDevClosed()));
-                    } else {
-                        nxml = nxml.replaceAll("\\$\\{closedInDevAt\\}", "");
-                    }
-                    try {
-                        nxml = nxml.replaceAll("\\$\\{vid\\}", "" + v.getId());
-                    } catch (Exception ex) {
-                    }
-                    nxml = nxml.replaceAll("\\$\\{likelihood\\}", v.getLikelyhoodStr());
-                    nxml = nxml.replaceAll("\\$\\{category\\}",
-                            v.getCategory() == null ? "UnCategorized" : CData(v.getCategory().getName()));
-                    if (v.getClosed() == null) {
-                        nxml = nxml.replaceAll("\\$\\{remediationStatus\\}", "Open");
-                    } else {
-                        nxml = nxml.replaceAll("\\$\\{remediationStatus\\}", "Closed");
-                    }
-                    nxml = nxml.replaceAll("\\$\\{sevId\\}", "" + v.getOverallStr().charAt(0) + "V" + index);
-
+                    String nxml = replaceXml(xml,v,customFieldMap,colorMap,cellMap,cellMap,index,0);
                     // remove color loops
                     if (nxml.contains("${color") || nxml.contains("${fill") || nxml.contains("${custom-fields"))
-                        nxml = "";
-                    if (v.getCustomFields() != null && !nxml.equals("")) {
-                        for (CustomField cf : v.getCustomFields()) {
-                            /*
-                             * Boolean isHyperlink = nxml.matches(
-                             * ".*<w:hyperlink w:history=\"true\" r:id=\".*\"><w:r><w:rPr><w:rStyle w:val=\"Hyperlink\"/>(<w:rFonts w:cstheme=\".*\"/>)?</w:rPr><w:t>\\$\\{cf"
-                             * +cf.getType().getVariable()+"\\}.*");
-                             * if(cf.getType().getFieldType() < 3 && !isHyperlink) {
-                             */
-                            if (cf.getType().getFieldType() < 3) {
-                                nxml = nxml.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-                                        CData(cf.getValue()));
-                                if (customFieldMap.containsKey(cf.getType().getVariable())
-                                        && colorMap.containsKey(cf.getValue())) {
-                                    String colorMatch = customFieldMap.get(cf.getType().getVariable());
-                                    String color = colorMap.get(cf.getValue());
-                                    if (colorMatch != null && colorMatch != "" && color != null && color != "") {
-                                        // Change Custom Field Font Colors
-                                        nxml = nxml.replaceAll("w:val=\"" + colorMatch + "\"",
-                                                "w:val=\"" + color + "\"");
-                                    }
-                                }
-                                if (customFieldMap.containsKey(cf.getType().getVariable())
-                                        && cellMap.containsKey(cf.getValue())) {
-                                    String colorMatch = customFieldMap.get(cf.getType().getVariable());
-                                    String color = cellMap.get(cf.getValue());
-                                    if (colorMatch != null && colorMatch != "" && color != null && color != "") {
-                                        // Change Custom Field Font Colors
-                                        nxml = nxml.replaceAll("w:fill=\"" + colorMatch + "\"",
-                                                "w:fill=\"" + color + "\"");
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    // Foreground colors
-                    nxml = nxml.replaceAll("w:val=\"FAC701\"", "w:val=\"" + colorMap.get(v.getOverallStr()) + "\"");
-                    nxml = nxml.replaceAll("w:val=\"FAC702\"", "w:val=\"" + colorMap.get(v.getLikelyhoodStr()) + "\"");
-                    nxml = nxml.replaceAll("w:val=\"FAC703\"", "w:val=\"" + colorMap.get(v.getImpactStr()) + "\"");
-                    // Fill Cells
-                    nxml = nxml.replaceAll("w:fill=\"FAC701\"", "w:fill=\"" + cellMap.get(v.getOverallStr()) + "\"");
-                    nxml = nxml.replaceAll("w:fill=\"FAC702\"", "w:fill=\"" + cellMap.get(v.getLikelyhoodStr()) + "\"");
-                    nxml = nxml.replaceAll("w:fill=\"FAC703\"", "w:fill=\"" + cellMap.get(v.getImpactStr()) + "\"");
+                    	nxml = "";
+                    
                     if (nxml != "") {
                         try {
                             Object paragraph = XmlUtils.unmarshalString(nxml);
@@ -1361,76 +1033,31 @@ public class DocxUtils {
             // update custom fields inside the html before inserting into the document.
             int count = 1;
             for (Vulnerability v : filteredVulns) {
-                HashMap<String, List<Object>> map2 = new HashMap();
-
-                if (v.getDescription() == null && v.getDefaultVuln() != null) {
-                    String desc = v.getDefaultVuln().getDescription();
-                    if (v.getCustomFields() != null) {
-                        for (CustomField cf : v.getCustomFields()) {
-                            desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
-                        }
-                    }
-                    desc = this.replaceFigureVariables(desc, count);
-                    map2.put("${desc}", wrapHTML(desc, customCSS, "desc"));
-                } else if (v.getDescription() != null) {
-                    String desc = v.getDescription();
-                    if (v.getCustomFields() != null) {
-                        for (CustomField cf : v.getCustomFields()) {
-                            desc = desc.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
-                        }
-                    }
-                    desc = this.replaceFigureVariables(desc, count);
-                    map2.put("${desc}", wrapHTML(desc, customCSS, "desc"));
-                } else {
-                    map2.put("${desc}", wrapHTML("", customCSS, "desc"));
-                }
-
-                if (v.getRecommendation() == null && v.getDefaultVuln() != null) {
-                    String rec = v.getDefaultVuln().getRecommendation();
-                    if (v.getCustomFields() != null) {
-                        for (CustomField cf : v.getCustomFields()) {
-                            rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
-                        }
-                    }
-                    rec = this.replaceFigureVariables(rec, count);
-                    map2.put("${rec}", wrapHTML(rec, customCSS, "rec"));
-                } else if (v.getRecommendation() != null) {
-                    String rec = v.getRecommendation();
-                    if (v.getCustomFields() != null) {
-                        for (CustomField cf : v.getCustomFields()) {
-                            rec = rec.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}", cf.getValue());
-                        }
-                    }
-                    rec = this.replaceFigureVariables(rec, count);
-                    map2.put("${rec}", wrapHTML(rec, customCSS, "rec"));
-                } else {
-                    map2.put("${rec}", wrapHTML("", customCSS, "rec"));
-                }
-
-                if (v.getDetails() != null) {
-                    String details = v.getDetails();
-                    if (v.getCustomFields() != null) {
-                        for (CustomField cf : v.getCustomFields()) {
-                            details = details.replaceAll("\\$\\{cf" + cf.getType().getVariable() + "\\}",
-                                    cf.getValue());
-                        }
-                    }
-                    details = this.replaceFigureVariables(details, count);
-                    map2.put("${details}", wrapHTML(details, customCSS, "details"));
-                } else {
-                    map2.put("${details}", wrapHTML("", customCSS, "details"));
-                }
+				HashMap<String, List<Object>> detailsMap = new HashMap<>();
+				
+				String rec = getRecommendation(v);
+				rec = this.replaceFigureVariables(rec, count);
+				detailsMap.put("${rec}", wrapHTML(rec, customCSS, "rec"));
+				
+				String desc = getDescription(v);
+				desc = this.replaceFigureVariables(desc, count);
+				detailsMap.put("${desc}", wrapHTML(desc, customCSS, "desc"));
+				
+				String details = getDetails(v);
+				details = this.replaceFigureVariables(details, count);
+				detailsMap.put("${details}", wrapHTML(details, customCSS, "details"));
+				
 
                 if (v.getCustomFields() != null) {
                     for (CustomField cf : v.getCustomFields()) {
                         if (cf.getType().getFieldType() == 3) {
-                            map2.put("${cf" + cf.getType().getVariable() + "}",
+                            detailsMap.put("${cf" + cf.getType().getVariable() + "}",
                                     wrapHTML(cf.getValue(), customCSS, cf.getType().getVariable()));
                         }
                     }
                 }
 
-                replaceHTML(mlp.getMainDocumentPart(), map2, true);
+                replaceHTML(mlp.getMainDocumentPart(), detailsMap, true);
                 count++;
 
             }
@@ -1440,80 +1067,29 @@ public class DocxUtils {
 
     }
 
+    @ProfileMethod("Get all Elements by Type")
     private List<Object> getAllElementFromObject(Object obj, Class<?> toSearch) {
-        List<Object> result = new ArrayList<Object>();
-        if (obj instanceof JAXBElement)
-            obj = ((JAXBElement<?>) obj).getValue();
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "getAllElementsFromObject");
+        try {
+			List<Object> result = new ArrayList<Object>();
+			if (obj instanceof JAXBElement)
+				obj = ((JAXBElement<?>) obj).getValue();
 
-        if (obj.getClass().equals(toSearch))
-            result.add(obj);
-        else if (obj instanceof ContentAccessor) {
-            List<?> children = ((ContentAccessor) obj).getContent();
-            for (Object child : children) {
-                result.addAll(getAllElementFromObject(child, toSearch));
-            }
+			if (obj.getClass().equals(toSearch))
+				result.add(obj);
+			else if (obj instanceof ContentAccessor) {
+				List<?> children = ((ContentAccessor) obj).getContent();
+				for (Object child : children) {
+					result.addAll(getAllElementFromObject(child, toSearch));
+				}
 
+			}
+			return result;
+        }finally {
+        	context.end();
         }
-        return result;
     }
 
-    /*
-     * Change color of a table cell based on the variable names
-     */
-    private int changeColorOfCell(Tr row, String variable, String color) {
-        List<Object> paragraphs = getAllElementFromObject(row, P.class);
-        for (Object para : paragraphs) {
-            if (matchText((P) para, variable)) {
-                Tc cell = ((Tc) ((P) para).getParent());
-                if (cell.getTcPr().getShd() != null) {
-                    cell.getTcPr().getShd().setFill(color);
-                } else {
-                    CTShd shader = new CTShd();
-                    shader.setColor("auto");
-                    shader.setFill(color);
-
-                    cell.getTcPr().setShd(shader);
-                }
-            }
-        }
-        return -1;
-    }
-
-    private int changeColorOfText(Tr row, String variable, String color) {
-        List<Object> paragraphs = getAllElementFromObject(row, P.class);
-        for (Object para : paragraphs) {
-            if (matchText((P) para, variable)) {
-                CTShd shader = new CTShd();
-                shader.setColor(color);
-                for (Object o : ((P) para).getContent()) {
-                    if (o.getClass().getName().equals("org.docx4j.wml.R")) {
-                        BooleanDefaultTrue setBold = new BooleanDefaultTrue();
-                        setBold.setVal(false);
-                        BooleanDefaultTrue setI = new BooleanDefaultTrue();
-                        setI.setVal(false);
-                        if (((R) o).getRPr() != null) {
-                            if (((R) o).getRPr().getB() != null && ((R) o).getRPr().getB().isVal()) {
-                                setBold.setVal(true);
-                            }
-                            if (((R) o).getRPr().getI() != null && ((R) o).getRPr().getI().isVal()) {
-                                setI.setVal(true);
-                            }
-
-                        }
-                        org.docx4j.wml.ObjectFactory factory = new org.docx4j.wml.ObjectFactory();
-                        org.docx4j.wml.RPr rpr = factory.createRPr();
-                        org.docx4j.wml.Color colr = factory.createColor();
-                        colr.setVal(color);
-                        rpr.setColor(colr);
-                        rpr.setB(setBold);
-                        rpr.setI(setI);
-                        ((R) o).setRPr(rpr);
-                    }
-                }
-            }
-        }
-        return -1;
-    }
 
     /*
      * Utility function to find elements in the docx file
@@ -1541,74 +1117,96 @@ public class DocxUtils {
         return -1;
     }
 
+    @ProfileMethod("Index of cell")
     private int indexOfCell(Tbl table, List<Object> paragraphs, String variable) {
-        for (Object para : paragraphs) {
-            if (matchText((P) para, variable)) {
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "indexOfCell");
+        try {
+			for (Object para : paragraphs) {
+				if (matchText((P) para, variable)) {
 
-                Tc cell = ((Tc) ((P) para).getParent());
-                if (cell.getParent().getClass().getName().equals("org.docx4j.wml.Tr")) {
-                    return ((Tr) cell.getParent()).getContent().indexOf(cell);
-                }
-            }
+					Tc cell = ((Tc) ((P) para).getParent());
+					if (cell.getParent().getClass().getName().equals("org.docx4j.wml.Tr")) {
+						return ((Tr) cell.getParent()).getContent().indexOf(cell);
+					}
+				}
+			}
+			return -1;
+        }finally {
+        	context.end();
         }
-        return -1;
     }
 
     /*
      * Check if there is a match in the text
      */
     private boolean matchText(P paragraph, String variable) {
-        final StringWriter paragraphText = new StringWriter();
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "matchText");
         try {
-            TextUtils.extractText(paragraph, paragraphText);
-        } catch (Exception ex) {
-            return false;
+			final StringWriter paragraphText = new StringWriter();
+			try {
+				TextUtils.extractText(paragraph, paragraphText);
+			} catch (Exception ex) {
+				return false;
+			}
+			final String identifier = paragraphText.toString();
+			if (identifier != null && identifier.startsWith(variable)) {
+				return true;
+			}
+			return false;
+        }finally{
+        	context.end();
         }
-        final String identifier = paragraphText.toString();
-        if (identifier != null && identifier.startsWith(variable)) {
-            return true;
-        }
-        return false;
     }
 
     private void replaceHTML(final Object mainPart, final Map<String, List<Object>> replacements) {
         replaceHTML(mainPart, replacements, true);
     }
 
+    @ProfileMethod("Get Paragraphs")
     private List<P> getParagraphs(final Object mainPart) {
-        // look for all P elements in the specified object
-        final List<P> paragraphs = Lists.newArrayList();
-        new TraversalUtil(mainPart, new TraversalUtil.CallbackImpl() {
-            @Override
-            public List<Object> apply(Object o) {
-                if (o instanceof P) {
-                    paragraphs.add((P) o);
-                }
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "getParagraphs");
+        try {
+			// look for all P elements in the specified object
+			final List<P> paragraphs = Lists.newArrayList();
+			new TraversalUtil(mainPart, new TraversalUtil.CallbackImpl() {
+				@Override
+				public List<Object> apply(Object o) {
+					if (o instanceof P) {
+						paragraphs.add((P) o);
+					}
 
-                return null;
-            }
-        });
-        return paragraphs;
+					return null;
+				}
+			});
+			return paragraphs;
+        }finally {
+        	context.end();
+        }
 
     }
 
     private List<P.Hyperlink> getHyperLinks(final Object mainPart) {
-        final List<P.Hyperlink> links = new ArrayList<>();
-        new TraversalUtil(mainPart, new TraversalUtil.CallbackImpl() {
-            @Override
-            public List<Object> apply(Object o) {
-                if (o instanceof P.Hyperlink) {
-                    links.add((P.Hyperlink) o);
-                }
-                return null; // Continue traversal
-            }
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "getHyperLinks");
+        try {
+			final List<P.Hyperlink> links = new ArrayList<>();
+			new TraversalUtil(mainPart, new TraversalUtil.CallbackImpl() {
+				@Override
+				public List<Object> apply(Object o) {
+					if (o instanceof P.Hyperlink) {
+						links.add((P.Hyperlink) o);
+					}
+					return null; // Continue traversal
+				}
 
-            @Override
-            public boolean shouldTraverse(Object o) {
-                return true; // Traverse all elements
-            }
-        });
-        return links;
+				@Override
+				public boolean shouldTraverse(Object o) {
+					return true; // Traverse all elements
+				}
+			});
+			return links;
+        }finally {
+        	context.end();
+        }
     }
 
     @ProfileMethod("Replace hyperlink text and URL in document")
@@ -1667,167 +1265,199 @@ public class DocxUtils {
     }
 
     private String getHyperlinkDisplayText(P.Hyperlink hyperlink) {
-        StringBuilder text = new StringBuilder();
-        for (Object obj : hyperlink.getContent()) {
-            if (obj instanceof R) {
-                R run = (R) obj;
-                for (Object runContent : run.getContent()) {
-                    if (runContent instanceof Text) {
-                        text.append(((Text) runContent).getValue());
-                    } else if (runContent instanceof JAXBElement) {
-                        JAXBElement<?> element = (JAXBElement<?>) runContent;
-                        if (element.getValue() instanceof Text) {
-                            text.append(((Text) element.getValue()).getValue());
-                        }
-                    }
-                }
-            }
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "getHyperlinkDisplayText");
+        try {
+			StringBuilder text = new StringBuilder();
+			for (Object obj : hyperlink.getContent()) {
+				if (obj instanceof R) {
+					R run = (R) obj;
+					for (Object runContent : run.getContent()) {
+						if (runContent instanceof Text) {
+							text.append(((Text) runContent).getValue());
+						} else if (runContent instanceof JAXBElement) {
+							JAXBElement<?> element = (JAXBElement<?>) runContent;
+							if (element.getValue() instanceof Text) {
+								text.append(((Text) element.getValue()).getValue());
+							}
+						}
+					}
+				}
+			}
+			return text.toString();
+        }finally {
+        	context.end();
         }
-        return text.toString();
     }
 
     private void updateHyperlinkDisplayText(P.Hyperlink hyperlink, String newText) {
-        // Clear existing content
-        hyperlink.getContent().clear();
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "updateHyperlinkDisplayText");
+        try {
+			// Clear existing content
+			hyperlink.getContent().clear();
 
-        // Create new run with the text
-        R run = new R();
+			// Create new run with the text
+			R run = new R();
 
-        // Add hyperlink style
-        RPr runProps = new RPr();
-        RStyle hyperlinkStyle = new RStyle();
-        hyperlinkStyle.setVal("Hyperlink");
-        runProps.setRStyle(hyperlinkStyle);
-        run.setRPr(runProps);
+			// Add hyperlink style
+			RPr runProps = new RPr();
+			RStyle hyperlinkStyle = new RStyle();
+			hyperlinkStyle.setVal("Hyperlink");
+			runProps.setRStyle(hyperlinkStyle);
+			run.setRPr(runProps);
 
-        // Add the text
-        Text text = new Text();
-        text.setValue(newText);
-        run.getContent().add(text);
+			// Add the text
+			Text text = new Text();
+			text.setValue(newText);
+			run.getContent().add(text);
 
-        hyperlink.getContent().add(run);
+			hyperlink.getContent().add(run);
+        }finally {
+        	context.end();
+        }
     }
 
     // This function is needed to get better processing around images
     // that can used to center them
     private String centerImages(String content) {
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "centerImages");
+        try {
 
-        int index = content.indexOf("<img ");
-        while (index != -1) {
-            String first = content.substring(0, index);
-            String second = content.substring(index, content.length());
-            second = second.replaceFirst("/>", "></img>");
-            content = first + second;
-            index = content.indexOf("<img ", index + 1);
+			int index = content.indexOf("<img ");
+			while (index != -1) {
+				String first = content.substring(0, index);
+				String second = content.substring(index, content.length());
+				second = second.replaceFirst("/>", "></img>");
+				content = first + second;
+				index = content.indexOf("<img ", index + 1);
 
+			}
+			content = content.replaceAll("<p><img", "<center><img");
+			content = content.replaceAll("</img><br /></p>", "</img></center>");
+			return content;
+        }finally {
+        	context.end();
         }
-        content = content.replaceAll("<p><img", "<center><img");
-        content = content.replaceAll("</img><br /></p>", "</img></center>");
-        return content;
     }
 
     private void replaceHeaderAndFooter(final Map<String, String> replacements) {
-        List<Object> list = new ArrayList<>();
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "replaceHeaderAndFooter");
         try {
+			List<Object> list = new ArrayList<>();
+			try {
 
-            if (this.mlp.getHeaderFooterPolicy().getDefaultHeader() != null) {
-                HeaderPart fp = this.mlp.getHeaderFooterPolicy().getDefaultHeader();
-                String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
-                for (String key : replacements.keySet()) {
-                    xml = xml.replace("${" + key + "}", replacements.get(key));
-                }
-                this.mlp.getHeaderFooterPolicy().getDefaultHeader().setContents((Hdr) XmlUtils.unmarshalString(xml));
-            }
-            if (this.mlp.getHeaderFooterPolicy().getFirstHeader() != null) {
-                HeaderPart fp = this.mlp.getHeaderFooterPolicy().getFirstHeader();
-                String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
-                for (String key : replacements.keySet()) {
-                    xml = xml.replace("${" + key + "}", replacements.get(key));
-                }
-                this.mlp.getHeaderFooterPolicy().getFirstHeader().setContents((Hdr) XmlUtils.unmarshalString(xml));
-            }
-            if (this.mlp.getHeaderFooterPolicy().getEvenHeader() != null) {
-                HeaderPart fp = this.mlp.getHeaderFooterPolicy().getEvenHeader();
-                String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
-                for (String key : replacements.keySet()) {
-                    xml = xml.replace("${" + key + "}", replacements.get(key));
-                }
-                this.mlp.getHeaderFooterPolicy().getEvenHeader().setContents((Hdr) XmlUtils.unmarshalString(xml));
+				if (this.mlp.getHeaderFooterPolicy().getDefaultHeader() != null) {
+					HeaderPart fp = this.mlp.getHeaderFooterPolicy().getDefaultHeader();
+					String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
+					for (String key : replacements.keySet()) {
+						xml = xml.replace("${" + key + "}", replacements.get(key));
+					}
+					this.mlp.getHeaderFooterPolicy().getDefaultHeader().setContents((Hdr) XmlUtils.unmarshalString(xml));
+				}
+				if (this.mlp.getHeaderFooterPolicy().getFirstHeader() != null) {
+					HeaderPart fp = this.mlp.getHeaderFooterPolicy().getFirstHeader();
+					String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
+					for (String key : replacements.keySet()) {
+						xml = xml.replace("${" + key + "}", replacements.get(key));
+					}
+					this.mlp.getHeaderFooterPolicy().getFirstHeader().setContents((Hdr) XmlUtils.unmarshalString(xml));
+				}
+				if (this.mlp.getHeaderFooterPolicy().getEvenHeader() != null) {
+					HeaderPart fp = this.mlp.getHeaderFooterPolicy().getEvenHeader();
+					String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
+					for (String key : replacements.keySet()) {
+						xml = xml.replace("${" + key + "}", replacements.get(key));
+					}
+					this.mlp.getHeaderFooterPolicy().getEvenHeader().setContents((Hdr) XmlUtils.unmarshalString(xml));
 
-            }
-            if (this.mlp.getHeaderFooterPolicy().getDefaultFooter() != null) {
-                FooterPart fp = this.mlp.getHeaderFooterPolicy().getDefaultFooter();
-                String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
-                for (String key : replacements.keySet()) {
-                    xml = xml.replace("${" + key + "}", replacements.get(key));
-                }
-                this.mlp.getHeaderFooterPolicy().getDefaultFooter().setContents((Ftr) XmlUtils.unmarshalString(xml));
-            }
-            if (this.mlp.getHeaderFooterPolicy().getFirstFooter() != null) {
-                FooterPart fp = this.mlp.getHeaderFooterPolicy().getFirstFooter();
-                String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
-                for (String key : replacements.keySet()) {
-                    xml = xml.replace("${" + key + "}", replacements.get(key));
-                }
-                this.mlp.getHeaderFooterPolicy().getFirstFooter().setContents((Ftr) XmlUtils.unmarshalString(xml));
-            }
-            if (this.mlp.getHeaderFooterPolicy().getEvenFooter() != null) {
-                FooterPart fp = this.mlp.getHeaderFooterPolicy().getEvenFooter();
-                String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
-                for (String key : replacements.keySet()) {
-                    xml = xml.replace("${" + key + "}", replacements.get(key));
-                }
-                this.mlp.getHeaderFooterPolicy().getEvenFooter().setContents((Ftr) XmlUtils.unmarshalString(xml));
+				}
+				if (this.mlp.getHeaderFooterPolicy().getDefaultFooter() != null) {
+					FooterPart fp = this.mlp.getHeaderFooterPolicy().getDefaultFooter();
+					String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
+					for (String key : replacements.keySet()) {
+						xml = xml.replace("${" + key + "}", replacements.get(key));
+					}
+					this.mlp.getHeaderFooterPolicy().getDefaultFooter().setContents((Ftr) XmlUtils.unmarshalString(xml));
+				}
+				if (this.mlp.getHeaderFooterPolicy().getFirstFooter() != null) {
+					FooterPart fp = this.mlp.getHeaderFooterPolicy().getFirstFooter();
+					String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
+					for (String key : replacements.keySet()) {
+						xml = xml.replace("${" + key + "}", replacements.get(key));
+					}
+					this.mlp.getHeaderFooterPolicy().getFirstFooter().setContents((Ftr) XmlUtils.unmarshalString(xml));
+				}
+				if (this.mlp.getHeaderFooterPolicy().getEvenFooter() != null) {
+					FooterPart fp = this.mlp.getHeaderFooterPolicy().getEvenFooter();
+					String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
+					for (String key : replacements.keySet()) {
+						xml = xml.replace("${" + key + "}", replacements.get(key));
+					}
+					this.mlp.getHeaderFooterPolicy().getEvenFooter().setContents((Ftr) XmlUtils.unmarshalString(xml));
 
-            }
+				}
 
-        } catch (XPathBinderAssociationIsPartialException | JAXBException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch (Docx4JException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+			} catch (XPathBinderAssociationIsPartialException | JAXBException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (Docx4JException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+        }finally {
+        	context.end();
         }
     }
 
+    @ProfileMethod("replace HTML")
     private void replaceHTML(final Object mainPart, final Map<String, List<Object>> replacements, boolean once) {
+    	if(replacements.size() == 0)
+    		return;
+    	
         if (mainPart == null)
             return;
-        Preconditions.checkNotNull(mainPart, "the supplied main doc part may not be null!");
-        Preconditions.checkNotNull(replacements, "replacements may not be null!");
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "replaceHTML");
+        try {
+			Preconditions.checkNotNull(mainPart, "the supplied main doc part may not be null!");
+			Preconditions.checkNotNull(replacements, "replacements may not be null!");
 
-        List<P> paragraphs = this.getParagraphs(mainPart);
+			List<P> paragraphs = this.getParagraphs(mainPart);
+			
 
-        // run through all found paragraphs to located identifiers
-        for (final P paragraph : paragraphs) {
-            // convert paragraph to raw text
-            final StringWriter paragraphText = new StringWriter();
-            try {
-                TextUtils.extractText(paragraph, paragraphText);
-            } catch (Exception ex) {
+			// run through all found paragraphs to located identifiers
+			for (final P paragraph : paragraphs) {
+				
+				// convert paragraph to raw text
+				final StringWriter paragraphText = new StringWriter();
+				try {
+					TextUtils.extractText(paragraph, paragraphText);
+				} catch (Exception ex) {
 
-            }
-            final String identifier = paragraphText.toString().trim();
-            // if raw text is our variable then replace the paragraph
-            // with formated text
-            if (identifier != null && replacements.containsKey(identifier)) {
-                final List<Object> listToModify = this.getUpdatableElements(paragraph);
+				}
+				final String identifier = paragraphText.toString().trim();
+				// if raw text is our variable then replace the paragraph
+				// with formated text
+				if (identifier != null && identifier.indexOf("${") != -1 && replacements.containsKey(identifier)) {
+					
+					final List<Object> listToModify = this.getParentElement(paragraph);
 
-                if (listToModify != null) {
-                    final int index = listToModify.indexOf(paragraph);
-                    Preconditions.checkState(index > -1, "could not located the paragraph in the specified list!");
+					if (listToModify != null) {
+						final int index = listToModify.indexOf(paragraph);
+						Preconditions.checkState(index > -1, "could not located the paragraph in the specified list!");
 
-                    // remove the paragraph from it's current index
-                    listToModify.remove(index);
+						// remove the paragraph from it's current index
+						listToModify.remove(index);
 
-                    // add the converted HTML paragraphs
-                    listToModify.addAll(index, replacements.get(identifier));
-                    if (once)
-                        replacements.remove(identifier);
+						// add the converted HTML paragraphs
+						listToModify.addAll(index, replacements.get(identifier));
+						if (once)
+							replacements.remove(identifier);
 
-                }
-            }
+					}
+				}
 
+			}
+        }finally {
+        	context.end();
         }
     }
 
@@ -1854,61 +1484,71 @@ public class DocxUtils {
         }
     }
 
-    private List<Object> getUpdatableElements(P paragraph) {
-        if (paragraph.getParent() instanceof Tc) {
-            // paragraph located in table-cell
-            final Tc parent = (Tc) paragraph.getParent();
-            return parent.getContent();
-        } else if (paragraph.getParent() instanceof Hdr) {
-            // located in a header element
-            final Hdr parent = (Hdr) paragraph.getParent();
-            return parent.getContent();
-        } else if (paragraph.getParent() instanceof CTTxbxContent) {
-            final CTTxbxContent parent = (CTTxbxContent) paragraph.getParent();
-            return parent.getContent();
-        } else {
-            // paragraph located in main document part
-            return ((MainDocumentPart) mlp.getMainDocumentPart()).getContent();
+    private List<Object> getParentElement(P paragraph) {
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "getParentElement");
+        try {
+			if (paragraph.getParent() instanceof Tc) {
+				// paragraph located in table-cell
+				final Tc parent = (Tc) paragraph.getParent();
+				return parent.getContent();
+			} else if (paragraph.getParent() instanceof Hdr) {
+				// located in a header element
+				final Hdr parent = (Hdr) paragraph.getParent();
+				return parent.getContent();
+			} else if (paragraph.getParent() instanceof CTTxbxContent) {
+				final CTTxbxContent parent = (CTTxbxContent) paragraph.getParent();
+				return parent.getContent();
+			} else {
+				// paragraph located in main document part
+				return ((MainDocumentPart) mlp.getMainDocumentPart()).getContent();
+			}
+        }finally {
+        	context.end();
         }
 
     }
 
     private void updateDocWithExtensions(String customCSS) {
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "updateDocWithExtensions");
+        try {
 
-        MainDocumentPart mainPart = mlp.getMainDocumentPart();
-        // look for all P elements in the specified object
-        List<P> paragraphs = this.getParagraphs(mainPart);
+			MainDocumentPart mainPart = mlp.getMainDocumentPart();
+			// look for all P elements in the specified object
+			List<P> paragraphs = this.getParagraphs(mainPart);
 
-        // run through all found paragraphs to located identifiers
-        for (final P paragraph : paragraphs) {
-            // convert paragraph to raw text
-            final StringWriter paragraphText = new StringWriter();
-            try {
-                TextUtils.extractText(paragraph, paragraphText);
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
-            final String identifier = paragraphText.toString().trim();
-            final List<Object> listToModify = this.getUpdatableElements(paragraph);
+			// run through all found paragraphs to located identifiers
+			for (final P paragraph : paragraphs) {
+				// convert paragraph to raw text
+				final StringWriter paragraphText = new StringWriter();
+				try {
+					TextUtils.extractText(paragraph, paragraphText);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+				final String identifier = paragraphText.toString().trim();
+				final List<Object> listToModify = this.getParentElement(paragraph);
 
-            if (listToModify != null) {
-                final int index = listToModify.indexOf(paragraph);
-                Preconditions.checkState(index > -1, "could not located the paragraph in the specified list!");
-                if (this.reportExtension.isExtended()) {
-                    String html = this.reportExtension.updateReport(this.assessment, identifier);
-                    if (html != null && !html.equals(identifier)) {
-                        listToModify.remove(index);
-                        try {
-                            listToModify.addAll(index, this.wrapHTML(html, customCSS, ""));
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
-                        }
-                    }
+				if (listToModify != null) {
+					final int index = listToModify.indexOf(paragraph);
+					Preconditions.checkState(index > -1, "could not located the paragraph in the specified list!");
+					if (this.reportExtension.isExtended()) {
+						String html = this.reportExtension.updateReport(this.assessment, identifier);
+						if (html != null && !html.equals(identifier)) {
+							listToModify.remove(index);
+							try {
+								listToModify.addAll(index, this.wrapHTML(html, customCSS, ""));
+							} catch (Exception ex) {
+								ex.printStackTrace();
+							}
+						}
 
-                }
+					}
 
-            }
+				}
 
+			}
+        }finally {
+        	context.end();
         }
 
     }
@@ -1934,75 +1574,289 @@ public class DocxUtils {
 
     }
 
+    @ProfileMethod("Addes a Page Break")
     private void addPageBreak(WordprocessingMLPackage mlp, int index) {
-        org.docx4j.wml.ObjectFactory wmlObjectFactory = Context.getWmlObjectFactory();
-        P p = wmlObjectFactory.createP();
-        // Create object for r
-        R r = wmlObjectFactory.createR();
-        p.getContent().add(r);
-        // Create object for br
-        Br br = wmlObjectFactory.createBr();
-        r.getContent().add(br);
-        br.setType(org.docx4j.wml.STBrType.PAGE);
-        mlp.getMainDocumentPart().getContent().add(index, p);
-
-    }
-
-    private int getIndex(final MainDocumentPart mainPart, String keyword) {
-        Preconditions.checkNotNull(mainPart, "the supplied main doc part may not be null!");
-
-        // look for all P elements in the specified object
-        final List<P> paragraphs = this.getParagraphs(mainPart);
-
-        // run through all found paragraphs to located identifiers
-        for (final P paragraph : paragraphs) {
-            // check if this is one of our identifiers
-            final StringWriter paragraphText = new StringWriter();
-            try {
-                TextUtils.extractText(paragraph, paragraphText);
-            } catch (Exception ex) {
-
-            }
-
-            final String identifier = paragraphText.toString();
-            if (identifier != null && identifier.contains(keyword)) {
-                int index = mainPart.getContent().indexOf(paragraph);
-                if (index == -1) {
-                    return -1;
-                } else {
-                    mainPart.getContent().remove(index);
-                    // mainPart.getContent().set(index, new P());
-                    return index;
-                }
-
-            }
-
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "addpageBreak");
+        try {
+			org.docx4j.wml.ObjectFactory wmlObjectFactory = Context.getWmlObjectFactory();
+			P p = wmlObjectFactory.createP();
+			// Create object for r
+			R r = wmlObjectFactory.createR();
+			p.getContent().add(r);
+			// Create object for br
+			Br br = wmlObjectFactory.createBr();
+			r.getContent().add(br);
+			br.setType(org.docx4j.wml.STBrType.PAGE);
+			mlp.getMainDocumentPart().getContent().add(index, p);
+        }finally {
+        	context.end();
         }
-        return -1;
+
     }
 
+    @ProfileMethod("Gets an index based on keyword")
+    private int getIndex(final MainDocumentPart mainPart, String keyword) {
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "getIndex");
+        try {
+			Preconditions.checkNotNull(mainPart, "the supplied main doc part may not be null!");
+
+			// look for all P elements in the specified object
+			final List<P> paragraphs = this.getParagraphs(mainPart);
+
+			// run through all found paragraphs to located identifiers
+			for (final P paragraph : paragraphs) {
+				// check if this is one of our identifiers
+				final StringWriter paragraphText = new StringWriter();
+				try {
+					TextUtils.extractText(paragraph, paragraphText);
+				} catch (Exception ex) {
+
+				}
+
+				final String identifier = paragraphText.toString();
+				if (identifier != null &&  identifier.contains("${") && identifier.contains(keyword)) {
+					int index = mainPart.getContent().indexOf(paragraph);
+					if (index == -1) {
+						return -1;
+					} else {
+						mainPart.getContent().remove(index);
+						// mainPart.getContent().set(index, new P());
+						return index;
+					}
+
+				}
+
+			}
+			return -1;
+        }finally {
+        	context.end();
+        }
+    }
+
+    @ProfileMethod("Gets Matching paragraphs from text")
     private String getMatchingText(P paragraph, String variable) {
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "getMathingText");
         final StringWriter paragraphText = new StringWriter();
         try {
-            TextUtils.extractText(paragraph, paragraphText);
-        } catch (Exception ex) {
-            return null;
+			try {
+				TextUtils.extractText(paragraph, paragraphText);
+			} catch (Exception ex) {
+				return null;
+			}
+			final String identifier = paragraphText.toString();
+			if (identifier != null && identifier.startsWith(variable)) {
+				return identifier;
+			}
+			return null;
+        }finally {
+        	context.end();
         }
-        final String identifier = paragraphText.toString();
-        if (identifier != null && identifier.startsWith(variable)) {
-            return identifier;
-        }
-        return null;
     }
 
+    @ProfileMethod("Gets Matching paragraphs from text")
     private String getMatchingText(List<Object> paragraphs, String variable) {
-        final StringWriter paragraphText = new StringWriter();
-        for (Object paragraph : paragraphs) {
-            String text = getMatchingText((P) paragraph, variable);
-            if (text != null)
-                return text;
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "getMathingText");
+        try {
+			for (Object paragraph : paragraphs) {
+				String text = getMatchingText((P) paragraph, variable);
+				if (text != null)
+					return text;
+			}
+			return null;
+        }finally {
+        	context.end();
         }
-        return null;
+    }
+
+    private static String toMD5(String input) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(input.getBytes(StandardCharsets.UTF_8));
+
+            StringBuilder hexString = new StringBuilder();
+            for (byte b : digest) {
+                String hex = Integer.toHexString(0xff & b);
+                if (hex.length() == 1) {
+                    hexString.append('0');
+                }
+                hexString.append(hex);
+            }
+
+            return hexString.toString();
+        } catch (NoSuchAlgorithmException e) {
+            // MD5 is guaranteed to exist in Java, so this should never happen
+            throw new RuntimeException(e);
+        }
+    }
+    private static String replaceAll(String original, String pattern, String replacement, Boolean wrapCDATA) {
+    	if(wrapCDATA) {
+    		return StringUtils.replace(original, "${" + pattern + "}", CData(replacement));
+    	}else {
+    		return StringUtils.replace(original, "${" + pattern + "}", replacement);
+    	}
+    }
+    
+    private static String replaceAllCf(String original,Vulnerability v) {
+		if (v.getCustomFields() != null) {
+			for (CustomField cf : v.getCustomFields()) {
+				try {
+					original = replaceAll(original, "cf" + cf.getType().getVariable(), cf.getValue(), true);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+		}
+		return original;
+    }
+    private static String getRecommendation(Vulnerability v) {
+    	String rec = "";
+		if (v.getRecommendation() == null && v.getDefaultVuln() != null) {
+			rec = v.getDefaultVuln().getRecommendation();
+		} else if (v.getRecommendation() != null) {
+			rec = v.getRecommendation();
+		}
+		if(!rec.isEmpty()) {
+			return replaceAllCf(rec, v);
+		}else {
+			return rec;
+		}
+    }
+    private static String getDescription(Vulnerability v) {
+    	String desc = "";
+		if (v.getDescription() == null && v.getDefaultVuln() != null) {
+			desc = v.getDefaultVuln().getDescription();
+		} else if (v.getDescription() != null) {
+			desc = v.getDescription();
+		}
+		if(!desc.isEmpty()) {
+			return replaceAllCf(desc, v);
+		}else {
+			return desc;
+		}
+    }
+    private static String getDetails(Vulnerability v) {
+    	String details = ""; 
+		if (v.getDetails() != null) {
+			return v.getDetails();
+		}
+		if(!details.isEmpty()) {
+			return replaceAllCf(details, v);
+		}else {
+			return details;
+		}
+    }
+    private static String replaceXml(String xml, 
+    		Vulnerability v, 
+    		HashMap<String,String> customFieldMap, 
+    		HashMap<String,String> colorMap, 
+    		HashMap<String,String> cellMap, 
+    		HashMap<String,String> fillMap, 
+    		int count, 
+    		int sevIndex) {
+		SimpleDateFormat formatter;
+		formatter = new SimpleDateFormat("MM/dd/yyyy");
+		String nxml = replaceAll(xml, "vulnName", v.getName(), true);
+		nxml = replaceAll(nxml, "severity", v.getOverallStr(), true);
+		nxml = replaceAll(nxml, "impact", v.getImpactStr(), true);
+		nxml = replaceAll(nxml, "likelihood", v.getLikelyhoodStr(), true);
+		nxml = replaceAll(nxml, "cvssScore", v.getCvssScore(), true);
+		nxml = replaceAll(nxml, "cvssString", v.getCvssString(), true);
+		nxml = replaceAll(nxml, "tracking", v.getTracking(), true);
+		if (v.getOpened() != null) {
+			nxml = replaceAll(nxml, "openedAt", formatter.format(v.getOpened()), false);
+		} else {
+			nxml = replaceAll(nxml, "openedAt", "", false);
+		}
+		if (v.getClosed() != null) {
+			nxml = replaceAll(nxml, "closedAt", formatter.format(v.getClosed()), false);
+		} else {
+			nxml = replaceAll(nxml, "closedAt", "", false);
+		}
+		if (v.getDevClosed() != null) {
+			nxml = replaceAll(nxml, "closedInDevAt", formatter.format(v.getDevClosed()), false);
+		} else {
+			nxml = replaceAll(nxml, "closedInDevAt", "", false);
+		}
+		try {
+			nxml = replaceAll(nxml, "vid", "" + v.getId(), false);
+		} catch (Exception ex) {
+		}
+		nxml = replaceAll(nxml, 
+				"category",
+				v.getCategory() == null ? "UnCategorized" : v.getCategory().getName(), 
+				true);
+		
+		if (v.getClosed() == null)
+			nxml = replaceAll(nxml, "remediationStatus", "Open", false);
+		else
+			nxml = replaceAll(nxml, "remediationStatus", "Closed", false);
+
+		nxml = replaceAll(nxml, "count", "" + count, false);
+		nxml = replaceAll(nxml, "loop", "" , false);
+		nxml = nxml.replaceAll("\\$\\{loop\\-[0-9]+\\}", "");
+
+		if (v.getOverallStr() != null && !v.getOverallStr().equals("")) {
+			nxml = replaceAll(nxml, "sevId", "" + v.getOverallStr().charAt(0) + "V" + sevIndex, false);
+		} else {
+			nxml = replaceAll(nxml, "sevId", "V" + sevIndex, false);
+		}
+
+		if (v.getCustomFields() != null) {
+			for (CustomField cf : v.getCustomFields()) {
+				// Only perform this action if the variable is plain text and not a hyperlink
+				/*
+				 * Boolean isHyperlink = nxml.matches(
+				 * ".*<w:hyperlink w:history=\"true\" r:id=\".*\"><w:r><w:rPr><w:rStyle w:val=\"Hyperlink\"/></w:rPr><w:t>\\$\\{cf"
+				 * +cf.getType().getVariable()+"\\}.*");
+				 * if(cf.getType().getFieldType() < 3 && !isHyperlink) {
+				 */
+
+				if (cf.getType().getFieldType() < 3) {
+					nxml = StringUtils.replace(nxml, "${cf" + cf.getType().getVariable() + "}", CData(cf.getValue()));
+					if (customFieldMap.containsKey(cf.getType().getVariable())
+							&& colorMap.containsKey(cf.getValue())) {
+						String colorMatch = customFieldMap.get(cf.getType().getVariable());
+						String color = colorMap.get(cf.getValue());
+						if (colorMatch != null && colorMatch != "" && color != null && color != "") {
+							// Change Custom Field Font Colors
+							nxml = StringUtils.replace(nxml, "w:val=\"" + colorMatch + "\"", "w:val=\"" + color + "\"");
+						}
+					}
+					if (customFieldMap.containsKey(cf.getType().getVariable())
+							&& cellMap.containsKey(cf.getValue())) {
+						String colorMatch = customFieldMap.get(cf.getType().getVariable());
+						String color = cellMap.get(cf.getValue());
+						if (colorMatch != null && colorMatch != "" && color != null && color != "") {
+							// Change Custom Field background Colors
+							nxml = StringUtils.replace(nxml, "w:fill=\"" + colorMatch + "\"", "w:fill=\"" + color + "\"");
+						}
+					}
+				}
+			}
+		}
+
+		// change border colors:
+		nxml = StringUtils.replace(nxml, "w:color=\"FAC701\"", "w:color=\"" + colorMap.get(v.getOverallStr()) + "\"");
+		nxml = StringUtils.replace(nxml, "w:color=\"FAC701\"", "w:color=\"" + colorMap.get(v.getOverallStr()) + "\"");
+		nxml = StringUtils.replace(nxml, "w:color=\"FAC702\"", "w:color=\"" + colorMap.get(v.getLikelyhoodStr()) + "\"");
+		nxml = StringUtils.replace(nxml, "w:color=\"FAC703\"",
+				"w:color=\"" + colorMap.get(v.getImpactStr()) + "\"");
+
+		// Fill Cells
+		nxml = StringUtils.replace(nxml, "w:fill=\"FAC701\"",
+				"w:fill=\"" + cellMap.get(v.getOverallStr()) + "\"");
+		nxml = StringUtils.replace(nxml, "w:fill=\"FAC702\"",
+				"w:fill=\"" + cellMap.get(v.getLikelyhoodStr()) + "\"");
+		nxml = StringUtils.replace(nxml, "w:fill=\"FAC703\"", "w:fill=\"" + cellMap.get(v.getImpactStr()) + "\"");
+
+		// Change font colors:
+		nxml = StringUtils.replace(nxml, "w:val=\"FAC701\"", "w:val=\"" + colorMap.get(v.getOverallStr()) + "\"");
+		nxml = StringUtils.replace(nxml, "w:val=\"FAC702\"",
+				"w:val=\"" + colorMap.get(v.getLikelyhoodStr()) + "\"");
+		nxml = StringUtils.replace(nxml, "w:val=\"FAC703\"", "w:val=\"" + colorMap.get(v.getImpactStr()) + "\"");
+		
+		return nxml;
+    	
     }
 
 }

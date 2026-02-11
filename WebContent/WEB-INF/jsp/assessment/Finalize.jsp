@@ -8,6 +8,7 @@
 <bs:mco colsize="12">
 <bs:box type="success" title="Controls">
 <div style="padding-bottom:60px">
+<s:if test="hasTemplate">
   <bs:button color="success" size="md" colsize="3" text="Generate Report" id="genreport"></bs:button>
   <s:if test="assessment.finalReport != null">
     <s:if test="prEnabled">
@@ -16,6 +17,14 @@
     <bs:button color="primary" size="md" colsize="3" text="Download Report" id="dlreport"></bs:button>
     <bs:button color="danger" size="md" colsize="3" text="Finalize Assessment" id="finalize"></bs:button>
   </s:if>
+  </s:if>
+  <s:else>
+  <div class="alert alert-danger">
+                  <h5><i class="icon fas fa-ban"></i> Alert!</h5>
+  	No Report Template Configured for this Assessment Type. 
+  	Contact Your Administrator.
+                </div>
+  </s:else>
 </div>
 </bs:box>
 </bs:mco>

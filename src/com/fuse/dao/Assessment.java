@@ -41,7 +41,7 @@ public class Assessment {
 	private String name;
 	@ManyToOne
 	private User engagement;
-	@OneToMany(fetch = FetchType.EAGER)
+	@OneToMany(fetch = FetchType.LAZY)
 	private List<User> assessor;
 	@ManyToOne
 	private User remediation;
@@ -54,7 +54,7 @@ public class Assessment {
 	@JsonIgnore
 	private String Notes;
 	@JsonIgnore
-	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Note> notebook = new ArrayList<>();
 	private String DistributionList;
 	private String AccessNotes;

@@ -92,6 +92,7 @@ public class AssessmentView extends FSActionSupport {
 	private String calendarLink="";
 	private List<Status> statuses = new ArrayList<>();
 	private Long status;
+	private Boolean hasTemplate = false;
 	
 
 	@Action(value = "Assessment", 
@@ -141,6 +142,7 @@ public class AssessmentView extends FSActionSupport {
 		if (assessment == null)
 			return SUCCESS;
 		
+		hasTemplate = AssessmentQueries.checkForReportTemplates(em, assessment);
 		
 
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
@@ -899,6 +901,10 @@ public class AssessmentView extends FSActionSupport {
 	}
 	public List<BoilerPlate> getSummaryTemplates(){
 		return summaryTemplates;
+	}
+	
+	public boolean getHasTemplate() {
+		return this.hasTemplate;
 	}
 
 

@@ -85,55 +85,64 @@ public class FSUtils {
 	private static String UNKNOWN = "Uncategorized";
 
 	public static String jtidy(String html) {
-		// figures seems to kill the whole message.
-		//html = html.replaceAll("<(/)?figure>", "");
+		
+        MethodProfiler.ProfileContext context = MethodProfiler.start("FSUtils", "jtidy");
+        try {
+			// figures seems to kill the whole message.
+			//html = html.replaceAll("<(/)?figure>", "");
+        	if(!html.contains("<")) {
+        		return html;
+        	}
 
-		Tidy tidy = new Tidy();
-		InputStream stream = new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8));
-		// tidy.setXmlOut(true);
-		tidy.setQuiet(true);
-		tidy.setWord2000(false);
-		tidy.setQuoteAmpersand(true);
-		tidy.setQuoteMarks(true);
-		tidy.setQuoteNbsp(true);
-		tidy.setTidyMark(false);
-		tidy.setShowErrors(0);
-		tidy.setShowWarnings(false);
-		tidy.setWraplen(0);
-		tidy.setWrapAttVals(false);
-		tidy.setPrintBodyOnly(true);
-		tidy.setXHTML(true);
+			Tidy tidy = new Tidy();
+			InputStream stream = new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8));
+			// tidy.setXmlOut(true);
+			tidy.setQuiet(true);
+			tidy.setWord2000(false);
+			tidy.setQuoteAmpersand(true);
+			tidy.setQuoteMarks(true);
+			tidy.setQuoteNbsp(true);
+			tidy.setTidyMark(false);
+			tidy.setShowErrors(0);
+			tidy.setShowWarnings(false);
+			tidy.setWraplen(0);
+			tidy.setWrapAttVals(false);
+			tidy.setPrintBodyOnly(true);
+			tidy.setXHTML(true);
 
-		tidy.setOutputEncoding("UTF-8");
-		tidy.setInputEncoding("UTF-8");
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			tidy.setOutputEncoding("UTF-8");
+			tidy.setInputEncoding("UTF-8");
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-		tidy.parse(stream, baos);
-		try {
-			String out = new String(baos.toByteArray(), "UTF-8");
-			out = out.replaceAll("&nbsp;", " ");
-			ArrayList<String> updated = new ArrayList<String>();
-			Boolean preSection=false;
-			for (String line : out.split("\n")) {
-				line = line.replaceAll("^[ ]+", "");
-				if(line.contains("<code>")) {
-					preSection = true;
+			tidy.parse(stream, baos);
+			try {
+				String out = new String(baos.toByteArray(), "UTF-8");
+				out = out.replaceAll("&nbsp;", " ");
+				ArrayList<String> updated = new ArrayList<String>();
+				Boolean preSection=false;
+				for (String line : out.split("\n")) {
+					line = line.replaceAll("^[ ]+", "");
+					if(line.contains("<code>")) {
+						preSection = true;
+					}
+					if (line.contains("</code>")) {
+						preSection = false;
+					}
+					if(preSection) {
+						line = line + "\n";
+					}
+					updated.add(line);
 				}
-				if (line.contains("</code>")) {
-					preSection = false;
-				}
-				if(preSection) {
-					line = line + "\n";
-				}
-				updated.add(line);
+				out = String.join("", updated);
+
+				return out;
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+				return new String(baos.toByteArray());
 			}
-			out = String.join("", updated);
-
-			return out;
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-			return new String(baos.toByteArray());
-		}
+        }finally {
+        	context.end();
+        }
 	}
 
 	public static String sanitizeHTML(String html) {

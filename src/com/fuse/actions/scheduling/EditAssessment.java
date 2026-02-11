@@ -53,6 +53,7 @@ public class EditAssessment extends FSActionSupport {
 	private List<User> users;
 	private List<User> assessors = new ArrayList<User>();
 	private List<User> remediation = new ArrayList<User>();
+	private List<User> eng_users;
 	private String appid;
 	private String appName;
 	private List<Integer> assessorId;
@@ -105,6 +106,11 @@ public class EditAssessment extends FSActionSupport {
             remediation = em.createQuery("from User", User.class).getResultList()
                 .stream()
                 .filter( u -> u.getPermissions() != null && u.getPermissions().isRemediation())
+                .collect(Collectors.toList());
+            
+            eng_users = em.createQuery("from User", User.class).getResultList()
+                .stream()
+                .filter( u -> u.getPermissions() != null && u.getPermissions().isEngagement())
                 .collect(Collectors.toList());
 
 			teams = em.createQuery("from Teams").getResultList();
@@ -376,7 +382,10 @@ public class EditAssessment extends FSActionSupport {
 		}
 		return eng;
 	}
-
+	
+	public List<User> getEng_users() {
+		return eng_users;
+	}
 	public List<User> getRemediation() {
         return remediation;
 	}

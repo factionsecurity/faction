@@ -182,7 +182,11 @@ public class AssessmentDTO {
         dto.setEnd(""+assessment.getEnd().getTime());
         dto.setCompleted(assessment.getCompleted());
         dto.setStatus(assessment.getStatus());
-        dto.setNotes(assessment.getNotebook().get(0).getNote());
+        if(assessment.getNotebook() == null || assessment.getNotebook().size() == 0) {
+        	dto.setNotes("");
+        }else {
+        	dto.setNotes(assessment.getNotebook().get(0).getNote());
+        }
         dto.setAccessNotes(assessment.getAccessNotes());
         dto.setSummary(assessment.getSummary());
         dto.setDistributionList(assessment.getDistributionList());
