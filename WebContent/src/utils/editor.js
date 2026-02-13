@@ -231,12 +231,30 @@ export class FactionEditor {
 
 		if (offloadImages) {
 			this.editors[id].addHook( "addImageBlobHook", async (blob, callback, source) => {
+					// Create overlay
+					const editorEl = document.querySelector(`#${id}`);
+					const overlay = document.createElement('div');
+					overlay.className = 'editor-upload-overlay';
+					overlay.innerHTML = `
+						<div class="editor-upload-spinner">
+							<div class="spinner-icon"></div>
+							<div class="spinner-text">Uploading image...</div>
+						</div>
+					`;
+					editorEl.style.position = 'relative';
+					editorEl.appendChild(overlay);
+
 					const encodedImage = await imageToURL(blob)
 					let data = "encodedImage=" + encodeURIComponent(encodedImage);
 					data += "&assessmentId=" + _this.assessmentId;
 					$.post("UploadImage", data).done(function(resp) {
 						let uuid = resp.message;
 						callback("getImage?id=" + uuid);
+						// Remove overlay after callback
+						overlay.remove();
+					}).fail(function() {
+						// Remove overlay on error too
+						overlay.remove();
 					});
 
 				});
