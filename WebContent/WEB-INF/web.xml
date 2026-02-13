@@ -90,6 +90,7 @@
         	<param-name>struts.i18n.encoding</param-name>
         	<param-value>UTF-8</param-value>
     	</init-param>
+    	<async-supported>true</async-supported>
 	</filter>
 	<filter-mapping>
 		<filter-name>struts2</filter-name>
@@ -259,6 +260,13 @@
 		<servlet-name>uploadAssessment</servlet-name>
 		<servlet-class>com.fuse.servlets.uploadAssessment</servlet-class>
 	</servlet>
+	<servlet>
+		<description>Server-Side Events stream endpoint</description>
+		<display-name>EventStreamServlet</display-name>
+		<servlet-name>EventStreamServlet</servlet-name>
+		<servlet-class>com.fuse.servlets.EventStreamServlet</servlet-class>
+		<async-supported>true</async-supported>
+	</servlet>
 	<servlet-mapping>
 		<servlet-name>test</servlet-name>
 		<url-pattern>/service/test</url-pattern>
@@ -334,6 +342,10 @@
 	<servlet-mapping>
 		<servlet-name>uploadAssessment</servlet-name>
 		<url-pattern>/service/uploadAssessment</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>EventStreamServlet</servlet-name>
+		<url-pattern>/service/events/stream</url-pattern>
 	</servlet-mapping>
 	<welcome-file-list>
 		<welcome-file>index.html</welcome-file>
