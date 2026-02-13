@@ -141,7 +141,7 @@ div[id^='rtCust']{
 	  </bs:row>
 	 <bs:row>
 		 <bs:select name="Engagement Contact: <b></b>" colsize="4" id="engName">
-		 	<s:iterator value="engagement">
+		 	<s:iterator value="eng_users">
                       <option value="<s:property value="id"/>"><s:property value="fname"/> <s:property value="lname"/></option>
             </s:iterator>
 		 </bs:select>

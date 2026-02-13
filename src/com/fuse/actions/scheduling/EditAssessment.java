@@ -39,6 +39,7 @@ import com.fuse.dao.Verification;
 import com.fuse.dao.query.AssessmentQueries;
 import com.faction.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
+import com.fuse.utils.FSUtils;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/engagement/EditAssessment.jsp")
@@ -53,6 +54,7 @@ public class EditAssessment extends FSActionSupport {
 	private List<User> users;
 	private List<User> assessors = new ArrayList<User>();
 	private List<User> remediation = new ArrayList<User>();
+	private List<User> eng_users;
 	private String appid;
 	private String appName;
 	private List<Integer> assessorId;
@@ -106,6 +108,11 @@ public class EditAssessment extends FSActionSupport {
                 .stream()
                 .filter( u -> u.getPermissions() != null && u.getPermissions().isRemediation())
                 .collect(Collectors.toList());
+            
+            eng_users = em.createQuery("from User", User.class).getResultList()
+                .stream()
+                .filter( u -> u.getPermissions() != null && u.getPermissions().isEngagement())
+                .collect(Collectors.toList());
 
 			teams = em.createQuery("from Teams").getResultList();
 			assessmentTypes = em.createQuery("from AssessmentType").getResultList();
@@ -130,6 +137,7 @@ public class EditAssessment extends FSActionSupport {
 
 		if (action != null && action.equals("get")) {
 			currentAssessment = AssessmentQueries.getAssessment(em, user, (long) this.aid);
+			FSUtils.CheckForUpdatedCustomFields(currentAssessment, em);
 			
 			files = (List<Files>) em.createQuery("from Files where entityId = :id").setParameter("id", (long) this.aid)
 					.getResultList();
@@ -376,7 +384,10 @@ public class EditAssessment extends FSActionSupport {
 		}
 		return eng;
 	}
-
+	
+	public List<User> getEng_users() {
+		return eng_users;
+	}
 	public List<User> getRemediation() {
         return remediation;
 	}

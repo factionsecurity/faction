@@ -42,6 +42,7 @@ import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.Note;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
@@ -1010,15 +1011,15 @@ public class assessments {
                         asmt.setAppId(appid);
                     }
                 } else if (appName != null && !appName.trim().equals("")) {
-                    List<Assessment> asmts = em.createQuery("from Assessment where appName = :name")
+                    List<Assessment> asmts = em.createQuery("from Assessment where name = :name")
                             .setParameter("name", appName).getResultList();
-                    if (asmts != null) {
+                    if (asmts != null && asmts.size() != 0) {
                         asmt.setName(appName);
                         asmt.setAppId(asmts.get(0).getAppId());
                     } else {
                         asmt.setName(appName);
                         Random r = new Random();
-                        int rand = r.nextInt((1000 - 500000) + 1) + 1000;
+                        int rand = r.nextInt((1000000 - 500000) + 1) + 1000;
                         asmt.setAppId("" + rand);
                     }
                 } else {
@@ -1082,6 +1083,10 @@ public class assessments {
                         asmt.setCampaign(camp);
                     }
                 }
+                
+                //Note note = new Note();
+                //em.persist(note);
+                //asmt.addNoteToList(note);
                 HibHelper.getInstance().preJoin();
                 em.joinTransaction();
                 em.persist(asmt);
