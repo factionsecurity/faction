@@ -1,7 +1,9 @@
 package com.fuse.actions.images;
 
+import java.awt.Color;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import org.apache.struts2.convention.annotation.Action;
@@ -13,6 +15,7 @@ import com.fuse.dao.HibHelper;
 import com.fuse.dao.Image;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
+import com.fuse.utils.ImageBorderUtil;
 
 @Namespace("/portal")
 public class UploadImage extends FSActionSupport {
@@ -40,9 +43,28 @@ public class UploadImage extends FSActionSupport {
 		return this.MESSAGEJSON;
 	}
 	
+    private String outlineImages(String encodedImage) {
+    	if(encodedImage == null || encodedImage.isEmpty())
+    		return encodedImage;
+    	
+		try {
+			String[] parts = encodedImage.split(",");
+			String file_dataContentType = parts[0].split(";")[0].replace("data:", "");
+			byte[] imageData = Base64.getDecoder().decode(parts[1]);
+			imageData = ImageBorderUtil.addBorder(imageData, 1, Color.GRAY);
+			String borderedImage = Base64.getEncoder().encodeToString(imageData);
+			borderedImage = "data:" + file_dataContentType + ";base64," + borderedImage;
+			return borderedImage;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			return encodedImage;
+		}
+    }
+	
 	
 	public void setEncodedImage(String encodedImage) {
-		this.encodedImage = encodedImage;
+		this.encodedImage = outlineImages(encodedImage);
 	}
 	public void setAssessmentId(Long assessmentId) {
 		this.assessmentId = assessmentId;

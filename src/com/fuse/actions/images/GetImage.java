@@ -49,7 +49,7 @@ public class GetImage extends FSActionSupport {
 			file_dataContentType = parts[0].split(";")[0].replace("data:", "");
 
 			byte[] imageData = Base64.getDecoder().decode(parts[1]);
-			imageData = ImageBorderUtil.addBorder(imageData, 1, Color.GRAY);
+			//imageData = ImageBorderUtil.addBorder(imageData, 1, Color.GRAY);
 
 			stream = new ByteArrayInputStream(imageData);
 			return SUCCESS;
