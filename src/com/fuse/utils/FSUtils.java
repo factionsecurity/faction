@@ -853,6 +853,10 @@ public class FSUtils {
 	}
 	
 	public static void CheckForUpdatedCustomFields(Assessment assessment, EntityManager em) {
+		
+		if(assessment.isFinalized()) {
+			return;
+		}
 		List<CustomType> types = em
 				.createQuery("from CustomType where type = :variableType and (deleted IS NULL or deleted = false)")
 				.setParameter("variableType", CustomType.ObjType.ASMT.getValue())

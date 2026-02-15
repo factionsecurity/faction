@@ -114,7 +114,7 @@ class SSE {
 	 }
 
 	 checkStatus() {
-		 fetch('/faction-enterprise/api/events/status')
+		 fetch('../api/events/status')
 		 .then(response => response.json())
 		 .then(data => {
 			console.log(data);
@@ -649,6 +649,7 @@ class VulnerabilityView {
 		else
 			value = data.message.value
 		
+		
 		//Update Notes
 		if(key == "noteText"){
 			const noteIndex = `note-${id}`
@@ -721,8 +722,9 @@ class VulnerabilityView {
 			if(key == 'title' || key == 'update'){
 				// Get the row that matches this current vuln
 				let row = Array.from($("#vulntable tbody tr")).filter((el) => $(el).data('vulnid') == id);
+				
 				// Update the title, category, and severity of the vuln
-				if (row.length > 0 && id != this.vulnId) {
+				if (row.length > 0) { // && id != this.vulnId) {
 					let vulnName = $(row[0]).find(".vulnName")[0].innerHTML;
 					// ket=Title will stream the updates when typed
 					// update the table an resort it

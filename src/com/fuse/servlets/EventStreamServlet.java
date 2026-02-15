@@ -32,6 +32,7 @@ public class EventStreamServlet extends HttpServlet {
     private static class ClientConnection {
         final AsyncContext asyncContext;
         final String assessmentId;
+        final Object writeLock = new Object();
 
         ClientConnection(AsyncContext asyncContext, String assessmentId) {
             this.asyncContext = asyncContext;
@@ -82,17 +83,20 @@ public class EventStreamServlet extends HttpServlet {
         final String finalAssessmentId = assessmentId;
 
         // Add this client to the map with assessment context
-        CLIENTS.put(sessionId, new ClientConnection(asyncContext, finalAssessmentId));
+        ClientConnection connection = new ClientConnection(asyncContext, finalAssessmentId);
+        CLIENTS.put(sessionId, connection);
 
         // Send welcome message
-        try {
-            PrintWriter writer = asyncContext.getResponse().getWriter();
-            sendEvent(writer, "connection",
-                "Connected to SSE stream. Assessment: " + finalAssessmentId + ", Total clients: " + CLIENTS.size());
-            writer.flush();
-        } catch (IOException e) {
-            CLIENTS.remove(sessionId);
-            asyncContext.complete();
+        synchronized (connection.writeLock) {
+            try {
+                PrintWriter writer = asyncContext.getResponse().getWriter();
+                sendEvent(writer, "connection",
+                    "Connected to SSE stream. Assessment: " + finalAssessmentId + ", Total clients: " + CLIENTS.size());
+                writer.flush();
+            } catch (IOException e) {
+                CLIENTS.remove(sessionId);
+                asyncContext.complete();
+            }
         }
 
         // Handle client disconnection
@@ -167,18 +171,24 @@ public class EventStreamServlet extends HttpServlet {
                 continue;
             }
 
-            try {
-                PrintWriter writer = connection.asyncContext.getResponse().getWriter();
-                sendEvent(writer, eventType, message);
-                writer.flush();
-                successCount++;
-            } catch (Exception e) {
-                // Client disconnected, remove it
-                CLIENTS.remove(sessionId);
+            // Synchronize writes to prevent concurrent access to the same writer
+            synchronized (connection.writeLock) {
                 try {
-                    connection.asyncContext.complete();
-                } catch (Exception ex) {
-                    // Ignore
+                    PrintWriter writer = connection.asyncContext.getResponse().getWriter();
+                    sendEvent(writer, eventType, message);
+                    writer.flush();
+                    successCount++;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    System.out.println(e.getMessage());
+                    // Client disconnected, remove it
+                    CLIENTS.remove(sessionId);
+                    try {
+                        connection.asyncContext.complete();
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        System.out.println(ex.getMessage());
+                    }
                 }
             }
         }

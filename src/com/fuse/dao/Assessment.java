@@ -49,7 +49,7 @@ public class Assessment {
 	private Date start;
 	private Date end;
 	private Date completed;
-	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<CustomField> CustomFields;
 	@JsonIgnore
 	private String Notes;
