@@ -211,14 +211,11 @@ public class DocxUtils {
             List<Vulnerability> filteredVulns = this.getFilteredVulns(section);
 
             List<Object> tables = getAllElementFromObject(mlp.getMainDocumentPart(), Tbl.class);
-            System.out.println("Num Tables: " + tables.size());
             for (Object table : tables) {
             	MethodProfiler.ProfileContext context2 = MethodProfiler.start("DocxUtils", "sectionTest");
                 List<Object> paragraphs = getAllElementFromObject(table, P.class);
-                System.out.println("Num Paragraphs: " + paragraphs.size());
                 // This is to get a list of widths to ensure elements in tables behave
                 List<Object> cells = getAllElementFromObject(table, Tc.class);
-                System.out.println("Num Cells: " + cells.size());
                 Map<String, BigInteger> widths = new HashMap<>();
                 for (Object cell : cells) {
                     Tc tc = (Tc) cell;

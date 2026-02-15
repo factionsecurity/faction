@@ -56,7 +56,6 @@ class SSE {
 
 		 // Handle message events with type "message"
 		 this.eventSource.addEventListener('message', function(e) {
-			 console.log('Message: ' + e.data, 'message');
 			 const data = JSON.parse(e.data);
 			 if(data.message.type == "vulnerability" && (data.message.key == "delete" || data.message.key == "add" || data.message.key == "update")){
 				//TODO: This is really hacky and this entire file should be re-written to use SSE
@@ -71,8 +70,28 @@ class SSE {
 			 if (_this.eventSource.readyState === EventSource.CLOSED) {
 				 console.log('Connection closed', 'error');
 				 _this.eventSource = null;
+				 $.alert({
+					 title: 'Connection Lost',
+					 content: 'Real-time connection has been disconnected. Changes from other users may not appear until you refresh the page.',
+					 type: 'red',
+					 columnClass: 'medium',
+					 autoClose: 'ok|5000',
+					 buttons: {
+						 ok: function () { }
+					 }
+				 });
 			 } else {
 				 console.log('Connection error', 'error');
+				 $.alert({
+					 title: 'Connection Error',
+					 content: 'There was an error with the real-time connection. Attempting to reconnect...',
+					 type: 'orange',
+					 columnClass: 'medium',
+					 autoClose: 'ok|3000',
+					 buttons: {
+						 ok: function () { }
+					 }
+				 });
 			 }
 		 };
 	 }
@@ -698,8 +717,7 @@ class VulnerabilityView {
 				if ($(el).data('vulnid') == id) {
 					if ($(el).find(".userEdit").length == 0) {
 						let vulnName = $(el).find(".vulnName")[0].outerHTML;
-						//TODO: XSS issue if not sanitied
-						vulnName = vulnName + "<span class='userEdit'>" + user + " is making changes</span>";
+						vulnName = vulnName + "<span class='userEdit'><br/><span class='userEditText'>" + entityEncode(user) + " editing...</span></span>";
 						$(el).find(".vulnName")[0].outerHTML = (vulnName);
 					}
 				}
@@ -767,7 +785,7 @@ class VulnerabilityView {
                 if ($(el).data('vulnid') == vuln.id) {
                     if ($(el).find(".userEdit").length == 0) {
                         let vulnName = $(el).find(".vulnName")[0].outerHTML;
-                        vulnName = vulnName + "<span class='userEdit'>" + vuln.lockby + " is making changes</span>";
+                        vulnName = entityEncode(vulnName) + "<span class='userEdit'>" + entityEncode(vuln.lockby) + " is making changes</span>";
                         $(el).find(".vulnName")[0].outerHTML = (vulnName);
                     }
                 }

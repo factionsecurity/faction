@@ -150,7 +150,7 @@ td:first-child {
 	border-left-style: dotted;
 }
 
-.userEdit {
+.userEditText {
 	background: #f39c12;
 	color: white;
 	font-weight: bold;
@@ -159,7 +159,6 @@ td:first-child {
 	padding-right: 7px;
 	padding-top: 2px;
 	padding-bottom: 4px;
-	margin-left: 30px;
 }
 
 .cvsstrue {
