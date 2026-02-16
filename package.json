@@ -1,0 +1,20 @@
+{
+  "name": "faction-memory-test",
+  "version": "1.0.0",
+  "description": "Playwright-based memory load testing for Faction",
+  "main": "playwright-memory-test.js",
+  "scripts": {
+    "test": "node playwright-memory-test.js",
+    "install-browsers": "npx playwright install chromium"
+  },
+  "keywords": [
+    "memory",
+    "load-testing",
+    "playwright"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "playwright": "^1.40.0"
+  }
+}

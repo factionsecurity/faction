@@ -92,6 +92,7 @@ public class AssessmentView extends FSActionSupport {
 	private String calendarLink="";
 	private List<Status> statuses = new ArrayList<>();
 	private Long status;
+	private Boolean hasTemplate = false;
 	
 
 	@Action(value = "Assessment", 
@@ -141,6 +142,7 @@ public class AssessmentView extends FSActionSupport {
 		if (assessment == null)
 			return SUCCESS;
 		
+		hasTemplate = AssessmentQueries.checkForReportTemplates(em, assessment);
 		
 
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
@@ -158,6 +160,7 @@ public class AssessmentView extends FSActionSupport {
 		history = this.createHistory(assessment, levels);
 
 		avulns = (List<Vulnerability>) assessment.getVulns();
+		
 		for (int i = 0; i < 10; i++) {
 			counts.put(i, 0);
 		}
@@ -255,6 +258,7 @@ public class AssessmentView extends FSActionSupport {
 			
 		}
 
+		FSUtils.CheckForUpdatedCustomFields(assessment, em);
 		return SUCCESS;
 	}
 	
@@ -690,7 +694,8 @@ public class AssessmentView extends FSActionSupport {
 				return result;
 
 		}
-		AssessmentQueries.removeImages(assessment);
+		//TODO: ADD this BACK
+		//AssessmentQueries.removeImages(assessment);
 		assessment.setCompleted(new Date());
 		assessment.setStatus("Complete");
 		assessment.setFinalized();
@@ -898,6 +903,10 @@ public class AssessmentView extends FSActionSupport {
 	}
 	public List<BoilerPlate> getSummaryTemplates(){
 		return summaryTemplates;
+	}
+	
+	public boolean getHasTemplate() {
+		return this.hasTemplate;
 	}
 
 

@@ -25,10 +25,12 @@ import javax.ws.rs.core.Response;
 
 import org.apache.commons.codec.binary.Base64;
 import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import com.faction.reporting.ReportFeatures;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fuse.api.Events.EnrichedMessage;
 import com.fuse.api.dto.AssessmentDTO;
 import com.fuse.api.dto.CustomTypeDTO;
 import com.fuse.api.dto.VulnerabilityDTO;
@@ -42,11 +44,13 @@ import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.Note;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.dao.query.VulnerabilityQueries;
+import com.fuse.servlets.EventStreamServlet;
 import com.fuse.utils.FSUtils;
 
 import io.swagger.annotations.Api;
@@ -58,6 +62,8 @@ import io.swagger.annotations.ApiResponses;
 @Api(value = "/assessments")
 @Path("/assessments")
 public class assessments {
+    private static final ObjectMapper objectMapper = new ObjectMapper();
+    
     @GET
     @ApiOperation(value = "Gets the the Assessment Queue for the user associated with the FACTION-API-KEY token header.", notes = "Gets the the Assessment Queue for the user associated with the FACTION-API-KEY token header.", response = Assessment.class, responseContainer = "List", position = 100)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
@@ -844,7 +850,8 @@ public class assessments {
 
                 em.persist(a);
                 HibHelper.getInstance().commit();
-
+                
+                this.broadcastAddVuln(u, v.getId(), v.getAssessmentId());
                 // Return the vulnerability ID of the newly created Vuln.
                 String returnMsg = String.format(Support.SUCCESSMSG, "\"vid\":" + v.getId());
                 return Response.status(200).entity(returnMsg).build();
@@ -952,6 +959,7 @@ public class assessments {
                             v.setDetails(previousDetails + "<br/>" + decodeAndSanitize(details));
                             em.persist(v);
                             HibHelper.getInstance().commit();
+                            this.broadcastAddVuln(u, v.getId(), v.getAssessmentId());
                             return Response.status(200).entity(Support.SUCCESS).build();
 
                         }
@@ -1010,15 +1018,15 @@ public class assessments {
                         asmt.setAppId(appid);
                     }
                 } else if (appName != null && !appName.trim().equals("")) {
-                    List<Assessment> asmts = em.createQuery("from Assessment where appName = :name")
+                    List<Assessment> asmts = em.createQuery("from Assessment where name = :name")
                             .setParameter("name", appName).getResultList();
-                    if (asmts != null) {
+                    if (asmts != null && asmts.size() != 0) {
                         asmt.setName(appName);
                         asmt.setAppId(asmts.get(0).getAppId());
                     } else {
                         asmt.setName(appName);
                         Random r = new Random();
-                        int rand = r.nextInt((1000 - 500000) + 1) + 1000;
+                        int rand = r.nextInt((1000000 - 500000) + 1) + 1000;
                         asmt.setAppId("" + rand);
                     }
                 } else {
@@ -1082,6 +1090,10 @@ public class assessments {
                         asmt.setCampaign(camp);
                     }
                 }
+                
+                //Note note = new Note();
+                //em.persist(note);
+                //asmt.addNoteToList(note);
                 HibHelper.getInstance().preJoin();
                 em.joinTransaction();
                 em.persist(asmt);
@@ -1357,6 +1369,7 @@ public class assessments {
                     vuln.setCustomFields(customFields);
                     em.persist(vuln);
                     HibHelper.getInstance().commit();
+                    this.broadcastVulnUpdates(u, vuln);
 
                     return Response.status(200).entity(Support.SUCCESS).build();
 
@@ -1568,6 +1581,7 @@ public class assessments {
                 if (updated) {
                     em.persist(vuln);
                     HibHelper.getInstance().commit();
+                    this.broadcastVulnUpdates(u, vuln);
                 }
 
                 return Response.status(200).entity(Support.SUCCESS).build();
@@ -1709,5 +1723,65 @@ public class assessments {
             }
         }
     }
+    
+	private void broadcastAddVuln(User user, Long vulnId, Long assessmentId) {
+		this.sendBroadcastMessage(user, vulnId, assessmentId, "add", "");
+	}
+	private void broadcastDeleteVuln(User user, Long vulnId, Long assessmentId) {
+		this.sendBroadcastMessage(user, vulnId, assessmentId,  "delete", "");
+	}
+	private void broadcastVulnUpdates(User user, Vulnerability vuln) {
+		
+		vuln.updateRiskLevels();
+		JSONObject json = new JSONObject();
+		json.put("title", vuln.getName());
+		if(vuln.getCategory() != null) {
+			json.put("categoryName", vuln.getCategory().getName());
+			json.put("categoryId", vuln.getCategory().getId());
+		}
+		json.put("overallId", vuln.getOverall());
+		json.put("overallName", vuln.getOverallStr());
+		json.put("likelihoodId", vuln.getLikelyhood());
+		json.put("likelihoodName", vuln.getLikelyhoodStr());
+		json.put("impactId", vuln.getImpact());
+		json.put("impactName", vuln.getImpactStr());
+		
+		this.sendBroadcastMessage(user, vuln.getId(), vuln.getAssessmentId(), "update", json);
+	}
+    
+	/**
+	 * Broadcasts a message to all connected SSE clients for a specific assessment
+	 *
+	 * @param user The user who triggered the change
+	 * @param vulnId The vulnerability ID
+	 * @param assessmentId The assessment ID to broadcast to
+	 * @param key The field that changed
+	 * @param value The new value
+	 */
+	private void sendBroadcastMessage(User user, Long vulnId, Long assessmentId, String key, Object value) {
+		// Create enriched message with user information
+		JSONObject json = new JSONObject();
+		json.put("type", "vulnerability");
+		json.put("id", vulnId);
+		json.put("key", key);
+		json.put("value", value);
+
+		EnrichedMessage enrichedMessage = new EnrichedMessage();
+		enrichedMessage.setUserId(user.getId());
+		enrichedMessage.setFirstName(user.getFname());
+		enrichedMessage.setLastName(user.getLname());
+		enrichedMessage.setMessage(json);
+		enrichedMessage.setTimestamp(System.currentTimeMillis());
+
+		// Convert the enriched message to JSON string for broadcasting
+		try {
+			String messageJson = objectMapper.writeValueAsString(enrichedMessage);
+			// Pass null for sessionId since REST API doesn't have sessions
+			// This will broadcast to all clients viewing this assessment
+			EventStreamServlet.broadcastEvent("message", messageJson, null, String.valueOf(assessmentId));
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+	}
 
 }

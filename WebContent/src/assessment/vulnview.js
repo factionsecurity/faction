@@ -15,9 +15,138 @@ import '../loading/js/jquery-loading';
 import '../scripts/jquery.autocomplete.min';
 import {FactionEditor} from '../utils/editor';
 
+class SSE {
+
+	constructor(caller, callback, assessmentId){
+		this.saveQueue = caller;
+		this.eventSource = null;
+	    this.eventsReceived = 0;
+		this.assessmentId = assessmentId;
+		let _this = this;
+		this.callback = callback;
+		window.addEventListener('beforeunload', function() {
+			 if (_this.eventSource) {
+				 _this.eventSource.close();
+			 }
+		});
+
+	}
+
+	 connect() {
+		let _this = this;
+		 if (this.eventSource) {
+			 console.log('Already connected', 'error');
+			 return;
+		 }
+
+		 // Create new EventSource connection (servlet endpoint) with assessment ID
+		 this.eventSource = new EventSource('../service/events/stream?assessmentId=' + this.assessmentId);
+
+		 // Handle connection open
+		 this.eventSource.onopen = function(e) {
+			 console.log('Connection established', 'connection');
+			 _this.checkStatus();
+		 };
+
+		 // Handle connection events with type "connection"
+		 this.eventSource.addEventListener('connection', function(e) {
+			 console.log('Server: ' + e.data, 'connection');
+			 _this.eventsReceived++;
+		 });
+
+		 // Handle message events with type "message"
+		 this.eventSource.addEventListener('message', function(e) {
+			 const data = JSON.parse(e.data);
+			 if(data.message.type == "vulnerability" && (data.message.key == "delete" || data.message.key == "add" || data.message.key == "update")){
+				//TODO: This is really hacky and this entire file should be re-written to use SSE
+				_this.saveQueue.locks.checkLocks();
+			 }
+			 _this.callback(data);
+			 _this.eventsReceived++;
+		 });
+
+		 // Handle errors
+		 this.eventSource.onerror = function(e) {
+			 if (_this.eventSource.readyState === EventSource.CLOSED) {
+				 console.log('Connection closed', 'error');
+				 _this.eventSource = null;
+				 $.alert({
+					 title: 'Connection Lost',
+					 content: 'Real-time connection has been disconnected. Changes from other users may not appear until you refresh the page.',
+					 type: 'red',
+					 columnClass: 'medium',
+					 autoClose: 'ok|5000',
+					 buttons: {
+						 ok: function () { }
+					 }
+				 });
+			 } else {
+				 console.log('Connection error', 'error');
+				 $.alert({
+					 title: 'Connection Error',
+					 content: 'There was an error with the real-time connection. Attempting to reconnect...',
+					 type: 'orange',
+					 columnClass: 'medium',
+					 autoClose: 'ok|3000',
+					 buttons: {
+						 ok: function () { }
+					 }
+				 });
+			 }
+		 };
+	 }
+
+	 disconnect() {
+		 if (this.eventSource) {
+			 this.eventSource.close();
+			 this.eventSource = null;
+			 console.log('Disconnected by user', 'error');
+		 }
+	 }
+
+	sendMessage(message) {
+		 
+
+		 if (!message) {
+			 return;
+		 }
+
+		 // Send POST request to trigger event
+		 fetch('../api/events/trigger', {
+			 method: 'POST',
+			 headers: {
+				 'Content-Type': 'application/json'
+			 },
+			 body: JSON.stringify({ message: message })
+		 })
+		 .then(response => response.json())
+		 .then(data => {
+			 console.log('Broadcast to ' + data.clientsSent + ' client(s): ' + data.message, 'message');
+			 if(data.type == "vulnerability"){
+				
+			 }
+			 this.checkStatus();
+		 })
+		 .catch(error => {
+			 console.log('Failed to send message: ' + error, 'error');
+		 });
+	 }
+
+	 checkStatus() {
+		 fetch('../api/events/status')
+		 .then(response => response.json())
+		 .then(data => {
+			console.log(data);
+		 })
+		 .catch(error => {
+			 console.error('Failed to check status:', error);
+		 });
+	 }
+}
+
 
 class SaveQueue {
-    constructor(caller, assessmentId, saveCallback, updateVulnsCallback) {
+    constructor(caller, assessmentId, saveCallback, updateVulnsCallback, sseCallback) {
         this.queue = {};
         this.timer = {};
         this.timeout = 2000;
@@ -25,8 +154,11 @@ class SaveQueue {
         this.caller = caller;
         this.token = caller._token;
         this.locks = new EditLocks(this, assessmentId, updateVulnsCallback);
+		this.sse = new SSE(this, sseCallback, assessmentId);
+		this.sse.connect();
     }
     push(type, id, key, value) {
+		this.sse.sendMessage({"type": type, "id": id, "key": key, "value": value});
         this.locks.setLock(type, id, key);
         let headerKey = key;
         if (type == 'note') {
@@ -110,6 +242,8 @@ class EditLocks {
         this.errorMessageShown = false;
     }
     setLock(type, id, attr) {
+		//TODO: Testing
+		return;
         let _this = this;
         if (typeof this.lockIds[id] == "undefined") {
             this.lockIds[id] = [attr];
@@ -141,7 +275,7 @@ class EditLocks {
     checkLocks() {
         let _this = this;
         
-        setInterval(function () {
+    //    setInterval(function () {
             $.get(`vulnerability/check/locks?id=${_this.assessmentId}`).done((resp) => {
                 if (resp.result && resp.result == "error") {
                     if (!_this.errorMessageShown) {
@@ -184,7 +318,7 @@ class EditLocks {
                     });
                 }
             })
-        }, 1000)
+     //   }, 1000)
 
     }
 }
@@ -194,7 +328,12 @@ class VulnerabilityView {
 
     constructor(assessmentId) {
         this._token = $("#_token")[0].value;
-        this.queue = new SaveQueue(this, assessmentId, this.saveChanges, (type, vulns) => { this.updateCallback(type, vulns) });
+        this.queue = new SaveQueue(this, 
+			assessmentId, 
+			this.saveChanges, 
+			(type, vulns) => { this.updateCallback(type, vulns) }, 
+			(data) => { this.sseCallback(data) }
+		);
         this.vulnId = -1;
         this.descUndoCount = 0;
         this.initialHTML = {};
@@ -495,6 +634,7 @@ class VulnerabilityView {
             this.disableAutoSave()
             $("#vulnForm").addClass("disabled");
         } else {
+        	this.editors.changeOff("notes")
             $("#notes").addClass("disabled");
         }
     }
@@ -515,37 +655,163 @@ class VulnerabilityView {
             }
         }
     }
+	// Callback for Server Side Event Handling	
+	sseCallback(data){
+		const user = data.firstName + " " + data.lastName;
+		const userId = data.userId;
+		const type = data.message.type;
+		const id = data.message.id
+		const key = data.message.key
+		let value = "";
+		if(typeof data.message.value == 'string')
+			value = entityDecode(decodeURIComponent(data.message.value));
+		else
+			value = data.message.value
+		
+		
+		//Update Notes
+		if(key == "noteText"){
+			const noteIndex = `note-${id}`
+			if(noteIndex in this.clearLockTimeout){
+				clearTimeout(this.clearLockTimeout[noteIndex]);
+			}
+			const selected = $(`#notebook option:selected`);
+			if (id == selected.val()) {
+				this.setLockScreen('note');
+			}
+			this.clearLockTimeout[noteIndex] = setTimeout( () => {
+				if ($("#notes").hasClass("disabled") && selected.val() == id) {
+					this.getNote(id);
+				}
+			},5000) 
+			const notebook = $(`#notebook option`);
+			for (let note of notebook) {
+				if ($("#notes").hasClass("disabled") && selected.val() == id) {
+					this.editors.setEditorContents('notes', value, false)
+				}
+			}
+			
+		}
+		//Update Vulns		
+		if(type == 'vulnerability' && key != "delete" && key != "add"){
+			// Reset the timeout that clears the edit states
+			if(id in this.clearLockTimeout){
+				clearTimeout(this.clearLockTimeout[id]);
+			}
+			// Add a new timeout for this new edit state
+			this.clearLockTimeout[id] = setTimeout( () => {
+				// This removes the from lock
+				if(this.vulnId == id){
+					this.getVuln(id);
+				}
+				// this removed any table locks
+				$(`#deleteVuln${id}`).show();
+				$(`#deleteVuln${id}`).parent().parent().find(".userEdit").each((_a, edit) => edit.remove());
+				
+			},5000) 
+			
+			// Prevent deleting this vuln that is being edited	
+			$(`#deleteVuln${id}`).hide();
+			// Set the name of user editing the vuln in the table
+			$("#vulntable tbody tr").each((_a, el) => {
+				if ($(el).data('vulnid') == id) {
+					if ($(el).find(".userEdit").length == 0) {
+						let vulnName = $(el).find(".vulnName")[0].outerHTML;
+						vulnName = vulnName + "<span class='userEdit'><br/><span class='userEditText'>" + entityEncode(user) + " editing...</span></span>";
+						$(el).find(".vulnName")[0].outerHTML = (vulnName);
+					}
+				}
+			});
+			// Check if the same vuln is open by the user
+			if(this.vulnId == id){
+				// Lock the screen so the current user cannot edit while other edits
+				// are happening
+				this.setLockScreen('vulnerability');
+				
+				// Update the forms
+				if(key == 'description' || key == 'recommendation' || key == 'details'){
+					this.editors.setEditorContents(key, value, false)
+				}else if(key.indexOf("rtCust") == 0){
+					this.editors.setEditorContents(key, value, true)
+				}
+				
+			}
+			// Update the Left table with user updates
+			if(key == 'title' || key == 'update'){
+				// Get the row that matches this current vuln
+				let row = Array.from($("#vulntable tbody tr")).filter((el) => $(el).data('vulnid') == id);
+				
+				// Update the title, category, and severity of the vuln
+				if (row.length > 0) { // && id != this.vulnId) {
+					let vulnName = $(row[0]).find(".vulnName")[0].innerHTML;
+					// ket=Title will stream the updates when typed
+					// update the table an resort it
+					if (key == 'title' && vulnName != value) {
+						$(row[0]).find(".vulnName")[0].innerHTML = value;
+						
+					// Update will return the entire vulnerability object
+					}else if(key == 'update'){
+						
+						$(row[0]).find(".vulnName")[0].innerHTML = value.title;
+						$(row[0]).find(".category")[0].innerHTML = value.categoryName;
+						$(row[0]).find(".severity")[0].innerHTML = value.overallName;
+						$(row[0]).children()[0].className = `sev${value.overallName}`
+						$($(row[0]).children()[1]).attr('data-sort', value.overallId)
+						this.vulntable.row(row[0]).invalidate()
+						this.vulntable.order([1, 'desc']).draw();
+						this.updateColors();
+					}
+				}
+			}
+		}
+	}
+	
     updateCallback(type, data) {
         let lockedVulns = data.vulns;
         let lockedNotes = data.notes;
         this.lockNoteEditor(lockedNotes);
+		// set locks and update table 
         for (let vuln of lockedVulns) {
+			// If the locked vuln is the selected vuln then we set the lock screen
             if (vuln.id == this.vulnId) {
                 this.setLockScreen('vulnerability');
             }
+			// We need to remove the delete button for any vuln in the table that is 
+			// being edited
             $(`#deleteVuln${vuln.id}`).hide();
+			// We need to update the table to show that this vulnerability is
+			// being edited by another user
             $("#vulntable tbody tr").each((_a, el) => {
                 if ($(el).data('vulnid') == vuln.id) {
                     if ($(el).find(".userEdit").length == 0) {
                         let vulnName = $(el).find(".vulnName")[0].outerHTML;
-                        vulnName = vulnName + "<span class='userEdit'>" + vuln.lockby + " is making changes</span>";
+                        vulnName = entityEncode(vulnName) + "<span class='userEdit'>" + entityEncode(vuln.lockby) + " is making changes</span>";
                         $(el).find(".vulnName")[0].outerHTML = (vulnName);
                     }
                 }
             });
         }
+		// get array of locked vulns
         const vulnIds = lockedVulns.map(v => v.id);
         $("#vulntable tbody tr").each((_a, el) => {
-            let vulnId = $(el).data('vulnid');
+            let vulnId = $(el).data('vulnid'); //get a vulnId from the table
+			// If the table vuln is not a locked vuln 
+			// and the table vuln is selected 
+			// and the selected is disabled (meaning locked for other user editing)
+			// then we can update the vuln which will clear the disabled flag as well
             if (vulnIds.indexOf(`${vulnId}`) == -1 && this.vulnId == vulnId && $("#vulnForm").hasClass("disabled")) {
                 this.getVuln(vulnId);
-            } else if (vulnIds.indexOf(`${vulnId}`) == -1) {
+				
+			// else 
+			// the table vuln is not a locked vuln
+			// then we can remove the user edit badge from the table.	
+            } else if (vulnIds.indexOf(`${vulnId}`) == -1) { //remove the form showing User is editing the vuln
                 $(el).find(".userEdit").each((_a, edit) => edit.remove());
                 $(`#deleteVuln${vulnId}`).show();
             }
         });
-        //const activeVulns = Array.from($("#vulntable tbody tr")).map(tr => `${$(tr).data("vulnid")}`).filter(tr => tr != "undefined");
-
+		
+		// Using the checkbox, get an array of active vulnIds from the table
         const activeVulns = Array.from(this.vulntable.data().map(function (value, index) {
             let col = value[0];
             if (col.indexOf('id="ckl') == -1) {
@@ -554,7 +820,9 @@ class VulnerabilityView {
                 return col.split('"')[3].replace("ckl", "")
             }
         }))
-
+		// Get list of current vulns from the callback
+		// and look to see if we need to add or delete
+		// vulns from the table
         for (let vuln of data.current) {
             //vuln was added by another user so add it to the table
             if (activeVulns.indexOf(vuln.id) == -1) {
@@ -571,9 +839,10 @@ class VulnerabilityView {
                 this.rebindTable();
                 this.updateColors();
             } else {
+				// Get the row that matches this current vuln
                 let row = Array.from($("#vulntable tbody tr")).filter((el) => $(el).data('vulnid') == vuln.id);
+				// Update the title, category, and severity of the vuln
                 if (row.length > 0 && vuln.id != this.vulnId) {
-
                     let vulnName = $(row[0]).find(".vulnName")[0].innerHTML;
                     let category = $(row[0]).find(".category")[0].innerHTML;
                     let severity = $(row[0]).find(".severity")[0].innerHTML;
@@ -599,6 +868,9 @@ class VulnerabilityView {
             }
 
         }
+		// now we need to find any vulns in the table
+		// that are not in the current list and delete
+		// them from the table
         const serverVulns = data.current.map(c => c.id);
         // delete rows of vulns that have been deleted by another user
         for (let vuln of activeVulns) {

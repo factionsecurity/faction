@@ -67,7 +67,8 @@ public class ReportGenThread implements Runnable{
 			String [] generated = genReport.generateDocxReport(id, em, isRetest);
 			this.report = generated[0];
 			String fileType = generated[1];
-			em.close();
+			if(em.isOpen())
+				em.close();
 			em = HibHelper.getInstance().getEM();
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
