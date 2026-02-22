@@ -189,10 +189,11 @@ public class ManagerDashboardCSV extends FSActionSupport {
         StringBuilder query = new StringBuilder("{");
         boolean hasConditions = false;
 
-        // Build date range condition
+        // Build date range condition - include assessments that overlap with the search
+        // range
         if (startDate != null && endDate != null) {
-            query.append("\"start\": {$gte: ISODate(\"").append(sdf.format(startDate)).append("\")}, ");
-            query.append("\"end\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}");
+            query.append("\"start\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}, ");
+            query.append("\"end\": {$gte: ISODate(\"").append(sdf.format(startDate)).append("\")}");
             hasConditions = true;
         }
 

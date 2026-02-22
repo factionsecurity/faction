@@ -399,8 +399,8 @@ public class ManagerDashboard extends FSActionSupport {
         
         // Build date range condition
         if (startDate != null && endDate != null) {
-            query.append("\"start\": {$gte: ISODate(\"").append(sdf.format(startDate)).append("\")}, ");
-            query.append("\"end\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}");
+            query.append("\"start\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}, ");
+            query.append("\"end\": {$gte: ISODate(\"").append(sdf.format(startDate)).append("\")}");
             hasConditions = true;
         }
         
