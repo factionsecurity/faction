@@ -52,6 +52,7 @@ import org.docx4j.wml.ObjectFactory;
 import org.docx4j.wml.P;
 import org.docx4j.wml.PPrBase.Ind;
 import org.dom4j.CDATA;
+import org.xml.sax.SAXParseException;
 import org.docx4j.wml.R;
 import org.docx4j.wml.RFonts;
 import org.docx4j.wml.RPr;
@@ -435,7 +436,7 @@ public class DocxUtils {
 
     @ProfileMethod("Convert HTML content to docx format with CSS styling")
     private List<Object> wrapHTML(String content, String customCSS,
-            String className) throws Docx4JException {
+            String className) throws Docx4JException{
         MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "wrapHTML");
         try {
             
@@ -467,9 +468,25 @@ public class DocxUtils {
 				rfonts.setAscii(this.FONT);
 				XHTMLImporterImpl.addFontMapping("Arial", rfonts);
 				XHTMLImporterImpl.addFontMapping("arial", rfonts);
-                List<Object> converted = xhtml.convert(html, null);
-                nodeMap.put(md5, converted);
-                return converted;       
+				try {
+					List<Object> converted = xhtml.convert(html, null);
+					nodeMap.put(md5, converted);
+					return converted; 
+					// This section is hacky but running jtidy 
+					// is expensive so lets not do it unless we have to
+                }catch(Docx4JException ex){
+                	String sanitized = FSUtils.jtidy(html);
+					List<Object> converted;
+					try {
+						converted = xhtml.convert(sanitized, null);
+						nodeMap.put(md5, converted);
+						return converted; 
+					} catch (Docx4JException e) {
+						System.out.println(html);
+						e.printStackTrace();
+						throw(e);
+					}
+                }
             }
         } finally {
             context.end();
