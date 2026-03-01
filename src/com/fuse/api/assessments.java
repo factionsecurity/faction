@@ -7,6 +7,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.regex.Pattern;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
@@ -987,10 +988,10 @@ public class assessments {
     public Response createAssessment(
             @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
             @ApiParam(value = "Application ID", required = false) @FormParam("appid") String appid,
-            @ApiParam(value = "Assessment Start Date", required = true) @FormParam("start") DateParam start,
-            @ApiParam(value = "Assessment End Date", required = true) @FormParam("end") DateParam end,
+            @ApiParam(value = "Assessment Start Date (YYYY-MM-DD)", required = true) @FormParam("start") DateParam start,
+            @ApiParam(value = "Assessment End Date (YYYY-MM-DD)", required = true) @FormParam("end") DateParam end,
             @ApiParam(value = "Semicolon Delimted list of assessor user names", required = true) @FormParam("assessors") String assessor_names,
-            @ApiParam(value = "Semicolon Delimted distriburtion list", required = true) @FormParam("distro") String distro,
+            @ApiParam(value = "Semicolon Delimted distriburtion list", required = false) @FormParam("distro") String distro,
             @ApiParam(value = "Engagement User Name", required = true) @FormParam("engagement_username") String engagement_username,
             @ApiParam(value = "Remediation User Name", required = true) @FormParam("remediation_username") String remediation_username,
             @ApiParam(value = "Application Name", required = true) @FormParam("appName") String appName,
@@ -999,7 +1000,7 @@ public class assessments {
             @ApiParam(value = "Assessment Campaign Name", required = true) @FormParam("campaign") String campaign,
             // @ApiParam(value = "Option to auto add users if the email does not exist",
             // required = true) @FormParam("auto_create_users") Boolean autoCreateUsers,
-            @ApiParam(value = "Option to auto create a campaign if it does not exist", required = true) @FormParam("auto_create_campaigns") Boolean autoCreateCamp) {
+            @ApiParam(value = "Option to auto create a campaign if it does not exist", required = true) @FormParam("auto_create_campaigns") Boolean autoCreateCamp) throws JsonProcessingException {
 
         EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
         JSONArray jarray = new JSONArray();
@@ -1018,8 +1019,15 @@ public class assessments {
                         asmt.setAppId(appid);
                     }
                 } else if (appName != null && !appName.trim().equals("")) {
-                    List<Assessment> asmts = em.createQuery("from Assessment where name = :name")
-                            .setParameter("name", appName).getResultList();
+                    List<Assessment> asmts = em.createNativeQuery(
+                	    "{'name': {$regex: '^" + FSUtils.sanitizeMongo(appName) + "$', $options: 'i'}}",
+                	    Assessment.class)
+                        .getResultList();
+                    
+                	Campaign camp = (Campaign) em.createNativeQuery(
+                	    "{'name': {$regex: '^" + FSUtils.sanitizeMongo(campaign) + "$', $options: 'i'}}",
+                	    Campaign.class
+                	).getResultList().stream().findFirst().orElse(null);
                     if (asmts != null && asmts.size() != 0) {
                         asmt.setName(appName);
                         asmt.setAppId(asmts.get(0).getAppId());
@@ -1070,17 +1078,24 @@ public class assessments {
                 } else {
                     return Support.error("Remediation User Name not found");
                 }
-                AssessmentType aType = (AssessmentType) em.createQuery("from AssessmentType where type = :type")
-                        .setParameter("type", type).getResultList().stream().findFirst().orElse(null);
+                AssessmentType aType = (AssessmentType) em.createNativeQuery(
+                	    "{'type': {$regex: '^" + FSUtils.sanitizeMongo(type) + "$', $options: 'i'}}",
+                	    AssessmentType.class
+                	).getResultList().stream().findFirst().orElse(null);
                 if (aType != null)
                     asmt.setType(aType);
                 else
                     return Support.error("Assessment Type not found");
+                
+                if(distro == null)
+                	distro = "";
 
                 asmt.setDistributionList(distro);
                 if (campaign != null) {
-                    Campaign camp = (Campaign) em.createQuery("from Campaign where name = :name")
-                            .setParameter("name", campaign).getResultList().stream().findFirst().orElse(null);
+                	Campaign camp = (Campaign) em.createNativeQuery(
+                	    "{'name': {$regex: '^" + FSUtils.sanitizeMongo(campaign) + "$', $options: 'i'}}",
+                	    Campaign.class
+                	).getResultList().stream().findFirst().orElse(null);
                     if (camp != null)
                         asmt.setCampaign(camp);
                     else if (autoCreateCamp) {
@@ -1098,7 +1113,15 @@ public class assessments {
                 em.joinTransaction();
                 em.persist(asmt);
                 HibHelper.getInstance().commit();
-                return Support.success();
+                AssessmentDTO dto = AssessmentDTO.fromEntity(asmt);
+
+                // Add custom fields if any
+                if (asmt.getCustomFields() != null) {
+                    dto.setCustomFieldsFromEntity(asmt.getCustomFields());
+                }
+                ObjectMapper mapper = new ObjectMapper();
+                String json = mapper.writeValueAsString(dto);
+                return Response.status(200).entity(json).build();
             } else {
                 return Support.autherror();
             }
