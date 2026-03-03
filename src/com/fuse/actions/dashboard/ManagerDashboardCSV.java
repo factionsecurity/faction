@@ -192,8 +192,16 @@ public class ManagerDashboardCSV extends FSActionSupport {
         // Build date range condition - include assessments that overlap with the search
         // range
         if (startDate != null && endDate != null) {
-            query.append("\"start\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}, ");
-            query.append("\"end\": {$gte: ISODate(\"").append(sdf.format(startDate)).append("\")}");
+        	endDate.setDate(endDate.getDate()+1);
+            query.append("$and: [");
+            query.append(" { \"start\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}}, ");
+            query.append(" { $or: [ ");
+            query.append("   { \"completed\": { $exists: true, $gte: ISODate(\"")
+            								.append(sdf.format(startDate)).append("\")}}");
+            query.append("   ,");
+            query.append("   { \"completed\": {$exists: false}},");
+            query.append("  ]}");
+            query.append("]");
             hasConditions = true;
         }
 

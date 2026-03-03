@@ -425,7 +425,7 @@ public class Metrics extends FSActionSupport {
 			SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
 			Date chartDate = a.getCompleted() == null ? a.getEnd() : a.getCompleted();
 			if (isCamp) {
-				dates += ", [\"" + sdf.format(chartDate) + "\",\"" + a.getAppId() + "\",\" " + a.getName() + "\"]";
+				dates += ", [\"" + sdf.format(chartDate) + "\",\"" + a.getAppId() + "\",\" " + a.getName().trim() + "\"]";
 			} else {
 				dates += ", \"" + sdf.format(chartDate) + "\"";
 			}

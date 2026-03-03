@@ -43,7 +43,7 @@
 	<s:if test="#astat.index != 0">,</s:if>{ "start" : "<s:date name="start" format="yyyy-MM-dd"/>", 
 		"end" : "<s:date name="completed" format="yyyy-MM-dd" />",
 		"appid" : "${a.appId}", 
-		"name" : "<s:property value="name"/>",
+		"name" : "<s:property value="name.trim()"/>",
 		"cname" : "<s:property value="campaign.name"/>",
 		"users" : "<s:iterator value="assessor" status="ustat"><s:if test="#ustat.index != 0">, </s:if><s:property value="fname"/> <s:property value="lname"/></s:iterator>", 
 		"report" : "<s:if test="#a.finalReport != null"><a href='DownloadReport?guid=${a.finalReport.filename}'>Report</a></s:if>",

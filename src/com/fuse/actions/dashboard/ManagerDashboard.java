@@ -319,7 +319,7 @@ public class ManagerDashboard extends FSActionSupport {
             }
             
             // For completed assessments, count by assessor
-            if ( ("Completed".equals(status) || status == null && assessment.getCompleted() != null || status == "Open" && assessment.getCompleted() != null) && assessment.getAssessor() != null) {
+            if ( (("Complete".equals(status) || "Completed".equals(status)) || status == null && assessment.getCompleted() != null || status == "Open" && assessment.getCompleted() != null) && assessment.getAssessor() != null) {
                 for (User assessor : assessment.getAssessor()) {
                     String assessorName = assessor.getFname() + " " + assessor.getLname();
                     filteredAssessorStats.put(assessorName,
@@ -364,6 +364,8 @@ public class ManagerDashboard extends FSActionSupport {
 
     private void performAssessmentSearch() {
         List<Assessment> results;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+        StringBuilder query = new StringBuilder("{");
         
         // If not searching, get current month's assessments
         if (!"search".equals(searchAction)) {
@@ -374,33 +376,46 @@ public class ManagerDashboard extends FSActionSupport {
             cal.set(Calendar.MINUTE, 0);
             cal.set(Calendar.SECOND, 0);
             cal.set(Calendar.MILLISECOND, 0);
-            Date monthStart = cal.getTime();
+            startDate = cal.getTime();
             
             cal.add(Calendar.MONTH, 1);
             cal.add(Calendar.DAY_OF_MONTH, -1);
             cal.set(Calendar.HOUR_OF_DAY, 23);
             cal.set(Calendar.MINUTE, 59);
             cal.set(Calendar.SECOND, 59);
-            Date monthEnd = cal.getTime();
+            endDate = cal.getTime();
+        
             
             // Query assessments for current month
-            results = em.createQuery("from Assessment where start >= :monthStart and start <= :monthEnd order by start desc", Assessment.class)
-                .setParameter("monthStart", monthStart)
-                .setParameter("monthEnd", monthEnd)
-                .getResultList();
+            query.append("$and: [");
+            query.append(" { \"start\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}}, ");
+            query.append(" { $or: [ ");
+            query.append("   { \"completed\": { $exists: true, $gte: ISODate(\"")
+            								.append(sdf.format(startDate)).append("\")}}");
+            query.append("   ,");
+            query.append("   { \"completed\": {$exists: false}},");
+            query.append("  ]}");
+            query.append("]}");
+            results = em.createNativeQuery(query.toString(), Assessment.class).getResultList();
             searchResults = results;
             return;
         }
         
         // Build MongoDB query for search mode
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-        StringBuilder query = new StringBuilder("{");
         boolean hasConditions = false;
         
         // Build date range condition
         if (startDate != null && endDate != null) {
-            query.append("\"start\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}, ");
-            query.append("\"end\": {$gte: ISODate(\"").append(sdf.format(startDate)).append("\")}");
+        	endDate.setDate(endDate.getDate()+1);
+            query.append("$and: [");
+            query.append(" { \"start\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}}, ");
+            query.append(" { $or: [ ");
+            query.append("   { \"completed\": { $exists: true, $gte: ISODate(\"")
+            								.append(sdf.format(startDate)).append("\")}}");
+            query.append("   ,");
+            query.append("   { \"completed\": {$exists: false}},");
+            query.append("  ]}");
+            query.append("]");
             hasConditions = true;
         }
         
