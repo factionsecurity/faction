@@ -171,16 +171,14 @@ let rejectSingleChange = {
 	}
 }
 
-
-
 const editorConfig = {
 	display: 'block',
 	width: '100%',
 	codeMirror: CodeMirror,
 	plugins: [acceptAllChanges, rejectAllChanges, undoLastChange, acceptSingleChange, rejectSingleChange, textStyle, font, fontColor, hiliteColor, link, fontSize, align, image, imageGallery, list, formatBlock, table, blockquote, textStyle],
 	buttonList: [
-		['undo', 'redo', 'font', 'fontSize', 'formatBlock', 'textStyle'],
-		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
+		['undo', 'redo', 'formatBlock' ],
+		['bold', 'underline', 'italic', 'removeFormat'],
 		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
 		['link', 'image', 'fullScreen', 'showBlocks'],
 		['acceptAllChanges', 'rejectAllChanges'], ['acceptSingleChange', 'rejectSingleChange']
@@ -197,7 +195,7 @@ const noteConfig = {
 	plugins: [font, fontColor, fontSize, image, align, imageGallery, list, formatBlock, table, blockquote],
 	buttonList: [
 		['undo', 'redo', 'font', 'fontSize', 'formatBlock'],
-		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
+		['bold', 'underline', 'italic', 'removeFormat'],
 	],
 	defaultStyle: 'font-family: arial; font-size: 18px',
 	allowedClassNames: ".*",

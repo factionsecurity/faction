@@ -11,6 +11,7 @@ import org.apache.struts2.convention.annotation.Result;
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
+import com.fuse.dao.FinalReport;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Notification;
 import com.fuse.dao.RiskLevel;
@@ -24,6 +25,7 @@ import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.TaskQueueExecutor;
 import com.fuse.utils.FSUtils;
+import com.opensymphony.xwork2.interceptor.annotations.Before;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/retests/VerificationQueue.jsp")
@@ -37,138 +39,30 @@ public class VerificationQueue extends FSActionSupport {
 	private Long vid = -1l;
 	private String notes;
 	private Long pass = -1l;
-	private List<RiskLevel>levels = new ArrayList();
+	private List<RiskLevel>levels = new ArrayList<>();
+	private List<FinalReport> reports = new ArrayList<>();
+	private User user;
+	
+	
+	@Before(priority=1)
+	public String authorization() {
+		if (!(this.isAcassessor() || this.isAcmanager())) {
+			return AuditLog.notAuthorized(this, "User is not an Assessor or Manager", true);
+		}
+		user = this.getSessionUser();
+		return null;
+		
+	}
 
 	@Action(value = "Verifications", results = {
 			@Result(name = "verification", location = "/WEB-INF/jsp/retests/Verification.jsp") })
 	public String execute() {
-		if (!(this.isAcassessor() || this.isAcmanager())) {
-			return AuditLog.notAuthorized(this, "User is not an Assessor or Manager", true);
-		}
-		User user = this.getSessionUser();
-
 		verifications = (List<Verification>) em
 				.createQuery("from Verification v where v.assessor = :id and v.workflowStatus = :wf1 ")
 				.setParameter("id", user).setParameter("wf1", Verification.InAssessorQueue).getResultList();
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 
-		if (action.startsWith("submit")) {
-
-			for (Verification v : verifications) {
-				if (v.getId().longValue() == ver.longValue()) {
-					if (v.getCompleted() != null && v.getCompleted().getTime() != 0l)
-						return this.ERRORJSON;
-
-					HibHelper.getInstance().preJoin();
-					em.joinTransaction();
-
-					String vnote = "";
-					VerificationItem vi = v.getVerificationItems().get(0);
-
-					SystemSettings ss = (SystemSettings) em.createQuery("From SystemSettings").getResultList().stream()
-							.findFirst().orElse(null);
-
-					Long verOption = 0l;
-					if (ss != null && ss.getVerificationOption() != null)
-						verOption = ss.getVerificationOption();
-
-					if (pass == 1l) {
-						vi.setPass(true);
-						if (verOption == 1l) {
-							vi.getVulnerability().setDevClosed(new Date());
-							vnote = "<span style=color:green > Issue Passed Verification in the Development Environment.</span><br>"
-									+ notes;
-						} else if (verOption == 2l) {
-							vi.getVulnerability().setClosed(new Date());
-							vnote = "<span style=color:green > Issue Passed Verification in the Production Environment.</span><br>"
-									+ notes;
-
-						} else if (verOption == 3l) {
-							// TODO add API info here
-							// vi.getVulnerability().setClosed(new Date());
-							// vnote = "<span style=color:green > Issue Passed Verification in the
-							// Production Environment.</span><br>" + notes;
-
-						} else
-							vnote = "<span style=color:green > Issue Passed Verification </span><br>" + notes;
-
-					} else if (pass == 0l) {
-						vi.setPass(false);
-						vnote = "<span style=color:red > Issue Failed Verification </span><br>" + notes;
-					} else {
-
-						return "errorJson";
-
-					}
-					v.setCompleted(new Date());
-					v.setWorkflowStatus(Verification.AssessorCompleted);
-
-					vi.setNotes(notes);
-					VulnNotes vn = new VulnNotes();
-					vn.setCreatorObj(user);
-					vn.setCreator(user.getId());
-					vn.setCreated(new Date());
-					vn.setNote(vnote);
-					vn.setUuid("nodelete");
-					vn.setVulnId(vi.getVulnerability().getId());
-					Notification notif = new Notification();
-					notif.setAssessorId(user.getId());
-					notif.setCreated(new Date());
-					notif.setMessage("Verification Completed for <b>" + vi.getVulnerability().getName()
-							+ "</b>: <a href='../service/Report.pdf?retest=true&id=" + v.getAssessment().getId()
-							+ "'>Retest Report</a>");
-					em.persist(notif);
-					em.persist(vn);
-					if (verOption == 1l || verOption == 2l) {
-						v.setWorkflowStatus(Verification.RemediationCompleted);
-						// em.remove(vi);
-						// em.remove(v);
-					}
-					em.persist(vi);
-					em.persist(v);
-
-					Assessment a = em.find(Assessment.class, vi.getVulnerability().getAssessmentId());
-
-					
-					String status = "Passed";
-					if (!vi.isPass())
-						status = "Failed";
-					AuditLog.audit(this, "Issue " + status + " verification.", AuditLog.UserAction,
-							AuditLog.CompVulnerability, vi.getVulnerability().getId(), false);
-					HibHelper.getInstance().commit();
-
-					String email = "<h2> ReTest for : " + vi.getVulnerability().getName() + "[ "
-							+ vi.getVulnerability().getOverallStr() + " ] </h2>";
-					email += "<p> The vulnerability was ";
-					if (vi.isPass()) {
-						email += "<span color='green'><b>Passed</b></span>";
-					} else {
-						email += "<span color='red'><b>Failed</b></span>";
-					}
-					email += " by " + user.getFname() + " " + user.getLname() + ".<br/><br/>";
-					email += "<u>Additional Information:</u><br/>";
-					email += this.notes;
-
-					String Subject = "ReTest " + status + " for " + a.getAppId() + " - " + a.getName() + " - "
-							+ vi.getVulnerability().getName() + " [" + vi.getVulnerability().getTracking() + "]";
-
-					EmailThread emailThread = new EmailThread(a, Subject, email);
-					TaskQueueExecutor.getInstance().execute(emailThread);
-					
-					// Run all Extensions
-					Extensions vmgr = new Extensions(Extensions.EventType.VER_MANAGER);
-					if (vi.isPass())
-						vmgr.execute(v, VerificationManager.Operation.PASS);
-					else
-						vmgr.execute(v, VerificationManager.Operation.FAIL);
-
-					return "successJson";
-
-				}
-			}
-			return "errorJson";
-
-		} else if (id != null) {
+		if (id != null) {
 			for (Verification v : verifications) {
 				if (v.getId().longValue() == this.id.longValue()) {
 					verification = v;
@@ -176,11 +70,140 @@ public class VerificationQueue extends FSActionSupport {
 					break;
 				}
 			}
+			Assessment assessment = verification.getAssessment();
+			if(assessment.getFinalReport() != null) {
+				reports.add(assessment.getFinalReport());
+			}
+			if(assessment.getRetestReport() != null) {
+				reports.add(assessment.getRetestReport());
+			}
 
 			return "verification";
 		}
 
 		return SUCCESS;
+	}
+	
+	@Action(value = "CompleteVerification")
+	public String completeVerification() {
+		verifications = (List<Verification>) em
+				.createQuery("from Verification v where v.assessor = :id and v.workflowStatus = :wf1 ")
+				.setParameter("id", user).setParameter("wf1", Verification.InAssessorQueue).getResultList();
+		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
+		for (Verification v : verifications) {
+			if (v.getId().longValue() == ver.longValue()) {
+				if (v.getCompleted() != null && v.getCompleted().getTime() != 0l)
+					return this.ERRORJSON;
+
+				HibHelper.getInstance().preJoin();
+				em.joinTransaction();
+
+				String vnote = "";
+				VerificationItem vi = v.getVerificationItems().get(0);
+
+				SystemSettings ss = (SystemSettings) em.createQuery("From SystemSettings").getResultList().stream()
+						.findFirst().orElse(null);
+
+				Long verOption = 0l;
+				if (ss != null && ss.getVerificationOption() != null)
+					verOption = ss.getVerificationOption();
+
+				if (pass == 1l) {
+					vi.setPass(true);
+					if (verOption == 1l) {
+						vi.getVulnerability().setDevClosed(new Date());
+						vnote = "<span style=color:green > Issue Passed Verification in the Development Environment.</span><br>"
+								+ notes;
+					} else if (verOption == 2l) {
+						vi.getVulnerability().setClosed(new Date());
+						vnote = "<span style=color:green > Issue Passed Verification in the Production Environment.</span><br>"
+								+ notes;
+
+					} else if (verOption == 3l) {
+						// TODO add API info here
+						// vi.getVulnerability().setClosed(new Date());
+						// vnote = "<span style=color:green > Issue Passed Verification in the
+						// Production Environment.</span><br>" + notes;
+
+					} else
+						vnote = "<span style=color:green > Issue Passed Verification </span><br>" + notes;
+
+				} else if (pass == 0l) {
+					vi.setPass(false);
+					vnote = "<span style=color:red > Issue Failed Verification </span><br>" + notes;
+				} else {
+
+					return "errorJson";
+
+				}
+				v.setCompleted(new Date());
+				v.setWorkflowStatus(Verification.AssessorCompleted);
+
+				vi.setNotes(notes);
+				VulnNotes vn = new VulnNotes();
+				vn.setCreatorObj(user);
+				vn.setCreator(user.getId());
+				vn.setCreated(new Date());
+				vn.setNote(vnote);
+				vn.setUuid("nodelete");
+				vn.setVulnId(vi.getVulnerability().getId());
+				Notification notif = new Notification();
+				notif.setAssessorId(user.getId());
+				notif.setCreated(new Date());
+				notif.setMessage("Verification Completed for <b>" + vi.getVulnerability().getName()
+						+ "</b>: <a href='../service/Report.pdf?retest=true&id=" + v.getAssessment().getId()
+						+ "'>Retest Report</a>");
+				em.persist(notif);
+				em.persist(vn);
+				if (verOption == 1l || verOption == 2l) {
+					v.setWorkflowStatus(Verification.RemediationCompleted);
+					// em.remove(vi);
+					// em.remove(v);
+				}
+				em.persist(vi);
+				em.persist(v);
+
+				Assessment a = em.find(Assessment.class, vi.getVulnerability().getAssessmentId());
+
+				
+				String status = "Passed";
+				if (!vi.isPass())
+					status = "Failed";
+				AuditLog.audit(this, "Issue " + status + " verification.", AuditLog.UserAction,
+						AuditLog.CompVulnerability, vi.getVulnerability().getId(), false);
+				HibHelper.getInstance().commit();
+
+				String email = "<h2> ReTest for : " + vi.getVulnerability().getName() + "[ "
+						+ vi.getVulnerability().getOverallStr() + " ] </h2>";
+				email += "<p> The vulnerability was ";
+				if (vi.isPass()) {
+					email += "<span color='green'><b>Passed</b></span>";
+				} else {
+					email += "<span color='red'><b>Failed</b></span>";
+				}
+				email += " by " + user.getFname() + " " + user.getLname() + ".<br/><br/>";
+				email += "<u>Additional Information:</u><br/>";
+				email += this.notes;
+
+				String Subject = "ReTest " + status + " for " + a.getAppId() + " - " + a.getName() + " - "
+						+ vi.getVulnerability().getName() + " [" + vi.getVulnerability().getTracking() + "]";
+
+				EmailThread emailThread = new EmailThread(a, Subject, email);
+				TaskQueueExecutor.getInstance().execute(emailThread);
+				
+				// Run all Extensions
+				Extensions vmgr = new Extensions(Extensions.EventType.VER_MANAGER);
+				if (vi.isPass())
+					vmgr.execute(v, VerificationManager.Operation.PASS);
+				else
+					vmgr.execute(v, VerificationManager.Operation.FAIL);
+
+				return "successJson";
+
+			}
+		}
+		return "errorJson";
+		
 	}
 
 	@Action(value = "CancelVerification")
@@ -281,5 +304,8 @@ public class VerificationQueue extends FSActionSupport {
 
 	public List<RiskLevel> getLevels() {
 		return levels;
+	}
+	public List<FinalReport> getReports(){
+		return this.reports;
 	}
 }

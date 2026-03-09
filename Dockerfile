@@ -1,9 +1,12 @@
 from tomcat:9-jre11 as base_app
 RUN apt-get update
 RUN apt-get upgrade -y
+RUN apt-get install curl
 RUN mkdir /opt/faction
 #Fix issue with sending emails
 RUN sed -i 's/^jdk.tls.disabledAlgorithms/# jdk.tls.disabledAlgorithms/' /opt/java/openjdk/conf/security/java.security
+
+              
 
 #Remove this kruft
 RUN rm -rf /usr/local/tomcat/webapps/manager

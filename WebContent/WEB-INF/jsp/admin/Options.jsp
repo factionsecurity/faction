@@ -44,6 +44,7 @@
 											class="vulnControl vulnControl-delete"> <i
 												class="fa fa-trash"></i>
 										</span></td>
+										<td >${id}</td>
 									</tr>
 								</s:iterator>
 							</bs:datatable>
@@ -61,10 +62,11 @@
 					<br>
 					<bs:row>
 						<bs:mco colsize="12">
-							<bs:datatable columns="Name,Options" classname="" id="campaign">
+							<bs:datatable columns="Name,Default,Options" classname="" id="campaign">
 								<s:iterator value="campaigns">
 									<tr>
 										<td><s:property value="name" /></td>
+										<td><input type="checkbox" onClick="editSelectedCampaign(this,${id})" <s:if test="selected">checked</s:if>></td>
 										<td width="100px"><span
 											onclick="editCampaign(this,${id })" class="vulnControl">
 												<i class="fa fa-edit"></i>
@@ -100,11 +102,11 @@
 									<s:iterator value="custom">
 										<tr>
 											<td><input value="<s:property value="key"/>" id="key${id}"
-												class="form-control pull-right" /></td>
+												class="form-control pull-right" readonly></td>
 											<td><input id="var${id}" value="<s:property value="variable"/>"
-												class="form-control pull-right" /></td>
+												class="form-control pull-right" readonly /></td>
 											<td><input id="default${id}" value="<s:property value="defaultValue"/>"
-												class="form-control pull-right" /></td>
+												class="form-control pull-right" readonly/></td>
 											<td><s:property value="fieldTypeStr"/></td>
 											<td><s:property value="typeStr"/></td>
 											<s:if test="readonly">
@@ -114,7 +116,7 @@
 												<td><input type=checkbox id="ro${id}" /></td>
 											</s:else>
 											<td style="width: 70px"><span for="${id}" class="vulnControl updCF"><i
-													class="fa fa-save"></i></span><span for="${id}"
+													class="fa fa-edit"></i></span><span for="${id}"
 												class="vulnControl vulnControl-delete delCF"><i
 													class="fa fa-trash"></i></span></td>
 										</tr>
@@ -175,20 +177,27 @@
 						<br>
 						<br>
 						<bs:mco colsize="12">
-							<bs:datatable columns="Status,Default,Delete" classname="" id="">
-								<s:iterator value="EMS.status" var="stat">
+							<bs:datatable columns="Status,Actions" classname="" id="">
+								<s:iterator value="statuses" var="stat">
 									<tr>
-										<td><s:property value="stat" /></td>
-										<td width="50px" status="<s:property value="stat"/>"><s:if
-												test="#stat == EMS.defaultStatus">
-												<input type="checkbox" class="statuscheck" checked>
-											</s:if> <s:else>
-												<input type="checkbox" class="statuscheck">
-											</s:else></td>
-										<td width="50px"><span
+										<td><s:property value="name" /></td>
+										<td width="50px">
+										<s:if test="builtin">
+										<span
+											class="vulnControl vulnControl-delete"><i
+												class="fa fa-lock"></i></span>
+										</s:if>
+										<s:else>
+										<span
+											class="vulnControl vulnControl-edit"
+											onClick="editStatusModal('<s:property value="id"/>')"><i
+												class="fa fa-edit"></i></span>
+										<span
 											class="vulnControl vulnControl-delete"
-											onClick="deleteStatus('<s:property value="stat"/>')"><i
-												class="fa fa-trash"></i></span></td>
+											onClick="deleteStatus('<s:property value="id"/>')"><i
+												class="fa fa-trash"></i></span>
+										</s:else>
+										</td>
 									</tr>
 								</s:iterator>
 							</bs:datatable>

@@ -3,6 +3,7 @@ package com.fuse.servlets;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -14,12 +15,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.lang.StringEscapeUtils;
-import org.python.icu.util.Calendar;
 
 import com.fuse.dao.Assessment;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.OOO;
 import com.fuse.dao.PeerReview;
+import com.fuse.dao.Permissions;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
@@ -48,10 +49,12 @@ public class getAssessments extends HttpServlet {
 		if (user == null)
 			return;
 		if (user.getPermissions().isAssessor() || user.getPermissions().isManager()) {
-			PrintWriter out = response.getWriter();
 			response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 			response.setHeader("Pragma", "no-cache");
 			response.setDateHeader("Expires", 0);
+			response.setCharacterEncoding("UTF-8");
+			response.setContentType("application/json;charset=UTF-8");
+			PrintWriter out = response.getWriter();
 
 			EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 			try {
@@ -63,12 +66,16 @@ public class getAssessments extends HttpServlet {
 						.setMaxResults(50).getResultList();
 				List<RiskLevel> levels = (List<RiskLevel>) em.createQuery("from RiskLevel order by riskId desc")
 						.getResultList();
+				
+				int prcount =0;
+				
+				if(user.getPermissions().getAccessLevel() != Permissions.AccessLevelTeamOnly) {
+					List<PeerReview> prs = (List<PeerReview>) em.createQuery("from PeerReview").getResultList();
+					prcount = prs.stream().filter(
+							pr -> pr.getAssessment().getAssessor().stream().anyMatch(u -> u.getId() != user.getId()))
+							.collect(Collectors.toList()).size();
+				}
 
-				List<PeerReview> prs = (List<PeerReview>) em.createQuery("from PeerReview").getResultList();
-
-				int prcount = prs.stream().filter(
-						pr -> pr.getAssessment().getAssessor().stream().anyMatch(u -> u.getId() != user.getId()))
-						.collect(Collectors.toList()).size();
 
 				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 				String json = "{ 'count' : " + assessments.size() + ",\n";
@@ -132,10 +139,12 @@ public class getAssessments extends HttpServlet {
 		if (user == null)
 			return;
 
-		PrintWriter out = response.getWriter();
 		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
 		response.setHeader("Pragma", "no-cache");
 		response.setDateHeader("Expires", 0);
+		response.setCharacterEncoding("UTF-8");
+		response.setContentType("application/json;charset=UTF-8");
+		PrintWriter out = response.getWriter();
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		String[] ids = request.getParameter("id").split(",");
 

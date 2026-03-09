@@ -43,6 +43,11 @@
   <bs:row>
   <bs:mco colsize="6">
   	<bs:box type="danger" title="Notifications">
+  		<bs:row>
+  		<bs:mco colsize="12">
+  			<button class="btn btn-success pull-right" id="clearNotifications" style="margin-top:-30px;margin-right: 10px"><i class="fa fa-trash"></i> Clear All</button>
+  		</bs:mco>
+  		</bs:row>
   		<bs:datatable columns="Time,Description,&nbsp;" classname="" id="notify">
   			<s:iterator value="notifications">
   				<tr><td><s:date name="created" format="yyyy-MM-dd hh:mm:ss"/> </td>

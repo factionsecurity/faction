@@ -79,20 +79,28 @@ class AssessmentStats {
 
 	createCharts() {
 		this.requestStats((resp) => {
+			try{
 			const vulns = resp.data.vulns;
 			const categories = resp.data.categories;
+			const colors = resp.data.colors;
+			const colorLength = colors.length;
 			this.severityNames= resp.data.severityNames;
 			this.allColors = [];
 			this.allBorderColors = resp.data.colors;
-			const l = this.severityNames.length;
+			const totalSevs = this.severityNames.length;
 			this.severityNames.forEach( (_label, index) =>  {
-				this.bgColors.push(resp.data.colors[index +l -2]+"22");
-				this.borderColors.push(resp.data.colors[index +l -2 ]);
+				const sevIndex = totalSevs - index -1;
+				const colorIndex = colorLength -1 - sevIndex;
+				this.bgColors.push(colors[colorIndex ]+"22");
+				this.borderColors.push(colors[colorIndex]);
 				}
 			);
 			resp.data.colors.forEach( (color, _index) => this.allColors.push(color+"22"));
 			this.createBarChart(vulns)
 			this.createPieChart(categories)
+			}catch(e){
+				console.log(e)
+			}
 			
 		})
 		
@@ -100,6 +108,7 @@ class AssessmentStats {
 	
 	updateAllStats(){
 		this.requestStats( (resp) => {
+			try{
 			const vulns = resp.data.vulns;
 			let categories = resp.data.categories;
 			if(categories.length == 0){
@@ -118,6 +127,9 @@ class AssessmentStats {
 			this.vulnBarChart.data.datasets[0].data = vulnDataset;
 
 			this.vulnBarChart.update();
+			}catch(e){
+				console.log(e)
+			}
 			
 		});
 	}
@@ -141,7 +153,6 @@ assessmentStats.createCharts();
 window.addEventListener(
   "message",
   (event) => {
-	  console.log(event)
 	if(event.data.type == "updateVuln"){
 		  let sevId = event.data.sevId;
 		  let count = event.data.count;

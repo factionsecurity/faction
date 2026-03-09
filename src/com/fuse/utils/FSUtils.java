@@ -17,10 +17,17 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.KeySpec;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Scanner;
 import java.util.TreeMap;
@@ -28,6 +35,7 @@ import java.util.UUID;
 import java.util.jar.Manifest;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -52,10 +60,14 @@ import org.w3c.tidy.Tidy;
 
 import com.fuse.dao.Assessment;
 import com.fuse.dao.Category;
+import com.fuse.dao.CustomField;
+import com.fuse.dao.CustomType;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.ReportOptions;
+import com.fuse.dao.RiskLevel;
 import com.fuse.dao.Vulnerability;
+import com.fuse.dao.CustomType;
 
 import org.commonmark.Extension;
 import org.commonmark.ext.autolink.AutolinkExtension;
@@ -78,63 +90,83 @@ public class FSUtils {
 	private static String UNKNOWN = "Uncategorized";
 
 	public static String jtidy(String html) {
-		// figures seems to kill the whole message.
-		//html = html.replaceAll("<(/)?figure>", "");
+		
+        MethodProfiler.ProfileContext context = MethodProfiler.start("FSUtils", "jtidy");
+        try {
+			// figures seems to kill the whole message.
+			//html = html.replaceAll("<(/)?figure>", "");
+        	if(!html.contains("<")) {
+        		return html;
+        	}
 
-		Tidy tidy = new Tidy();
-		InputStream stream = new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8));
-		// tidy.setXmlOut(true);
-		tidy.setQuiet(true);
-		tidy.setWord2000(false);
-		tidy.setQuoteAmpersand(true);
-		tidy.setQuoteMarks(true);
-		tidy.setQuoteNbsp(true);
-		tidy.setTidyMark(false);
-		tidy.setShowErrors(0);
-		tidy.setShowWarnings(false);
-		tidy.setWraplen(0);
-		tidy.setWrapAttVals(false);
-		tidy.setPrintBodyOnly(true);
-		tidy.setXHTML(true);
+			Tidy tidy = new Tidy();
+			InputStream stream = new ByteArrayInputStream(html.getBytes(StandardCharsets.UTF_8));
+			// tidy.setXmlOut(true);
+			tidy.setQuiet(true);
+			tidy.setWord2000(false);
+			tidy.setQuoteAmpersand(true);
+			tidy.setQuoteMarks(true);
+			tidy.setQuoteNbsp(true);
+			tidy.setTidyMark(false);
+			tidy.setShowErrors(0);
+			tidy.setShowWarnings(false);
+			tidy.setWraplen(0);
+			tidy.setWrapAttVals(false);
+			tidy.setPrintBodyOnly(true);
+			tidy.setXHTML(true);
 
-		tidy.setOutputEncoding("UTF-8");
-		tidy.setInputEncoding("UTF-8");
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			tidy.setOutputEncoding("UTF-8");
+			tidy.setInputEncoding("UTF-8");
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-		tidy.parse(stream, baos);
-		try {
-			String out = new String(baos.toByteArray(), "UTF-8");
-			out = out.replaceAll("&nbsp;", " ");
-			ArrayList<String> updated = new ArrayList<String>();
-			for (String line : out.split("\n")) {
-				updated.add(line.replaceAll("^[ ]+", ""));
+			tidy.parse(stream, baos);
+			try {
+				String out = new String(baos.toByteArray(), "UTF-8");
+				out = out.replaceAll("&nbsp;", " ");
+				ArrayList<String> updated = new ArrayList<String>();
+				Boolean preSection=false;
+				for (String line : out.split("\n")) {
+					line = line.replaceAll("^[ ]+", "");
+					if(line.contains("<code>")) {
+						preSection = true;
+					}
+					if (line.contains("</code>")) {
+						preSection = false;
+					}
+					if(preSection) {
+						line = line + "\n";
+					}
+					updated.add(line);
+				}
+				out = String.join("", updated);
+
+				return out;
+			} catch (UnsupportedEncodingException e) {
+				e.printStackTrace();
+				return new String(baos.toByteArray());
 			}
-			out = String.join("", updated);
-
-			return out;
-		} catch (UnsupportedEncodingException e) {
-			e.printStackTrace();
-			return new String(baos.toByteArray());
-		}
+        }finally {
+        	context.end();
+        }
 	}
 
 	public static String sanitizeHTML(String html) {
 		PolicyFactory policyBuilder = new HtmlPolicyBuilder().allowAttributes("src").onElements("img")
 				.allowUrlProtocols("data", "http", "https").allowAttributes("href").onElements("a")
-				.allowAttributes("style", "class")
-				.onElements("a", "label", "h1", "h2", "h3", "h4", "h5", "h6", "p", "i", "b", "u", "strong", "em",
+				.allowAttributes("src", "width", "height", "controls").onElements("video")
+				.allowAttributes("style", "class", "colspan").onElements("a", "label", "h1", "h2", "h3", "h4", "h5", "h6", "p", "i", "b", "u", "strong", "em",
 						"small", "big", "pre", "code", "cite", "samp", "sub", "sup", "strike", "center", "blockquote",
 						"hr", "br", "col", "font", "div", "img", "ul", "ol", "li", "dd", "dt", "dl", "tbody", "thead",
-						"tfoot", "table", "td", "th", "tr", "colgroup", "fieldset", "legend", "span")
+						"tfoot", "table", "td", "th", "tr", "colgroup", "fieldset", "legend", "span", "backquote")
 				.allowAttributes("data-changedata", "data-cid", "data-last-change-time", "data-time", "data-userid",
-						"data-username", "title")
-				.onElements("span").allowAttributes("border", "cellpadding", "cellspacing", "style", "class").onElements("table")
+						"data-username", "title").onElements("span")
+				.allowAttributes("border", "cellpadding", "cellspacing", "style", "class", "colspan").onElements("table")
 				.allowStandardUrlProtocols()
 				.allowElements("a", "label", "h1", "h2", "h3", "h4", "h5", "h6", "p", "i", "b", "u", "strong", "em",
 						"small", "big", "pre", "code", "cite", "samp", "sub", "sup", "strike", "center", "blockquote",
 						"hr", "br", "col", "font", "div", "img", "ul", "ol", "li", "dd", "dt", "dl", "tbody", "thead",
 						"tfoot", "table", "td", "th", "tr", "colgroup", "fieldset", "legend", "del", "ins", "figure",
-						"span", "figcaption")
+						"span", "figcaption", "ins")
 				.toFactory();
 		String sanitized = policyBuilder.sanitize(html);
 
@@ -262,18 +294,18 @@ public class FSUtils {
 						getDescriptionFromVulnDB((String) (((JSONObject) json.get("description")).get("$ref"))));
 
 				if (ref != null) {
-					String addRef = dv.getDescription() + "<br><br><b>References:</b><br>";
+					String addRef = dv.getDescription() + "<br><br/><b>References:</b><br/>";
 					if (ref.getClass().getName().contains("JSONArray")) {
 						JSONArray ja = (JSONArray) ref;
 						for (int i = 0; i < ja.size(); i++) {
 							String url = (String) ((JSONObject) ja.get(i)).get("url");
 							String t = (String) ((JSONObject) ja.get(i)).get("title");
-							addRef += "<a href='" + url + "'>" + t + "</a><br>";
+							addRef += "<a href='" + url + "'>" + t + "</a><br/>";
 						}
 					} else {
 						String url = (String) ((JSONObject) ref).get("url");
 						String t = (String) ((JSONObject) ref).get("title");
-						addRef += "<a href='" + url + "'>" + t + "</a><br>";
+						addRef += "<a href='" + url + "'>" + t + "</a><br/>";
 					}
 					dv.setDescription(addRef);
 
@@ -434,6 +466,30 @@ public class FSUtils {
 		}
 
 	}
+	public static byte [] decryptBytes(String data) {
+		try {
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			String secret = System.getenv("FACTION_SECRET_KEY");
+			byte[] hash = md.digest(secret.getBytes());
+			char[] b64hash = Base64.encodeBase64String(hash).toCharArray();
+
+			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+			KeySpec spec = new PBEKeySpec(b64hash, "f04ce910-bedb-4d8f-a023-4d2441dc0fba".getBytes(), 65536, 256);
+			SecretKey tmp = factory.generateSecret(spec);
+			SecretKey SecKey = new SecretKeySpec(tmp.getEncoded(), "AES");
+
+			Cipher AesCipher = Cipher.getInstance("AES");
+			AesCipher.init(Cipher.DECRYPT_MODE, SecKey);
+			byte[] cypherText = Base64.decodeBase64(data);
+			byte[] bytePlainText = AesCipher.doFinal(cypherText);
+			return bytePlainText;
+
+		} catch (Exception ex) {
+			System.out.println(ex);
+			return null;
+		}
+
+	}
 	
 	public static String md5hash(String data) {
 		try {
@@ -486,31 +542,115 @@ public class FSUtils {
 		}
 
 	}
+	public static String encryptBytes(byte [] data) {
+		try {
 
-	public static String generateICSFile(List<String> sendTo, String sendFrom, String Title, String Body) {
-		UUID uid = UUID.randomUUID();
-		String ics = "BEGIN:VCALENDAR\r\n";
-		ics += "VERSION:2.0\r\n";
-		ics += "PRODID:-//FuseSoftLLS/Faction//NONSGML v1.0//EN\r\n";
-		ics += "BEGIN:VEVENT\r\n";
-		ics += "CLASS:PUBLIC\r\n";
-		ics += "UID:" + uid.toString() + "\r\n";
-		for (String email : sendTo)
-			ics += "ATTENDEE;mailto:" + email + "\r\n";
-		ics += "X-ALT-DESC;FMTTYPE=text/html:<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\">\\n<HTML>\\n"
-				+ "<BODY>\\n" + Body.replace("\r", "").replace("\n", "\\\\n") + "</BODY></HTML>\r\n";
-		ics += "SUMMARY:" + Title + "\r\n";
-		// ics+="DESCRIPTION:" + Body.replace("\r", "").replace("\n", "\\\\n") + "\r\n";
-		ics += "BEGIN:VALARM\r\n";
-		ics += "TRIGGER:-PT15M\r\n";
-		ics += "ACTION:DISPLAY\r\n";
-		ics += "DESCRIPTION:Reminder\r\n";
-		ics += "END:VALARM\r\n";
-		ics += "END:VEVENT\r\n";
-		ics += "END:VCALENDAR\r\n";
+			MessageDigest md = MessageDigest.getInstance("SHA-256");
+			String secret = System.getenv("FACTION_SECRET_KEY");
+			byte[] hash = md.digest(secret.getBytes());
+			char[] b64hash = Base64.encodeBase64String(hash).toCharArray();
 
-		return ics;
+			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+			KeySpec spec = new PBEKeySpec(b64hash, "f04ce910-bedb-4d8f-a023-4d2441dc0fba".getBytes(), 65536, 256);
+			SecretKey tmp = factory.generateSecret(spec);
+			SecretKey SecKey = new SecretKeySpec(tmp.getEncoded(), "AES");
+
+			Cipher AesCipher = Cipher.getInstance("AES");
+
+
+			AesCipher.init(Cipher.ENCRYPT_MODE, SecKey);
+			byte[] byteCipherText = AesCipher.doFinal(data);
+
+			return Base64.encodeBase64String(byteCipherText);
+
+		} catch (Exception Ex) {
+			Ex.printStackTrace();
+			return null;
+		}
+
 	}
+
+	
+	 /**
+     * Creates ICS content for a calendar event
+     */
+    public static String createICSContent(String title, String description, String location,
+                                         LocalDateTime startTime, LocalDateTime endTime,
+                                         String organizer, String[] attendees) {
+        
+        StringBuilder ics = new StringBuilder();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'");
+        
+        // Convert to UTC for ICS format
+        if(startTime == null) {
+        	startTime = LocalDateTime.now();
+        }
+        if(endTime == null) {
+        	endTime = LocalDateTime.now();
+        }
+        String startUTC = startTime.atZone(ZoneId.systemDefault())
+                                  .withZoneSameInstant(ZoneId.of("UTC"))
+                                  .format(formatter);
+        String endUTC = endTime.atZone(ZoneId.systemDefault())
+                              .withZoneSameInstant(ZoneId.of("UTC"))
+                              .format(formatter);
+        String nowUTC = LocalDateTime.now().atZone(ZoneId.systemDefault())
+                                          .withZoneSameInstant(ZoneId.of("UTC"))
+                                          .format(formatter);
+        
+        // Generate unique ID
+        
+        String uid = UUID.randomUUID().toString() + "@factionsecurity.com";
+        
+        // Build ICS content
+        ics.append("BEGIN:VCALENDAR\r\n");
+        ics.append("VERSION:2.0\r\n");
+        ics.append("PRODID:-//FACTIONSECURITYLLC//FACTION//EN\r\n");
+        ics.append("METHOD:REQUEST\r\n");
+        ics.append("CALSCALE:GREGORIAN\r\n");
+        
+        ics.append("BEGIN:VEVENT\r\n");
+        ics.append("UID:").append(uid).append("\r\n");
+        ics.append("DTSTAMP:").append(nowUTC).append("\r\n");
+        ics.append("DTSTART:").append(startUTC).append("\r\n");
+        ics.append("DTEND:").append(endUTC).append("\r\n");
+        ics.append("SUMMARY:").append(escapeText(title)).append("\r\n");
+        ics.append("DESCRIPTION:").append(escapeText(description)).append("\r\n");
+        
+        if (location != null && !location.trim().isEmpty()) {
+            ics.append("LOCATION:").append(escapeText(location)).append("\r\n");
+        }
+        
+        ics.append("ORGANIZER:MAILTO:").append(organizer).append("\r\n");
+        
+        // Add attendees
+        if (attendees != null) {
+            for (String attendee : attendees) {
+                ics.append("ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;")
+                   .append("RSVP=TRUE:MAILTO:").append(attendee).append("\r\n");
+            }
+        }
+        
+        ics.append("STATUS:CONFIRMED\r\n");
+        ics.append("SEQUENCE:0\r\n");
+        ics.append("REQUEST-STATUS:2.0;Success\r\n");
+        ics.append("END:VEVENT\r\n");
+        ics.append("END:VCALENDAR\r\n");
+        
+        return ics.toString();
+    }
+    
+    /**
+     * Escapes special characters in ICS text fields
+     */
+    private static String escapeText(String text) {
+        if (text == null) return "";
+        return text.replace("\\", "\\\\")
+                  .replace(",", "\\,")
+                  .replace(";", "\\;")
+                  .replace("\n", "\\n")
+                  .replace("\r", "");
+    }
 
 
 
@@ -569,7 +709,7 @@ public class FSUtils {
 			return "Version " + manifest.getMainAttributes().getValue("Implementation-Version");
 			
 		} catch (IOException e) {
-			e.printStackTrace();
+		} catch(Exception e) {
 		}
 		return "";
 		
@@ -585,69 +725,69 @@ public class FSUtils {
 			RPO = new ReportOptions();
 			RPO.setFont("Arial");
 			RPO.setSize("12px");
-			RPO.setBodyCss("body{ \r\n"
-					+ "    font-size: 15px; \r\n"
-					+ "} \r\n"
-					+ "figure{  \r\n"
-					+ "    text-align: center;  \r\n"
-					+ "    padding: 0px;  \r\n"
-					+ "    margin: 10px 0px;  \r\n"
-					+ "    display: inline-block; \r\n"
-					+ "    border: none; \r\n"
-					+ "} \r\n"
-					+ "img{ \r\n"
-					+ "    max-width: 600px; \r\n"
-					+ "    height: auto !important; \r\n"
-					+ "    display: block; \r\n"
-					+ "    margin: auto !important\r\n"
-					+ "} \r\n"
-					+ "p{ \r\n"
-					+ "    padding:0px !important; \r\n"
-					+ "    margin:0px !important; \r\n"
-					+ "    margin-bottom: 10px !important; \r\n"
-					+ "} \r\n"
-					+ "li{ \r\n"
-					+ "    margin-bottom: 10px !important; \r\n"
-					+ "} \r\n"
-					+ "code { \r\n"
-					+ "    font-family: monospace!important; \r\n"
-					+ "    color: #666; \r\n"
-					+ "    background-color: #eeeeee !important; \r\n"
-					+ "    border-radius: 6px !important; \r\n"
-					+ "    padding-left: 100px !important; \r\n"
-					+ "} \r\n"
-					+ "code span{ \r\n"
-					+ "    font-family: monospace!important; \r\n"
-					+ "    color: #666; \r\n"
-					+ "    background-color: #eeeeee !important; \r\n"
-					+ "    border-radius: 6px !important; \r\n"
-					+ "} \r\n"
-					+ "table {\r\n"
-					+ "    font-family: Arial, Helvetica, sans-serif;\r\n"
-					+ "    border-collapse: collapse;\r\n"
-					+ "    width: 100%;\r\n"
-					+ "}\r\n"
-					+ "td, th {\r\n"
-					+ "    border: 0.3px solid #acb9ca;\r\n"
-					+ "    padding: 2px;\r\n"
-					+ "  	padding-left: 8px;\r\n"
-					+ "}\r\n"
-					+ "td div {\r\n"
-					+ "   word-break: break-all !important;\r\n"
-					+ "}\r\n"
-					+ "th {\r\n"
-					+ "  white-space: nowrap !important;\r\n"
-					+ "  background-color: #afbfcf;\r\n"
-					+ "  display: table-cell;\r\n"
-					+ "  vertical-align: inherit;\r\n"
-					+ "  font-weight: normal;\r\n"
-					+ "}\r\n"
-					+ "pre{ \r\n"
-					+ "    background-color:#eeeeee !important; \r\n"
-					+ "    border:1px solid #cccccc !important; \r\n"
-					+ "    font-size:15px; \r\n"
-					+ "    padding: 10px 15px; \r\n"
-					+ "}\r\n");
+			RPO.setBodyCss(
+					"body{ \r\n" +
+							"    font-size: 15px; \r\n" +
+							"} \r\n" +
+							"figure{  \r\n" +
+							"    text-align: center;  \r\n" +
+							"    padding: 0px;  \r\n" +
+							"    margin: 10px 0px;  \r\n" +
+							"    display: inline-block; \r\n" +
+							"    border: none; \r\n" +
+							"} \r\n" +
+							"img{ \r\n" +
+							"    max-width: 600px; \r\n" +
+							"    height: auto !important; \r\n" +
+							"    display: block; \r\n" +
+							"    margin: auto !important\r\n" +
+							"} \r\n" +
+							"p{ \r\n" +
+							"    padding:0px !important; \r\n" +
+							"    margin:0px !important; \r\n" +
+							"    margin-bottom: 0px !important; \r\n" +
+							"} \r\n" +
+							"li{ \r\n" +
+							"    margin-bottom: 10px !important; \r\n" +
+							"} \r\n" +
+							"code { \r\n" +
+							"    font-family: monospace!important; \r\n" +
+							"    color: #666; \r\n" +
+							"    background-color: #eeeeee !important; \r\n" +
+							"    border-radius: 6px !important; \r\n" +
+							"    padding-left: 100px !important; \r\n" +
+							"} \r\n" +
+							"code span{ \r\n" +
+							"    font-family: monospace!important; \r\n" +
+							"    color: #666; \r\n" +
+							"    background-color: #eeeeee !important; \r\n" +
+							"    border-radius: 6px !important; \r\n" +
+							"} \r\n" +
+							"table {\r\n" +
+							"    font-family: Arial, Helvetica, sans-serif;\r\n" +
+							"    border-collapse: collapse;\r\n" +
+							"    width: 100%;\r\n" +
+							"    max-width: 480px;\r\n" +
+							"}\r\n" +
+							"td, th {\r\n" +
+							"    border: 0.3px solid #acb9ca;\r\n" +
+							"  	padding-left: 8px;\r\n" +
+							"}\r\n" +
+							"td div {\r\n" +
+							"   word-break: break-all !important;\r\n" +
+							"}\r\n" +
+							"th {\r\n" +
+							"  white-space: nowrap !important;\r\n" +
+							"  background-color: #afbfcf;\r\n" +
+							"  font-weight: normal;\r\n" +
+							"}\r\n" +
+							"pre{ \r\n" +
+							"    background-color:#eeeeee !important; \r\n" +
+							"    border:1px solid #cccccc !important; \r\n" +
+							"    font-size:15px; \r\n" +
+							"    padding: 10px 15px; \r\n" +
+							"}\r\n" 
+			);
 			
 			em.persist(RPO);
 			HibHelper.getInstance().commit();
@@ -664,12 +804,119 @@ public class FSUtils {
 			Node document = parser.parse(text);
 			HtmlRenderer renderer = HtmlRenderer.builder().extensions(extensions).build();
 			String converted = renderer.render(document);
+			converted = converted.replaceAll("\\+\\+([^+]+)\\+\\+", "<u>$1</u>"); // Allow for custom underline markdown
 			converted += "<br/>";
+			converted = converted.replaceAll("<br>", "\r\n").replaceAll("<br/>","\r\n");
+			converted = converted.replaceAll("</p>\\s*<p>", "</p><p><br/></p><p>");
 			return converted;
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			return text;
 		}
+	}
+	public static Date getDue(EntityManager em, Date start, int Level){
+		RiskLevel level = (RiskLevel)em.createQuery("from RiskLevel where riskId = :id")
+				.setParameter("id", Level).getResultList()
+				.stream().findFirst().orElse(null);
+		if(level.getDaysTillDue() == null)
+			return null;
+		Calendar dueDate =  Calendar.getInstance();
+		dueDate.setTime(start);
+		dueDate.add(Calendar.DAY_OF_YEAR, level.getDaysTillDue());
+		return dueDate.getTime();
+	}
+	
+	public static Date getWarn(Date end,int days){
+		Calendar dueDate =  Calendar.getInstance();
+		dueDate.setTime(end);
+		dueDate.add(Calendar.DAY_OF_YEAR, - days);
+		return dueDate.getTime();
+	}
+	
+	public static Date getWarning(EntityManager em, Date start, int Level){
+		RiskLevel level = (RiskLevel)em.createQuery("from RiskLevel where riskId = :id")
+				.setParameter("id", Level).getResultList()
+				.stream().findFirst().orElse(null);
+		if(level.getDaysTillWarning() == null)
+			return null;
+		Calendar dueDate =  Calendar.getInstance();
+		dueDate.setTime(start);
+		dueDate.add(Calendar.DAY_OF_YEAR, level.getDaysTillWarning());
+		return dueDate.getTime();
+	}
+	
+	public static String addBadge(String title, String color, String icon) {
+		return String.format("<small class=\"badge badge-%s\"><i class=\"fa %s\"></i>%s</small>",
+				color,
+				icon,
+				title);
+	}
+	
+	public static void CheckForUpdatedCustomFields(Assessment assessment, EntityManager em) {
+		
+		if(assessment.isFinalized()) {
+			return;
+		}
+		List<CustomType> types = em
+				.createQuery("from CustomType where type = :variableType and (deleted IS NULL or deleted = false)")
+				.setParameter("variableType", CustomType.ObjType.ASMT.getValue())
+				.getResultList();
+
+
+		if(CustomType.FieldType.values().length > 3) {
+			types = types
+				.stream()
+				.filter( vType ->
+					vType.getAssessmentTypes()
+						.stream()
+						.anyMatch( aType ->
+							aType.getId().equals(assessment.getType().getId())
+						))
+				.collect(Collectors.toList());
+		}
+		final List<CustomField> fields = assessment.getCustomFields();
+
+		final List<CustomType> filteredTypes = types;
+
+		// Identify CustomFields that should be removed (no longer enabled for the assessment type)
+		List<CustomField> fieldsToRemove = fields.stream()
+				.filter( f -> !filteredTypes.stream().anyMatch(t -> t.equals( f.getType() )))
+				.collect(Collectors.toList());
+
+		// Find New Fields we need to add
+		List<CustomType> newTypes = filteredTypes.stream()
+				.filter( t -> !fields.stream().anyMatch(f -> f.getType().equals(t) ) )
+				.collect(Collectors.toList());
+
+		System.out.println("CustomFields to remove: " + fieldsToRemove.size());
+		System.out.println("Found new CustomTypes to add : " + newTypes.size() );
+
+		// Just return if there are no changes
+		if(fieldsToRemove.isEmpty() && newTypes.isEmpty()) {
+			System.out.println("No Custom Field Changes Found");
+			return;
+		}
+
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+
+		// Remove fields that are no longer applicable - modify the existing collection in-place
+		fields.removeAll(fieldsToRemove);
+
+		// Create and add new fields directly to the existing collection
+		for(CustomType type : newTypes) {
+			CustomField newField = new CustomField();
+			newField.setType(type);
+			newField.setValue(type.getDefaultValue());
+			em.persist(newField);
+			fields.add(newField);
+		}
+
+		// Persist the assessment - the collection is already modified in-place
+		em.persist(assessment);
+		HibHelper.getInstance().commit();
+
+		System.out.println("CustomFields Updated to " + fields.size() + " fields");
 	}
 
 }

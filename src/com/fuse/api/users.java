@@ -17,6 +17,7 @@ import javax.ws.rs.core.Response;
 
 import com.fuse.api.util.Support;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.PasswordReset;
 import com.fuse.dao.Permissions;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
@@ -37,7 +38,7 @@ public class users {
 	@POST
 	@ApiOperation(value = "Add a user to Faction.", notes = "This call will give you the ability to create a user in Faction. If the user already exists then"
 			+ " an error will be returned. You can choose to send the user an email confirmation link or create "
-			+ " an account with an empty password. The later is mostly used with SSO type integrations.")
+			+ " an account with an empty password. The later is mostly used with SSO type integrations.", position = 10)
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 400, message = "Error Occured. User most likely already exists."),
 			@ApiResponse(code = 200, message = "Request Successfull") })
@@ -88,15 +89,23 @@ public class users {
 				}
 				newUser.setTeam(t);
 				if (verify != null && verify == true) {
-					String pass = UUID.randomUUID().toString();
-					newUser.setPasshash(AccessControl.HashPass("", pass));
+					String key = UUID.randomUUID().toString();
+					newUser.setPasshash(AccessControl.HashPass(UUID.randomUUID().toString()));
 					// Setting username to an empty string prevents logins with GUID.
 					// You must register first and create a password to login.
+					PasswordReset reset = new PasswordReset();
+					reset.setKey(key);
+					reset.setUser(u);
+					reset.setCreated(new Date());
+					HibHelper.getInstance().preJoin();
+					em.joinTransaction();
+					em.persist(reset);
+					HibHelper.getInstance().commit();
 					String message = "Hello " + fname + " " + lname + "<br><br>";
 					message += "Click the link below to update your password:<br><br>";
 					String url = req.getRequestURL().toString();
 					url = url.replace(req.getRequestURI(), "");
-					url = url + req.getContextPath() + "/portal/Register?uid=" + pass;
+					url = url + req.getContextPath() + "/portal/Register?uid=" + key;
 					message += "<a href='" + url + "'>Click here to Register</a><br>";
 					EmailThread emailThread = new EmailThread(email, "New Account Created", message);
 					TaskQueueExecutor.getInstance().execute(emailThread);
@@ -131,7 +140,7 @@ public class users {
 
 	@POST
 	@ApiOperation(value = "Disable A Faction User.", notes = "This operation will set any user into the inactive state. They will not be"
-			+ " able to log back in to the system untill the account is reset. ")
+			+ " able to log back in to the system untill the account is reset. ", position = 20)
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 400, message = "Error Occured. User most likely already exists."),
 			@ApiResponse(code = 200, message = "Request Successfull") })
@@ -172,7 +181,7 @@ public class users {
 	}
 
 	@POST
-	@ApiOperation(value = "Unlock A Faction User.", notes = "This operation will set any user into back into the acitive state.")
+	@ApiOperation(value = "Unlock A Faction User.", notes = "This operation will set any user into back into the acitive state.", position = 30)
 	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 400, message = "Error Occured. User most likely already exists."),
 			@ApiResponse(code = 200, message = "Request Successfull") })

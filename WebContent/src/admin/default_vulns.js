@@ -1,14 +1,8 @@
-
-require('suneditor/dist/css/suneditor.min.css');
+require('select2/dist/css/select2.min.css')
 require('../scripts/fileupload/css/fileinput.css');
 require('../loading/css/jquery-loading.css');
-//require('bootstrap/dist/css/bootstrap.css');
-import suneditor from 'suneditor';
-import plugins from 'suneditor/src/plugins';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/htmlmixed/htmlmixed';
-import 'codemirror/lib/codemirror.css';
 import '../loading/js/jquery-loading';
+import {FactionEditor} from '../utils/editor';
 import 'jquery';
 import 'datatables.net';
 import 'datatables.net-bs';
@@ -20,82 +14,29 @@ import 'select2';
 import '../scripts/jquery.autocomplete.min';
 import { marked } from 'marked';
 import CVSS from '../cvss'
-
-let fromMarkdown = {
-	name: 'fromMarkdown',
-	display: 'command',
-	title: 'Convert Markdown',
-	buttonClass: '',
-	innerHTML: '<i class="fa-brands fa-markdown" style="color:lightgray"></i>',
-	add: function(core, targetElement) {
-		core.context.fromMarkdown = {
-			targetButton: targetElement,
-			preElement: null
-		}
-	},
-	active: function(element) {
-		if (element) {
-			this.util.addClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
-			this.context.fromMarkdown.preElement = element;
-			return true;
-		} else {
-			this.util.removeClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
-			this.context.fromMarkdown.preElement = null;
-		}
-		return false;
-	},
-	action: function() {
-		let selected = this.getSelectedElements();
-		const md = selected.reduce((acc, item) => acc + item.innerText + "\n", "");
-		const html = marked.parse(md);
-		const div = document.createElement("p");
-		div.innerHTML = html;
-		const parent = selected[0].parentNode;
-		parent.insertBefore(div, selected[0]);
-		for (let i = 0; i < selected.length; i++) {
-			selected[i].remove();
-		}
-		this.history.push(true)
+global.editors = new FactionEditor(-1);
+global.editors.createEditor("description",false, ()=>{});
+global.editors.createEditor("recommendation",false, ()=>{});
+$('[id^="rtCust"]').each(function (_index, el) {
+	if(el.id.indexOf("_header") == -1){
+		global.editors.createEditor(el.id, "", false, ()=>{});
 	}
-};
-
-plugins['fromMarkdown'] = fromMarkdown;
-let editorOptions = {
-	codeMirror: CodeMirror,
-	plugins: plugins,
-	buttonList: [
-		['undo', 'redo', 'fontSize', 'formatBlock', 'textStyle'],
-		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
-		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown', 'codeView'],
-	],
-	defaultStyle: 'font-family: arial; font-size: 18px',
-	minHeight: 500,
-	height: "auto"
-};
-global.editors = {
-	description: suneditor.create("description", {...editorOptions}),
-	recommendation: suneditor.create("recommendation", {...editorOptions})
-};
-global.editors.description.onChange = function(contents, core) {
-	console.log(contents)
-	if (!contents.endsWith("</p>")) {
-		global.editors.description.setContents(contents + "<p><br></p>");
-	}
-}
-global.editors.recommendation.onChange = function(contents, core) {
-	if (!contents.endsWith("</p>")) {
-		global.editors.remediation.setContents(contents + "<p><br></p>");
-	}
-}
+});
 
 global.editVuln = function editVuln(id) {
 
 	$.get('DefaultVulns?vulnId=' + id + '&action=getvuln').done(function(data) {
-		global.editors.description.setContents(marked.parse(b64DecodeUnicode(data.desc)));
-		global.editors.recommendation.setContents(marked.parse(b64DecodeUnicode(data.rec)));
-		global.editors.description.core.history.reset();
-		global.editors.recommendation.core.history.push(true);
+        global.editors.recreateEditor("recommendation", data.rec, false, true);
+        global.editors.recreateEditor("description", data.desc, false, true);
+		
+        $('[id^="type"]').each((_index, el) => {
+                $(el).val("");
+		});
+        $('[id^="rtCust"]').each(function (_index, el) {
+			if(el.id.indexOf("_header") == -1){
+	        	global.editors.recreateEditor(el.id, "", false, true);
+			}
+        });
 
 		$("#title").val($("<div/>").html(data.name).text());
 		setIntVal(data.impact, "impact");
@@ -105,8 +46,22 @@ global.editVuln = function editVuln(id) {
 		$("#cvss40Score").val(data.cvss40Score);
 		$("#cvss31String").val(data.cvss31String);
 		$("#cvss40String").val(data.cvss40String);
-		$(data.cf).each(function(a, b) {
-			$("#type" + b.typeid).val(b.value);
+		$(data.cf).each(function (a, b) {
+			let el = $("#type" + b.typeid);
+			let rtEl = $("#rtCust" + b.typeid);
+			if (el.length != 0){
+				let value = b64DecodeUnicode(b.value)
+				if (el[0].type == 'checkbox' && value == 'true') {
+					$(el).prop('checked', true);
+				}
+				else if (el[0].type == 'checkbox' && value == 'false') {
+					$(el).prop('checked', false);
+				}
+				else
+					$(el).val(value).trigger('change');
+			}else if(rtEl.length != 0){
+				global.editors.recreateEditor("rtCust" + b.typeid, b.value, false,true)
+			}
 		});
 		$("#catNameSelect").val(data.category).trigger('change');
 		$("#vulnModal").modal({
@@ -116,8 +71,8 @@ global.editVuln = function editVuln(id) {
 		});
 		$("#saveVuln").unbind();
 		$(".saveVuln").click(function() {
-			let desc = global.editors.description.getContents();
-			let rec = global.editors.recommendation.getContents();
+			let desc = global.editors.getEditorText('description')
+			let rec = global.editors.getEditorText('recommendation')
 			let postData = "description=" + encodeURIComponent(desc);
 			postData += "&recommendation=" + encodeURIComponent(rec);
 			postData += "&name=" + $("#title").val();
@@ -131,13 +86,26 @@ global.editVuln = function editVuln(id) {
 			postData += "&category=" + $("#catNameSelect").select2("val");
 			postData += "&vulnId=" + id;
 			let fields = [];
-			for (let vulnId of vulnTypes) {
-				let val = $(`#type${vulnId}`).val();
-				if(`${val}` == "undefined"){
-					val=""
+			$('[id^="type"]').each(function(){
+				if(this.id.indexOf("_header") == -1){
+					let val = "";
+					if (this.type == 'checkbox') {
+						val = $(this).is(":checked");
+					} else {
+						val = $(this).val();
+					}
+					let fieldId = this.id.replace("type","");
+					fields.push(`{"typeid" : ${fieldId}, "value" : "${encodeURIComponent(b64EncodeUnicode(val))}"}`);
 				}
-				fields.push(`{"typeid" : ${vulnId}, "value" : "${val}"}`);
-			}
+			});
+			$('[id^="rtCust"]').each(function () {
+				if(this.id.indexOf("_header") == -1){
+					const rtId = this.id;
+					let contents = global.editors.getHTML(rtId)
+					let fieldId = this.id.replace("rtCust","");
+					fields.push(`{"typeid" : ${fieldId}, "value" : "${encodeURIComponent(b64EncodeUnicode(contents))}"}`);
+				}
+			});
 			postData += '&cf=[' + fields.join(",") + "]";
 			postData += "&action=savevuln";
 			postData += "&_token=" + _token;
@@ -291,14 +259,21 @@ $(function() {
 	});
 	$("#addVuln").click(function() {
 		
-		let desc = global.editors.description.setContents("");
-		let rec = global.editors.recommendation.setContents("");
-		global.editors.description.core.history.reset();
-		global.editors.recommendation.core.history.push(true);
+        global.editors.recreateEditor("recommendation", "", false, true);
+        global.editors.recreateEditor("description", "", false, true);
+        $('[id^="type"]').each((_index, el) => {
+                $(el).val("");
+		});
+        $('[id^="rtCust"]').each(function (_index, el) {
+			if(el.id.indexOf("_header") == -1){
+	        	global.editors.recreateEditor(el.id, "", false, true);
+			}
+        });
 		$("#title").val("");
-		$("#impact").val(0).trigger('change')
-		$("#likelyhood").val(0).trigger('change')
-		$("#overall").val(0).trigger('change')
+		const last_sev = $("#overall").children()[0].value;
+		$("#impact").val(last_sev).trigger('change')
+		$("#likelyhood").val(last_sev).trigger('change')
+		$("#overall").val(last_sev).trigger('change')
 		$("#catNameSelect").val(0).trigger('change')
 		$("#cvss31String").val('');
 		$("#cvss40String").val('');
@@ -311,8 +286,8 @@ $(function() {
 		});
 		$(".saveVuln").unbind();
 		$(".saveVuln").click(function() {
-			let desc = global.editors.description.getContents();
-			let rec = global.editors.recommendation.getContents();
+			let desc = global.editors.getEditorText('description')
+			let rec = global.editors.getEditorText('recommendation')
 			let data = "description=" + encodeURIComponent(desc);
 			data += "&recommendation=" + encodeURIComponent(rec);
 			data += "&name=" + $("#title").val();
@@ -325,13 +300,26 @@ $(function() {
 			data += "&cvss31Score=" + $("#cvss31Score").val();
 			data += "&cvss40Score=" + $("#cvss40Score").val();
 			let fields = [];
-			for (let vulnId of vulnTypes) {
-					let val = $(`#type${vulnId}`).val();
-					if(`${val}` == "undefined"){
-						val=""
+			$('[id^="type"]').each(function (event) {
+				if(this.id.indexOf("_header") == -1){
+					let val = "";
+					if (this.type == 'checkbox') {
+						val = $(this).is(":checked");
+					} else {
+						val = $(this).val();
 					}
-				fields.push(`{"typeid" : ${vulnId}, "value" : "${val}"}`);
-			}
+					let fieldId = this.id.replace("type","");
+					fields.push(`{"typeid" : ${fieldId}, "value" : "${encodeURIComponent(b64EncodeUnicode(val))}"}`);
+				}
+			});
+			$('[id^="rtCust"]').each(function () {
+				if(this.id.indexOf("_header") == -1){
+					const rtId = this.id;
+					let contents = global.editors.getHTML(rtId)
+					let fieldId = this.id.replace("rtCust","");
+					fields.push(`{"typeid" : ${fieldId}, "value" : "${encodeURIComponent(b64EncodeUnicode(contents))}"}`);
+				}
+			});
 			data += '&cf=[' + fields.join(",") + "]";
 			data += "&action=addvuln";
 			data += "&_token=" + _token;

@@ -59,19 +59,40 @@ export default class CVSS {
 	
 	getCVSSScore(){
 		if(this.is31()){
-			let score = this.vector.BaseScore();
-			const tmpScore = this.vector.TemporalScore();
 			const envScore = this.vector.EnvironmentalScore();
-			if(tmpScore != 0 && tmpScore < score){
-				score = tmpScore
-			}
-			if(envScore != 0 && envScore < score){
-				score = envScore
-			}
-			return score;
+			return this.roundup(envScore)
 		}else{
 			return this.vector.Score();
 		}
+	}
+	roundup(num) {
+	  // Convert to string to work with decimal places
+	  const str = num.toString();
+	  const decimalIndex = str.indexOf('.');
+	  
+	  // If no decimal point, add .0 and return
+	  if (decimalIndex === -1) {
+		return parseFloat(num).toFixed(1);
+	  }
+	  
+	  // If only one decimal place, return with .0 format
+	  if (str.length <= decimalIndex + 2) {
+		return parseFloat(num).toFixed(1);
+	  }
+	  
+	  // Get the second decimal digit
+	  const secondDecimal = parseInt(str[decimalIndex + 2]);
+	  
+	  // If second decimal is 0, return number with 1 decimal place (.0 format)
+	  if (secondDecimal === 0) {
+		return parseFloat((Math.round(num * 10) / 10).toFixed(1));
+	  }
+	  
+	  // If second decimal is greater than 0, round up the first decimal
+	  const firstDecimal = parseInt(str[decimalIndex + 1]);
+	  const integerPart = Math.floor(num);
+	  
+	  return parseFloat((integerPart + (firstDecimal + 1) / 10).toFixed(1));
 	}
 	
 	updateCVSSScore(){
@@ -292,31 +313,30 @@ export default class CVSS {
 								$("#modalCVSSString").val(vectorString);
 								
 							}else{
-								let at = $("input[name='at']:checked").val() || "X"
-								let vc = $("input[name='vc']:checked").val() || "X"
-								let vi = $("input[name='vi']:checked").val() || "X"
-								let va = $("input[name='va']:checked").val() || "X"
-								let sc = $("input[name='sc']:checked").val() || "X"
-								let si = $("input[name='si']:checked").val() || "X"
-								let sa = $("input[name='sa']:checked").val() || "X"
+								let at = $("input[name='at']:checked").val() || "X";
+								let vc = $("input[name='vc']:checked").val() || "X";
+								let vi = $("input[name='vi']:checked").val() || "X";
+								let va = $("input[name='va']:checked").val() || "X";
+								let sc = $("input[name='sc']:checked").val() || "X";
+								let si = $("input[name='si']:checked").val() || "X";
+								let sa = $("input[name='sa']:checked").val() || "X";
 								
-								let s = $("input[name='s']:checked").val() || "X"
-								let au = $("input[name='au']:checked").val() || "X"
-								let r = $("input[name='r']:checked").val() || "X"
-								let v = $("input[name='v']:checked").val() || "X"
-								let re = $("input[name='re']:checked").val() || "X"
-								let u = $("input[name='u']:checked").val() || "X"
+								let s = $("input[name='s']:checked").val() || "X";
+								let au = $("input[name='au']:checked").val() || "X";
+								let r = $("input[name='r']:checked").val() || "X";
+								let v = $("input[name='v']:checked").val() || "X";
+								let re = $("input[name='re']:checked").val() || "X";
+								let u = $("input[name='u']:checked").val() || "X";
 								
-								let mvc = $("input[name='mvc']:checked").val() || "X"
-								let mvi = $("input[name='mvi']:checked").val() || "X"
-								let mva = $("input[name='mva']:checked").val() || "X"
+								let mvc = $("input[name='mvc']:checked").val() || "X";
+								let mvi = $("input[name='mvi']:checked").val() || "X";
+								let mva = $("input[name='mva']:checked").val() || "X";
 								
 								
-								let msc = $("input[name='msc']:checked").val() || "X"
-								let msi = $("input[name='msi']:checked").val() || "X"
-								let msa = $("input[name='msa']:checked").val() || "X"
-								
-								let mat = $("input[name='mat']:checked").val() || "X"
+								let msc = $("input[name='msc']:checked").val() || "X";
+								let msi = $("input[name='msi']:checked").val() || "X";
+								let msa = $("input[name='msa']:checked").val() || "X";
+								let mat = $("input[name='mat']:checked").val() || "X";
 								let cvss40Vector = {
 									AT: at, 
 									VC: vc, 
@@ -338,11 +358,11 @@ export default class CVSS {
 									MSI: msi, 
 									MSA: msa, 
 									MAT: mat
-								}
+								};
 								cvssVector = {
 									...cvss40Vector, 
 									...commonVector
-								}
+								};
 								Object.keys(cvssVector).forEach( (a, _i) =>{
 										_this.vector.Set(a,cvssVector[a]);
 								});

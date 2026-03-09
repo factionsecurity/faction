@@ -3,6 +3,7 @@ package com.fuse.actions.admin;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.convention.annotation.Action;
@@ -16,6 +17,7 @@ import com.fuse.dao.Campaign;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.Status;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
 import com.fuse.dao.query.AssessmentQueries;
@@ -66,10 +68,16 @@ public class Options extends FSActionSupport {
 	private String clientid;
 	private String profile;
 	private String status;
+	private Long statusId;
 	private String selfPeerReview;
 	private String riskName;
 	private Long riskId;
 	private Integer riskType;
+	private Boolean selected;
+	private String asmtTypes;
+	private CustomType resultType;
+	private List<Status> statuses;
+	
 
 	@Action(value = "Options")
 	public String execute() {
@@ -85,6 +93,7 @@ public class Options extends FSActionSupport {
 		campaigns = (List<Campaign>) em.createQuery("from Campaign").getResultList();
 		EMS = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst().orElse(null);
 		custom = (List<CustomType>) em.createQuery("from CustomType where deleted = false or deleted IS NULL").getResultList();
+		statuses = em.createQuery("from Status").getResultList();
 		if (EMS != null) {
 			if(EMS.getServer() == null || EMS.getServer().equals("")) {
 				EMS.initSMTPSettings();
@@ -152,9 +161,26 @@ public class Options extends FSActionSupport {
 
 				return this.ERRORJSON;
 			}
+			
+			AssessmentType type = em.find(AssessmentType.class, this.id);
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
-			AssessmentType type = em.find(AssessmentType.class, this.id);
+			
+			//remove assessment type from custom types
+			List<CustomType> customTypes = em.createQuery("from CustomType").getResultList();
+			for(CustomType customType : customTypes) {
+				List<AssessmentType> asmtTypes = customType.getAssessmentTypes();
+				if(asmtTypes != null && asmtTypes.stream().anyMatch( asmtType -> asmtType.getId().equals(type.getId()))) {
+					List<AssessmentType> updatedList = asmtTypes
+							.stream()
+							.filter( asmtType -> !asmtType.getId().equals(type.getId()) )
+							.collect(Collectors.toList());
+					customType.setAssessmentTypes(updatedList);
+					em.persist(customType);
+				}
+			}
+			
+			
 			em.remove(type);
 			AuditLog.audit(this, "Assessment Type " + type.getType() + " deleted", AuditLog.UserAction, false);
 			HibHelper.getInstance().commit();
@@ -168,6 +194,10 @@ public class Options extends FSActionSupport {
 				this.message = "Campaign Name is Empty.";
 				return this.ERRORJSON;
 			}
+			if(this.selected == null) {
+				this.selected = false;
+			}
+			
 			Campaign CA = AssessmentQueries.getCampaignByName(em, this.name);
 
 			if (CA != null) {
@@ -179,6 +209,7 @@ public class Options extends FSActionSupport {
 			em.joinTransaction();
 			Campaign camp = new Campaign();
 			camp.setName(this.name.trim());
+			camp.setSelected(this.selected);
 			em.persist(camp);
 			AuditLog.audit(this, "Campaign " + this.name + " added", AuditLog.UserAction, false);
 			HibHelper.getInstance().commit();
@@ -290,18 +321,37 @@ public class Options extends FSActionSupport {
 
 		CustomType foundType = (CustomType) em.createQuery("from CustomType where variable = :variable").setParameter("variable", this.cfvar)
 				.getResultList().stream().findFirst().orElse(null);
-		if (foundType != null && foundType.getDeleted() != null && foundType.getDeleted()) {
+		/*if (foundType != null && foundType.getDeleted() != null && foundType.getDeleted()) {
 			message = "This variable has already been used by a deleted field";
 			return this.ERRORJSON;
-		}else if (foundType != null && (foundType.getDeleted() == null || !foundType.getDeleted())) {
+		}else */
+		if (foundType != null && (foundType.getDeleted() == null || !foundType.getDeleted())) {
 			message = "This variable has already been used by an active field";
 			return this.ERRORJSON;
 		}
-
+		
 		CustomType type = new CustomType(this.cfname, this.cfvar.replaceAll(" ", ""), this.cftype);
+		
+		List<AssessmentType> typeList = new ArrayList<>();
+		if(this.asmtTypes != null && this.asmtTypes != "") {
+			String [] typeArray = this.asmtTypes.split(",");
+			for(String typeId : typeArray) {
+				if(typeId.toLowerCase().equals("all")) {
+					typeList = em.createQuery("from AssessmentType").getResultList();
+					break;
+				}else {
+					AssessmentType at = em.find(AssessmentType.class, Long.parseLong(typeId));
+					if(at != null) {
+						typeList.add(at);
+					}
+				}
+			}
+			type.setAssessmentTypes(typeList);
+		}
 		type.setDefaultValue(this.cfdefault);
 		type.setFieldType(this.cffieldtype);
 		type.setReadonly(this.readonly);
+		
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		em.persist(type);
@@ -322,23 +372,44 @@ public class Options extends FSActionSupport {
 			return this.ERRORJSON;
 
 		CustomType foundType = (CustomType) em.createQuery("from CustomType where variable = :variable").setParameter("variable", this.cfvar)
-				.getResultList().stream().findFirst().orElse("null");
-		if (foundType != null && foundType.getDeleted()) {
+				.getResultList().stream().findFirst().orElse(null);
+		/*if (foundType != null && foundType.getDeleted()) {
 			message = "This variable has already been used by a deleted field";
 			return this.ERRORJSON;
-		}else if (foundType != null && !foundType.getDeleted() && !foundType.getId().equals(this.cfid)) {
+		}else */
+		if (foundType != null && !foundType.getDeleted() && !foundType.getId().equals(this.cfid)) {
 			message = "This variable has already been used by an active field";
 			return this.ERRORJSON;
 		}
 		
 		CustomType type = (CustomType) em.createQuery("from CustomType where id = :id").setParameter("id", this.cfid)
 				.getResultList().stream().findFirst().orElse(null);
+		
+		List<AssessmentType> typeList = new ArrayList<>();
+		if(this.asmtTypes != null && this.asmtTypes != "") {
+			String [] typeArray = this.asmtTypes.split(",");
+			for(String typeId : typeArray) {
+				if(typeId.toLowerCase().equals("all")) {
+					typeList = em.createQuery("from AssessmentType").getResultList();
+					break;
+				}else {
+					AssessmentType at = em.find(AssessmentType.class, Long.parseLong(typeId));
+					if(at != null) {
+						typeList.add(at);
+					}
+				}
+			}
+			type.setAssessmentTypes(typeList);
+		}
+		
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		type.setKey(this.cfname);
 		type.setVariable(this.cfvar.replaceAll(" ", ""));
 		type.setReadonly(this.readonly);
 		type.setDefaultValue(cfdefault);
+		type.setFieldType(this.cffieldtype);
+		type.setType(this.cftype);
 		em.persist(type);
 		HibHelper.getInstance().commit();
 
@@ -370,6 +441,19 @@ public class Options extends FSActionSupport {
 		HibHelper.getInstance().commit();
 
 		return this.SUCCESSJSON;
+	}
+	
+	@Action(value = "getCustomType", results={
+			@Result(name="typeJson",location="/WEB-INF/jsp/admin/resultTypeJSON.jsp")
+		})
+	public String getCustomType() {
+		if (!(this.isAcadmin() || this.isAcmanager() || this.isAcengagement())) {
+			return LOGIN;
+		}
+		resultType = (CustomType) em.createQuery("from CustomType where id = :id").setParameter("id", this.cfid)
+				.getResultList().stream().findFirst().orElse(null);
+		
+		return "typeJson";
 	}
 
 	@Action(value = "updatePrConfig")
@@ -503,6 +587,38 @@ public class Options extends FSActionSupport {
 		return this.SUCCESSJSON;
 
 	}
+	@Action(value = "editSelectedCampaign")
+	public String editSelectedCampaign() {
+		if (!(this.isAcadmin() || this.isAcmanager() || this.isAcengagement())) {
+			return LOGIN;
+		}
+
+		if (!this.testToken(false))
+			return this.ERRORJSON;
+
+		
+		List<Campaign> camps = em.createQuery("from Campaign").getResultList();
+		if (camps == null)
+			return this.SUCCESSJSON;
+		
+		for(Campaign c : camps) {
+			if(c.getId().equals(this.getId())) {
+				c.setSelected(this.selected);
+				HibHelper.getInstance().preJoin();
+				em.joinTransaction();
+				em.persist(c);
+				HibHelper.getInstance().commit();
+			}else {
+				c.setSelected(false);
+				HibHelper.getInstance().preJoin();
+				em.joinTransaction();
+				em.persist(c);
+				HibHelper.getInstance().commit();
+			}
+		}
+		return this.SUCCESSJSON;
+
+	}
 
 	@Action(value = "editType")
 	public String editType() {
@@ -550,28 +666,12 @@ public class Options extends FSActionSupport {
 			this._message = "Status is Empty";
 			return this.ERRORJSON;
 		}
-		SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
-				.orElse(null);
-		if (ems == null) {
-			this._message = "No System Settings to update";
-			return this.SUCCESSJSON;
-		}
-
-		if (ems.getStatus().stream().anyMatch(s -> s.toLowerCase().equals(this.status.toLowerCase().trim()))) {
-			this._message = "Status Exists";
-			return this.ERRORJSON;
-		} else {
-			List<String> stats = ems.getStatus();
-			stats.add(this.status);
-			stats.sort(String.CASE_INSENSITIVE_ORDER);
-			ems.setStatus(stats);
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(ems);
-			AuditLog.audit(this, "User Added Status [" + this.status + "]", AuditLog.UserAction, null, null, false);
-			HibHelper.getInstance().commit();
-			return this.SUCCESSJSON;
-		}
+		Status s = new Status(this.status);
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		em.persist(s);
+		HibHelper.getInstance().commit();
+		return this.SUCCESSJSON;
 
 	}
 
@@ -582,30 +682,50 @@ public class Options extends FSActionSupport {
 		}
 		if (!this.testToken(false))
 			return this.ERRORJSON;
-		if (status == null || status.trim().equals("")) {
-			this._message = "Status is Empty";
-			return this.ERRORJSON;
-		}
-		SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
-				.orElse(null);
-		if (ems == null) {
-			this._message = "No System Settings to update";
-			return this.SUCCESSJSON;
-		}
-
-		if (ems.getStatus().stream().anyMatch(s -> s.equals(this.status.trim()))) {
-
-			List<String> stats = ems.getStatus();
-			stats.remove(this.status.trim());
-			stats.sort(String.CASE_INSENSITIVE_ORDER);
-			ems.setStatus(stats);
-			if (ems.getDefaultStatus().equals(this.status.trim()))
-				ems.setDefaultStatus("");
-
+		if(this.statusId != null) {
+			Status s = em.find(Status.class, this.statusId);
+			if(s.getBuiltin()) {
+				this._message = "Invalid Id";
+				return this.ERRORJSON;
+			}
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
-			em.persist(ems);
-			AuditLog.audit(this, "User Deleted Status [" + this.status + "]", AuditLog.UserAction, null, null, false);
+			em.remove(s);
+			AuditLog.audit(this, "User Deleted Status [" + this.statusId + "]", AuditLog.UserAction, null, null, false);
+			HibHelper.getInstance().commit();
+			return this.SUCCESSJSON;
+		} else {
+			this._message = "Status Does not Exist";
+			return this.ERRORJSON;
+		}
+
+	}
+	@Action("updateStatus")
+	public String updateStatus() {
+		if (!(this.isAcadmin())) {
+			return LOGIN;
+		}
+		if (!this.testToken(false))
+			return this.ERRORJSON;
+		if(this.statusId != null) {
+			Status s = em.find(Status.class, this.statusId);
+			if(s.getBuiltin()) {
+				this._message = "Invalid Id";
+				return this.ERRORJSON;
+			}
+			List<Status> exists = em.createQuery("from Status where name = :name")
+				.setParameter("name", this.status)
+				.getResultList();
+			
+			if(!exists.stream().anyMatch(z -> z.getId().equals(s.getId()))) {
+				this._message = "Name Exists";
+				return this.ERRORJSON;
+			}
+			s.setName(this.status);
+			HibHelper.getInstance().preJoin();
+			em.joinTransaction();
+			em.persist(s);
+			AuditLog.audit(this, "User Updated Status [" + this.statusId + "]", AuditLog.UserAction, null, null, false);
 			HibHelper.getInstance().commit();
 			return this.SUCCESSJSON;
 		} else {
@@ -615,39 +735,6 @@ public class Options extends FSActionSupport {
 
 	}
 
-	@Action("setDefaultStatus")
-	public String setDefaultStatus() {
-		if (!(this.isAcadmin())) {
-			return LOGIN;
-		}
-		if (!this.testToken(false))
-			return this.ERRORJSON;
-		if (status == null || status.trim().equals("")) {
-			this._message = "Status is Empty";
-			return this.ERRORJSON;
-		}
-		SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
-				.orElse(null);
-		if (ems == null) {
-			this._message = "No System Settings to update";
-			return this.ERRORJSON;
-		}
-
-		if (ems.getStatus().stream().anyMatch(s -> s.toLowerCase().equals(this.status.toLowerCase().trim()))) {
-
-			ems.setDefaultStatus(this.status.trim());
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(ems);
-			AuditLog.audit(this, "User Added Status [" + this.status + "]", AuditLog.UserAction, null, null, false);
-			HibHelper.getInstance().commit();
-			return this.SUCCESSJSON;
-		} else {
-			this._message = "This Status Does not Exist";
-			return this.ERRORJSON;
-		}
-
-	}
 
 	public String getActiveOptions() {
 		return "active";
@@ -948,6 +1035,26 @@ public class Options extends FSActionSupport {
 	public void setRiskType(Integer riskType) {
 		this.riskType = riskType;
 	}
+	
+	public void setSelected(Boolean selected) {
+		this.selected = selected;
+	}
+	
+	public void setAsmtTypes(String asmtTypes) {
+		this.asmtTypes = asmtTypes;
+	}
+	
+	public CustomType getResultType() {
+		return this.resultType;
+	}
+	public List<Status> getStatuses(){
+		return this.statuses;
+	}
+	public void setStatusId(Long statusId) {
+		this.statusId = statusId;
+	}
+		
+	
 	
 
 }

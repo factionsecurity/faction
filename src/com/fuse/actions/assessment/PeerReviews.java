@@ -12,6 +12,7 @@ import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.Comment;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.PeerReview;
+import com.fuse.dao.Permissions;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
@@ -50,7 +51,11 @@ public class PeerReviews extends FSActionSupport{
 			 //Add only PRs that are from the same team. 
 			 //TODO: make this a more granular control later on
 			 for(PeerReview pr : tmp){ 
-				 if(pr.getAssessment().getAssessor().get(0).getTeam() == null ) {
+				 if(user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
+					 //this user cannot do peer review
+					 continue;
+				 }
+				 else if(pr.getAssessment().getAssessor().get(0).getTeam() == null ) {
 					 reviews.add(pr);
 				 }
 				 else if(pr.getAssessment().getAssessor().get(0).getTeam().getId().longValue() == user.getTeam().getId().longValue()

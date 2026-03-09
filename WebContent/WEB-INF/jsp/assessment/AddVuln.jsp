@@ -15,7 +15,7 @@
 			</bs:row>
 		<bs:row>
 			<bs:mco colsize="2">
-				<button id="addVuln" class="btn btn-block btn-primary btn-lg"
+				<button id="addVuln" class="btn btn-primary btn-lg"
 					<s:if test="hideit">disabled</s:if>>
 					<b><i class="glyphicon glyphicon-plus"></i> New Vulnerability</b>
 				</button>
@@ -150,7 +150,7 @@ td:first-child {
 	border-left-style: dotted;
 }
 
-.userEdit {
+.userEditText {
 	background: #f39c12;
 	color: white;
 	font-weight: bold;
@@ -159,7 +159,6 @@ td:first-child {
 	padding-right: 7px;
 	padding-top: 2px;
 	padding-bottom: 4px;
-	margin-left: 30px;
 }
 
 .cvsstrue {
@@ -167,6 +166,16 @@ td:first-child {
 }
 .cvssfalse {
 	display: none;
+}
+
+#description {
+	background-color: white
+}
+#recommendation {
+	background-color: white
+}
+#details {
+	background-color: white
 }
 </style>
 
@@ -189,7 +198,7 @@ td:first-child {
 										id="title_header"></span></label>
 									<div class="col-sm-10">
 										<input type="text" class="form-control" id="title"
-											placeholder="Vulnerbility Name">
+											placeholder="Search for Vulnerability Title, CVE id, or Enter Custom Name">
 									</div>
 								</div>
 							</bs:row>
@@ -209,6 +218,23 @@ td:first-child {
 								</div>
 
 							</bs:row>
+							<s:if test="sectionsEnabled">
+								<bs:row>
+									<div class="form-group">
+										<label for="section" class="col-sm-2 control-label">Section:
+											<span id="reportSection_header"></span>
+										</label>
+										<div class="col-sm-10">
+											<select class="select2 form-control field-error" id="reportSection"
+												style="width: 100%">
+												<s:iterator value="sections" var="section">
+													<option value="<s:property value="#section[0]"/>"><s:property value="#section[1]"/></option>
+												</s:iterator>
+											</select>
+										</div>
+									</div>
+								</bs:row>
+							</s:if>
 							<s:if test="assessment.type.cvss31 || assessment.type.cvss40" >
 							<div class="cvss<s:property value="assessment.type.cvss31 || assessment.type.cvss40"/>">
 								<bs:row>
@@ -303,13 +329,16 @@ td:first-child {
 								<hr>
 							</s:if>
 						</div>
+					</div>
+					<div class="row">
 						<s:iterator value="customFields">
-							<div class="form-group">
-								<div class="col-md-6">
-									<label class="col-sm-2 control-label"
-										title="Variable: &#x24;{cf${variable}}">${key}<span
-										id="type${id}_header"></span></label>
-									<div class="col-md-4" style="height: 50px">
+						<s:if test="fieldType != 3">
+							<div class="form-group col-md-3" style="padding-left: 25px">
+								<label class=""
+									title='Variable: &#x24;{cf<s:property value="variable"/>}'><s:property value="key"/>
+										<span id="type${id}_header"></span><br/><small>Variable: &#x24;&#x7B;cf<s:property value="variable"/>&#x7D;</small>
+										</label>
+									<div class="" style="height: 50px">
 										<s:if test="fieldType == 0">
 											<input type="text" class="form-control pull-right"
 												id="type${id}" value='${defaultValue}'
@@ -317,9 +346,8 @@ td:first-child {
 												<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized || readOnly">disabled</s:if> />
 										</s:if>
 										<s:if test="fieldType == 1">
-											<br>
 											<input type="checkbox" class="icheckbox_minimal-blue"
-												style="width: 20px; height: 20px; position: absolute; margin-top: -13px"
+												style="width: 20px; height: 20px; margin-top: -13px"
 												data-default='${defaultValue}'
 												id="type<s:property value="id"/>"
 												<s:if test="defaultValue == 'true'">checked</s:if>
@@ -340,7 +368,7 @@ td:first-child {
 										</s:if>
 									</div>
 								</div>
-							</div>
+							</s:if>
 
 						</s:iterator>
 					</div>
@@ -358,10 +386,10 @@ td:first-child {
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="description" toolbar="Full" id="description"
+										<div name="description" toolbar="Full" id="description"
 											clickToEnable="false">
 
-										</bs:editor>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -381,10 +409,10 @@ td:first-child {
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="recommendation" toolbar="Full"
+										<div name="recommendation" toolbar="Full"
 											id="recommendation" clickToEnable="false">
 
-										</bs:editor>
+										</div>
 									</div>
 								</div>
 							</div>
@@ -404,16 +432,20 @@ td:first-child {
 								<!-- /.box-header -->
 								<div class="box-body pad">
 									<div>
-										<bs:editor name="details" toolbar="Full" id="details"
+										<div name="details" toolbar="Full" id="details"
 											clickToEnable="false">
 
-										</bs:editor>
+										</div>
 									</div>
 								</div>
 							</div>
 							<!-- /.box -->
 						</div>
 					</div>
+					
+					<!-- Custom Forms -->
+						<jsp:include page="VulnRichTextForms.jsp"/>
+					<!--  Custom Forms -->
 
 				</div>
 				<!-- /.box-body -->
@@ -436,7 +468,7 @@ td:first-child {
 			<div class="box-body">
 				<div class="moveDown"></div>
 				<table id="vulntable"
-					class="table table-striped table-hover dataTable">
+					class="table table-striped table-hover dataTable" style="width:100%">
 					<thead class="theader">
 						<tr>
 							<th></th>
@@ -477,6 +509,7 @@ td:first-child {
 </div>
 
 <input type="hidden" id="isCVSS40" value="<s:property value="assessment.type.cvss40"/>"></input>
+<input type="hidden" id="isCVSS31" value="<s:property value="assessment.type.cvss31"/>"></input>
 
 <script>
   function getValueFromId(id){

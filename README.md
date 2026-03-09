@@ -1,14 +1,46 @@
-# FACTION PenTesting Report Generation and Collaboration Framework
+# OWASP - FACTION PenTesting Report Generation and Collaboration Framework
 
- ![GitHub last commit](https://img.shields.io/github/last-commit/factionsecurity/faction) ![GitHub Release Date - Published_At](https://img.shields.io/github/release-date/factionsecurity/faction)
+ ![GitHub last commit](https://img.shields.io/github/last-commit/factionsecurity/faction) ![GitHub Release Date - Published_At](https://img.shields.io/github/release-date/factionsecurity/faction) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10120/badge)](https://www.bestpractices.dev/projects/10120)
 
 [![](https://img.shields.io/badge/null0perat0r-it?style=flat-square&logo=mastodon&labelColor=white&color=white&link=https%3A%2F%2Finfosec.exchange%2F%40null0perat0r)](https://infosec.exchange/@null0perat0r)
- [![](https://img.shields.io/twitter/follow/we_are_faction)](https://twitter.com/intent/follow?screen_name=we_are_faction)
+[![Bluesky](https://img.shields.io/badge/Bluesky-0285FF?logo=bluesky&logoColor=fff)](https://bsky.app/profile/factionsecurity.com)
 
+___Faction is now an OWASP Project! You can find more information [here](https://owasp.org/www-project-faction/)___
 
 ![image](https://github.com/factionsecurity/faction/assets/2343831/d9237bed-302f-4e6a-9716-22ae88d0dc36)
 
-___News: Faction 1.2 Release in March: [More Info](https://github.com/orgs/factionsecurity/discussions/40)___
+## Sponsors
+### Premium Sponsors 
+
+<table style="background:white">
+ <tr>
+ <td align="center">
+ <a href="https://www.otto-js.com"><img style="width:100px; margin-right:30%; margin-left: 30%" src="https://www.otto-js.com/assets/otto-blue-logo.jpg"/></a><br/><a href="https://www.otto-js.com">otto-js - PCI and Client Side Security</a> 
+ </td>
+ <td align="center">
+ <a href="https://secninjaz.com/">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="backers/white-horizontal.svg">
+  <source media="(prefers-color-scheme: light)" srcset="backers/black-horizontal.svg">
+  <img alt="SecNinjaz Technologies LLP" src="backers/Secninjaz+Logo+with+outline+01.svg" style="padding-bottom:25px; margin-top:30px">
+</picture>
+ </a><br/><a href="https://secninjaz.com/">Secninjaz Technologies LLP</a> 
+ </td>
+ </td>
+ </tr>
+</table>
+
+### Become a Sponsor ❤️
+If you like the project and would like to see it advance then consider being a sponsor. All sponsors get access to the Faction discord server and will have bug reports prioritized. Just click the sponsor links at the top of this repo or contact us at info[at]factionsecurity.com
+
+### Community, Getting Involved, and Updates
+[Join the OWASP Slack Community](https://owasp.org/slack/invite) and and follow #project-faction! Be sure to follow us on [BlueSky](https://bsky.app/profile/factionsecurity.com) and our [Blog](https://medium.com/@we-are-faction) to get the latest updates.
+
+
+### Contributing
+Please see our [contributing guidelines](CONTRIBUTING.md) for details and standards on contributing before considering or submitting a pull request.
+
+# Introduction
 
 FACTION is your entire assessment workflow in a box. With FACTION you can:
 1. Automate pen testing and security assessment Reports
@@ -62,8 +94,6 @@ You can find out more information about creating your own custom report template
 ## Don't want to host it yourself?
 We can provide hosting for your instance. All instances are single tenants so you don't have to worry about sharing infrastructure with untrusted parties. Navigate to [https://www.factionsecurity.com to learn more](https://www.factionsecurity.com). 
 
-## Become a Sponsor ❤️
-If you like the project and would like to see it advance then consider being a sponser. All sponsers get access to the Faction discord server and will have bug reports priotirized. Just click the sponsor links at the top of this repo. 
 
 ## Screenshots
 __Vulnerability Templates__

@@ -51,7 +51,7 @@ import com.opensymphony.xwork2.interceptor.annotations.Before;
 public class FSActionSupport extends ActionSupport implements SessionAware, ServletRequestAware, ServletResponseAware { 
 	
 
-	protected SessionMap<String,Object> JSESSION;  
+	protected SessionMap JSESSION;  
 	protected Map<String,String> COOKIES;
 	public HttpServletRequest request = ServletActionContext.getRequest();
 	public HttpServletResponse response = ServletActionContext.getResponse();
@@ -254,7 +254,7 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	}*/
 	public String get_token() {
 		if(this._token == null || this._token.equals("")) {
-			return CSRF.getToken(ServletActionContext.getRequest().getSession());
+			return CSRF.getOrCreateToken(ServletActionContext.getRequest().getSession());
 		}else {
 			return this._token;
 		}

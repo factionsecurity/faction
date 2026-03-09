@@ -4,6 +4,15 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 
+<style>
+#notes{
+	background-color: white;
+}
+div[id^='rtCust']{
+	background-color: white;
+}
+</style>
+
  
 <bs:row>
 <bs:mco colsize="6">
@@ -14,7 +23,16 @@
    <bs:button size="lg" color="primary" colsize="2" text="<i class='glyphicon glyphicon-plus'></i> Save" id="AddAssessment"></bs:button>
  </bs:row>
  <bs:row>
- &nbsp;
+	  <bs:mco colsize="12">
+	  	<h3>Assessment Details
+	  	<span style="float: right;">
+  <s:if test="currentAssessment.InPr"> <span class="text-warning fa fa-eye"></span><b class="text-warning"> (in Peer Review)</b></s:if>
+  <s:if test="currentAssessment.prComplete"> <span class="text-success fa fa-eye"></span><b class="text-success"> (Peer Review Completed)</b></s:if>
+  <s:if test="currentAssessment.Finalized"> <span class="text-primary fa fa-check"></span><b  class="text-primary"> Assessment Completed</b></s:if>
+  </span>
+  </h3>
+	  <hr>
+	  </bs:mco>
  </bs:row>
 	<bs:row>
 		 <!--<bs:inputgroup name="App ID:" id="appId" colsize="3"><s:property value="currentAssessment.appId"/></bs:inputgroup>
@@ -36,50 +54,6 @@
 		
 		 <bs:inputgroup name="App Name: <b>*</b>" id="appName" colsize="4" ><s:property value="currentAssessment.name" /></bs:inputgroup>
 		 <bs:dt name="Start and End Date: <b>*</b>" colsize="4" id="reservation" readOnly="${currentAssessment.isFinalized() }"><s:property value="startStr"/> to <s:property value="endStr"/></bs:dt>
-		 <bs:select name="Engagement Contact: <b></b>" colsize="4" id="engName">
-		 	<s:iterator value="engagement">
-                      <option value="<s:property value="id"/>"><s:property value="fname"/> <s:property value="lname"/></option>
-            </s:iterator>
-		 </bs:select>
-		 <bs:select name="Remediation Contact: <b></b>" colsize="4" id="remName" readOnly="${currentAssessment.isFinalized() }">
-		 	<s:iterator value="remediation">
-                      <option value="<s:property value="id"/>"><s:property value="fname"/> <s:property value="lname"/></option>
-            </s:iterator>
-		 </bs:select>
-		
-		 <s:iterator value="custom">
-			 <bs:mco colsize="4">
-			 <div class="form-group">
-			     <label><s:property value="key"/>:</label>
-			     	<s:if test="fieldType == 0">
-			       		<input type="text" 
-			       			class="form-control" 
-			       			id="cust<s:property value="id"/>" 
-			       			<s:if test="currentAssessment.finalized">readonly</s:if> 
-			       			value="<s:property value="defaultValue"/>"/>
-			       	</s:if>
-			       	<!--  ${fieldType} -->
-			     	<s:if test="fieldType == 1">
-			       		<br><input type="checkbox" 
-			       			class="icheckbox_minimal-blue" style="height:34px"
-			       			id="cust<s:property value="id"/>" 
-			       			<s:if test="currentAssessment.finalized">readonly</s:if> 
-			       			<s:if test="defaultValue == 'true'">checked</s:if>/>
-			       	</s:if>
-			     	<s:if test="fieldType == 2">
-			       		<select
-			       			class='form-control select2 ' style='width: 100%;'
-			       			id="cust<s:property value="id"/>" 
-			       			<s:if test="currentAssessment.finalized">readonly</s:if> >
-								<s:iterator value="defaultValue.split(',')" var="option">
-									<option value="<s:property value="option"/>"><s:property value="option"/></option>
-								</s:iterator>
-			       			</select>
-			       	</s:if>
-			   </div><!-- /.form group -->
-			 </bs:mco>
-		 </s:iterator>
-		 
 		 <bs:select name="Select Team: <b>*</b>" colsize="4" id="teamName" readOnly="${currentAssessment.isFinalized() }">
 		 	<s:iterator value="teams">
 	            <option value="<s:property value="id"/>"><s:property value="teamName"/></option>
@@ -90,18 +64,94 @@
 	            <option value="<s:property value="id"/>"><s:property value="type"/></option>
 	        </s:iterator>
 		 </bs:select>
-		 <bs:select name="Select Campaign: <b></b>" colsize="4" id="campName"  readOnly="${currentAssessment.isFinalized() }" >
+		 <bs:select name="Select Campaign: <b></b>" colsize="4" id="campName" >
 		 	<s:iterator value="campaigns">
-	            <option value="<s:property value="id"/>"><s:property value="name"/></option>
+		 		<s:if test="selected == true">
+	            	<option value="<s:property value="id"/>"><s:property value="name"/></option>
+	            </s:if>
+	        </s:iterator>
+		 	<s:iterator value="campaigns">
+		 		<s:if test="selected == null || selected == false">
+	            	<option value="<s:property value="id"/>"><s:property value="name"/></option>
+	            </s:if>
 	        </s:iterator>
 		 </bs:select>
-		
-		 
-		 
+		<bs:select name="Status:" colsize="4" id="statusSelect">
+				 <option value="-1">Automatic</option>
+				 <s:iterator value="statuses">
+						  <option value="<s:property value="id"/>"><s:property value="name"/></option>
+				</s:iterator>
+		</bs:select>
+	  </bs:row><!--  End of Top Row -->
+	  <bs:row>
+	  <bs:mco colsize="12">
+	  	<h3>Variables</h3>
+	  <hr>
+	  </bs:mco>
+	  <div id="variables">
+	  	<s:if test="currentAssessment != null">
+				<s:iterator value="currentAssessment.customFields">
+					<s:if test="type.fieldType < 3">
+						<div class="col-md-4">
+							<label class=""><s:property value="type.key"/></label>
+								<s:if test="type.fieldType == 0">
+									<input type="text" class="form-control" id="cust${type.id}"
+										value="<s:property value="value"/>"
+										<s:if test="currentAssessment.InPr || currentAssessment.prComplete || currentAssessment.finalized">disabled</s:if> 
+										<s:if test="type.readonly">readonly</s:if>
+										/>
+								</s:if>
+								<s:if test="type.fieldType == 1">
+									<br>
+									<input type="checkbox" class="icheckbox_minimal-blue"
+										style="width: 20px; height: 20px; margin-top: -30px"
+										id="cust<s:property value="type.id"/>"
+										<s:if test="value == 'true'">checked</s:if>
+										<s:if test="currentAssessment.InPr || currentAssessment.prComplete || currentAssessment.finalized">disabled</s:if>
+										<s:if test="type.readonly">readonly</s:if>
+										 />
+								</s:if>
+								<s:if test="type.fieldType == 2">
+									<select class='form-control select2 ' style='width: 100%;'
+										id="cust<s:property value="type.id"/>"
+										<s:if test="currentAssessment.finalized">readonly disabled</s:if> 
+										<s:if test="type.readonly">readonly</s:if>>
+										<s:iterator value="type.defaultValue.split(',')" var="option">
+											<s:set var="aOption" value="option" />
+											<option value="<s:property value="option"/>"
+												<s:if test="value.equals(#aOption)">selected</s:if>><s:property
+													value="option" /></option> 
+										</s:iterator>
+									</select>
+								</s:if>
+						</div>
+					</s:if>
+				</s:iterator>
+	  	</s:if>
+	  
+	  </div>
 		 
 	  </bs:row><!--  End of Top Row -->
 	  <!--  Add Distribution list section -->
 	 <bs:row>
+	  <bs:mco colsize="12">
+	  	<h3>Contacts</h3>
+	  <hr>
+	  </bs:mco>
+	  </bs:row>
+	 <bs:row>
+		 <bs:select name="Engagement Contact: <b></b>" colsize="4" id="engName">
+		 	<s:iterator value="eng_users">
+                      <option value="<s:property value="id"/>"><s:property value="fname"/> <s:property value="lname"/></option>
+            </s:iterator>
+		 </bs:select>
+		 <bs:select name="Remediation Contact: <b></b>" colsize="4" id="remName">
+		 	<s:iterator value="remediation">
+                      <option value="<s:property value="id"/>"><s:property value="fname"/> <s:property value="lname"/></option>
+            </s:iterator>
+		 </bs:select>
+		
+		 
 	 	<bs:inputgroup colsize="12" name="Distribution List:" id="distlist"  readOnly="${currentAssessment.isFinalized() }"><s:property value="currentAssessment.DistributionList"/> </bs:inputgroup>
 	 </bs:row>
 	 <br>
@@ -124,7 +174,7 @@
 	     
 	     <div class="form-group">
 	                  <label>Find Assessors:</label>
-	                  <select id="assessors" multiple="" class="form-control" <s:if test="currentAssessment.finalized">readonly</s:if>>
+	                  <select id="assessors" multiple="" class="form-control" <s:if test="currentAssessment.finalized">readonly disabled</s:if>>
 	                 
 	                  </select>
 	              
@@ -138,7 +188,7 @@
      <div id="assessorList">
      <div class="form-group">
                   <label>Assigned Assessors: <b>*</b></label>
-                  <select id="assessorListSelect" multiple="" class="form-control" <s:if test="currentAssessment.finalized">readonly</s:if>>
+                  <select id="assessorListSelect" multiple="" class="form-control" <s:if test="currentAssessment.finalized">readonly disabled</s:if>>
                    <s:iterator value="assessors">
 	            		<option value="<s:property value="Id"/>"><s:property value="fname"/> <s:property value="lname"/> - <s:property value="team.TeamName"/> [ Assigned ]</option>
 	        		  </s:iterator>
@@ -151,11 +201,16 @@
 	  
 	  <!--  Add Notes section -->
 	 <bs:row>
+		  <bs:mco colsize="12">
+			  <h3>Scope</h3>
+		  <hr>
+		  </bs:mco>
+	 </bs:row>
+	 <bs:row>
 	 	<bs:mco colsize="12">
-	 		<label>Notes:</label>
-            <textarea id="notes" name="notes" rows="10" cols="80" <s:if test="currentAssessment.finalized">disabled</s:if> > 
+            <div id="notes" name="notes" rows="10" cols="80" <s:if test="currentAssessment.finalized">disabled</s:if> > 
             	<s:property value="currentAssessment.AccessNotes"/>                
-            </textarea>
+            </div>
 	 	</bs:mco>
 	 </bs:row>
 	  
@@ -163,13 +218,30 @@
 	     <bs:mco colsize="12">
 	     <div class="form-group">
 	     	<label>Upload Files</label>
-	    	<input id="files" type="file" multiple name="file_data" <s:if test="currentAssessment.finalized">readonly</s:if>/>
+	    	<input id="files" type="file" multiple name="file_data" />
 	     </div>
 	     </bs:mco>
 	     
 	     <br>
      </bs:row>
      <br>
+     <bs:row>
+	  <div id="richTextVariables">
+			<s:iterator value="custom">
+				<s:if test="fieldType == 3">
+			 		<bs:mco colsize="12">
+				 		<div class="form-group">
+					 		<label><s:property value="key"/>:</label>
+							<div id="rtCust<s:property value="id"/>" <s:if test="currentAssessment.finalized">disabled</s:if> > 
+								   <s:property value="defaultValue"/>
+							</div>
+						</div>
+					</bs:mco>
+				</s:if>
+			</s:iterator>
+		</div>
+		</bs:row>
+			 
 </bs:mco> <!--  End of Top col -->
 
 <bs:mco colsize="6">

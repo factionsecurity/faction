@@ -1,8 +1,8 @@
 package com.fuse.actions.remediation;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -19,6 +19,8 @@ import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.VulnerabilityQueries;
+import com.fuse.utils.FSUtils;
+import com.fuse.utils.Item;
 
 import java.util.Calendar;
 
@@ -31,29 +33,6 @@ public class RemediationQueue extends FSActionSupport{
 	private String checked="";
 	private boolean all=false;
 	
-	private Date getDue(EntityManager em, Date start, int Level){
-		RiskLevel level = (RiskLevel)em.createQuery("from RiskLevel where riskId = :id")
-				.setParameter("id", Level).getResultList()
-				.stream().findFirst().orElse(null);
-		if(level.getDaysTillDue() == null)
-			return null;
-		Calendar dueDate =  Calendar.getInstance();
-		dueDate.setTime(start);
-		dueDate.add(Calendar.DAY_OF_YEAR, level.getDaysTillDue());
-		return dueDate.getTime();
-	}
-	
-	private Date getWarning(EntityManager em, Date start, int Level){
-		RiskLevel level = (RiskLevel)em.createQuery("from RiskLevel where riskId = :id")
-				.setParameter("id", Level).getResultList()
-				.stream().findFirst().orElse(null);
-		if(level.getDaysTillWarning() == null)
-			return null;
-		Calendar dueDate =  Calendar.getInstance();
-		dueDate.setTime(start);
-		dueDate.add(Calendar.DAY_OF_YEAR, level.getDaysTillWarning());
-		return dueDate.getTime();
-	}
 	
 	@Action(value="RemediationQueue")
 	public String execute()
@@ -84,69 +63,67 @@ public class RemediationQueue extends FSActionSupport{
 					.setParameter("wf2", Verification.AssessorCompleted)
 					.setParameter("wf3", Verification.AssessorCancelled)
 					.getResultList();
-			//Get completed assessments
-			//as = (List<Assessment>)em.createNativeQuery("{\"remediation_Id\" : "+uid+", \"workflow\" : 4}", Assessment.class).getResultList();
 		}
 		SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings" ).getResultList().stream().findFirst().orElse(null);
-		//List<RiskLevel> levels = (List<RiskLevel>)em.createQuery("from RiskLevel order by riskId").getResultList();
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 		//Check status of currently assigned verifications
-		for(Verification v : vs){
-			//remove completed Verifications from the list
-			//System.out.println(v.getCompleted().getTime());
-			//if(v.getCompleted().getTime() == 0l)
-				//continue;
+		for(Verification verification : vs){
 			Item i = new Item();
-			i.setAppid(v.getAssessment().getAppId());
-			i.setAppname(v.getAssessment().getName());
-			i.setAssessor(v.getAssessor());
-			i.setDesc(v.getVerificationItems().get(0).getVulnerability().getName());
-			i.setDue(v.getEnd());
-			i.setOpened(v.getStart());
-			v.getVerificationItems().get(0).getVulnerability().updateRiskLevels(em);
+			i.setAppid(verification.getAssessment().getAppId());
+			i.setAppname(verification.getAssessment().getName());
+			i.setAssessor(verification.getAssessor());
+			i.setDesc(verification.getVerificationItems().get(0).getVulnerability().getName());
+			i.setDue(verification.getEnd());
+			i.setOpened(verification.getStart());
+			verification.getVerificationItems().get(0).getVulnerability().updateRiskLevels(em);
 			//i.setSeverity(v.getVerificationItems().get(0).getVulnerability().getOverallStr());
-			Long sev = v.getVerificationItems().get(0).getVulnerability().getOverall();
+			Long sev = verification.getVerificationItems().get(0).getVulnerability().getOverall();
 			i.setSeverity(em, sev, levels);
 			i.setType("Verification");
-			i.setVulnid(-1l * v.getId());
-			if(v.getWorkflowStatus().equals(Verification.AssessorCancelled)) {
-				i.setInfo("<span id='ver" + v.getId() + "'>"
-						+"<i class='circle glyphicon glyphicon-remove bg-orange' title='Cancelled'></i> "
-						+"</span>");
+			i.setVulnid(-1l * verification.getId());
+			String badges = "";
+			if(verification.getWorkflowStatus().equals(Verification.AssessorCancelled)) {
+				badges += FSUtils.addBadge("Verification Cancelled", "yellow", "fa-times");
 			}else {
-				i.setInfo("<span id='ver" + v.getId() + "'>"
-									+"<i class='circle glyphicon glyphicon-ok bg-gray' title='Pass/Fail'></i> "
-									+"<i class='circle glyphicon glyphicon-calendar bg-green' title='Past Due Verification'></i> "
-									+"<i class='circle fa fa-bug bg-gray' title='Past Due Vulnerability'></i>"
-								+"</span>");
-				if(i.getDue() == null){
-					i.setInfo(i.getInfo().replace("green", "red"));
-				}else if(i.getDue().getTime() < (new Date()).getTime())
-					i.setInfo(i.getInfo().replace("green", "red"));
-				if(v.getVerificationItems().get(0).isPass())
-					i.setInfo(i.getInfo().replace("glyphicon-ok bg-gray", "glyphicon-ok bg-green"));
-				else if(v.getCompleted() != null && v.getCompleted().getTime() > 0)
-					i.setInfo(i.getInfo().replace("glyphicon-ok bg-gray", "glyphicon-ok bg-red"));
+				
+				if(verification.getEnd().getTime() < (new Date().getTime())) {
+					badges += FSUtils.addBadge("Verification Past Due", "red", "fa-calendar");
+				}
+				else if(verification.getEnd().getTime() < (FSUtils.getWarn(new Date(), 2)).getTime() ) {
+					badges += FSUtils.addBadge("Verification Almost Due", "yellow", "fa-calendar");
+				}
+				
+				if(verification.getWorkflowStatus().equals(Verification.AssessorCompleted)) {
+					if(verification.getVerificationItems().get(0).isPass()) {
+						badges += FSUtils.addBadge("Verification Passed", "green", "fa-check");
+					}else if(verification.getCompleted() != null && verification.getCompleted().getTime() > 0) {
+						badges += FSUtils.addBadge("Verification Failed", "red", "fa-times");
+					}else{
+						badges += FSUtils.addBadge("In Retest", "green", "fa-calendar");
+					}
+				}
 			}
 			
-			//HashMap<String, Date>status = this.VulnStatus(v.getVerificationItems().get(0).getVulnerability(), ems);
-			Vulnerability tmpVuln = v.getVerificationItems().get(0).getVulnerability();
-			Date DueDate = getDue(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
-			Date WarnDate = getWarning(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
-			if(DueDate != null && DueDate.getTime() <= (new Date()).getTime()){
-				i.setInfo(i.getInfo().replace("circle fa fa-bug bg-gray", "circle fa fa-bug bg-red"));
-				i.setInfo(i.getInfo().replace("title='Past Due Vulnerability", "title='Past Due Vulnerability - " + DueDate));
+			Vulnerability tmpVuln = verification.getVerificationItems().get(0).getVulnerability();
+			Date DueDate = FSUtils.getDue(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
+			Date WarnDate = FSUtils.getWarning(em, tmpVuln.getOpened(), tmpVuln.getOverall().intValue());
+			String pattern = "MM/dd/yyyy";
+			SimpleDateFormat format = new SimpleDateFormat(pattern);
+			if(DueDate != null ) {
+				String dueDateString = format.format(DueDate);
+				
+				if(DueDate != null && DueDate.getTime() <= (new Date()).getTime()){
+					badges += FSUtils.addBadge("Vulnerability Past Due (" + dueDateString +")", "red", "fa-bug");
+				}
+				else if(WarnDate != null && WarnDate.getTime() <= (new Date()).getTime()){
+					badges += FSUtils.addBadge("Vulnerability Approaching Due Date (" + dueDateString +")", "yellow", "fa-bug");
+				}
 			}
-			else if(WarnDate != null && WarnDate.getTime() <= (new Date()).getTime()){
-				i.setInfo(i.getInfo().replace("circle fa fa-bug bg-gray", "circle fa fa-bug bg-yellow"));
-				i.setInfo(i.getInfo().replace("title='Past Due Vulnerability", "title='Approaching Due Date - " + DueDate));
-			}else{
-				i.setInfo(i.getInfo().replace("title='Past Due Vulnerability", "title='Vulnerability OK' - " + DueDate));
-			}
+			i.setInfo(badges);
 			
 			
 			items.add(i);
-			itemList.add(v.getVerificationItems().get(0).getVulnerability().getId());
+			itemList.add(verification.getVerificationItems().get(0).getVulnerability().getId());
 			
 			
 		}
@@ -155,8 +132,8 @@ public class RemediationQueue extends FSActionSupport{
 		
 		for(Vulnerability v : vulns){
 	
-			Date DueDate = getDue(em, v.getOpened(), v.getOverall().intValue());
-			Date WarnDate = getWarning(em, v.getOpened(), v.getOverall().intValue());
+			Date DueDate = FSUtils.getDue(em, v.getOpened(), v.getOverall().intValue());
+			Date WarnDate = FSUtils.getWarning(em, v.getOpened(), v.getOverall().intValue());
 			if( DueDate!= null && DueDate.getTime() <= (new Date()).getTime()){
 					if(itemList.contains(v.getId()))
 						continue;
@@ -174,8 +151,8 @@ public class RemediationQueue extends FSActionSupport{
 					Long sev = v.getOverall();
 					i.setSeverity(em, sev, levels);
 					i.setVulnid(v.getId());
-					i.setInfo("<span id='vuln'" + v.getId() + "'><i class='circle fa fa-bug bg-red' title='Past Due'></i><span>");
-					i.setType("Past Due Vulnerability");
+					i.setInfo(FSUtils.addBadge("Vulnerability Past Due", "red", "fa-bug"));
+					i.setType("Vulnerability");
 					i.setOpened(v.getOpened());
 					items.add(i);	
 						
@@ -200,8 +177,8 @@ public class RemediationQueue extends FSActionSupport{
 				i.setSeverity(em, sev, levels);
 				i.setOpened(v.getOpened());
 				i.setVulnid(v.getId());
-				i.setInfo("<span id='vuln'" + v.getId() + "'><i class='circle fa fa-bug bg-yellow' title='Due Date Approaching'></i><span>");
-				i.setType("Due Date Aproaching");
+				i.setInfo(FSUtils.addBadge("Vulnerability Approaching Due Date", "yellow", "fa-bug"));
+				i.setType("Vulnerability");
 				items.add(i);
 			}
 			
@@ -307,116 +284,6 @@ public class RemediationQueue extends FSActionSupport{
 	}
 
 
-	private class Item{
-		private User assessor;
-		private String appid;
-		private String appname;
-		private String desc;
-		private String info;
-		private Date due;
-		private String type;
-		private Date opened;
-		private String severity;
-		private Long vulnid;
-		
-		public User getAssessor() {
-			return assessor;
-		}
-		public void setAssessor(User assessor) {
-			this.assessor = assessor;
-		}
-		public String getAppid() {
-			return appid;
-		}
-		public void setAppid(String appid) {
-			this.appid = appid;
-		}
-		public String getAppname() {
-			return appname;
-		}
-		public void setAppname(String appname) {
-			this.appname = appname;
-		}
-		public String getDesc() {
-			return desc;
-		}
-		public void setDesc(String desc) {
-			this.desc = desc;
-		}
-		public String getInfo() {
-			return info;
-		}
-		public void setInfo(String info) {
-			this.info = info;
-		}
-		public Date getDue() {
-			return due;
-		}
-		public void setDue(Date due) {
-			this.due = due;
-		}
-		public String getType() {
-			return type;
-		}
-		public void setType(String type) {
-			this.type = "<b style=\"color:black\">" + type + "</b>";
-			if(type.equals("Verification"))
-				this.type = this.type.replace("black", "#00a65a");
-			else if(type.equals("Past Due Vulnerability"))
-				this.type = this.type.replace("black", "#dd4b39");
-			else if(type.equals("Due Date Aproaching"))
-				this.type = this.type.replace("black", "#00c0ef");
-			
-			
-		}
-		public Date getOpened() {
-			return opened;
-		}
-		public void setOpened(Date opened) {
-			this.opened = opened;
-		}
-		public String getSeverity() {
-			return severity;
-		}
-		/*public void setSeverity(String severity) {
-			this.severity = "<b style=\"color:black\">" + severity + "</b>";
-			if(severity.equals("Critical"))
-				this.severity = this.severity.replace("black", "red");
-			else if(severity.equals("High"))
-				this.severity = this.severity.replace("black", "orange");
-			else if(severity.equals("Medium"))
-				this.severity = this.severity.replace("black", "yellow");
-			else if(severity.equals("Low"))
-				this.severity = this.severity.replace("black", "blue");
-		}*/
-		public void setSeverity(EntityManager em, Long riskId, List<RiskLevel>levels) {
-			this.severity = levels.get(riskId.intValue()).getRisk();
-			//this.severity = "<b style=\"color:black\">" + levels.get(riskId.intValue()).getRisk() + "</b>";
-			/*String[] colors = new String [] {"red", "orange", "yellow", "blue", "aqua","green"};
-			int c=0;
-			for(int i=9; i>=0; i--){
-				String risk = levels.get(i).getRisk();
-				if(risk == null || risk.equals("") || risk.toLowerCase().equals("unassigned"))
-					continue;
-				else if (riskId.intValue() == i && c < colors.length){
-					this.severity = this.severity.replace("black", colors[c]);
-				}else
-					c++;
-			}*/
-		}
-		public Long getVulnid() {
-			return vulnid;
-		}
-		public void setVulnid(Long vulnid) {
-			this.vulnid = vulnid;
-		}
-		
-		
-		
-		
-		
-		
-	}
 
 
 	public String getChecked() {

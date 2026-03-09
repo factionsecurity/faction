@@ -17,6 +17,7 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.struts2.dispatcher.SessionMap;
 import org.pac4j.core.profile.UserProfile;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import com.fuse.authentication.LDAPValidator;
 import com.fuse.dao.Permissions;
@@ -26,7 +27,7 @@ import com.fuse.dao.User;
 public class AccessControl {
 
 	public static enum AuthResult {
-		FAILED_AUTH, LOCKEDOUT, NOACCOUNT, SUCCESS, INACTIVITY, REDIRECT_OAUTH, NOT_VALID_OAUTH_ACCOUNT
+		FAILED_AUTH, LOCKEDOUT, NOACCOUNT, SUCCESS, INACTIVITY, REDIRECT_OAUTH, NOT_VALID_OAUTH_ACCOUNT, REDIRECT_SAML2, NOT_VALID_EMAIL, DUPLICATE_USERS, LOGOUT_PROFILE
 	}
 
 	public static boolean isNewInstance(EntityManager em) {
@@ -65,19 +66,44 @@ public class AccessControl {
 	public static AuthResult Authenticate(String user, String pass, HttpServletRequest request, EntityManager em, List<UserProfile> profiles) {
 		
 		HttpSession jsession = request.getSession(true);
+		BCryptPasswordEncoder encoder =new BCryptPasswordEncoder();
 		
 		//Check oAuth Stuff
 	
-		if( profiles != null && profiles.size() > 0 && (user==null || user.equals(""))) {
+		if( profiles != null && profiles.size() > 0) {
 			for(UserProfile profile : profiles) {
 				String email = (String) profile.getAttribute("email");
+				if (email == null) {
+				    email = (String) profile.getAttribute("EmailAddress");
+				}
+				if (email == null) {
+				    Object attribute = profile.getAttribute("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress");
+				    if(attribute != null) {
+				    	if (attribute instanceof String) {
+				            email = (String) attribute;
+				        } else if (attribute instanceof List) {
+				            List<?> list = (List<?>) attribute;
+				            if (!list.isEmpty() && list.get(0) instanceof String) {
+				                email = (String) list.get(0);
+				            }
+				        }
+				    	
+				    }
+				}
+				
 				if(email != null) {
-					User tmp = (User) em.createQuery("from User where email = :email")
-							.setParameter("email", email)
-							.getResultList()
-							.stream()
-							.findFirst()
-							.orElse(null);
+					String query = String.format("{'email': {$regex: '^%s$', $options: 'i'}}",FSUtils.sanitizeMongo(email));
+					List<User> users = em.createNativeQuery(query, User.class).getResultList();
+					User tmp = null;
+					if(users.size() == 0) {
+						return AuthResult.NOT_VALID_OAUTH_ACCOUNT;
+					}
+					else if(users.size() == 1) {
+						tmp = users.get(0);
+					}else {
+						return AuthResult.DUPLICATE_USERS;
+					}
+					
 					if(tmp != null) {
 						tmp.setLastLogin(tmp.getLoginTime());
 						tmp.setLoginTime(new Date());
@@ -89,6 +115,8 @@ public class AccessControl {
 						jsession.setAttribute("user", tmp);
 						return AuthResult.SUCCESS;
 					}
+				}else {
+					return AuthResult.NOT_VALID_EMAIL;
 				}
 			}
 			//lets invalidate the session that has existing profiles since 
@@ -116,7 +144,10 @@ public class AccessControl {
 		
 		// redirect to OAUTH
 		if(tmp.getAuthMethod().equals("OAUTH2.0")) {
-				return AuthResult.REDIRECT_OAUTH;
+			return AuthResult.REDIRECT_OAUTH;
+		// redirect SAML
+		}else if(tmp.getAuthMethod().equals("SAML2")) {
+			return AuthResult.REDIRECT_SAML2;
 		// Validate LDAP
 		}else if (tmp.getAuthMethod().equals("LDAP")) {
 			LDAPValidator ldapValidator = new LDAPValidator(ems.getLdapURL(), ems.getLdapBaseDn(),
@@ -128,7 +159,7 @@ public class AccessControl {
 			}
 
 		// Validate Native
-		} else if (!tmp.getPasshash().equals(AccessControl.HashPass(user, pass))) {
+		} else if (!encoder.matches(pass, tmp.getPasshash())) {
 			tmp.setFailedAuth(tmp.getFailedAuth() == null ? 1 : tmp.getFailedAuth() + 1);
 			em.persist(tmp);
 			return AuthResult.FAILED_AUTH;
@@ -177,25 +208,16 @@ public class AccessControl {
 		u.setFname(first.trim());
 		u.setLname(last.trim());
 		u.setInActive(false);
-		u.setPasshash(HashPass(username, pass));
+		u.setPasshash(HashPass(pass));
 		u.setPermissions(p);
 		u.setUsername(username);
 		em.persist(u);
 
 	}
 
-	public static String HashPass(String user, String pass) {
-		String random = "akdsjhkjnviuafdb9876qwrhfn9801236098hgcb99tbciuewiufgikbfciu7g32rpfebkjlclk";
-		String StringPass = user + "|" + random + "|" + pass;
-		try {
-			MessageDigest digest = MessageDigest.getInstance("SHA-256");
-			byte[] hash = digest.digest(StringPass.getBytes(StandardCharsets.UTF_8));
-			return Base64.encodeBase64String(hash);
-		} catch (NoSuchAlgorithmException e) {
-
-			e.printStackTrace();
-			return null;
-		}
+	public static String HashPass(String pass) {
+		BCryptPasswordEncoder encoder =new BCryptPasswordEncoder();
+		return encoder.encode(pass);
 	}
 
 	/**

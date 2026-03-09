@@ -1,12 +1,15 @@
-require('suneditor/dist/css/suneditor.min.css');
 require('../scripts/fileupload/css/fileinput.css');
 require('./scheduling.css');
-import suneditor from 'suneditor';
-import plugins from 'suneditor/src/plugins';
-import CodeMirror from 'codemirror';
-import 'codemirror/mode/htmlmixed/htmlmixed';
-import 'codemirror/lib/codemirror.css';
+require('select2/dist/css/select2.min.css')
+require('daterangepicker/daterangepicker.css');
 import '../loading/js/jquery-loading';
+import Editor from '@toast-ui/editor'
+import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
+import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
+import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
+import '@toast-ui/editor/dist/toastui-editor.css';
+import 'tui-color-picker/dist/tui-color-picker.css';
+import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
 import 'jquery';
 import 'datatables.net';
 import 'datatables.net-bs';
@@ -16,7 +19,7 @@ import 'jquery-ui';
 import 'jquery-confirm';
 import '../scripts/jquery.autocomplete.min';
 import * as moment from 'moment';
-import 'bootstrap-daterangepicker';
+import 'daterangepicker';
 import 'select2';
 import 'jquery.gantt';
 import { marked } from 'marked';
@@ -25,59 +28,8 @@ let assessors = {};
 let editors = {
 	notes: {}
 };
+let initialHTML={};
 global._token = $("#_token")[0].value;
-let fromMarkdown = {
-	name: 'fromMarkdown',
-	display: 'command',
-	title: 'Convert Markdown',
-	buttonClass: '',
-	innerHTML: '<i class="fa-brands fa-markdown" style="color:lightgray"></i>',
-	add: function(core, targetElement) {
-		core.context.fromMarkdown = {
-			targetButton: targetElement,
-			preElement: null
-		}
-	},
-	active: function(element) {
-		if (element) {
-			this.util.addClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
-			this.context.fromMarkdown.preElement = element;
-			return true;
-		} else {
-			this.util.removeClass(this.context.fromMarkdown.targetButton.firstChild, 'mdEnabled');
-			this.context.fromMarkdown.preElement = null;
-		}
-		return false;
-	},
-	action: function() {
-		let selected = this.getSelectedElements();
-		const md = selected.reduce( (acc,item) => acc + item.innerText +"\n", "") ;
-		const html = marked.parse(md);
-		const div = document.createElement("p");
-		div.innerHTML = html;
-		const parent = selected[0].parentNode;
-		parent.insertBefore(div, selected[0]);
-		for(let i=0; i<selected.length; i++){
-			selected[i].remove();
-		}
-		this.history.push(true)
-	}
-}
-plugins['fromMarkdown'] = fromMarkdown;
-let editorOptions = {
-	codeMirror: CodeMirror,
-	plugins: plugins, 
-	buttonList: [
-		['undo', 'redo', 'font', 'fontSize', 'formatBlock'],
-		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
-		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks', 'fromMarkdown', 'codeView'],
-
-	],
-	defaultStyle: 'font-family: arial; font-size: 18px',
-	height: 500,
-	width: "100%"
-};
 global.calendar = {};
 $(function() {
 	if(location.hash == "#tab_3"){
@@ -89,6 +41,10 @@ $(function() {
 			$(".select2-selection__arrow").remove();
 		} else
 			$(".disabled-select", objs).remove();
+	}
+	//Support for edit page
+	if(typeof aid == 'undefined'){
+		createAllCustomFields();
 	}
 
 	//getAssessors();
@@ -218,12 +174,26 @@ $(function() {
 	if(remName != '') $("#remName").val(remName).trigger("change");
 	if(campName != '') $("#campName").val(campName).trigger("change");
 	if(assType != '') $("#assType").val(assType).trigger("change");
-	if(statName != '') $("#statName").val(statName).trigger("change");
+	if(statusSelectName != ''){
+		let selectedValue = $(`select option:contains("${statusSelectName}")`).val()
+		if(typeof selectedValue != 'undefiend'){
+			$("#statusSelect").val(selectedValue).trigger("change");
+		}else{
+			$("#statusSelect").append($('<option>', {
+			    value: '-2',
+			    text: statusSelectName
+			}));
+		}
+	}
 	getAssessors();
 	if (finalized) {
-		readonly_select($(".select2"), true);
+		readonly_select($(".select_ro"), true);
 	}
-	editors.notes = suneditor.create("notes", editorOptions);
+	createEditor("notes")
+	$('[id^="rtCust"]').each( (_index,el)=>{
+		let id = el.id;
+		createEditor(id)
+	})
 	if(!finalized){
 
 		$('#reservation').daterangepicker({
@@ -248,6 +218,106 @@ $(function() {
 		//$("#reservation").val(`${sDate} to ${eDate}`);
 		getAssessors();
 	}
+	function createCustomStringVariableHTML(name,id, readOnly, defaultValue){
+		let html =`<div class="col-md-4">
+			 <div class="form-group">
+			     <label>${name}:</label>
+			       		<input type="text" 
+			       			class="form-control" 
+			       			id="cust${id}" `
+		if(readOnly){
+			html =`${html}
+			readonly`;
+		}
+		html = `${html} /></div>`
+		return html;
+	}
+	function createCustomCheckBoxVariableHTML(name,id, readOnly, defaultValue){
+		let html =`<div class="col-md-4">
+			 <div class="form-group">
+			     <label>${name}:</label>
+			       		<br><input type="checkbox" 
+			       			class="icheckbox_minimal-blue" style="height:34px"
+			       			id="cust${id}" `;
+		if(readOnly){
+			html =`${html}
+			readonly`;
+		}
+		if(defaultValue == true){
+			html = `${html}
+			checked`;
+		}
+		html = `${html} /></div>`
+		
+		return html;
+	}
+	function createCustomRichTextVariableHTML(name,id, readOnly, defaultValue){
+		let html =`<div class="col-md-12">
+			 <div class="form-group">
+			     <label>${name}:</label>
+							<div id="rtCust${id}"`
+		if(readOnly){
+			html = `${html} disabled`;
+		}
+		html = `${html}>`
+		html = `${html} ${entityEncode(defaultValue)}`
+		html = `${html}</div></div></div>`
+		return html;
+	}
+	
+	function createCustomListVariableHTML(name,id, readOnly, defaultValue){
+		let html =`<div class="col-md-4">
+			 <div class="form-group">
+			     <label>${name}:</label>
+			       		<select
+			       			class='form-control select2 ' style='width: 100%;'
+			       			id="cust${id}" `
+		if(readOnly){
+			html =`${html}
+			readonly`;
+		}
+		html = `${html} >`
+		let options = defaultValue.split(",");
+		console.log(options);
+		for(let option of options){
+			html = `${html}
+			<option value="${option}">${option}</option>`
+		}
+		html = `${html}
+			    </select></div>`
+		return html;
+	}
+	function createAllCustomFields(){
+		const assessmentType = $('#assType').val()
+		$.post('getCustomTypes', `assessmentType=${assessmentType}&variableType=0`)
+		.done((json) =>{
+			$("#variables").html("");
+			$("#richTextVariables").html("");
+			
+			for( let type of json){
+				if(type.fieldType == 0){
+					$("#variables").append(createCustomStringVariableHTML(type.name, type.id, finalized, type.defaultValue));
+				}
+				else if(type.fieldType == 1){
+					$("#variables").append(createCustomCheckBoxVariableHTML(type.name, type.id, finalized, type.defaultValue));
+				}
+				else if(type.fieldType == 2){
+					$("#variables").append(createCustomListVariableHTML(type.name, type.id, finalized, type.defaultValue));
+				}
+				else if(type.fieldType == 3){
+					$("#richTextVariables").append(createCustomRichTextVariableHTML(type.name, type.id, finalized, type.defaultValue));
+				}
+			}
+			
+			$('[id^="rtCust"]').each( (_index,el)=>{
+				let id = el.id;
+				createEditor(id)
+			})
+		});
+	}
+	$('#assType').on('change', () =>{
+		createAllCustomFields();
+	});
 	$('#reservation, #teamName').on('change', function() {
 		getAssessors();
 		let value3 = $("#assessorListSelect option");
@@ -369,7 +439,10 @@ function confirmAndPostIt(messages, index, size) {
 						data += "&remId=" + $("#remName").val();
 						data += "&engId=" + $("#engName").val();
 						data += "&type=" + $("#assType").val();
-						data += "&statusName=" + $("#statName").val();
+						const statusId = $("#statusSelect").val();
+						if(statusId != -1){
+							data += "&statusId=" + $("#statusSelect").val();
+						}
 						let value3 = $("#assessorListSelect option");
 
 						index = 0;
@@ -390,6 +463,14 @@ function confirmAndPostIt(messages, index, size) {
 								val = $(el).is(':checked')
 							}
 								
+							let field = `{"id" : ${id}, "text" : "${val}"}`;
+							fields.push(field);
+						})
+						$('[id^="rtCust"]').each( (_index,el)=>{
+							let id = el.id;
+							id = id.replace('rtCust',"");
+							//let val = encodeURIComponent(btoa(getEditorText("rtCust" + id)));
+							let val = encodeURIComponent(b64EncodeUnicode(getEditorText("rtCust" + id)));
 							let field = `{"id" : ${id}, "text" : "${val}"}`;
 							fields.push(field);
 						})
@@ -475,12 +556,16 @@ $(function() {
 		"ordering": true,
 		"info": true,
 		"autoWidth": true,
-		"order": [[4, "desc"]],
+		"order": [[6, "desc"]],
 		 columnDefs: [
 			{
 				target: 11,
 				visible: false,
 				searchable: false
+			},
+			{
+				target: [3,4,5,9,10],
+				orderable: false
 			}
         ],
 		serverSide: true,
@@ -493,7 +578,9 @@ $(function() {
 				   "assessorId": $("#search_assessorid").val(),
 				   "engId": $("#search_engagementid").val(),
 				   "appName": $("#search_appname").val(),
-				   "statusName": $("#statusSearch").val(),
+				   "statusId": $("#statusSearch").val(),
+				   "sdate": $("#search_start").val(),
+				   "edate": $("#search_end").val(),
 				   "action": "search",
 				   "max": 10
 				 } );
@@ -503,14 +590,16 @@ $(function() {
 
 	});
 	searchTable.on('draw', function(){
-		$('#searchResults').unbind('click', 'tr');
+		$('#searchResults').off('click', 'tr');
 		$('#searchResults').on('click', 'tr', function(event){
-			const id = searchTable.row(this).data()[11]
-			console.log(event.target.outerHTML)
-			if(event.target.outerHTML.indexOf('trash') != -1){
-				deleteAssessment(this,id);
-			}else{
-				window.open(`EditAssessment?action=get&aid=${id}`, '_blank');
+			if(this.firstChild.tagName != "TH"){
+				const id = searchTable.row(this).data()[11]
+				console.log(event.target.outerHTML)
+				if(event.target.outerHTML.indexOf('trash') != -1){
+					deleteAssessment(this,id);
+				}else{
+					window.open(`EditAssessment?action=get&aid=${id}`, '_blank');
+				}
 			}
 		});
 	});
@@ -546,7 +635,6 @@ $(function() {
 			});
 		},
 		onSelect: function(e, term, item) {
-				console.log("RUnning this");
 			let appid = term.split("<a> </a>")[0];
 			let appName = term.split("<a> </a>")[1];
 			let others = term.split("<a> </a>")[2];
@@ -565,19 +653,22 @@ $(function() {
 			$("#assType").val(json.type).trigger("change");
 			$("#engName").val(json.engId).trigger("change");
 			$("#remName").val(json.remediationId).trigger("change");
+			$("#statusSelect").val("-1").trigger("change");
 			$("[id^=cust]").val("");
-			$(json.fields).each(function(a, b) {
-				console.log("RUnning this");
-				let el = $("#cust" + b.fid)
-				if(el.type == 'checkbox' && b.value == "true"){
-					$(el).prop('checked', true);
-				}else if(el.type == 'checkbox'){
-					$(el).prop('checked', false);
-				}else{
-					$(el).val(b.value);
-				}
+			$("[id^=rtCust]").val("");
+			setTimeout( () => {
+				$(json.fields).each(function(a, b) {
+					let el = $("#cust" + b.fid)
+					if(el.type == 'checkbox' && b.value == "true"){
+						$(el).prop('checked', true);
+					}else if(el.type == 'checkbox'){
+						$(el).prop('checked', false);
+					}else{
+						$(el).val(b.value);
+					}//TODO: add rtCust
+				});
 				
-			});
+			}, 300);
 
 		}
 
@@ -646,25 +737,70 @@ function updateCalendar(user, userid) {
 	let copiedEventObject = $.extend({}, originalEventObject);
 	copiedEventObject.allDay = true;
 	copiedEventObject.title = $("#appId").val() + " - " + $("#appName").val() + " - " + user;
-	copiedEventObject.start = new Date(($("#reservation").val().split("to")[0].trim()));
+	let start = new Date(($("#reservation").val().split("to")[0].trim()));
+	copiedEventObject.start = start;
 	copiedEventObject.color = edit_color;
 	copiedEventObject.id = "-1";
 	let endTmp = $("#reservation").val().split("to")[1];
 	let end = new Date(endTmp);
-	end = end.setDate(end.getDate() + 1);
+	end = new Date(end.setDate(end.getDate() + 1));
 	copiedEventObject.end = end;
 	calendar.addEvent(copiedEventObject, true);
-	$.post('../service/getAssessments', 'id=' + userid).done((adata) => {
-		let json = JSON.parse(adata);
-		let N = json.count;
+	start = new Date(start.setDate(start.getDate() - 30));
+	end = new Date(end.setDate(end.getDate() + 30));
+	
+	$.post('Calendar', `userid=${userid}&team=-1&start=${start.toLocaleDateString("en-US")}&end=${end.toLocaleDateString("en-US")}&action=search`).done(function(json) {
+		for (let verification of json.verifications) {
+			let s = verification.start;
+			let e = verification.end;
+			let t = verification.appid + " - " + verification.appname + " - " + verification.vuln;
+			let aaid = verification.appid;
 
-		for (let i = 0; i < N; i++) {
-			let s = json.assessments[i][2];
-			let e = json.assessments[i][4];
-			let fullname = json.assessments[i][5];
-			let t = json.assessments[i][1] + " - " + json.assessments[i][0] + " - " + fullname;
-			let aid = json.assessments[i][3].replace('app', '');
+			if (s != 'null' && e != 'null') {
+				let originalEventObject = $(this).data('eventObject');
+				let copiedEventObject = $.extend({}, originalEventObject);
+				copiedEventObject.allDay = true;
+				copiedEventObject.title = t;
+				copiedEventObject.start = new Date(s);
+				copiedEventObject.color = ver_color;
+				copiedEventObject.id = aaid;
+				let end = new Date(e);
+				end = end.setDate(end.getDate() + 1);
 
+				copiedEventObject.end = end;
+				copiedEventObject.editable = false;
+				global.calendar.addEvent(copiedEventObject, true);
+
+			}
+		}
+		for (let ooo of json.ooo) {
+			let s = ooo.start;
+			let e = ooo.end;
+			let t = ooo.title;
+			let oid = "ooo" + ooo.id;
+			if (s != 'null' && e != 'null') {
+				let originalEventObject = $(this).data('eventObject');
+				let copiedEventObject = $.extend({}, originalEventObject);
+				copiedEventObject.allDay = true;
+				copiedEventObject.title = t;
+				copiedEventObject.start = new Date(s);
+				copiedEventObject.color = ooo_color;
+				copiedEventObject.id = oid;
+				let end = new Date(e);
+				end = end.setDate(end.getDate() + 1);
+
+				copiedEventObject.end = end;
+				copiedEventObject.editable = false;
+				global.calendar.addEvent(copiedEventObject, true);
+
+			}
+		}
+		for(let assessment of json.assessments){
+			let s = assessment.start; 
+			let e = assessment.end; 
+			let fullname = assessment.username; 
+			let t = assessment.appid + " - " + assessment.name + " - " + fullname;
+			let aid = assessment.id;
 			if (s != 'null' && e != 'null') {
 				originalEventObject = $(this).data('eventObject');
 				copiedEventObject = $.extend({}, originalEventObject);
@@ -680,31 +816,8 @@ function updateCalendar(user, userid) {
 				calendar.addEvent(copiedEventObject, true);
 
 			}
+			
 		}
-		let first = 0;
-		N = json.ocount;
-		for (let i = 0; i < N; i++) {
-			let s = json.ooo[i][2];
-			let e = json.ooo[i][3];
-			let t = json.ooo[i][0];
-			let oid = "ooo" + json.ooo[i][0];
-			if (s != 'null' && e != 'null') {
-				originalEventObject = $(this).data('eventObject');
-				copiedEventObject = $.extend({}, originalEventObject);
-				copiedEventObject.allDay = true;
-				copiedEventObject.title = t;
-				copiedEventObject.start = new Date(s);
-				copiedEventObject.color = ooo_color;
-				copiedEventObject.id = oid;
-				let tmpdate = new Date(e);
-				tmpdate = tmpdate.setDate(tmpdate.getDate() + 1);
-				copiedEventObject.end = tmpdate;
-				copiedEventObject.editable = false;
-				calendar.addEvent(copiedEventObject, true);
-
-			}
-		}
-
 	});
 }
 
@@ -752,5 +865,38 @@ $(function() {
 });
 
 function getEditorText(name) {
-	return editors[name].getContents();
+	return editors[name].getHTML();
+}
+function createEditor(id){
+	initialHTML[id] = entityDecode($(`#${id}`).html());
+	$(`#${id}`).html("");
+	editors[id]= new Editor({
+				el: document.querySelector(`#${id}`),
+				previewStyle: 'vertical',
+				height: 'auto',
+				autofocus: false,
+				height: '560px',
+				plugins: [colorSyntax, tableMergedCell]
+			});
+	editors[id].hide();
+	editors[id].setHTML(initialHTML[id], false);
+	initialHTML[id] = editors[id].getHTML();
+	editors[id].show();
+	
+	/// This is a hack becuase toastui does not have inital undo history set correctly
+	/// https://github.com/nhn/tui.editor/issues/3195
+	editors[id].on( 'keydown', function(a,e){
+		const html = editors[id].getHTML()
+		if ((e.ctrlKey || e.metaKey) && e.key == 'z' && html == initialHTML[id]) {
+			e.preventDefault();
+			throw new Error("Prevent Undo");
+		 }
+	})
+	
+}
+function entityDecode(encoded){
+	let textArea = document.createElement("textarea");
+	textArea.innerHTML = encoded;
+	return textArea.innerText;
+	
 }

@@ -173,6 +173,7 @@ public class Comment {
 		json.put("details", v.getDetails());
 		json.put("cvss_score", v.getCvssScore());
 		json.put("cvss_string", v.getCvssString());
+		json.put("section", v.getSection());
 		if (blankNotes) {
 			json.put("rec_notes", "<p></p>");
 			json.put("desc_notes", "<p></p>");
@@ -266,6 +267,7 @@ public class Comment {
 			v.setRec_notes("" + (vuln.get("rec_notes") == null ? "" : vuln.get("rec_notes")));
 			v.setCvssString("" + (vuln.get("cvss_string") == null ? "" : vuln.get("cvss_string")));
 			v.setCvssScore("" + (vuln.get("cvss_score") == null ? "" : vuln.get("cvss_score")));
+			v.setSection("" + vuln.get("section"));
 			vulns.add(v);
 		}
 		a.setVulns(vulns);

@@ -1,12 +1,12 @@
 package com.fuse.actions;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
 import org.apache.struts2.ServletActionContext;
@@ -14,14 +14,12 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 import org.apache.struts2.convention.annotation.ResultPath;
-
-import org.pac4j.core.context.J2EContext;
+import org.pac4j.core.context.JEEContext;
 import org.pac4j.core.context.WebContext;
-import org.pac4j.core.context.session.J2ESessionStore;
+import org.pac4j.core.context.session.JEESessionStore;
 import org.pac4j.core.context.session.SessionStore;
 import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.UserProfile;
-import org.python.icu.text.SimpleDateFormat;
 
 import com.fuse.dao.AssessmentType;
 import com.fuse.dao.AuditLog;
@@ -29,6 +27,7 @@ import com.fuse.dao.Campaign;
 import com.fuse.dao.Category;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.PasswordReset;
 import com.fuse.dao.ReportTemplates;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.SystemSettings;
@@ -41,6 +40,7 @@ import com.fuse.utils.AccessControl.AuthResult;
 import com.fuse.utils.FSUtils;
 import com.fuse.utils.reporttemplate.ReportTemplate;
 import com.fuse.utils.reporttemplate.ReportTemplateFactory;
+import com.opensymphony.xwork2.ActionContext;
 
 @Namespace("/")
 @ResultPath(value = "/")
@@ -69,17 +69,26 @@ public class Login extends FSActionSupport {
 	
 	private List<UserProfile>getProfiles(){
 		
-		WebContext context = new J2EContext(request,response);
-		SessionStore sessionStore = new J2ESessionStore();
+		WebContext context = new JEEContext(request,response);
+		SessionStore sessionStore = new JEESessionStore();
 		ProfileManager pm = new ProfileManager(context, sessionStore);
 		return pm.getAll(true);
+	}
+	private void logoutProfiles(){
+		
+		WebContext context = new JEEContext(request,response);
+		SessionStore sessionStore = new JEESessionStore();
+		ProfileManager pm = new ProfileManager(context, sessionStore);
+		pm.logout();
 	}
 	
 
 	@Action(value = "index", results = { @Result(name = "createAccount", location = "/WEB-INF/jsp/newInstance.jsp"),
 			@Result(name = "failedAuth", location = "/index.jsp"),
 			@Result(name = "redirect_to_oauth", location = "/oauth"),
+			@Result(name = "redirect_to_saml2", location = "saml2"),
 			@Result(name = "assessorQueue", type = "redirectAction", location = "portal/Dashboard"),
+			@Result(name = "managerDash", type = "redirectAction", location = "portal/ManagerDashboard"),
 			@Result(name = "engagement", type = "redirectAction", location = "portal/Engagement"),
 			@Result(name = "admin", type = "redirectAction", location = "portal/Users"),
 			@Result(name = "calendar", type = "redirectAction", location = "portal/Calendar"),
@@ -91,7 +100,7 @@ public class Login extends FSActionSupport {
 			return "createAccount";
 		} else if (AccessControl.isAuthenticated(this.JSESSION)) {
 			return redirectIt(this.getSessionUser());
-		}else if ( (username != null && !username.equals("")) || (getProfiles() != null && getProfiles().size()>0) ) {
+		}else if ( action == null && ((username != null && !username.equals("")) || (getProfiles() != null && getProfiles().size()>0) )) {
 			AuthResult result = AccessControl.Authenticate(username, password, request, em, getProfiles());
 			if (result == AuthResult.SUCCESS) {
 				HibHelper.getInstance().preJoin();
@@ -144,10 +153,24 @@ public class Login extends FSActionSupport {
 				message = "Your account has been locked due to inactivity. Please contact your administrator";
 				return "failedAuth";
 			} else if (result == AuthResult.REDIRECT_OAUTH) {
+				Map<String,String[]> map = request.getParameterMap();
 				return "redirect_to_oauth";
+			} else if (result == AuthResult.REDIRECT_SAML2) {
+				Map<String,String[]> map = request.getParameterMap();
+				return "redirect_to_saml2";
 			}else if (result == AuthResult.NOT_VALID_OAUTH_ACCOUNT) {
 				failed = true;
 				message = "Not a valid OAuth User. Try another account or contact the administrator.";
+				logoutProfiles();
+				return "failedAuth";
+			}else if (result == AuthResult.NOT_VALID_EMAIL) {
+				logoutProfiles();
+				failed = true;
+				message = "Claims did not include email address.";
+				return "failedAuth";
+			}else if (result == AuthResult.DUPLICATE_USERS) {
+				failed = true;
+				message = "More than one user exists with this email address.";
 				return "failedAuth";
 			} else {
 				HibHelper.getInstance().preJoin();
@@ -157,10 +180,11 @@ public class Login extends FSActionSupport {
 
 				failed = true;
 				message = "Username and/or Password was incorrect.";
+				logoutProfiles();
 				return "failedAuth";
 			}
 
-		} else if (action != null && action.equals("create")) {
+		} else if (AccessControl.isNewInstance(em) && (action != null && action.equals("create"))) {
 			if (adminUsername == null || adminUsername.trim().equals("")) {
 				this.message = "Username is blank";
 				return "createAccount";
@@ -323,10 +347,10 @@ public class Login extends FSActionSupport {
 
 		if (u != null) {
 			// Check if user is inactive due to number of days inactive
-			if (ems != null && ems.getInactiveDays() != null && ems.getInactiveDays() > 30) {
+			/*if (ems != null && ems.getInactiveDays() != null && ems.getInactiveDays() != 0) {
 				Date ll = u.getLastLogin();
 				// first check if the user has ever logged in.
-				if (ll != null || ll.getTime() != 0l) {
+				if (ll != null && ll.getTime() != 0l) {
 					java.util.Calendar backdate = java.util.Calendar.getInstance();
 					backdate.add(java.util.Calendar.DATE, -ems.getInactiveDays());
 					if (ll.getTime() < backdate.getTimeInMillis()) {
@@ -340,21 +364,23 @@ public class Login extends FSActionSupport {
 						return "gotologin";
 					}
 				}
-			}
+			}*/
 
-			String pass = UUID.randomUUID().toString();
-			u.setPasshash(AccessControl.HashPass("", pass));
-			// Setting username to an empty string prevents logins with GUID.
+			String key = UUID.randomUUID().toString();
+			PasswordReset reset = new PasswordReset();
+			reset.setKey(key);
+			reset.setUser(u);
+			reset.setCreated(new Date());
 			// You must register first and create a password to login.
 			String message = "Hello " + u.getFname() + " " + u.getLname() + "<br><br>";
 			message += "Click the link below to reset your password:<br><br>";
 			String url = request.getRequestURL().toString();
 			url = url.replace(request.getRequestURI(), "");
-			url = url + request.getContextPath() + "/portal/Register?uid=" + pass;
+			url = url + request.getContextPath() + "/portal/Register?uid=" + key;
 			message += "<a href='" + url + "'>Click here to Reset</a><br>";
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
-			em.persist(u);
+			em.persist(reset);
 			HibHelper.getInstance().commit();
 			EmailThread emailThread = new EmailThread(u.getEmail(), "Password Reset", message);
 			TaskQueueExecutor.getInstance().execute(emailThread);
@@ -364,17 +390,16 @@ public class Login extends FSActionSupport {
 	}
 
 	private String redirectIt(User user) {
-		if (user.getPermissions().isAssessor())
+		if (user.getPermissions().isManager())
+			return "managerDash";
+		else if (user.getPermissions().isAssessor())
 			return "assessorQueue";
 		else if (user.getPermissions().isEngagement())
 			return "engagement";
 		else if (user.getPermissions().isRemediation())
-
 			return "remediation";
 		else if (user.getPermissions().isAdmin())
 			return "admin";
-		else if (user.getPermissions().isManager())
-			return "calendar";
 		return "login";
 	}
 

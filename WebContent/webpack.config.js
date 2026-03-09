@@ -12,6 +12,7 @@ module.exports = {
 		vulnview:  path.resolve(__dirname, './src/assessment/vulnview.js'),
 		assessment_queue:  path.resolve(__dirname, './src/assessment/assessment_queue.js'),
 		checklist:  path.resolve(__dirname, './src/assessment/checklist.js'),
+		listbootstrap:  path.resolve(__dirname, './src/assessment/listbootstrap.js'),
 		peerreviewedit:  path.resolve(__dirname, './src/peerreview/peerreviewedit.js'),
 		peerreview_queue:  path.resolve(__dirname, './src/peerreview/peerreview_queue.js'),
 		assessorreviewedit:  path.resolve(__dirname, './src/peerreview/assessorreviewedit.js'),
@@ -24,13 +25,15 @@ module.exports = {
 		verification_edit: path.resolve(__dirname, './src/remediation/verification_edit.js'),
 		remediation: path.resolve(__dirname, './src/remediation/remediation.js'),
 		remediation_queue: path.resolve(__dirname, './src/remediation/remediation_queue.js'),
+		remediation_schedule: path.resolve(__dirname, './src/remediation/remediation_schedule.js'),
 		verification: path.resolve(__dirname, './src/retests/verification.js'),
 		verification_queue: path.resolve(__dirname, './src/retests/verification_queue.js'),
 		ice: path.resolve(__dirname, './src/ice_patched.js'),
 		templates: path.resolve(__dirname, './src/templates/templates.js'),
 		assessment_stats: path.resolve(__dirname, './src/assessment/assessment_stats.js'),
 		appstore: path.resolve(__dirname, './src/appstore/appstore.js'),
-		install_extension: path.resolve(__dirname, './src/appstore/install_extension.js')
+		install_extension: path.resolve(__dirname, './src/appstore/install_extension.js'),
+		manager_dashboard: path.resolve(__dirname, './src/dashboard/manager_dashboard.js')
 		
 	},
 	output: {

@@ -12,6 +12,7 @@ public class ReportTemplate {
 	URL defaultTemplateURL;
 	String defaultReportName = "default-report-template.docx";
 
+
 	public ReportTemplate() {
 		try {
 			this.defaultTemplateURL = new URL(

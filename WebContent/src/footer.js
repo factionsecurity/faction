@@ -52,18 +52,30 @@ global.alertMessage = function alertMessage(resp, success) {
 				title: "SUCCESS!",
 				type: "green",
 				content: success,
-				columnClass: 'small'
+				columnClass: 'small',
+				autoClose: 'OK|2000',
+				backgroundDismiss: 'OK',
+				buttons: {
+					OK: ()=>{}
+				}
 			}
 		);
+		return true;
 	} else {
 		$.alert(
 			{
 				title: "Error",
 				type: "red",
 				content: resp.message,
-				columnClass: 'small'
+				columnClass: 'small',
+				autoClose: 'OK|2000',
+				backgroundDismiss: 'OK',
+				buttons: {
+					OK: ()=>{}
+				}
 			}
 		);
+		return false;
 	}
 
 	//global._token = resp.token;
@@ -193,4 +205,38 @@ global.b64DecodeUnicode = function b64DecodeUnicode(str) {
 		return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
 	}).join(''));
 };
+global.b64EncodeUnicode= function b64EncodeUnicode(str) {
+  return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g,
+    (match, p1) => String.fromCharCode('0x' + p1)
+  ));
+}
+global.entityDecode = function entityDecode(encoded){
+	let textArea = document.createElement("textarea");
+	textArea.innerHTML = encoded;
+	return textArea.innerText;
+	
+}
+
+global.entityEncode = function entityEncode(data){
+	let textArea = document.createElement("textarea");
+	textArea.innerText = data;
+	return textArea.innerHTML
+	
+}
+global.imageToURL = function imageToURL(imageFile) {
+ return new Promise((resolve, reject) => {
+   const reader = new FileReader();
+
+   reader.onload = (event) => {
+	 resolve(event.target.result);
+   };
+
+   reader.onerror = (error) => {
+	 reject(error);
+   };
+
+   reader.readAsDataURL(imageFile);
+ });
+}
+
 

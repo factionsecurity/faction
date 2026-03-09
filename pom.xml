@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.faction</groupId>
 	<artifactId>faction</artifactId>
-	<version>1.2.6-SNAPSHOT</version>
+	<version>1.7.5-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>Faction</name>
 	<scm>
@@ -10,7 +10,7 @@
 		<connection>scm:git:https://github.com/factionsecurity/faction.git</connection>
 		<developerConnection>
 			scm:git:https://github.com/factionsecurity/faction.git</developerConnection>
-		<tag>1.2.1</tag>
+		<tag>1.7.0</tag>
 	</scm>
 	<properties>
 		<aws.java.sdk.version>2.18.16</aws.java.sdk.version>
@@ -51,6 +51,13 @@
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.10.1</version>
 				<configuration>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>1.18.36</version>
+						</path>
+					</annotationProcessorPaths>
 					<source>8</source>
 					<target>8</target>
 				</configuration>
@@ -59,6 +66,7 @@
 				<artifactId>maven-war-plugin</artifactId>
 				<version>3.2.2</version>
 				<configuration>
+					<attachClasses>true</attachClasses>
 					<warSourceDirectory>WebContent</warSourceDirectory>
 					<warSourceExcludes>
 						node_modules/,.env/,.node_env/,WEB-INF/lib-bk/</warSourceExcludes>
@@ -70,6 +78,23 @@
 						</manifest>
 					</archive>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.3.0</version>
+				<executions>
+					<execution>
+						<id>build-jar</id>
+						<phase>package</phase>
+						<goals>
+							<goal>jar</goal>
+						</goals>
+						<configuration>
+							<classifier>classes</classifier>
+						</configuration>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
@@ -133,17 +158,22 @@
 		<dependency>
 			<groupId>org.apache.struts</groupId>
 			<artifactId>struts2-core</artifactId>
-			<version>2.5.32</version>
+			<version>6.7.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.struts</groupId>
 			<artifactId>struts2-junit-plugin</artifactId>
-			<version>2.5.32</version>
+			<version>6.7.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.struts</groupId>
 			<artifactId>struts2-convention-plugin</artifactId>
-			<version>2.5.12</version>
+			<version>6.7.0</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-crypto</artifactId>
+			<version>3.1.7.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.el</groupId>
@@ -175,21 +205,6 @@
 			<groupId>xml-apis</groupId>
 			<artifactId>xml-apis</artifactId>
 			<version>1.0.b2</version>
-		</dependency>
-		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-core-asl</artifactId>
-			<version>1.9.13</version>
-		</dependency>
-		<dependency>
-			<groupId>org.codehaus.jackson</groupId>
-			<artifactId>jackson-mapper-asl</artifactId>
-			<version>1.9.13</version>
-		</dependency>
-		<dependency>
-			<groupId>org.python</groupId>
-			<artifactId>jython-standalone</artifactId>
-			<version>2.7.2b3</version>
 		</dependency>
 		<dependency>
 			<groupId>net.sf.json-lib</groupId>
@@ -259,27 +274,27 @@
 		<dependency>
 			<groupId>com.factionsecurity</groupId>
 			<artifactId>faction-extender</artifactId>
-			<version>2.5</version>
+			<version>2.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.docx4j</groupId>
 			<artifactId>docx4j-core</artifactId>
-			<version>11.4.8</version>
+			<version>11.4.11</version>
 		</dependency>
 		<dependency>
 			<groupId>org.docx4j</groupId>
-			<artifactId>docx4j-ImportXHTML</artifactId>
-			<version>11.4.8</version>
+			<artifactId>docx4j-ImportXHTML-core</artifactId>
+			<version>11.4.10</version>
 		</dependency>
 		<dependency>
 			<groupId>org.docx4j</groupId>
 			<artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
-			<version>11.4.8</version>
+			<version>11.4.11</version>
 		</dependency>
 		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi</artifactId>
-			<version>5.2.4</version>
+			<groupId>org.docx4j</groupId>
+			<artifactId>docx4j-JAXB-ReferenceImpl</artifactId>
+			<version>11.4.11</version>
 		</dependency>
 		<dependency>
 			<groupId>com.openhtmltopdf</groupId>
@@ -295,11 +310,6 @@
 			<groupId>com.openhtmltopdf</groupId>
 			<artifactId>openhtmltopdf-objects</artifactId>
 			<version>1.0.10</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.poi</groupId>
-			<artifactId>poi-ooxml</artifactId>
-			<version>5.2.4</version>
 		</dependency>
 		<dependency>
 			<groupId>org.docx4j</groupId>
@@ -347,8 +357,6 @@
 			<artifactId>hibernate-ogm-core</artifactId>
 			<version>5.1.0.Final</version>
 		</dependency>
-
-
 		<dependency>
 			<groupId>javax.persistence</groupId>
 			<artifactId>javax.persistence-api</artifactId>
@@ -385,34 +393,33 @@
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
-			<artifactId>j2e-pac4j</artifactId>
-			<version>4.1.0</version>
+			<artifactId>jee-pac4j</artifactId>
+			<version>5.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
 			<artifactId>pac4j-oidc</artifactId>
-			<version>3.0.0</version>
-			<exclusions>
-				<exclusion>
-					<groupId>javax.activation</groupId>
-					<artifactId>activation</artifactId>
-				</exclusion>
-			</exclusions>
+			<version>4.5.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
 			<artifactId>pac4j-http</artifactId>
-			<version>3.0.0</version>
+			<version>4.5.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
 			<artifactId>pac4j-jwt</artifactId>
-			<version>3.0.0</version>
+			<version>4.5.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
 			<artifactId>pac4j-core</artifactId>
-			<version>3.0.0</version>
+			<version>4.5.7</version>
+		</dependency>
+		<dependency>
+			<groupId>org.pac4j</groupId>
+			<artifactId>pac4j-saml</artifactId>
+			<version>4.5.7</version>
 		</dependency>
 		<dependency>
 			<groupId>org.commonmark</groupId>
@@ -445,6 +452,38 @@
 			<artifactId>build-helper-maven-plugin</artifactId>
 			<version>3.2.0</version>
 			<type>maven-plugin</type>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-core</artifactId>
+			<version>3.10.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.36</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk15on</artifactId>
+			<version>1.70</version>
+		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk15on</artifactId>
+			<version>1.70</version>
+		</dependency>
+		<dependency>
+			<groupId>org.libreoffice</groupId>
+			<artifactId>libreoffice</artifactId>
+			<version>24.2.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.libreoffice</groupId>
+			<artifactId>unoil</artifactId>
+			<version>24.2.3</version>
 		</dependency>
 	</dependencies>
 	<dependencyManagement>

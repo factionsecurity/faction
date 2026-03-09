@@ -12,6 +12,27 @@
 	min-height: 570px;
 	max-height: 570px;
 }
+#summary{
+	background-color:white;
+}
+#risk{
+	background-color:white;
+}
+#notes{
+	background-color:white;
+}
+#engagmentnotes{
+	background-color:white;
+}
+.input-group-addon{
+	background-color: #030D1C !important;
+	border-top-left-radius: 4px !important;
+	border-bottom-left-radius: 4px !important;
+}
+.form-control{
+border-color: #030D1C !important;
+}
+
 </style>
 
 
@@ -27,54 +48,58 @@
 			<!-- /.box-header -->
 			<!-- form start -->
 			<form class="form-horizontal">
-				<div class="box-body">
-					<div class="form-group">
-						<label for="assessor" class="col-sm-2 control-label">Assessor(s)</label>
-						<div class="col-sm-10">
+				<div class="box-body row">
+						<div class="col-sm-12">
+							<label for="assessor" class="control-label">Assessor(s)</label>
+							
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-user-group"></i>
+							</div>
 							<input type="text" disabled="" class="form-control" id="assessor"
 								value="<s:iterator value="assessment.assessor" ><s:property value="fname"/>&nbsp;<s:property value="lname"/>; </s:iterator>">
+								</div>
 
 						</div>
-					</div>
-					<div class="form-group">
-						<label for="engagement" class="col-sm-2 control-label">Project
-							Manager</label>
-						<div class="col-sm-10">
+						<div class="col-sm-6">
+						<label for="engagement" class="control-label">Project Manager</label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-user"></i>
+							</div>
 							<input type="text" disabled="" class="form-control"
 								id="engagement"
 								value="<s:property value="assessment.engagement.fname"/>&nbsp;<s:property value="assessment.engagement.lname"/>">
+								</div>
 						</div>
-					</div>
-					<div class="form-group">
-						<label for="remediation" class="col-sm-2 control-label">Remediation</label>
-						<div class="col-sm-10">
+						<div class="col-sm-6">
+						<label for="remediation" class="control-label">Remediation</label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-user"></i>
+							</div>
 							<input type="text" disabled="" class="form-control"
 								id="remediation"
 								value="<s:property value="assessment.remediation.fname"/>&nbsp;<s:property value="assessment.remediation.lname"/>">
+								</div>
 						</div>
-					</div>
-					<div class="form-group">
-						<label for="Distro" class="col-sm-2 control-label">Distro</label>
-						<div class="col-sm-10">
+						<div class="col-sm-12">
+						<label for="Distro" class="control-label">Distro</label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-envelope"></i>
+							</div>
 							<input type="text" disabled="" class="form-control" id="Distro"
 								value="<s:property value="assessment.distributionList"/>">
+								</div>
 						</div>
-					</div>
-					<div class="form-group">
-						<label for="Distro" class="col-sm-2 control-label">Status</label>
-						<div class="col-sm-10">
-							<input type="text" disabled="" class="form-control" id="status"
-								value="<s:property value="assessment.status"/>">
-						</div>
-					</div>
-
 
 				</div>
+			<!-- /.box-body -->
+			</form>
 		</div>
-		<!-- /.box-body -->
-		</form>
-	</div>
 	<!-- /.box -->
+	</div>
 
 	<div class="col-md-6">
 		<!-- Horizontal Form -->
@@ -87,94 +112,66 @@
 			<!-- /.box-header -->
 			<!-- form start -->
 			<div class="form-horizontal">
-				<div class="box-body">
-					<div class="form-group">
-						<label for="type" class="col-sm-2 control-label">Type</label>
-						<div class="col-sm-10">
-							<input type="text" disabled="" class="form-control" id="type"
-								value="<s:property value="assessment.type.type"/>">
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="team" class="col-sm-2 control-label">Team</label>
-						<div class="col-sm-10">
-							<input type="text" disabled="" class="form-control" id="team"
-								value="<s:property value="assessment.assessor[0].team.teamName"/>">
-						</div>
-					</div>
-					<div class="form-group">
-						<label for="campaign" disabled="" class="col-sm-2 control-label">Campaign</label>
-						<div class="col-sm-10">
-							<input type="text" disabled="" class="form-control" id="campaign"
-								value="<s:property value="assessment.campaign.name"/>">
-						</div>
-					</div>
-					<div class="form-group">
-						<label class="col-sm-2 control-label">Date range</label>
-						<div class="col-sm-10">
-							<div class="input-group ">
-								<div class="input-group-addon ">
+				<div class="box-body row">
+					<div class="col-sm-6">
+						<label class="">Date Range</label>
+							<div class="input-group">
+								<div class="input-group-addon">
 									<i class="fa fa-calendar"></i>
 								</div>
-								<input disabled="" class="form-control pull-right"
+								<input disabled class="form-control pull-right"
 									id="reservation" type="text"
 									value='<s:property value="assessment.start"/> - <s:property value="assessment.end"/>'>
 							</div>
-							<!-- /.input group -->
+						<!-- /.input group -->
+					</div>
+					<div class="col-sm-6">
+						<label for="Distro" class="control-label">Status <span id="status_header"></span></label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-circle-dot"></i>
+							</div>
+						<select class='form-control select2 ' style='width: 100%;'
+							id="status"
+							<s:if test="currentAssessment.finalized">readonly</s:if>>
+							<s:iterator value="statuses" var="status">
+								<option value="<s:property value="#status.id"/>"
+									<s:if test="#status.name.equals(assessment.status)">selected</s:if>><s:property
+										value="#status.name" /> </option> 
+							</s:iterator>
+						</select>
 						</div>
 					</div>
-					<s:iterator value="assessment.customFields">
-						<div class="form-group">
-							<label for="team" class="col-sm-2 control-label"
-								title="Variable: &#x24;{cf${type.variable}}">${type.key}</label>
-
-							<s:if test="!type.readonly">
-								<div class="col-sm-8">
-									<s:if test="type.fieldType == 0">
-										<input type="text" class="form-control" id="cust${id}"
-											value='${value}'
-											<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
-									</s:if>
-									<s:if test="type.fieldType == 1">
-										<br>
-										<input type="checkbox" class="icheckbox_minimal-blue"
-											style="width: 20px; height: 20px; position: absolute; margin-top: -13px"
-											id="cust<s:property value="id"/>"
-											<s:if test="value == 'true'">checked</s:if>
-											<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
-									</s:if>
-									<s:if test="type.fieldType == 2">
-										<select class='form-control select2 ' style='width: 100%;'
-											id="cust<s:property value="id"/>"
-											<s:if test="currentAssessment.finalized">readonly</s:if>>
-											<s:iterator value="type.defaultValue.split(',')" var="option">
-												<s:set var="aOption" value="option" />
-												<option value="<s:property value="option"/>"
-													<s:if test="value.equals(#aOption)">selected</s:if>><s:property
-														value="option" /></option> 
-											</s:iterator>
-										</select>
-									</s:if>
+					<div class="col-sm-6">
+						<label for="type" class="control-label">Type</label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-gem"></i>
+							</div>
+							<input type="text" disabled="" class="form-control" id="type"
+								value="<s:property value="assessment.type.type"/>">
 								</div>
-								<div class="col-sm-2">
-									<s:if
-										test="!(assessment.InPr || assessment.prComplete || assessment.finalized)">
-										<button class="btn btn-default updateCF" for="${id}">Update</button>
-									</s:if>
+					</div>
+					<div class="col-sm-6">
+						<label for="team" class="control-label">Team</label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-user-group"></i>
+							</div>
+							<input type="text" disabled="" class="form-control" id="team"
+								value="<s:property value="assessment.assessor[0].team.teamName"/>">
 								</div>
-							</s:if>
-							<s:else>
-								<div class="col-sm-8">
-									<input type="text" class="form-control" value='${value}'
-										disabled>
-								</div>
-								<div class="col-sm-2"></div>
-							</s:else>
-
-
 						</div>
-					</s:iterator>
-
+					<div class="col-sm-6">
+						<label for="campaign" disabled="" class="control-label">Campaign</label>
+							<div class="input-group">
+							<div class="input-group-addon ">
+								<i class="fa fa-flag"></i>
+							</div>
+							<input type="text" disabled="" class="form-control" id="campaign"
+								value="<s:property value="assessment.campaign.name"/>">
+								</div>
+						</div>
 				</div>
 				<!-- /.box-body -->
 
@@ -183,6 +180,79 @@
 		<!-- /.box -->
 	</div>
 </div>
+
+<s:if test="assessment.varsExist">	
+					
+<div class="row">
+	<div class="col-md-12">
+		<!-- Horizontal Form -->
+		<div class="box box-primary">
+			<div class="box-header with-border">
+				<h3 class="box-title">
+					<i class="glyphicon  glyphicon-list-alt"></i> Assessment Variables
+				</h3>
+			</div>
+			<!-- /.box-header -->
+			<!-- form start -->
+			<div class="form-horizontal">
+				<div class="box-body">
+				<div class="row">	
+					<s:iterator value="assessment.customFields">
+						<s:if test="type.fieldType < 3">
+							<div class="form-group col-sm-3">
+								<div class="col-sm-12">
+								<label class=""
+									title='Variable: &#x24;{cf<s:property value="type.variable"/>}'><s:property value="type.key"/>
+										<span id="cust${id}_header"></span><br/><small>Variable: &#x24;&#x7B;cf<s:property value="type.variable"/>&#x7D;</small>
+										</label>
+
+								<s:if test="!type.readonly">
+									<div class="">
+										<s:if test="type.fieldType == 0">
+											<input type="text" class="form-control" id="cust${id}"
+												value='<s:property value="value"/>'
+												<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
+										</s:if>
+										<s:if test="type.fieldType == 1">
+											<br>
+											<input type="checkbox" class="icheckbox_minimal-blue"
+												style="width: 20px; height: 20px; margin-top: -30px"
+												id="cust<s:property value="id"/>"
+												<s:if test="value == 'true'">checked</s:if>
+												<s:if test="assessment.InPr || assessment.prComplete || assessment.finalized">disabled</s:if> />
+										</s:if>
+										<s:if test="type.fieldType == 2">
+											<select class='form-control select2 ' style='width: 100%;'
+												id="cust<s:property value="id"/>"
+												<s:if test="currentAssessment.finalized">readonly</s:if>>
+												<s:iterator value="type.defaultValue.split(',')" var="option">
+													<s:set var="aOption" value="option" />
+													<option value="<s:property value="option"/>"
+														<s:if test="value.equals(#aOption)">selected</s:if>><s:property
+															value="option" /></option> 
+												</s:iterator>
+											</select>
+										</s:if>
+									</div>
+								</s:if>
+								<s:else>
+									<div class="">
+										<input type="text" class="form-control" value='${value}'
+											disabled>
+									</div>
+								</s:else>
+								</div>
+							</div>
+						</s:if>
+					</s:iterator>
+					</div> <!-- end iterator -->
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</s:if>
+
 
 <div class="row">
 	<!-- SUMMARY Section -->
@@ -198,10 +268,10 @@
 			<!-- /.box-header -->
 			<div class="box-body pad">
 				<form>
-					<bs:editor name="editor1" toolbar="Full" id="summary"
+					<div name="editor1" toolbar="Full" id="summary"
 						clickToEnable="false" readonly="${hideit}">
 						<s:property value="assessment.summary" />
-					</bs:editor>
+					</div>
 				</form>
 				<s:if test="!(hideit)">
 					<br>
@@ -235,24 +305,20 @@
 					<select id="summaryTemplates" multiple="false"
 						class="form-control templates">
 						<s:iterator value="summaryTemplates">
-							<option value="${id}" title="${user.fname } ${user.lname}"
-								global="${global}"
+							<option value="<s:property value='id'/>" title="<s:property value='user.fname'/> <s:property value='user.lname'/>"
+								global="<s:property value="global"/>"
 								<s:if test="global == true">
-								class='globalTemplate'>
-							</s:if><s:else>
-								class='userTemplate'>
-							</s:else>
-							${title}
+								class='globalTemplate'
+								</s:if><s:else>
+								class='userTemplate'
+								</s:else>>
+							<s:property value="title"/>
 							</option>
 						</s:iterator>
 					</select>
 				</div>
 				<s:if test="!(hideit)">
 					<div class="row">
-						<!-- <div class="col-md-8">
-							<input class="form-control searchTemplate"
-								for="summary" placeholder="Search for Template" />
-						</div>-->
 						<div class="col-md-1"></div>
 						<div class="col-md-11" style="padding-top: 8px">
 							<span id="saveTemplateSideBar"
@@ -293,10 +359,10 @@
 			<!-- /.box-header -->
 			<div class="box-body pad">
 				<form>
-					<bs:editor name="editor2" toolbar="Full" id="riskAnalysis"
+					<div name="editor2" toolbar="Full" id="risk"
 						clickToEnable="false" readonly="${hideit}">
-						<s:property value="assessment.riskAnalysis" />
-					</bs:editor>
+						<s:property value="assessment.riskAnalysis"/>
+					</div>
 				</form>
 				<s:if test="!(hideit)">
 					<br>
@@ -327,14 +393,14 @@
 					<select id="riskTemplates" multiple="false"
 						class="form-control templates">
 						<s:iterator value="riskTemplates">
-							<option value="${id}" title="${user.fname } ${user.lname}"
-								global="${global}"
+							<option value="<s:property value='id'/>" title="<s:property value='user.fname'/> <s:property value='user.lname'/>"
+								global="<s:property value='global'/>"
 								<s:if test="global == true">
-								class='globalTemplate'>
+								class='globalTemplate'
 							</s:if><s:else>
-								class='userTemplate'>
-							</s:else>
-							${title}
+								class='userTemplate'
+							</s:else>>
+							<s:property value='title'/>
 							</option>
 						</s:iterator>
 					</select>
@@ -369,33 +435,6 @@
 
 <div class="row">
 
-	<!-- Notes Analysis Section -->
-	<div class="col-md-12">
-		<div class="box box-success">
-			<div class="box-header">
-				<h3 class="box-title">
-					<i class="glyphicon glyphicon-pencil"></i> Notes <span
-						id="notes_header" class="edited"></span> <small>Not
-						included in report</small>
-				</h3>
-				<div class="box-tools pull-right"></div>
-			</div>
-			<!-- /.box-header -->
-			<div class="box-body pad">
-				<form>
-					<bs:editor name="editor3" toolbar="Full" id="notes"
-						clickToEnable="false" readonly="${hideit}">
-						<s:property value="assessment.Notes" />
-					</bs:editor>
-				</form>
-			</div>
-		</div>
-		<!-- /.box -->
-	</div>
-
-</div>
-<div class="row">
-
 	<!-- Engagement Notes Section -->
 	<div class="col-md-12">
 		<div class="box box-primary">
@@ -411,10 +450,10 @@
 			<div class="box-body pad">
 				<div class="col-md-6">
 					<form>
-						<bs:editor name="engagmentnotes" toolbar="None"
-							id="engagmentnotes" readonly="true" clickToEnable="false">
+						<div name="engagementnotes" toolbar="None"
+							id="engagementnotes" readonly="true" clickToEnable="false">
 							<s:property value="assessment.accessNotes" />
-						</bs:editor>
+						</div>
 					</form>
 				</div>
 				<div class="col-md-6">

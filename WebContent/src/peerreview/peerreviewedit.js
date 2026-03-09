@@ -72,15 +72,14 @@ $(function() {
 });
 
 let editors = {}
-//window.editors = editors;
 const editorConfig = {
 	display: 'block',
 	width: '100%',
 	codeMirror: CodeMirror,
 	plugins: [font, fontColor, hiliteColor, link, fontSize, align, image, imageGallery, list, formatBlock, table, blockquote, textStyle],
 	buttonList: [
-		['undo', 'redo', 'font', 'fontSize', 'formatBlock'],
-		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
+		['undo', 'redo', 'formatBlock'],
+		['bold', 'underline', 'italic', 'strike', 'removeFormat'],
 		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
 		['link', 'image', 'fullScreen', 'showBlocks', 'preview'],
 
