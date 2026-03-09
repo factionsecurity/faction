@@ -54,7 +54,41 @@
 								</bs:row>
 								<br>
 								<hr>
+								<s:if test="sectionsEnabled">
+									<bs:row>
+										<div class="box-header with-border">
+											<h3 class="box-title">Report Sections</h3>
+										</div>
+									</bs:row>
+									<bs:row>
+										<input type="text" id="sectionName" class="form-control" placeholder="Report Section Name"/>
+										<br>
+										<button class="btn btn-block btn-info btn-lg" id="addSection">Add
+											Section</button>
+											<br>
+									</bs:row>
+									<bs:row>
+										<bs:datatable columns="Section Name,Variable,Edit"
+											classname="primary" id="reportSectionsTable">
+											<s:iterator value="reportSections" var="sectionName">
+												<tr>
+													<td><s:property value="#sectionName[1]" /></td>
+													<td><s:property value="#sectionName[0]" /></td>
+													<td> <span class="vulnControl vulnControl-delete deleteSection"
+														id="deleteSection_<s:property value="#sectionName[0]"/>"> <i class="fa fa-trash"></i>
+													</span></td>
+												</tr>
+											</s:iterator>
+										</bs:datatable>
+									</bs:row>
+								</s:if>
 								<br>
+								<hr>
+								<bs:row>
+									<div class="box-header with-border">
+										<h3 class="box-title">Generate Sample Reports</h3>
+									</div>
+								</bs:row>
 								<bs:row>
 									<bs:select name="Assessment Type" colsize="6" id="asmtType">
 										<s:iterator value="types">
@@ -103,18 +137,15 @@
 						classname="primary" id="templates">
 						<s:iterator value="templates">
 							<tr>
-								<td><s:property value="name"/></td>
-								<td><s:property value="team.teamName"/></td>
-								<td><s:property value="type.type"/></td>
+								<td><s:property value="name" /></td>
+								<td><s:property value="team.teamName" /></td>
+								<td><s:property value="type.type" /></td>
 								<td>${retest}</td>
-								<td>
-											<span class="vulnControl editUser" id="tmpEdit${id}">
-												<i class="fa fa-edit"></i>
-											</span> 
-											<span class="vulnControl vulnControl-delete deleteUser" id="tmpDel${id}">
-												<i class="fa fa-trash"></i>
-											</span>
-											</td>
+								<td><span class="vulnControl editUser" id="tmpEdit${id}">
+										<i class="fa fa-edit"></i>
+								</span> <span class="vulnControl vulnControl-delete deleteUser"
+									id="tmpDel${id}"> <i class="fa fa-trash"></i>
+								</span></td>
 							</tr>
 						</s:iterator>
 					</bs:datatable>

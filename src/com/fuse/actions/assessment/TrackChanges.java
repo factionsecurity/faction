@@ -4,13 +4,13 @@ import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.commons.beanutils.PropertyUtils;
 import org.apache.struts2.convention.annotation.Action;
@@ -20,18 +20,19 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.ParseException;
 
+import com.faction.reporting.ReportFeatures;
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.CheckListAnswers;
 import com.fuse.dao.Comment;
-import com.fuse.dao.ExploitStep;
 import com.fuse.dao.Files;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Notification;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.PeerReviewLock;
 import com.fuse.dao.RiskLevel;
+import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
@@ -39,9 +40,8 @@ import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
 
 @Namespace("/portal")
-@Result(name = "success", location = "/WEB-INF/jsp/peerreviews/PeerReviewIce.jsp")
+@Result(name = "success", location = "/WEB-INF/jsp/peerreviews/TrackChanges.jsp")
 public class TrackChanges extends FSActionSupport {
-
 	private Assessment asmt;
 	private User user;
 	private String action = "";
@@ -59,64 +59,15 @@ public class TrackChanges extends FSActionSupport {
 	private String jsonResponse;
 	private Boolean prqueue = false;
 	private List<RiskLevel> levels;
-	private Map<Long, List<CheckListAnswers>> checklists = new HashMap();
+	private Map<Long, List<CheckListAnswers>> checklists = new HashMap<>();
 	private List<Files> files;
 	private boolean showSave = true;
 	private boolean showComplete = true;
 	private String field;
 	private PeerReviewLock lock;
 	private List<PeerReviewLock> allLocks;
+	private List<String> sections = new ArrayList<>();
 
-	private Assessment cloneAsssessmentFromPeerReview(PeerReview pr) throws ParseException {
-		Assessment assessment = new Assessment();
-		Comment com = pr.getComments().get(pr.getComments().size() - 1);
-		assessment = com.exportAssessment(em);
-		assessment.setAnswers(pr.getAssessment().getAnswers());
-		assessment.setId(pr.getAssessment().getId());
-		assessment.setAppId(pr.getAssessment().getAppId());
-		assessment.setName(pr.getAssessment().getName());
-		return assessment;
-	}
-
-	private Comment createUpdatedCommentFromPeerReview(PeerReview pr) {
-		Comment review = pr.getComments().get(pr.getComments().size() - 1);
-		Assessment asmt;
-		try {
-			asmt = review.exportAssessment(em);
-			if (this.summary != null)
-				review.setSummary1(this.summary);
-			if (this.risk != null)
-				review.setSummary2(this.risk);
-			if (this.sum_notes != null)
-				review.setSummary1_notes(this.sum_notes);
-			if (this.risk_notes != null)
-				review.setSummary2_notes(this.risk_notes);
-
-			for (Vulnerability v : asmt.getVulns()) {
-				long id = v.getId();
-				if (vuln_desc != null && vuln_desc.get("" + id) != null)
-					v.setDescription(vuln_desc.get("" + id));
-				if (vuln_desc_notes != null && vuln_desc_notes.get("" + id) != null)
-					v.setDesc_notes(vuln_desc_notes.get("" + id));
-				if (vuln_rec != null && vuln_rec.get("" + id) != null)
-					v.setRecommendation(vuln_rec.get("" + id));
-				if (vuln_rec_notes != null && vuln_rec_notes.get("" + id) != null)
-					v.setRec_notes(vuln_rec_notes.get("" + id));
-				if (vuln_details != null && vuln_details.get("" + id) != null)
-					v.setDetails(vuln_details.get("" + id));
-				if (vuln_detail_notes != null && vuln_detail_notes.get("" + id) != null)
-					v.setDetail_notes(vuln_detail_notes.get("" + id));
-			}
-			// Remove the vulns currently there and add our Updated ones.
-			review.deleteAllVulns();
-			review.addVulns(asmt.getVulns(), false);
-			return review;
-		} catch (ParseException e) {
-			e.printStackTrace();
-			return review;
-		}
-
-	}
 
 	@Action(value = "SaveChanges", results = {
 			@Result(name = "completeErrors", location = "/WEB-INF/jsp/peerreviews/completeErrors.jsp"),
@@ -186,6 +137,7 @@ public class TrackChanges extends FSActionSupport {
 		Assessment assessment = pr.getAssessment();
 		Comment comment = pr.getComments().get(pr.getComments().size() - 1);
 		Assessment updatedAssessment = comment.exportAssessment(em);
+		updatedAssessment.setType(assessment.getType());
 		comment.setAcceptedEdits(true);
 
 		// Save Everything...
@@ -214,6 +166,12 @@ public class TrackChanges extends FSActionSupport {
 		for (Vulnerability v : assessment.getVulns()) {
 			if (v.getDescription().matches(trackChangesTest)) {
 				errors.add("Vulnerability " + v.getName() + " Description contains UnAccepted Edits");
+			}
+			if (v.getRecommendation().matches(trackChangesTest)) {
+				errors.add("Vulnerability " + v.getName() + " Recommendation contains UnAccepted Edits");
+			}
+			if (v.getDetails().matches(trackChangesTest)) {
+				errors.add("Vulnerability " + v.getName() + " Details contains UnAccepted Edits");
 			}
 		}
 		JSONObject result = new JSONObject();
@@ -373,6 +331,17 @@ public class TrackChanges extends FSActionSupport {
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
 		if (pr == null)
 			return "redirect";
+		
+		this.sections.add("Default");
+		if(ReportFeatures.allowSections()) {
+			
+			SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+					.findFirst().orElse(null);
+			
+			for(String section : ReportFeatures.getFeatures(ems.getFeatures())){
+				this.sections.add(section);
+			}
+		}
 
 		boolean isAssessor = false;
 		for (User u : pr.getAssessment().getAssessor()) {
@@ -402,6 +371,7 @@ public class TrackChanges extends FSActionSupport {
 		asmt.setId(pr.getAssessment().getId());
 		asmt.setAppId(pr.getAssessment().getAppId());
 		asmt.setName(pr.getAssessment().getName());
+		asmt.setType(pr.getAssessment().getType());
 
 		files = (List<Files>) em.createQuery("from Files where type = :type and entityId = :id")
 				.setParameter("type", Files.ASSESSMENT).setParameter("id", pr.getAssessment().getId()).getResultList();
@@ -439,12 +409,24 @@ public class TrackChanges extends FSActionSupport {
 				&& !pr.getAssessment().getAssessor().stream().anyMatch(usr -> usr.getId() == user.getId())) {
 			return ERROR;
 		}
+		
+		this.sections.add("Default");
+		if(ReportFeatures.allowSections()) {
+			
+			SystemSettings ems = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+					.findFirst().orElse(null);
+			
+			for(String section : ReportFeatures.getFeatures(ems.getFeatures())){
+				this.sections.add(section);
+			}
+		}
 
 		asmt = com.exportAssessment(em);
 		asmt.setAnswers(pr.getAssessment().getAnswers());
 		asmt.setId(pr.getAssessment().getId());
 		asmt.setAppId(pr.getAssessment().getAppId());
 		asmt.setName(pr.getAssessment().getName());
+		asmt.setType(pr.getAssessment().getType());
 		this.showComplete = false;
 		this.showSave = false;
 		levels = em.createQuery("from RiskLevel order by riskId").getResultList();
@@ -607,7 +589,7 @@ public class TrackChanges extends FSActionSupport {
 
 	private void clearOldLocks(Comment comment) {
 		Calendar now = Calendar.getInstance();
-		now.add(Calendar.MINUTE, -5);
+		now.add(Calendar.MINUTE, -1);
 		Date fiveMin = now.getTime();
 		List<PeerReviewLock> allOldLocks = (List<PeerReviewLock>) em
 				.createQuery("from PeerReviewLock where lastComment = :comment and lockedAt < :fiveMin")
@@ -618,6 +600,59 @@ public class TrackChanges extends FSActionSupport {
 			allOldLocks.stream().forEach( lock -> em.remove(lock));
 			HibHelper.getInstance().commit();
 		}
+	}
+	private Assessment cloneAsssessmentFromPeerReview(PeerReview pr) throws ParseException {
+		Assessment assessment = new Assessment();
+		Comment com = pr.getComments().get(pr.getComments().size() - 1);
+		assessment = com.exportAssessment(em);
+		assessment.setAnswers(pr.getAssessment().getAnswers());
+		assessment.setId(pr.getAssessment().getId());
+		assessment.setAppId(pr.getAssessment().getAppId());
+		assessment.setName(pr.getAssessment().getName());
+		assessment.setType(pr.getAssessment().getType());
+		return assessment;
+	}
+
+	private Comment createUpdatedCommentFromPeerReview(PeerReview pr) {
+		Comment review = pr.getComments().get(pr.getComments().size() - 1);
+		Assessment asmt;
+		try {
+			asmt = review.exportAssessment(em);
+			//TODO: Need to fix this so it happens in the export command
+			asmt.setType(pr.getAssessment().getType());
+			if (this.summary != null)
+				review.setSummary1(this.summary);
+			if (this.risk != null)
+				review.setSummary2(this.risk);
+			if (this.sum_notes != null)
+				review.setSummary1_notes(this.sum_notes);
+			if (this.risk_notes != null)
+				review.setSummary2_notes(this.risk_notes);
+
+			for (Vulnerability v : asmt.getVulns()) {
+				long id = v.getId();
+				if (vuln_desc != null && vuln_desc.get("" + id) != null)
+					v.setDescription(vuln_desc.get("" + id));
+				if (vuln_desc_notes != null && vuln_desc_notes.get("" + id) != null)
+					v.setDesc_notes(vuln_desc_notes.get("" + id));
+				if (vuln_rec != null && vuln_rec.get("" + id) != null)
+					v.setRecommendation(vuln_rec.get("" + id));
+				if (vuln_rec_notes != null && vuln_rec_notes.get("" + id) != null)
+					v.setRec_notes(vuln_rec_notes.get("" + id));
+				if (vuln_details != null && vuln_details.get("" + id) != null)
+					v.setDetails(vuln_details.get("" + id));
+				if (vuln_detail_notes != null && vuln_detail_notes.get("" + id) != null)
+					v.setDetail_notes(vuln_detail_notes.get("" + id));
+			}
+			// Remove the vulns currently there and add our Updated ones.
+			review.deleteAllVulns();
+			review.addVulns(asmt.getVulns(), false);
+			return review;
+		} catch (ParseException e) {
+			e.printStackTrace();
+			return review;
+		}
+
 	}
 
 	public String getActivePR() {
@@ -795,5 +830,8 @@ public class TrackChanges extends FSActionSupport {
 	public List<PeerReviewLock> getAllLocks() {
 		return this.allLocks;
 	}
-
+	
+	public List<String> getSections(){
+		return this.sections;
+	}
 }

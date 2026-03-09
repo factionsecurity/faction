@@ -9,6 +9,7 @@ import org.apache.struts2.convention.annotation.Result;
 
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.PasswordReset;
 import com.fuse.dao.User;
 import com.fuse.utils.AccessControl;
 
@@ -26,15 +27,16 @@ public class Register extends FSActionSupport {
 			@Result(name = "gotologin", type = "redirectAction", location = "../login"), })
 	public String execute() {
 
-		// Session session = HibHelper.getSessionFactory().openSession();
-		String hash = AccessControl.HashPass("", uid);
-		User u = (User) em.createQuery("from User where passhash = :hash").setParameter("hash", hash).getResultList()
-				.stream().findFirst().orElse(null);
-		if (u == null) {
+		PasswordReset reset = (PasswordReset) em.createQuery("from PasswordReset where key = :key")
+				.setParameter("key", uid)
+				.getResultList().stream()
+				.findFirst().orElse(null);
+		if(reset == null) {
 			AuditLog.audit(this, "Registration Link was not valid", AuditLog.Login, true);
 			message = "Link is no longer valid.";
 			return SUCCESS;
 		}
+		User u = reset.getUser(); 
 		this.username = u.getUsername();
 
 		if (this.request.getMethod().equals("GET"))
@@ -44,10 +46,11 @@ public class Register extends FSActionSupport {
 		if (message.equals("")) {
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
-			String hash2 = AccessControl.HashPass(username.toLowerCase(), password);
+			String hash2 = AccessControl.HashPass(password);
 			u.setPasshash(hash2);
 			u.setFailedAuth(0);
 			em.persist(u);
+			em.remove(reset);
 			AuditLog.audit(username, this, "Rest of password was successfull for " + username, AuditLog.Login, false);
 			HibHelper.getInstance().commit();
 

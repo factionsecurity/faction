@@ -1,0 +1,59 @@
+/*!
+ * @kurkle/color v0.3.4
+ * https://github.com/kurkle/color#readme
+ * (c) 2024 Jukka Kurkela
+ * Released under the MIT License
+ */
+
+/*!
+ * Chart.js v4.5.0
+ * https://www.chartjs.org
+ * (c) 2025 Chart.js Contributors
+ * Released under the MIT License
+ */
+
+/*!
+ * jQuery JavaScript Library v3.7.1
+ * https://jquery.com/
+ *
+ * Copyright OpenJS Foundation and other contributors
+ * Released under the MIT license
+ * https://jquery.org/license
+ *
+ * Date: 2023-08-28T13:37Z
+ */
+
+/*!
+ * jQuery UI Widget 1.14.1
+ * https://jqueryui.com
+ *
+ * Copyright OpenJS Foundation and other contributors
+ * Released under the MIT license.
+ * https://jquery.org/license
+ */
+
+/*!
+ * jquery-confirm v3.3.4 (http://craftpip.github.io/jquery-confirm/)
+ * Author: Boniface Pereira
+ * Website: www.craftpip.com
+ * Contact: hey@craftpip.com
+ *
+ * Copyright 2013-2019 jquery-confirm
+ * Licensed under MIT (https://github.com/craftpip/jquery-confirm/blob/master/LICENSE)
+ */
+
+/*! DataTables Bootstrap 3 integration
+ * ©2011-2015 SpryMedia Ltd - datatables.net/license
+ */
+
+/**
+* @version: 3.1
+* @author: Dan Grossman http://www.dangrossman.info/
+* @copyright: Copyright (c) 2012-2019 Dan Grossman. All rights reserved.
+* @license: Licensed under the MIT license. See http://www.opensource.org/licenses/mit-license.php
+* @website: http://www.daterangepicker.com/
+*/
+
+//! moment.js
+
+//! moment.js locale configuration

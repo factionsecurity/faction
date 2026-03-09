@@ -21,10 +21,15 @@
 	</bs:select>
 	<bs:select name="Status:" colsize="2" id="statusSearch">
 	 		<option value="">&nbsp;</option>
-		 	<s:iterator value="status" var="stat">
-                      <option value="<s:property value="stat"/>"><s:property value="stat"/></option>
+		 	<s:iterator value="statuses">
+                      <option value="<s:property value="id"/>"><s:property value="name"/></option>
             </s:iterator>
 	</bs:select>
+</bs:row>
+<bs:row>
+	<bs:inputgroup name="Start:" id="search_start" colsize="2" ></bs:inputgroup>&nbsp;
+	
+	<bs:inputgroup name="End:" id="search_end" colsize="2" ></bs:inputgroup>
 </bs:row>
 <br>
 <bs:row>

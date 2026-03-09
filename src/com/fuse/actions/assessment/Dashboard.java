@@ -43,7 +43,7 @@ public class Dashboard extends FSActionSupport {
 					+ "\"end\": { $gte : ISODate(\"" + sdf.format(new Date()) + "\")}}";
 
 			current = (List<Assessment>) em.createNativeQuery(query, Assessment.class).getResultList();
-			
+
 			notifications = (List<Notification>) em.createQuery("from Notification where assessorId = :id")
 					.setParameter("id", user.getId()).getResultList();
 			levels = em.createQuery("from RiskLevel order by riskId").getResultList();
@@ -61,6 +61,24 @@ public class Dashboard extends FSActionSupport {
 		}
 
 		return SUCCESS;
+	}
+
+	@Action(value = "clearNotifications", results = {
+			@Result(name = "successJson", location = "/WEB-INF/jsp/successJson.jsp") })
+	public String clearNotifications() {
+		if (!(this.isAcassessor() || this.isAcmanager()))
+			return LOGIN;
+
+		User user = this.getSessionUser();
+		List<Notification> notifications = (List<Notification>) em.createQuery("from Notification where assessorId = :id")
+				.setParameter("id", user.getId()).getResultList();
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		for(Notification n : notifications) {
+			em.remove(n);
+		}
+		HibHelper.getInstance().commit();
+		return "successJson";
 	}
 
 	public String getActiveDB() {

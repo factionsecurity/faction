@@ -8,6 +8,7 @@
 <bs:mco colsize="12">
 <bs:box type="success" title="Controls">
 <div style="padding-bottom:60px">
+<s:if test="hasTemplate">
   <bs:button color="success" size="md" colsize="3" text="Generate Report" id="genreport"></bs:button>
   <s:if test="assessment.finalReport != null">
     <s:if test="prEnabled">
@@ -16,6 +17,14 @@
     <bs:button color="primary" size="md" colsize="3" text="Download Report" id="dlreport"></bs:button>
     <bs:button color="danger" size="md" colsize="3" text="Finalize Assessment" id="finalize"></bs:button>
   </s:if>
+  </s:if>
+  <s:else>
+  <div class="alert alert-danger">
+                  <h5><i class="icon fas fa-ban"></i> Alert!</h5>
+  	No Report Template Configured for this Assessment Type. 
+  	Contact Your Administrator.
+                </div>
+  </s:else>
 </div>
 </bs:box>
 </bs:mco>
@@ -116,7 +125,11 @@
        <div class="timeline-item">
 	       <h3 class="timeline-header no-border">Schedule Report Meeting</h3>
 	         <div class="timeline-body">
-	         	 <button class="btn btn-primary" id="openICS" <s:if test="finalized">disabled</s:if>>Open ICS file</button>
+	         	 <button class="btn btn-primary" id="openICS" <s:if test="finalized">disabled</s:if>><i class="fa-solid fa-envelope"></i> Email Meeting Invite</button>
+	         	 <button class="btn btn-primary" id="downloadICS" <s:if test="finalized">disabled</s:if>><i class="fa-solid fa-download"></i> Download Meeting Invite</button>
+	         	 <a class="btn btn-primary"  href="${LiveLink}" target="_blank"><img style="height: 20px" src="../dist/img/outlook.png"/> Open in Live Web</a>
+	         	 <a class="btn btn-danger"  href="${OutlookLink}" target="_blank"><img style="height: 20px" src="../dist/img/outlook.png"/> Open in Outlook Web</a>
+	         	 <a class="btn btn-default"  href="${GoogleLink}" target="_blank"><img style="height: 20px" src="../dist/img/google.png"/> Open in Google Calendar</a>
 	         </div>
        </div>
      </li> 

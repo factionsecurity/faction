@@ -1,0 +1,8 @@
+changelog:
+  categories:
+    - title: 🎉 🚀 Upgrades 🎉 🚀
+      labels:
+        - enhancement
+    - title: 🐛 Bugfixes 🐛
+      labels:
+        - bug

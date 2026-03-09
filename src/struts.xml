@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE struts PUBLIC
-	"-//Apache Software Foundation//DTD Struts Configuration 2.3//EN"
-	"http://struts.apache.org/dtds/struts-2.3.dtd">
+	"-//Apache Software Foundation//DTD Struts Configuration 6.0//EN"
+	"https://struts.apache.org/dtds/struts-6.0.dtd">
 <struts>
     
-	<constant name="struts.multipart.maxSize" value="10000000"/>	
-
+	<constant name="struts.multipart.maxSize" value="1000000000"/>
+	<constant name="struts.i18n.reload" value="true" />
+	<constant name="struts.locale" value="en_US" />
+	<constant name="struts.convention.action.packages" value="com.fuse.enterprise.actions,com.fuse.actions.*"/>
     <package name="default" namespace="/" extends="struts-default">
       <interceptors>
       	 <interceptor name="staticParams" class="com.opensymphony.xwork2.interceptor.StaticParametersInterceptor"/>
@@ -16,7 +18,6 @@
 	     <interceptor name="accessControlInterceptor" class="com.fuse.utils.AccessControlInterceptor"/>
 	     <interceptor-stack name="defaultSecurityStack">
 	         <interceptor-ref name="defaultStack">
-	         	<param name="fileUpload.allowedExtensions">msg,jpg,gif,png,pdf,doc,xls,xlsx,docx,txt,csv,xml,bmp,jpeg,zip,rar,tar,gzip,tar.gz</param>
 	         </interceptor-ref>
 	         <interceptor-ref name="accessControlInterceptor"/>
 	         <interceptor-ref name="cachingHeadersInterceptor"/>
@@ -46,13 +47,14 @@
             <exception-mapping exception="java.lang.Exception" result="error"/>
         </global-exception-mappings>
         
-		
-
     </package>
-     <constant name="struts.convention.default.parent.package" value="default"/>
-     <constant name="struts.devMode" value="false" />
+    <constant name="struts.convention.default.parent.package" value="default"/>
+    <constant name="struts.devMode" value="false" />
+	<constant name="struts.csp.enable" value="false" />
+	<constant name="struts.csp.policy" value="default-src 'self'; script-src 'self'; style-src 'self'" />
 
     <!-- Add packages here -->
-     <constant name="struts.action.excludePattern" value="/(service|api)/.*"/>
+    <constant name="struts.action.excludePattern" value="/(service|api)/.*"/>
+    <include file="struts-overlays.xml"/>
 
 </struts>

@@ -93,7 +93,6 @@
     <!-- DataTables -->
     <script src="../plugins/datatables/jquery.dataTables.min.js"></script>
     <script src="../plugins/datatables/dataTables.bootstrap.min.js"></script>
-    <!-- SlimScroll -->
     <script src="../plugins/slimScroll/jquery.slimscroll.min.js"></script>
     <!-- FastClick -->
     <script src="../plugins/fastclick/fastclick.min.js"></script>

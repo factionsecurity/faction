@@ -72,17 +72,16 @@ $(function() {
 });
 
 let editors = {}
-//window.editors = editors;
 const editorConfig = {
 	display: 'block',
 	width: '100%',
 	codeMirror: CodeMirror,
 	plugins: [font, fontColor, hiliteColor, link, fontSize, align, image, imageGallery, list, formatBlock, table, blockquote, textStyle],
 	buttonList: [
-		['undo', 'redo', 'font', 'fontSize', 'formatBlock'],
-		['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript', 'removeFormat'],
+		['undo', 'redo', 'formatBlock'],
+		['bold', 'underline', 'italic', 'strike', 'removeFormat'],
 		['fontColor', 'hiliteColor', 'outdent', 'indent', 'align', 'horizontalRule', 'list', 'table'],
-		['link', 'image', 'fullScreen', 'showBlocks', 'codeView', 'preview'],
+		['link', 'image', 'fullScreen', 'showBlocks', 'preview'],
 
 	],
 	defaultStyle: 'font-family: arial; font-size: 18px',
@@ -178,32 +177,6 @@ function updateVulnEditors() {
 		}
 	});
 }
-function updateStepEditors() {
-	$.each($("[id^=step]"), function(_id, obj) {
-		let id = $(obj).attr("id");
-		if (id.indexOf("header") != -1) {
-			return;
-		}
-
-		if (id.indexOf("notes") == -1) {
-			editorConfig.allowedClassNames = ".*";
-			editors[id] = suneditor.create(id, editorConfig)
-
-			setUpTracking(editors[id]);
-			editors[id].onKeyDown = function(contents, core) {
-				queueSave(id);
-			}
-
-		} else {
-			editors[id] = suneditor.create(id, notesConfig)
-			editors[id].width = "30%";
-			editors[id].onKeyDown = function(contents, core) {
-				queueSave(id);
-			}
-		}
-
-	});
-}
 
 function setUpTracking(element) {
 	try {
@@ -261,10 +234,6 @@ function saveAllEditors(isComplete = false) {
 				const title = b.innerHTML.split("*")[0]
 				b.innerHTML = title
 			})
-			/*$.alert({
-				title: "Saved",
-				content: "Peer Review Has been Saved."
-			});*/
 		} else if (resp.result == "complete") {
 			document.location = "PeerReview";
 		}
@@ -355,7 +324,6 @@ $(function() {
 	}
 
 	updateVulnEditors();
-	updateStepEditors();
 
 	setInterval(() => {
 		$.get(`PRCheckLocks?prid=${prid}`).done((resp) => {

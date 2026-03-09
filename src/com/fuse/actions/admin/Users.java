@@ -11,10 +11,12 @@ import org.apache.struts2.convention.annotation.Result;
 
 import com.fuse.actions.FSActionSupport;
 import com.fuse.authentication.LDAPValidator;
+import com.fuse.authentication.oauth.SecurityConfigFactory;
 import com.fuse.dao.APIKeys;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.PasswordReset;
 import com.fuse.dao.Permissions;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
@@ -69,6 +71,7 @@ public class Users extends FSActionSupport {
 	private String oauthClientId;
 	private String oauthClientSecret;
 	private String oauthDiscoveryURI;
+	private String saml2MetaUrl;
 
 	@Action(value = "Users")
 	public String execute() {
@@ -91,6 +94,7 @@ public class Users extends FSActionSupport {
 			this.ldapObjectClass = ems.getLdapObjectClass();
 			this.oauthClientId = ems.getOauthClientId();
 			this.oauthDiscoveryURI = ems.getOauthDiscoveryURI();
+			this.saml2MetaUrl = ems.getSaml2MetaUrl();
 		}
 
 		return SUCCESS;
@@ -135,13 +139,19 @@ public class Users extends FSActionSupport {
 			this._message = "Must set at least one Role: Manager, Assessor, Remediation, Engagement, or Admin";
 			return this.ERRORJSON;
 		}
-
-		Teams t = (Teams) em.createQuery("from Teams where id = :tid").setParameter("tid", Long.parseLong(this.team))
-				.getResultList().stream().findFirst().orElse(null);
+		Teams t = null;
+		try {
+			t = (Teams) em.createQuery("from Teams where id = :tid").setParameter("tid", Long.parseLong(this.team))
+					.getResultList().stream().findFirst().orElse(null);
+		}catch(Exception ex) {
+			
+		}
 		if (t == null) {
 			this._message = "Invalid Team Selected";
 			return this.ERRORJSON;
 		}
+		
+		PasswordReset reset = null;
 
 		this.username = this.username.toLowerCase();
 		User userExists = (User) em.createQuery("from User where username = :username")
@@ -173,24 +183,27 @@ public class Users extends FSActionSupport {
 			this.authMethod = this.authMethod.trim();
 			u.setAuthMethod(this.authMethod);
 			String message = "Hello " + this.fname + " " + this.lname + "<br><br>";
-			if (this.authMethod.equals("LDAP") || this.authMethod.equals("OAUTH2.0") ) {
+			if (this.authMethod.equals("LDAP") || this.authMethod.equals("OAUTH2.0") || this.authMethod.equals("SAML2") ) {
 				User emailExists = (User) em.createQuery("from User where email = :email")
 						.setParameter("email", this.email.trim()).getResultList().stream().findFirst().orElse(null);
 				if(emailExists != null) {
 					this._message = "Can't have two LDAP or OAuth users with the same email address.";
 					return this.ERRORJSON;
 				}else {
-					u.setPasshash((UUID.randomUUID()).toString());
+					String key = UUID.randomUUID().toString();
+					u.setPasshash(key);
 					message += "Your account has been created. Please access the link below and click to access with your SSO Credentials<br><br>";
 					String url = request.getRequestURL().toString();
 					url = url.replace(request.getRequestURI(), "");
 					url = url + request.getContextPath();
 					message += "<a href='" + url + "'>Click here to Login</a><br>";
+					
+					
 				}
 			} else if(this.credential != null && !this.credential.trim().equals("")){
 				String passErrorMessage = AccessControl.checkPassword(this.credential, this.credential);
 				if(passErrorMessage.equals("")) {
-					u.setPasshash(AccessControl.HashPass(u.getUsername(), this.credential));
+					u.setPasshash(AccessControl.HashPass(this.credential));
 					message += "Your account has been created. Please access the link below and click to access the portal. You will need to ask your Administrator for the credentials.<br><br>";
 					String url = request.getRequestURL().toString();
 					url = url.replace(request.getRequestURI(), "");
@@ -202,15 +215,16 @@ public class Users extends FSActionSupport {
 				}
 				
 			}else {
-				String pass = UUID.randomUUID().toString();
-				u.setPasshash(AccessControl.HashPass("", pass));
-				// Setting username to an empty string prevents logins with GUID.
-				// You must register first and create a password to login.
-
+				String key = UUID.randomUUID().toString();
+				u.setPasshash(AccessControl.HashPass(UUID.randomUUID().toString()));
+				reset = new PasswordReset();
+				reset.setKey(key);
+				reset.setUser(u);
+				reset.setCreated(new Date());
 				message += "Click the link below to update your password:<br><br>";
 				String url = request.getRequestURL().toString();
 				url = url.replace(request.getRequestURI(), "");
-				url = url + request.getContextPath() + "/portal/Register?uid=" + pass;
+				url = url + request.getContextPath() + "/portal/Register?uid=" + key;
 				message += "<a href='" + url + "'>Click here to Register</a><br>";
 			}
 
@@ -234,6 +248,9 @@ public class Users extends FSActionSupport {
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
 			em.persist(u);
+			if(reset != null) {
+				em.persist(reset);
+			}
 			AuditLog.audit(this, "User " + u.getUsername() + " added", AuditLog.UserAction, false);
 
 			HibHelper.getInstance().commit();
@@ -306,9 +323,9 @@ public class Users extends FSActionSupport {
 			return this.ERRORJSON;
 		User user = this.getSessionUser();
 		Long id = Long.parseLong(userId.replace("user", ""));
-		// this.selectedUser = (User)session.createQuery("from User where Id =
-		// :uid").setLong("uid", id).uniqueResult();
+		
 		this.selectedUser = em.find(User.class, id);
+		String currentEmail = selectedUser.getUsername();
 		if (this.selectedUser == null) {
 			this._message = "Cannot find user to update";
 			return this.ERRORJSON;
@@ -317,7 +334,7 @@ public class Users extends FSActionSupport {
 			this._message = "Must set at least one Role: Manager, Assessor, Remediation, Engagement, or Admin";
 			return this.ERRORJSON;
 		}
-		if (this.isNullStirng(this.email) || this.isNullStirng(fname) || this.isNullStirng(this.lname)) {
+		if (this.isNullStirng(this.username) || this.isNullStirng(this.email) || this.isNullStirng(fname) || this.isNullStirng(this.lname)) {
 			this._message = "Some inputs are empty";
 			return this.ERRORJSON;
 		}
@@ -327,7 +344,7 @@ public class Users extends FSActionSupport {
 					this._message = passErrorMessage;
 					return this.ERRORJSON;
 			}else {
-				this.selectedUser.setPasshash(AccessControl.HashPass(this.selectedUser.getUsername(), this.credential));
+				this.selectedUser.setPasshash(AccessControl.HashPass(this.credential));
 			}
 			this.selectedUser.setEmail(this.email.trim());
 		}else if(this.authMethod.equals("LDAP")) {
@@ -337,16 +354,32 @@ public class Users extends FSActionSupport {
 					settings.getLdapBindDn(), settings.getLdapSecurity(), settings.getLdapInsecureSSL());
 			String password = FSUtils.decryptPassword(settings.getLdapPassword());
 			User ldapInfo = validator.getUserInfo(this.selectedUser.getUsername(), password, settings.getLdapObjectClass());
-			this.selectedUser.setLdapUserDn(ldapInfo.getLdapUserDn());
-			this.selectedUser.setEmail(ldapInfo.getEmail());
+			if(ldapInfo!= null) {
+				this.selectedUser.setLdapUserDn(ldapInfo.getLdapUserDn());
+				this.selectedUser.setEmail(ldapInfo.getEmail());
+			}
 		}else {
 			this.selectedUser.setEmail(this.email.trim());
 		}
+		User userExists = (User) em.createQuery("from User where username = :username")
+				.setParameter("username", this.username.trim()).getResultList().stream().findFirst().orElse(null);
+		if(userExists != null && !id.equals(userExists.getId())) {
+			this._message = "Username already exists";
+			return this.ERRORJSON;
+		}
+		
+		User emailExists = (User) em.createQuery("from User where email = :email")
+				.setParameter("email", this.selectedUser.getEmail()).getResultList().stream().findFirst().orElse(null);
+		
+		if(emailExists != null && !id.equals(emailExists.getId())) {
+			this._message = "Email address already in use";
+			return this.ERRORJSON;
+		}
+		
+		this.selectedUser.setUsername(username);
 		this.selectedUser.setFname(this.fname.trim());
 		this.selectedUser.setLname(this.lname.trim());
 		this.selectedUser.setAuthMethod(this.authMethod.trim());
-		// Teams t = (Teams) session.createQuery("from Teams where id =
-		// :tid").setLong("tid", Long.parseLong(this.team)).uniqueResult();
 		Teams t = em.find(Teams.class, Long.parseLong(this.team));
 		if (t == null) {
 			this._message = "Could not find a valid team.";
@@ -363,7 +396,7 @@ public class Users extends FSActionSupport {
 		this.selectedUser.getPermissions().setAccessLevel(this.accesscontrol);
 
 		if (!this.authMethod.equals("Native")) {
-			this.selectedUser.setPasshash(UUID.randomUUID().toString());
+			this.selectedUser.setPasshash(AccessControl.HashPass(UUID.randomUUID().toString()));
 		}
 
 		HibHelper.getInstance().preJoin();
@@ -711,7 +744,29 @@ public class Users extends FSActionSupport {
 		em.persist(settings);
 		HibHelper.getInstance().commit();
 		//update the odic config in the filter
-		settings.updateOdicFilter();
+		//settings.updateSSOFilters();
+		SecurityConfigFactory.refreshConfig();
+		
+		return this.SUCCESSJSON;
+	}
+	
+	@Action(value = "SaveSAML2")
+	public String saveSAML2() {
+		if (!(this.isAcadmin())) {
+			return LOGIN;
+		}
+		if (!this.testToken(false))
+			return this.ERRORJSON;
+
+		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+				.findFirst().orElse(new SystemSettings());
+		settings.setSaml2MetaUrl(this.saml2MetaUrl);
+		settings.createKeystoreIfNotExists();
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		em.persist(settings);
+		HibHelper.getInstance().commit();
+		SecurityConfigFactory.refreshConfig();
 		
 		return this.SUCCESSJSON;
 	}
@@ -1040,6 +1095,13 @@ public class Users extends FSActionSupport {
 
 	public void setOauthClientSecret(String oauthClientSecret) {
 		this.oauthClientSecret = oauthClientSecret;
+	}
+	
+	public void setSaml2MetaUrl(String saml2MetaUrl) {
+		this.saml2MetaUrl = saml2MetaUrl;
+	}
+	public String getSaml2MetaUrl() {
+		return this.saml2MetaUrl;
 	}
 	
 	

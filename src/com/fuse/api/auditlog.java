@@ -40,11 +40,12 @@ public class auditlog {
 	
 	@POST
 	@ApiOperation(
-    value = "Get the audit log for a user given time frame.", 
-    notes = "",
-    response = AuditLog.class,
-    responseContainer = "List"
-    )
+	   value = "Get the audit log for a user given time frame.",
+	   notes = "",
+	   response = AuditLog.class,
+	   responseContainer = "List",
+	   position = 30
+	   )
 	@ApiResponses(value = { 
 			@ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 200, message = "Audit Log Returned")})
@@ -87,11 +88,12 @@ public class auditlog {
 	
 	@POST
 	@ApiOperation(
-    value = "Get the audit log for a assessments", 
-    notes = "",
-    response = AuditLog.class,
-    responseContainer = "List"
-    )
+	   value = "Get the audit log for a assessments",
+	   notes = "",
+	   response = AuditLog.class,
+	   responseContainer = "List",
+	   position = 10
+	   )
 	@ApiResponses(value = { 
 			@ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 200, message = "Audit Log Returned")})
@@ -134,11 +136,12 @@ public class auditlog {
 	}
 	@POST
 	@ApiOperation(
-    value = "Get the audit log for a assessments", 
-    notes = "",
-    response = AuditLog.class,
-    responseContainer = "List"
-    )
+	   value = "Get the audit log for a assessments",
+	   notes = "",
+	   response = AuditLog.class,
+	   responseContainer = "List",
+	   position = 20
+	   )
 	@ApiResponses(value = { 
 			@ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 200, message = "Audit Log Returned")})
@@ -184,11 +187,12 @@ public class auditlog {
 	
 	@POST
 	@ApiOperation(
-    value = "Get the audit log for a user for given time frame.", 
-    notes = "",
-    response = AuditLog.class,
-    responseContainer = "List"
-    )
+	   value = "Get the audit log for a user for given time frame.",
+	   notes = "",
+	   response = AuditLog.class,
+	   responseContainer = "List",
+	   position = 40
+	   )
 	@ApiResponses(value = { 
 			@ApiResponse(code = 401, message = "Not Authorized"),
 			@ApiResponse(code = 200, message = "Audit Log Returned")})

@@ -1,12 +1,15 @@
 package com.fuse.dao;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.EntityManager;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -18,6 +21,10 @@ import javax.persistence.TableGenerator;
 import javax.persistence.Transient;
 import javax.persistence.Version;
 
+import org.hibernate.annotations.NotFound;
+import org.hibernate.annotations.NotFoundAction;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fuse.utils.FSUtils;
 
 @Entity
@@ -34,7 +41,7 @@ public class Assessment {
 	private String name;
 	@ManyToOne
 	private User engagement;
-	@OneToMany(fetch = FetchType.EAGER)
+	@OneToMany(fetch = FetchType.LAZY)
 	private List<User> assessor;
 	@ManyToOne
 	private User remediation;
@@ -44,45 +51,70 @@ public class Assessment {
 	private Date completed;
 	@OneToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<CustomField> CustomFields;
+	@JsonIgnore
 	private String Notes;
+	@JsonIgnore
+	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<Note> notebook = new ArrayList<>();
 	private String DistributionList;
 	private String AccessNotes;
 	@ManyToOne
 	private AssessmentType type;
-	@OneToOne(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
+	@JsonIgnore
+	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	@NotFound(action = NotFoundAction.IGNORE)
 	private FinalReport finalReport;
-	@OneToOne(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
+	@JsonIgnore
+	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	@NotFound(action = NotFoundAction.IGNORE)
 	private FinalReport retestReport;
 	@ManyToOne
 	private Campaign campaign;
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<CheckListAnswers> answers = new ArrayList();
+	private List<CheckListAnswers> answers = new ArrayList<>();
 
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-	private List<Vulnerability> vulns = new ArrayList();
-
+	private List<Vulnerability> vulns = new ArrayList<>();
+	
+	@JsonIgnore
+	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval=true)
+	private List<Image> images = new ArrayList<>();
+	@JsonIgnore
 	private String pr_sum_notes;
+	@JsonIgnore
 	private String pr_risk_notes;
+	@JsonIgnore
 	private String guid = UUID.randomUUID().toString();
 	private Boolean peerreview;
 	private String status;
 	private Integer workflow = 0;
 
+	@JsonIgnore
 	@OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private PeerReview peerReview;
 
+	@JsonIgnore
 	private Boolean notesLock = false;
+	@JsonIgnore
 	@ManyToOne
 	private User notes_locked_by;
+	@JsonIgnore
 	private Date notes_lock_time;
+	@JsonIgnore
 	private Boolean summary_lock = false;
+	@JsonIgnore
 	@ManyToOne
 	private User summary_locked_by;
+	@JsonIgnore
 	private Date summary_lock_time;
+	@JsonIgnore
 	private Boolean risk_lock = false;
+	@JsonIgnore
 	@ManyToOne
 	private User risk_locked_by;
+	@JsonIgnore
 	private Date risk_lock_time;
+	
 
 	public Long getId() {
 		return id;
@@ -136,6 +168,22 @@ public class Assessment {
 	}
 
 	public List<Vulnerability> getVulns() {
+		if( this.getType() !=  null && (this.getType().isCvss31() || this.getType().isCvss40())) {
+			Collections.sort( this.vulns, new Comparator<Vulnerability>() {
+				@Override
+				public int compare(Vulnerability v1, Vulnerability v2) {
+					String rawScore1 = v1.getCvssScore();
+					rawScore1 = rawScore1 == null || rawScore1.trim().equals("")? "0.0" : rawScore1;
+					String rawScore2 = v2.getCvssScore();
+					rawScore2 = rawScore2 == null || rawScore2.trim().equals("")? "0.0" : rawScore2;
+					Double score1 = Double.parseDouble(rawScore1);
+					Double score2 = Double.parseDouble(rawScore2);
+					return score2.compareTo(score1);
+				}
+			});
+		}else {
+			Collections.sort( this.vulns, (Vulnerability v1, Vulnerability v2) -> v2.getOverall().compareTo(v1.getOverall()));
+		}
 		return this.vulns;
 	}
 
@@ -183,10 +231,12 @@ public class Assessment {
 		CustomFields = customFields;
 	}
 
+	@Deprecated
 	public String getNotes() {
 		return Notes;
 	}
-
+	
+	@Deprecated
 	public void setNotes(String notes) {
 		notes = FSUtils.sanitizeHTML(notes);
 		Notes = notes;
@@ -243,6 +293,13 @@ public class Assessment {
 	@Transient
 	public String getPr_sum_notes() {
 		return pr_sum_notes;
+	}
+	public List<Image> getImages(){
+		return this.images;
+	}
+	
+	public void setImages(List<Image> images) {
+		this.images = images;
 	}
 
 	@Transient
@@ -302,12 +359,37 @@ public class Assessment {
 		this.peerreview = peerreview;
 	}
 
+	@Transient
 	public String getStatus() {
-		return status;
+		String statusName = "Scheduled";
+		Date now = new Date();
+		if(now.after(this.start)) {
+			statusName = "In Progress";
+		}
+		if(now.after(this.end)) {
+			statusName = "Past Due";
+		}
+		if(this.getCompleted() != null) {
+			statusName="Completed";
+		}
+		if(this.status != null) {
+			statusName = this.status;
+		}
+		
+		return statusName;
+	}
+	@Transient
+	public String getRealStatus() {
+		return this.status;
 	}
 
 	public void setStatus(String status) {
 		this.status = status;
+	}
+	
+	@Transient
+	public void clearStatus() {
+		this.status = null;
 	}
 
 	public PeerReview getPeerReview() {
@@ -406,7 +488,62 @@ public class Assessment {
 	public void setRiskLockAt(Date notes_lock_time) {
 		this.risk_lock_time = notes_lock_time;
 	}
-
+	
+	public void setNotebook(List<Note> notebook) {
+		this.notebook = notebook;
+	}
+	
+	public List<Note> getNotebook(){
+		return this.notebook;
+	}
+	
+	@Transient
+	public void upgradeNotes(EntityManager em) {
+		Note note = new Note();
+		note.setName("default");
+		if(this.Notes == null)
+			note.setNote("");
+		else
+			note.setNote(this.Notes);
+		note.setCreated(this.start);
+		note.setCreatedBy(this.assessor.get(0));
+		note.setUpdated(new Date());
+		note.setUpdatedBy(this.assessor.get(0));
+		
+		List<Note> notebook = this.getNotebook();
+		notebook.add(note);
+		this.setNotebook(notebook);
+		
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		em.persist(this);
+		HibHelper.getInstance().commit();
+	}
+	
+	@Transient
+	public void addNoteToList(Note note) {
+		this.notebook.add(note);
+	}
+	
+	@Transient
+	public Note getNoteById(Long noteId) {
+		return this.notebook.stream()
+				.filter( note -> note.getId().equals(noteId))
+				.findFirst()
+				.orElse(null);
+	}
+	
+	@Transient
+	public Note updateNoteById(Long noteId, String name, String noteStr, User updatedBy) {
+		Note note = this.getNoteById(noteId);
+		note.setName(name);
+		note.setNote(noteStr);
+		note.setUpdatedBy(updatedBy);
+		note.setUpdated(new Date());
+		return note;
+	}
+	
+	
 	@Transient
 	public void setInPr() {
 		this.workflow = 1;
@@ -437,7 +574,9 @@ public class Assessment {
 
 	@Transient
 	public boolean isAcceptedEdits() {
-		if (this.workflow != null && this.workflow == 3)
+		if(this.workflow != null && this.workflow == 0) {
+			return true;
+		}else if (this.workflow != null && this.workflow == 3)
 			return true;
 		else
 			return false;
@@ -457,6 +596,21 @@ public class Assessment {
 			return true;
 		else
 			return false;
+	}
+	
+	@Transient
+	public Boolean getFormsExist() {
+		if(this.getCustomFields() == null) return false;
+		else {
+			return this.getCustomFields().stream().anyMatch(cf -> cf.getType().getFieldType() == 3);
+		}
+	}
+	@Transient
+	public Boolean getVarsExist() {
+		if(this.getCustomFields() == null) return false;
+		else {
+			return this.getCustomFields().stream().anyMatch(cf -> cf.getType().getFieldType() < 3);
+		}
 	}
 	
 }

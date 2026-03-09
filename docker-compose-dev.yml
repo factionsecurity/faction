@@ -1,0 +1,34 @@
+version: "3.7"
+services:
+  faction-mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - '~/.faction/data:/data/db'
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=faction_mongo_user
+      - MONGO_INITDB_ROOT_PASSWORD=faction_mongo_pass
+  tomcat-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+      target: base_app
+    volumes:
+        - "~/.faction/templates:/opt/faction/templates"
+        - "~/.faction/modules:/opt/faction/modules"
+    environment:
+        - 'FACTION_REPORT_STORAGE=local'
+        - 'FACTION_MONGO_HOST=faction-mongo'
+        - 'FACTION_MONGO_DATABASE=faction'
+        - 'FACTION_MONGO_USER=faction_mongo_user'
+        - 'FACTION_MONGO_PASSWORD=faction_mongo_pass'
+        - 'FACTION_SECRET_KEY=faction_encryption_key'
+        - 'FACTION_OAUTH_CALLBACK=http://localhost:8080'
+    links:
+      - faction-mongo
+    command: ["/usr/local/tomcat/bin/catalina.sh", "run"]
+    ports:
+      - "8080:8080"
+    depends_on:
+      - faction-mongo

@@ -10,6 +10,7 @@ public class BoxTagHandler extends TagSupport {
 
 	private String type;
 	private String title;
+	private String id="";
 
 	@Override
 	public int doStartTag() throws JspException {
@@ -17,7 +18,7 @@ public class BoxTagHandler extends TagSupport {
 		try {
 			// Get the writer object for output.
 			JspWriter out = pageContext.getOut();
-			String html = "<div class='box box-" + this.type + "'>\r\n" + "<div class='box-header with-border'>\r\n"
+			String html = "<div id='" + this.id + "' class='box box-" + this.type + "'>\r\n" + "<div class='box-header with-border'>\r\n"
 					+ "  <h3 class='box-title'>" + this.title + "</h3>\r\n" + "</div>\r\n"
 					+ "  <div class='box-body'>\r\n";
 			out.println(html);
@@ -57,6 +58,10 @@ public class BoxTagHandler extends TagSupport {
 
 	public void setTitle(String title) {
 		this.title = title;
+	}
+	
+	public void setId(String id) {
+		this.id = id;
 	}
 
 }

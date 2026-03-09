@@ -6,6 +6,18 @@
 <jsp:include page="../header.jsp" />
 <link rel="stylesheet" href="../plugins/iCheck/all.css">
 
+<style>
+	.meta {
+		font-weight: bold;
+		margin-left: 30px;
+	}
+	
+	#notes, #description, #recommendation, #failnotes, #details{
+		background-color: white;
+	}
+
+</style>
+
 <!-- Content Wrapper. Contains page content -->
 <div class="content-wrapper">
 	<!-- Content Header (Page header) -->
@@ -22,28 +34,45 @@
 		<bs:row>
 			<bs:mco colsize="9">
 				<bs:box type="info" 
-					title="<i class='glyphicon  glyphicon-list-alt'></i> Vulnerability Info">
+					title="<i class='glyphicon  glyphicon-list-alt'></i>&nbsp;&nbsp;Vulnerability Info">
 					<div style="height: 140px">
 					<bs:row>
-						<bs:mco colsize="12">
-							<bs:datatable
-								columns="App Name, Overall, Impact, Likelyhood, Start, End, Report"
-								classname="primary" id="">
-								<tr>
-									<td><s:property value="verification.assessment.appId" /> - <s:property value="verification.assessment.name" /></td>
-									<td><s:property
-											value="verification.verificationItems[0].vulnerability.overallStr" /></td>
-									<td><s:property
-											value="verification.verificationItems[0].vulnerability.impactStr" /></td>
-									<td><s:property
-											value="verification.verificationItems[0].vulnerability.likelyhoodStr" /></td>
-									<td><s:date name="verification.start" format="MM/dd/yyyy" /></td>
-									<td><s:date name="verification.end" format="MM/dd/yyyy" /></td>
-									<td><bs:button color="info" size="md" colsize="12"
-											text="<span class='fa fa-file'></span> Full Report" id="open"></bs:button></td>
-								</tr>
-							</bs:datatable>
-						</bs:mco>
+						<s:if test="verification.assessment.type.cvss40 || verification.assessment.type.cvss31">
+							<bs:mco colsize="1" style="width: 150px">
+								<div class="scoreBody" style="margin-top: 5px">
+									<h3 class="scoreBox <s:property value="verification.verificationItems[0].vulnerability.overallStr"/>" id="score"><s:property value="verification.verificationItems[0].vulnerability.cvssScore"/></h3>
+									<span class="severityBox <s:property value="verification.verificationItems[0].vulnerability.overallStr"/>" id="severity"><s:property value="verification.verificationItems[0].vulnerability.overallStr"/></span>
+								</div>
+							</bs:mco>
+							<bs:mco colsize="10">
+								<span class='meta'><u>Category:</u></span><br/>
+								<span class='meta'><s:property value="verification.verificationItems[0].vulnerability.category.name"/></span><br/>
+								<br/>
+								<span class='meta'><u>CVSS Vector:</u></span><br/>
+								<span class='meta'><s:property value="verification.verificationItems[0].vulnerability.cvssString"/></span><br/>
+							</bs:mco>
+						</s:if>
+						<s:else>
+							<bs:mco colsize="12">
+								<bs:datatable
+									columns="App Name, Overall, Impact, Likelyhood, Start, End, Report"
+									classname="primary" id="">
+									<tr>
+										<td><s:property value="verification.assessment.appId" /> - <s:property value="verification.assessment.name" /></td>
+										<td><s:property
+												value="verification.verificationItems[0].vulnerability.overallStr" /></td>
+										<td><s:property
+												value="verification.verificationItems[0].vulnerability.impactStr" /></td>
+										<td><s:property
+												value="verification.verificationItems[0].vulnerability.likelyhoodStr" /></td>
+										<td><s:date name="verification.start" format="MM/dd/yyyy" /></td>
+										<td><s:date name="verification.end" format="MM/dd/yyyy" /></td>
+										<td><bs:button color="info" size="md" colsize="12"
+												text="<span class='fa fa-file'></span> Full Report" id="open"></bs:button></td>
+									</tr>
+								</bs:datatable>
+							</bs:mco>
+						</s:else>
 					</bs:row>
 					</div>
 				</bs:box>
@@ -85,13 +114,13 @@
 		</bs:row>
 		<bs:row>
 			<bs:mco colsize="6">
-				<bs:box type="info" title="<i class='fa fa-bug'></i> Retest Notes">
+				<bs:box type="info" title="<i class='fa fa-bug'></i> Scope">
 
 					<bs:row>
 						<bs:mco colsize="12">
-							<textarea name="notes" id="notes" disabled>
+							<div name="notes" id="notes" disabled>
 					  <s:property value="verification.Notes" />
-				  </textarea>
+				  </div>
 						</bs:mco>
 					</bs:row>
 				</bs:box>
@@ -99,36 +128,64 @@
 			<bs:mco colsize="6">
 				<bs:box type="warning"
 					title="<i class='glyphicon  glyphicon-edit'></i>  Assessor Pass or Fail Notes">
-					<textarea id="failnotes" name="failnotes"></textarea>
+					<div id="failnotes" name="failnotes"></div>
 				</bs:box>
 			</bs:mco>
 		</bs:row>
 		<bs:row>
 			<bs:mco colsize="9">
 				<bs:box type="info" title="Vulnerability Description">
-					<textarea id="description" name="description"><s:property
-							value="verification.verificationItems[0].vulnerability.description" /></textarea>
+					<div id="description" name="description"><s:property
+							value="verification.verificationItems[0].vulnerability.description" /></div>
 				</bs:box>
 
 				<bs:box type="info" title="Vulnerability Recommendation">
-					<textarea id="recommendation" name="recommendation"><s:property
-							value="verification.verificationItems[0].vulnerability.recommendation" /></textarea>
+					<div id="recommendation" name="recommendation"><s:property
+							value="verification.verificationItems[0].vulnerability.recommendation" /></div>
 				</bs:box>
 
 				<bs:box type="info" title="Vulnerability Details">
-					<textarea id="details" name="details"><s:property
-							value="verification.verificationItems[0].vulnerability.details" /></textarea>
+					<div id="details" name="details"><s:property
+							value="verification.verificationItems[0].vulnerability.details" /></div>
 				</bs:box>
 			</bs:mco>
 			<bs:mco colsize="3">
-				<bs:box type="info"
-					title="<i class='glyphicon glyphicon-download'></i> Supporting Files">
-					<bs:row>
-						<bs:mco colsize="12">
-							<input id="files" type="file" multiple name="file_data" />
-						</bs:mco>
-					</bs:row>
-				</bs:box>
+				<bs:row>
+					<bs:box type="info"
+						title="<i class='glyphicon glyphicon-download'></i> Supporting Files">
+						<bs:row>
+							<bs:mco colsize="12">
+								<input id="files" type="file" multiple name="file_data" />
+							</bs:mco>
+						</bs:row>
+					</bs:box>
+				</bs:row>
+				<bs:row>
+					<bs:box type="primary" title="Reports">
+					<table class="table table-striped table-hover dataTable no-footer">
+					<thead>
+					<tr><th>Report Name</th><th>Created</th><td style="width:60px"></td></tr>
+					</thead>
+					<tbody id="reportTable">
+					<s:iterator value="reports" var="r" >
+					<s:if test="retest == true"><tr id="retestRow">
+					<td>Retest Report</td>	
+					</s:if>
+					<s:else>
+					<tr><td>Assessment Report</td>
+					</s:else>
+						<td><s:date name="gentime" format="MM-dd-yyyy hh:mm:ss"/></td>
+						<td>
+							<span class="vulnControl downloadReport" data-guid="<s:property value="filename"/>">
+								<i class="fa fa-download"></i>
+							</span>
+						</td>
+					</tr>
+					</s:iterator>
+					</tbody>
+					</table>
+					</bs:box>
+				</bs:row>
 			</bs:mco>
 		</bs:row>
 

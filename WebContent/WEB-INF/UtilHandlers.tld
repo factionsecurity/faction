@@ -18,5 +18,14 @@
       <rtexprvalue>true</rtexprvalue>
   	</attribute>
 </tag>
+<tag>
+    <name>AssessmentStatus</name>
+    <tagclass>com.fuse.taglib.AssessmentStatus</tagclass>
+    <attribute>
+      <name>asmt</name>
+      <required>true</required>
+      <rtexprvalue>true</rtexprvalue>
+  	</attribute>
+</tag>
 
 </taglib> 

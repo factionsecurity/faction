@@ -1,5 +1,6 @@
 package com.fuse.actions.scheduling;
 
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -7,7 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import java.util.Base64;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
@@ -26,12 +29,17 @@ import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.Files;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.OOO;
+import com.fuse.dao.Permissions;
+import com.fuse.dao.Status;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
+import com.fuse.dao.Verification;
 import com.fuse.dao.query.AssessmentQueries;
 import com.faction.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
+import com.fuse.utils.FSUtils;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/engagement/EditAssessment.jsp")
@@ -39,12 +47,14 @@ public class EditAssessment extends FSActionSupport {
 
 	private List<CustomType> custom;
 	private List<CustomField> fields;
-	private List<User> users;
 	private List<Teams> teams;
 	private String action;
 	private Date sdate;
 	private Date edate;
+	private List<User> users;
 	private List<User> assessors = new ArrayList<User>();
+	private List<User> remediation = new ArrayList<User>();
+	private List<User> eng_users;
 	private String appid;
 	private String appName;
 	private List<Integer> assessorId;
@@ -63,97 +73,81 @@ public class EditAssessment extends FSActionSupport {
 	private Long campId;
 	private List<Files> files;
 	private String cf;
-	private String statusName;
-	private List<String> status;
 	private Boolean randId = true;
 	private List<AuditLog> logs;
 	private String updatedText = "";
 	private String back;
+	private List<Status> statuses;
+	private Long statusId;
 
 	@Action(value = "EditAssessment")
-	public String execute() throws ParseException {
+	public String execute() throws ParseException, UnsupportedEncodingException {
 		//TODO: Update this method into separate methods for each function
-		User user = this.getSessionUser();
 		if (!(this.isAcengagement() || this.isAcmanager() || this.isAcassessor())) {
 			return LOGIN;
 		}
+        User user = this.getSessionUser();
+        Teams restrictedToTeam = (user.getPermissions().getAccessLevel().equals(Permissions.AccessLevelTeamOnly))
+            ? user.getTeam(): null;
+		try {
 
-		custom = em.createQuery("from CustomType where type = 0 and (deleted IS NULL or deleted = false)").getResultList();
+			custom = em.createQuery("from CustomType where type = 0 and (deleted IS NULL or deleted = false)").getResultList();
 
-		users = em.createQuery("from User").getResultList();
-		teams = em.createQuery("from Teams").getResultList();
-		assessmentTypes = em.createQuery("from AssessmentType").getResultList();
-		assessors = em.createQuery("from User").getResultList();
-		campaigns = em.createQuery("from Campaign").getResultList();
-		List<User> tmp = new ArrayList(assessors);
-		for (User u : tmp) {
-			if (!u.getPermissions().isAssessor())
-				assessors.remove(u);
+            if(restrictedToTeam != null) {
+                String userQuery = "{\"team_id\": " + restrictedToTeam.getId() + "}";
+                users = em.createNativeQuery(userQuery, User.class).getResultList();
+
+                teams = em.createQuery("from Teams where id = :teamId")
+                    .setParameter("teamId", restrictedToTeam.getId())
+                    .getResultList();
+            } else {
+                users = em.createQuery("from User").getResultList();
+                teams = em.createQuery("from Teams").getResultList();
+            }
+            remediation = em.createQuery("from User", User.class).getResultList()
+                .stream()
+                .filter( u -> u.getPermissions() != null && u.getPermissions().isRemediation())
+                .collect(Collectors.toList());
+            
+            eng_users = em.createQuery("from User", User.class).getResultList()
+                .stream()
+                .filter( u -> u.getPermissions() != null && u.getPermissions().isEngagement())
+                .collect(Collectors.toList());
+
+			teams = em.createQuery("from Teams").getResultList();
+			assessmentTypes = em.createQuery("from AssessmentType").getResultList();
+			assessors = em.createQuery("from User").getResultList();
+			campaigns = em.createQuery("from Campaign").getResultList();
+			statuses = em.createQuery("from Status").getResultList();
+			List<User> tmp = new ArrayList(assessors);
+			for (User u : tmp) {
+				if (u.getPermissions() != null && !u.getPermissions().isAssessor())
+					assessors.remove(u);
+			}
+			SystemSettings ss = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
+					.orElse(null);
+			if (ss.getEnableRandAppId() != null)
+				this.randId = ss.getEnableRandAppId();
+			else
+				this.randId = true;
+		}catch(Exception ex) {
+			this._message = ex.getMessage();
+			return this.ERRORJSON;
 		}
-		SystemSettings ss = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst()
-				.orElse(null);
-		if (ss.getEnableRandAppId() != null)
-			this.randId = ss.getEnableRandAppId();
-		else
-			this.randId = true;
-		this.status = ss.getStatus();
 
 		if (action != null && action.equals("get")) {
-			currentAssessment = em.find(Assessment.class, (long) this.aid);
+			currentAssessment = AssessmentQueries.getAssessment(em, user, (long) this.aid);
+			FSUtils.CheckForUpdatedCustomFields(currentAssessment, em);
+			
 			files = (List<Files>) em.createQuery("from Files where entityId = :id").setParameter("id", (long) this.aid)
 					.getResultList();
 			assessors = currentAssessment.getAssessor();
 
 			logs = AssessmentQueries.getLogs(em, currentAssessment);
 
-		} else if (action != null && action.equals("dateSearch")) {
-			assessors = users;
-
-			// session.close();
-			return "assessorJSON";
 		} else if (action != null && action.equals("update")) {
 
 			if (!this.testToken(false)) {
-				return this.ERRORJSON;
-			}
-			//Check that the user has permissions to edit the assessment
-			/// They must be either a manager, an admin, or an assessor of
-			/// the assessment
-			if( user.getPermissions().isAssessor() 
-					&&  !(user.getPermissions().isAdmin() || user.getPermissions().isManager())
-					&&  !assessors.stream().anyMatch( u -> u.getId() == user.getId() )
-			) {
-				this._message = "Not Authorized to Update This assessment. You must be a manager, admin, or contributer to the assessment";
-				return this.ERRORJSON;
-			}
-
-			List<User> assessors = new ArrayList<User>();
-			if (assessorId != null) {
-				for (Integer asid : assessorId) {
-
-					User assessor = em.find(User.class, asid.longValue());
-					if (assessor != null && assessor.getPermissions().isAssessor())
-						assessors.add(assessor);
-				}
-			}
-
-			User remediation = em.find(User.class, (long) remId);
-			if (remediation != null && !remediation.getPermissions().isRemediation())
-				remediation = null;
-
-			User engagement = em.find(User.class, (long) engId);
-			if (engagement != null && !engagement.getPermissions().isRemediation())
-				engagement = null;
-			AssessmentType Type = em.find(AssessmentType.class, (long) type);
-
-			Campaign camp = null;
-			if (campId != null && campId != -1) {
-				camp = em.find(Campaign.class, campId);
-			}
-			Assessment am = em.find(Assessment.class, (long) this.aid);
-
-			if (am == null) {
-				this._message = "Assessment is not Valid";
 				return this.ERRORJSON;
 			}
 			if (this.appid == null || this.appid.equals("")) {
@@ -169,19 +163,55 @@ public class EditAssessment extends FSActionSupport {
 				this._message = "Start and End Dates Could Be Missing";
 				return this.ERRORJSON;
 			}
-
-			if (statusName != null && !statusName.trim().equals("")) {
-
-				if (!ss.getStatus().stream().anyMatch(s -> s.equals(this.statusName.trim()))) {
-					this._message = "Status is not defined.";
-					return this.ERRORJSON;
-				}
-			}
-
+			//Check that the user has permissions to edit the assessment
+			/// They must be either a manager, an admin, or an assessor of
+			/// the assessment
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
-
 			try {
+				if( user.getPermissions().isAssessor() 
+						&&  !(user.getPermissions().isAdmin() || user.getPermissions().isManager())
+						&&  !assessors.stream().anyMatch( u -> u.getId() == user.getId() )
+				) {
+					this._message = "Not Authorized to Update This assessment. You must be a manager, admin, or contributer to the assessment";
+					return this.ERRORJSON;
+				}
+				List<User> assessors = new ArrayList<User>();
+				if (assessorId != null) {
+					for (Integer asid : assessorId) {
+
+						User assessor = em.find(User.class, asid.longValue());
+						if (assessor != null && assessor.getPermissions().isAssessor())
+							assessors.add(assessor);
+					}
+				}
+
+				User remediation = em.find(User.class, (long) remId);
+				if (remediation != null && !remediation.getPermissions().isRemediation())
+					remediation = null;
+
+				User engagement = em.find(User.class, (long) engId);
+				if (engagement != null && !engagement.getPermissions().isEngagement())
+					engagement = null;
+				AssessmentType Type = em.find(AssessmentType.class, (long) type);
+
+				Campaign camp = null;
+				if (campId != null && campId != -1) {
+					camp = em.find(Campaign.class, campId);
+				}
+				Status status = null;
+				if(statusId != null) {
+					status = em.find(Status.class, statusId);
+				}
+				Assessment am = em.find(Assessment.class, (long) this.aid);
+
+				if (am == null) {
+					this._message = "Assessment is not Valid";
+					return this.ERRORJSON;
+				}
+
+
+
 				if (am.isFinalized()) {
 					AuditLog.audit(this,
 							String.format("Assessment Updated after finalized. Was %s %s, now %s %s", am.getAppId(),
@@ -190,50 +220,51 @@ public class EditAssessment extends FSActionSupport {
 				}
 				am.setAppId(this.appid);
 				am.setName(this.appName);
+				if(status!= null) {
+					am.setStatus(status.getName());
+				}else if(statusId != null && !statusId.equals(-2l)) { //-2 means we had a deleted status and we kept it on update
+					am.setStatus(null);
+				}else if(statusId == null) {
+					am.setStatus(null);
+				}
+				am.setEngagement(engagement);
+				am.setRemediation(remediation);
+				if (camp != null)
+					am.setCampaign(camp);
+				am.setDistributionList(this.distro);
+				Map<String, Files> sessionfiles = null;
+				try {
+					sessionfiles = (Map<String, Files>) ServletActionContext.getRequest().getSession()
+							.getAttribute("Files");
+					ServletActionContext.getRequest().getSession().setAttribute("Files", null);
+				} catch (Exception ex) {
+					ex.printStackTrace();
+					this._message = ex.getMessage();
+					return this.ERRORJSON;
+				}
+				// session.getTransaction().begin();
+				if (sessionfiles != null) {
+					for (Files f : sessionfiles.values()) {
+						f.setCreator(this.getSessionUser());
+						f.setEntityId(am.getId());
+						f.setType(Files.ASSESSMENT);
+						// session.save(f);
+						em.persist(f);
+					}
+
+				}
 
 				// If assessment is finalized this info is locked
 				if (!am.isFinalized()) {
 					am.setStart(this.sdate);
 					am.setEnd(this.edate);
-					am.setEngagement(engagement);
-					am.setRemediation(remediation);
 					am.setAssessor(assessors);
 					am.setType(Type);
 					am.setAccessNotes(this.notes);
-					am.setDistributionList(this.distro);
-					am.setStatus(statusName);
-					Map<String, Files> sessionfiles = null;
-					if (camp != null)
-						am.setCampaign(camp);
-					try {
-						// HttpSession sess = this.request.getSession();
-						// sessionfiles = (Map<String, Files>) sess.getAttribute("Files");
-						sessionfiles = (Map<String, Files>) ServletActionContext.getRequest().getSession()
-								.getAttribute("Files");
-						ServletActionContext.getRequest().getSession().setAttribute("Files", null);
-						// sessionfiles = (Map<String, Files>) this.JSESSION.get("Files");
-						// sess.setAttribute("Files",null);
-						/// this.JSESSION.put("Files", null);
-					} catch (Exception ex) {
-						ex.printStackTrace();
-					}
-					// session.getTransaction().begin();
-					if (sessionfiles != null) {
-						for (Files f : sessionfiles.values()) {
-							f.setCreator(this.getSessionUser());
-							f.setEntityId(am.getId());
-							f.setType(Files.ASSESSMENT);
-							// session.save(f);
-							em.persist(f);
-						}
-
-					}
-					JSONArray cfstuff = new JSONArray();
 					if (this.cf != null) {
 						JSONParser parse = new JSONParser();
 						JSONArray array = (JSONArray) parse.parse(cf);
 
-						// am.setCustomFields(new ArrayList());
 
 						for (int i = 0; i < array.size(); i++) {
 							if (am.getCustomFields() == null)
@@ -246,7 +277,13 @@ public class EditAssessment extends FSActionSupport {
 							for (CustomField obj : am.getCustomFields()) {
 								if (obj.getType().getId().equals(cfid)) {
 									cfObj = obj;
-									cfObj.setValue("" + json.get("text"));
+									if(obj.getType().getFieldType() < 3) {
+										cfObj.setValue("" + json.get("text"));
+									}else {
+										String jsonText = ""+json.get("text");
+										String decoded = new String(Base64.getDecoder().decode(jsonText.getBytes()), "UTF-8");
+										cfObj.setValue(decoded);
+									}
 									break;
 								}
 							}
@@ -255,6 +292,13 @@ public class EditAssessment extends FSActionSupport {
 								CustomType ct = em.find(CustomType.class, cfid);
 								cfObj.setType(ct);
 								cfObj.setValue("" + json.get("text"));
+								if(cfObj.getType().getFieldType() < 3) {
+									cfObj.setValue("" + json.get("text"));
+								}else {
+									String jsonText = ""+json.get("text");
+									String decoded = new String(Base64.getDecoder().decode(jsonText.getBytes()), "UTF-8");
+									cfObj.setValue(decoded);
+								}
 								am.getCustomFields().add(cfObj);
 							}
 
@@ -266,20 +310,17 @@ public class EditAssessment extends FSActionSupport {
 				if (!am.isFinalized())
 					AuditLog.audit(this, "Assessment Updated", AuditLog.UserAction, AuditLog.CompAssessment, am.getId(),
 							false);
-
+				
+				// Run All extensions
 				Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-				if (amgr.checkIfExtended()) {
-					try {
-						amgr.execute(em, am, AssessmentManager.Operation.Update);
-					} catch (Exception ex) {
-						ex.printStackTrace();
-					}
-				}
+				amgr.execute(am, AssessmentManager.Operation.Update);
 			} finally {
 				HibHelper.getInstance().commit();
 			}
 			return this.SUCCESSJSON;
 
+		}else {
+			
 		}
 		return SUCCESS;
 	}
@@ -343,15 +384,12 @@ public class EditAssessment extends FSActionSupport {
 		}
 		return eng;
 	}
-
+	
+	public List<User> getEng_users() {
+		return eng_users;
+	}
 	public List<User> getRemediation() {
-		List<User> rem = new ArrayList<User>();
-		for (User u : users) {
-			if (u.getPermissions().isRemediation()) {
-				rem.add(u);
-			}
-		}
-		return rem;
+        return remediation;
 	}
 
 	public List<Teams> getTeams() {
@@ -566,16 +604,8 @@ public class EditAssessment extends FSActionSupport {
 		this.cf = cf;
 	}
 
-	public List<String> getStatus() {
-		return status;
-	}
-
 	public Boolean getRandId() {
 		return randId;
-	}
-
-	public void setStatusName(String statusName) {
-		this.statusName = statusName;
 	}
 
 	public List<AuditLog> getLogs() {
@@ -600,7 +630,7 @@ public class EditAssessment extends FSActionSupport {
 		Pattern p = Pattern.compile(emailRegex);
 		String[] emails = this.distro.split(";");
 		for (String mail : emails) {
-			Matcher m = p.matcher(mail.trim());
+			Matcher m = p.matcher(mail.toLowerCase().trim());
 			if (m.matches())
 				continue;
 			else
@@ -611,6 +641,16 @@ public class EditAssessment extends FSActionSupport {
 
 	public String getUpdatedText() {
 		return this.updatedText;
+	}
+	
+	public List<Status> getStatuses(){
+		return this.statuses;
+	}
+	public void setStatusId(Long statusId) {
+		this.statusId = statusId;
+	}
+	public Long getStatusId() {
+		return this.statusId;
 	}
 
 }

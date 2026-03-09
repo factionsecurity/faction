@@ -1,5 +1,6 @@
 package com.fuse.actions;
 
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import javax.persistence.EntityManager;
 
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
+import org.apache.struts2.convention.annotation.Result;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -19,6 +21,7 @@ import com.fuse.dao.Campaign;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.PeerReview;
+import com.fuse.dao.Permissions;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.User;
@@ -34,7 +37,12 @@ public class AjaxServices extends FSActionSupport {
 	private String campname;
 	private String username;
 
-	@Action(value = "getAssessments")
+	@Action(value = "getAssessments",
+			results = {@Result(
+				name="_json",type = "stream"
+				, params = {
+						"contentType", "application/json;charset=UTF-8", 
+				        "inputName", "_stream"})})
 	public String getAssessments() {
 		User user = this.getSessionUser();
 		if (user == null) {
@@ -56,22 +64,26 @@ public class AjaxServices extends FSActionSupport {
 						.getResultList();
 				List<PeerReview> prs = (List<PeerReview>) em.createQuery("from PeerReview where completed = :date")
 						.setParameter("date", new Date(0)).getResultList();
-
-				// remove PR's of which i am a user unless settings allows it
-				if(!(settings != null && settings.getSelfPeerReview() != null && settings.getSelfPeerReview())) {
-				prs = prs.stream().filter(
-						pr -> !pr.getAssessment().getAssessor().stream().anyMatch(u -> u.getId() == user.getId()))
-						.collect(Collectors.toList());
+				int prcount = 0;
+				if(user.getPermissions().getAccessLevel() != Permissions.AccessLevelUserOnly) {
+					// remove PR's of which i am a user unless settings allows it
+					if(!(settings != null && settings.getSelfPeerReview() != null && settings.getSelfPeerReview())) {
+					prs = prs.stream().filter(
+							pr -> !pr.getAssessment().getAssessor().stream().anyMatch(u -> u.getId() == user.getId()))
+							.collect(Collectors.toList());
+					}
+					// remove PRs from different teams
+					prs = prs.stream()
+							.filter(pr -> pr.getAssessment().getAssessor().stream()
+									.anyMatch(u -> u.getTeam().getId().longValue() == user.getTeam().getId().longValue()))
+							.collect(Collectors.toList());
+					prcount = prs.size();
 				}
-				// remove PRs from different teams
-				prs = prs.stream()
-						.filter(pr -> pr.getAssessment().getAssessor().stream()
-								.anyMatch(u -> u.getTeam().getId().longValue() == user.getTeam().getId().longValue()))
-						.collect(Collectors.toList());
+
 
 				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 				String json = "{ 'count' : " + assessments.size() + ",\n";
-				json += "'prcount' : " + prs.size() + ",\n";
+				json += "'prcount' : " + prcount + ",\n";
 				json += "'assessments' : [";
 				boolean isFirst = true;
 				for (Assessment a : assessments) {
@@ -123,7 +135,12 @@ public class AjaxServices extends FSActionSupport {
 		return this.jsonOutput("{ \"count\" : 0}");
 	}
 
-	@Action(value = "getVerifications")
+	@Action(value = "getVerifications",
+			results = {@Result(
+				name="_json",type = "stream"
+				, params = {
+						"contentType", "application/json;charset=UTF-8", 
+				        "inputName", "_stream"})})
 	public String getVerifications() {
 		User user = this.getSessionUser();
 		if (user == null)
@@ -147,9 +164,9 @@ public class AjaxServices extends FSActionSupport {
 						json += ",";
 					}
 					v.getVerificationItems().get(0).getVulnerability().updateRiskLevels(em);
-					json += "[ '" + v.getAssessment().getName() + "'," + "'" + v.getAssessment().getAppId() + "'," + "'"
+					json += "[ '" + URLEncoder.encode(v.getAssessment().getName()) + "'," + "'" + v.getAssessment().getAppId() + "'," + "'"
 							+ format.format(v.getStart()) + "'," + "'" + v.getId() + "'," + "'"
-							+ v.getVerificationItems().get(0).getVulnerability().getName() + "'," + "'"
+							+ URLEncoder.encode( v.getVerificationItems().get(0).getVulnerability().getName()) + "'," + "'"
 							+ v.getVerificationItems().get(0).getVulnerability().getOverallStr() + "']\n";
 					isFirst = false;
 
@@ -180,14 +197,10 @@ public class AjaxServices extends FSActionSupport {
 				String query = "{ '$query' : {$or : [{'appId' : { $regex : '.*" + FSUtils.sanitizeMongo(appid)
 						+ ".*', $options : 'i'}}, { 'name' : { $regex : '.*" + FSUtils.sanitizeMongo(appname)
 						+ ".*', $options : 'i'}}]}, '$orderby' : {'appId':1}}";
-				// String query = "{ 'name' : { $regex : '.*"+FSUtils.sanitizeMongo(appname) +
-				// ".*', $options : 'i'}, "
-				// + "$where: '/^"+FSUtils.sanitizeMongo(appid)+".*/.test(this.appId)'}";
-				as = FSUtils.sortUniqueAssessment(em.createNativeQuery(query, Assessment.class).getResultList());
+				as = FSUtils.sortUniqueAssessment(em.createNativeQuery(query, Assessment.class)
+						.getResultList());
 
 			} else if (!this.isNullStirng(appid)) {
-				// String query = "{ $where:
-				// '/^"+FSUtils.sanitizeMongo(appid)+".*/.test(this.appId)'}";
 				String query = "{ '$query' : { 'appId' : { $regex : '.*" + FSUtils.sanitizeMongo(appid)
 						+ ".*', $options : 'i'}}, '$orderby' : {'appId':1}}";
 				as = FSUtils.sortUniqueAssessment(em.createNativeQuery(query, Assessment.class).getResultList());
@@ -231,28 +244,30 @@ public class AjaxServices extends FSActionSupport {
 			}
 
 			JSONArray array = new JSONArray();
-			for (Assessment a : as) {
-				JSONObject json = new JSONObject();
-				json.put("appid", a.getAppId());
-				json.put("appname", a.getName());
-				json.put("type", a.getType().getId());
-				json.put("distro", a.getDistributionList());
-				json.put("remediationId", a.getRemediation().getId());
-				json.put("engId", a.getEngagement().getId());
-				json.put("remediationName", a.getRemediation().getFname() + " " + a.getRemediation().getLname());
-				json.put("campName", a.getCampaign().getName());
-				json.put("cid", a.getCampaign().getId());
-				JSONArray fields = new JSONArray();
-				if (a.getCustomFields() != null) {
-					for (CustomField cf : a.getCustomFields()) {
-						JSONObject field = new JSONObject();
-						field.put("fid", cf.getType().getId());
-						field.put("value", cf.getValue());
-						fields.add(field);
+			if(as != null) {
+				for (Assessment a : as) {
+					JSONObject json = new JSONObject();
+					json.put("appid", a.getAppId());
+					json.put("appname", a.getName());
+					json.put("type", a.getType().getId());
+					json.put("distro", a.getDistributionList());
+					json.put("remediationId", a.getRemediation().getId());
+					json.put("engId", a.getEngagement().getId());
+					json.put("remediationName", a.getRemediation().getFname() + " " + a.getRemediation().getLname());
+					json.put("campName", a.getCampaign().getName());
+					json.put("cid", a.getCampaign().getId());
+					JSONArray fields = new JSONArray();
+					if (a.getCustomFields() != null) {
+						for (CustomField cf : a.getCustomFields()) {
+							JSONObject field = new JSONObject();
+							field.put("fid", cf.getType().getId());
+							field.put("value", cf.getValue());
+							fields.add(field);
+						}
+						json.put("fields", fields);
 					}
-					json.put("fields", fields);
+					array.add(json);
 				}
-				array.add(json);
 			}
 
 			return this.jsonOutput(array.toJSONString());

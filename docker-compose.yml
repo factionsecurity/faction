@@ -1,7 +1,6 @@
-version: "3.7"
 services:
   faction-mongo:
-    image: mongo:latest
+    image: mongo:8.0
     ports:
       - "27017:27017"
     volumes:
@@ -14,9 +13,6 @@ services:
       context: .
       dockerfile: Dockerfile
       target: base_app
-    volumes:
-        - "~/.faction/templates:/opt/faction/templates"
-        - "~/.faction/modules:/opt/faction/modules"
     environment:
         - 'FACTION_REPORT_STORAGE=local'
         - 'FACTION_MONGO_HOST=faction-mongo'
@@ -25,6 +21,7 @@ services:
         - 'FACTION_MONGO_PASSWORD=faction_mongo_pass'
         - 'FACTION_SECRET_KEY=faction_encryption_key'
         - 'FACTION_OAUTH_CALLBACK=http://localhost:8080'
+        - 'FACTION_APPSTORE_ENABLED=true'
     links:
       - faction-mongo
     command: ["/usr/local/tomcat/bin/catalina.sh", "run"]

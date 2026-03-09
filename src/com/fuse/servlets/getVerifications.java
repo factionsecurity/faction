@@ -2,25 +2,21 @@ package com.fuse.servlets;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.hibernate.Session;
 
 import com.fuse.dao.Assessment;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.OOO;
 import com.fuse.dao.User;
 import com.fuse.dao.Verification;
-import com.fuse.utils.AccessControl;
 
 /**
  * Servlet implementation class getAssessments
@@ -45,16 +41,17 @@ public class getVerifications extends HttpServlet {
 			return;
 		if(user.getPermissions().isAssessor() || user.getPermissions().isManager()){
 		
-			PrintWriter out = response.getWriter();
 			response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
 			response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
 			response.setDateHeader("Expires", 0); // Proxies.
+			response.setCharacterEncoding("UTF-8");
+			response.setContentType("application/json;charset=UTF-8");
+			PrintWriter out = response.getWriter();
 			
 			EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 			try{
-				//"{$query : {\"assessor_Id\" : "+user.getId() +"} , $orderby : {start : +1}}",
-				String query = "{\"assessor_Id\" : "+user.getId() +", \"completed\" : ISODate(\"1970-01-01T00:00:00Z\"), $orderby: { \"start\" : -1 }}";
-				List<Verification>verifications = (List<Verification>)em.createNativeQuery(query, Verification.class).getResultList();
+				List<Verification> verifications = em.createQuery("from Verifications where workflowStatus != 'Remediation Complete' and assessor_Id = :id")
+						.setParameter("id", user.getId()).getResultList();
 				
 				
 				SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
@@ -67,11 +64,11 @@ public class getVerifications extends HttpServlet {
 						json += ",";
 					}
 					v.getVerificationItems().get(0).getVulnerability().updateRiskLevels(em);
-					json += "[ '"+v.getAssessment().getName() + "',"
-							+ "'" +v.getAssessment().getAppId() + "',"
+					json += "[ '"+URLEncoder.encode(v.getAssessment().getName()) + "',"
+							+ "'" +URLEncoder.encode(v.getAssessment().getAppId()) + "',"
 							+ "'" + format.format(v.getStart()) + "',"
 							+ "'" + v.getId()+ "',"
-							+ "'" + v.getVerificationItems().get(0).getVulnerability().getName() +"',"
+							+ "'" + URLEncoder.encode(v.getVerificationItems().get(0).getVulnerability().getName()) +"',"
 							+ "'" + v.getVerificationItems().get(0).getVulnerability().getOverallStr() + "']\n";
 					isFirst=false;
 					
@@ -83,9 +80,6 @@ public class getVerifications extends HttpServlet {
 				out.println("{ \"count\" : 0}");
 			}
 			em.close();
-			//HibHelper.getInstance().closeEM();
-			//em.close();
-			//HibHelper.getInstance().closeEMF();
 		}
 		
 	}
@@ -98,10 +92,12 @@ public class getVerifications extends HttpServlet {
 		if(u== null)
 			return;
 		
-		PrintWriter out = response.getWriter();
 		response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate"); // HTTP 1.1.
 		response.setHeader("Pragma", "no-cache"); // HTTP 1.0.
 		response.setDateHeader("Expires", 0); // Proxies.
+		response.setCharacterEncoding("UTF-8");
+		response.setContentType("application/json;charset=UTF-8");
+		PrintWriter out = response.getWriter();
 		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 		User user = (User) request.getSession().getAttribute("user");
 		Long id = Long.parseLong(request.getParameter("id"));
@@ -158,9 +154,7 @@ public class getVerifications extends HttpServlet {
 			Ex.printStackTrace();
 			out.println("{ \"count\" : 0}");
 		}
-		//hh.closeEM();
 		em.close();
-		//HibHelper.getInstance().closeEMF();
 		
 	}
 

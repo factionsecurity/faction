@@ -33,8 +33,6 @@ public class AssessmentQueue extends FSActionSupport{
 		
 		if(this.isAcassessor() || this.isAcmanager()){
 			User u = this.getSessionUser();
-			//{ assessor_Id : 158, $and : [{ completed : {$exists:false}}, {start : ISODate("2015-12-14T06:00:00Z")}]}
-			
 			try{
 				assessments = AssessmentQueries.getAllAssessments(em, u, AssessmentQueries.OnlyNonCompleted);
 				levels = em.createQuery("from RiskLevel order by riskId desc").getResultList();

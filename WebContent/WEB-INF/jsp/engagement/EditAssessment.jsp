@@ -4,8 +4,6 @@
 <%@ taglib prefix="s" uri="/struts-tags" %>
 <%@taglib prefix="bs" uri="/WEB-INF/BootStrapHandler.tld"%>
 <jsp:include page="../header.jsp" />
-   <link rel="stylesheet" href="../plugins/fullcalendar/fullcalendar.min.css">
-   <link rel="stylesheet" href="../plugins/fullcalendar/fullcalendar.print.css" media="print">
    <link rel="stylesheet" href="../plugins/daterangepicker/daterangepicker-bs3.css">
    <link href="../fileupload/css/fileinput.min.css" media="all" rel="stylesheet" type="text/css" />
    <link href="../dist/css/jquery.autocomplete.css" media="all" rel="stylesheet" type="text/css" />
@@ -22,6 +20,17 @@
    right:0;
    left:0;
 }
+.select2-container--disabled{
+   background-color:#d5d5d5;
+   opacity:0.5;
+   border-radius:4px;
+}
+.form-control[disabled]{
+   background-color:#d5d5d5;
+   opacity:0.5;
+   border-radius:4px;
+}
+
 .breadcrumb {
 	background-color: #030d1c !important;
 </style>
@@ -81,7 +90,7 @@
 	     <div class="tab-pane" id="tab_2">
 	         <bs:datatable columns="Timestamp,Description,User" classname="" id="auditlog">
 		     <s:iterator value="logs">
-		     <tr><td>${timestamp }</td><td>${description }</td><td>${user.fname } ${user.lname }</td></tr>
+		     <tr><td>${timestamp }</td><td><s:property value="description"/></td><td><s:property value="user.fname"/> <s:property value="user.lname"/></td></tr>
 		     </s:iterator>
 		     </bs:datatable>
 	     </div><!-- /.tab-pane -->
@@ -120,13 +129,18 @@
 			];
 		let finalized = <s:property value="currentAssessment.finalized"/>
 		let workflow = "<s:property value="currentAssessment.workflow"/>";
-    	let engName=<s:property value="currentAssessment.engagement.Id"/>;
+    	let engName="<s:property value="currentAssessment.engagement.Id"/>";
     	
-       let remName=<s:property value="currentAssessment.remediation.Id"/>;
-       let campName=<s:property value="currentAssessment.campaign.id"/>;
-       let teamName=<s:property value="currentAssessment.assessor[0].team.id"/>;
-       let assType=<s:property value="currentAssessment.type.id"/>;
-       let statName="<s:property value="currentAssessment.status"/>";
+       let remName="<s:property value="currentAssessment.remediation.Id"/>";
+       let campName="<s:property value="currentAssessment.campaign.id"/>";
+       let teamName="<s:property value="currentAssessment.assessor[0].team.id"/>";
+       let assType="<s:property value="currentAssessment.type.id"/>";
+       <s:if test="currentAssessment.realStatus == null">
+       	let statusSelectName="Automatic";
+	   </s:if>
+	   <s:else>
+       	let statusSelectName="<s:property value="currentAssessment.status"/>";
+       	</s:else>
        let aid="<s:property value="aid"/>";
 	   let initialPreviewDownloadUrl = 'GetEngFile?name={key}';
 	   let customFields = []
@@ -135,6 +149,7 @@
     	<s:iterator value="currentAssessment.CustomFields">
     		<s:if test="type.fieldType == 1 && value == 'true'"> $("#cust${type.id}").prop('checked', true);</s:if>
     		<s:elseif test="type.fieldType == 1 && value == 'false'"> $("#cust${type.id}").prop('checked', false);</s:elseif>
+    		<s:elseif test="type.fieldType == 3"> $("#rtCust${type.id}").html(entityDecode("<s:property value="value"/>"))</s:elseif>
     		<s:else>$("#cust${type.id}").val("${value}");</s:else>
 			customFields.push(${type.id});
     	</s:iterator>
@@ -146,8 +161,7 @@
         
        // this needs to loop through users
        <s:iterator value="currentAssessment.assessor">
-        $.post('../service/getAssessments','id=<s:property value="Id"/>').done(function(adata){
-			let json = JSON.parse(adata);
+        $.post('../service/getAssessments','id=<s:property value="Id"/>').done(function(json){
 			//console.log("Posted get Assessment");
 			let N=json.count;
 			for(let i=0;i<N; i++){

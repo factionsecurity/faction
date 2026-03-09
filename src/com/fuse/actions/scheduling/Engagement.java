@@ -1,21 +1,20 @@
 package com.fuse.actions.scheduling;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import javax.persistence.EntityManager;
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
-import org.hibernate.Query;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -32,17 +31,20 @@ import com.fuse.dao.CustomType;
 import com.fuse.dao.Files;
 import com.fuse.dao.FinalReport;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.Note;
 import com.fuse.dao.OOO;
 import com.fuse.dao.PeerReview;
+import com.fuse.dao.Permissions;
+import com.fuse.dao.Status;
 import com.fuse.dao.SystemSettings;
 import com.fuse.dao.Teams;
 import com.fuse.dao.User;
+import com.fuse.dao.Verification;
 import com.faction.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.TaskQueueExecutor;
 import com.fuse.utils.FSUtils;
-import com.opensymphony.xwork2.ActionContext;
 
 
 @Namespace("/portal")
@@ -51,13 +53,14 @@ public class Engagement  extends FSActionSupport{
 	
 	private List<CustomType> custom;
 	private List<User> users;
+	private List<User> remediation;
 	private List<User> eng_users;
 	private List<User> asmt_users;
+	private List<User>assessors = new ArrayList<User>();
 	private List<Teams>teams;
 	private String action="";
 	private Date sdate;
 	private Date edate;
-	private List<User>assessors = new ArrayList<User>();
 	private String appid="-1";
 	private String appName;
 	private List<Integer> assessorId;
@@ -82,10 +85,14 @@ public class Engagement  extends FSActionSupport{
 	public Integer count;
 	public String search;
 	private Boolean randId = true;
-	private List<String> status;
+	private List<String> ratings;
+	private String ratingName;
 	private String statusName;
-	private String defaultStatus;
+	private String defaultRating;
 	private String back;
+	private List<Object> order;
+	private Long statusId;
+	private List<Status> statuses;
 	
 
 	
@@ -98,25 +105,48 @@ public class Engagement  extends FSActionSupport{
 		if(!(this.isAcengagement() || this.isAcmanager())){
 			return AuditLog.notAuthorized(this, "User is not Engagment or Manager", true);
 		}
+		
+		User user = this.getSessionUser();
+	    Teams restrictedToTeam = (user.getPermissions().getAccessLevel().equals(Permissions.AccessLevelTeamOnly))
+		    ? user.getTeam(): null;
+		
 		custom = em.createQuery("from CustomType where type = 0 and (deleted IS NULL or deleted = false)").getResultList();
-		users = em.createQuery("from User").getResultList();
-		teams = em.createQuery("from Teams").getResultList();
+
+        if(restrictedToTeam != null) {
+			String userQuery = "{\"team_id\": " + restrictedToTeam.getId() + "}";
+			users = em.createNativeQuery(userQuery, User.class).getResultList();
+
+            teams = em.createQuery("from Teams where id = :teamId")
+                .setParameter("teamId", restrictedToTeam.getId())
+                .getResultList();
+        } else {
+            users = em.createQuery("from User").getResultList();
+		    teams = em.createQuery("from Teams").getResultList();
+        }
+        remediation = em.createQuery("from User", User.class).getResultList()
+            .stream()
+            .filter( u -> u.getPermissions() != null && u.getPermissions().isRemediation())
+            .collect(Collectors.toList());
+
 		assessmentTypes = em.createQuery("from AssessmentType").getResultList();
 		campaigns = em.createQuery("from Campaign").getResultList();
+		statuses = em.createQuery("from Status").getResultList();
+
 		SystemSettings ss = (SystemSettings)em.createQuery("from SystemSettings").getResultList().stream().findFirst().orElse(null);
 		if(ss.getEnableRandAppId() != null)
 			this.randId = ss.getEnableRandAppId();
 		else
 			this.randId = true;
-		this.status = ss.getStatus();
-		this.defaultStatus = ss.getDefaultStatus();
+
+		this.ratings = ss.getRatings();
+		this.defaultRating = ss.getDefaultRating();
 		
 		eng_users = new ArrayList<User>();
 		asmt_users = new ArrayList<User>();
 		for(User u : users){
-			if(u.getPermissions().isAssessor())
+			if(u.getPermissions() != null && u.getPermissions().isAssessor())
 				asmt_users.add(u);
-			if(u.getPermissions().isEngagement())
+			if(u.getPermissions() != null && u.getPermissions().isEngagement())
 				eng_users.add(u);
 		}
 		if(action.equals("")) {
@@ -129,11 +159,25 @@ public class Engagement  extends FSActionSupport{
 					.setParameter("start", this.sdate)
 					.setParameter("end", this.edate)
 					.getResultList();
+			
+			if(restrictedToTeam != null) {
+				asmts = asmts.stream()
+					.filter(a -> a.getAssessor().stream()
+						.anyMatch(u -> u.getTeam() != null && u.getTeam().getId().equals(restrictedToTeam.getId())))
+					.collect(Collectors.toList());
+
+			}
 			List<OOO> ooos = em
 					.createQuery("from OOO as a where (a.start >= :start and a.start <= :start) or (a.end >= :start and a.end <= :end)")
 					.setParameter("start", this.sdate)
 					.setParameter("end", this.edate)
 					.getResultList();
+			List<Verification> verifications = em
+					.createQuery("from Verification as a where (a.start >= :start and a.start <= :start) or (a.end >= :start and a.end <= :end)")
+					.setParameter("start", this.sdate)
+					.setParameter("end", this.edate)
+					.getResultList();
+					
 			for(User u : users){
 				for(Assessment a : asmts){
 					for(User hacker : a.getAssessor()){
@@ -147,7 +191,12 @@ public class Engagement  extends FSActionSupport{
 						u.setAssessmentCount(u.getAssessmentCount()+1);
 					}
 				}
-				if(u.getTeam() != null && u.getTeam().getId().longValue() == this.selectedTeam.longValue() && u.getPermissions().isAssessor())
+				for(Verification v : verifications) {
+					if(u.getId() == v.getAssessor().getId()) {
+						u.setAssessmentCount(u.getAssessmentCount() +1);
+					}
+				}
+				if(u.getTeam() != null && u.getTeam().getId().longValue() == this.selectedTeam.longValue() && u.getPermissions() != null && u.getPermissions().isAssessor())
 					assessors.add(u);
 			}
 			
@@ -164,6 +213,13 @@ public class Engagement  extends FSActionSupport{
 					.setParameter("start", sdate)
 					.setParameter("end", edate)
 					.getResultList();
+
+			if(restrictedToTeam != null) {
+				asmts = asmts.stream()
+					.filter(a -> a.getAssessor().stream()
+						.anyMatch(u -> u.getTeam() != null && u.getTeam().getId().equals(restrictedToTeam.getId())))
+					.collect(Collectors.toList());
+			}
 			
 			List<User>hackers = new ArrayList<User>();
 			if(assessorId != null) {
@@ -196,15 +252,14 @@ public class Engagement  extends FSActionSupport{
 				return this.ERRORJSON;
 			}
 			
-			if(sdate == null || edate == null)
-			 {
+			if(sdate == null || edate == null){
 				this._message = "Start and End Dates Could Be Missing";
 				return this.ERRORJSON;
 			}
-			if(statusName != null && !statusName.trim().equals("")) {
+			if(ratingName != null && !ratingName.trim().equals("")) {
 				
-				if(!ss.getStatus().stream().anyMatch(s -> s.equals(this.statusName.trim()))) {
-					this._message = "Status is not defined.";
+				if(!ss.getRatings().stream().anyMatch(s -> s.equals(this.ratingName.trim()))) {
+					this._message = "Rating is not defined.";
 					return this.ERRORJSON;
 				}
 			}
@@ -223,16 +278,17 @@ public class Engagement  extends FSActionSupport{
 			am.setEnd(edate);
 			am.setEngagement(engagement);
 			am.setRemediation(remediation);
-			am.setStatus(this.statusName);
-			//List<User>hackers = new ArrayList<User>();
-			//hackers.add(assessor);
-			
 			am.setAssessor(hackers);
 			am.setType(Type);
 			am.setDistributionList(this.distro);
 			am.setAccessNotes(this.notes);
 			am.setCampaign(camp);
-			JSONArray cfstuff = new JSONArray();
+			Note defaultNote = new Note();
+			defaultNote.setName("default");
+			defaultNote.setCreated(new Date());
+			defaultNote.setUpdated(new Date());
+			am.addNoteToList(defaultNote);
+			
 			if(this.cf != null){
 				JSONParser parse = new JSONParser();
 				JSONArray array = (JSONArray) parse.parse(cf);
@@ -245,7 +301,13 @@ public class Engagement  extends FSActionSupport{
 					Long cfid = Long.parseLong(""+json.get("id"));
 					CustomType ct = em.find(CustomType.class, cfid);
 					cf.setType(ct);
-					cf.setValue(""+json.get("text"));
+					if(cf.getType().getFieldType() < 3) {
+						cf.setValue(""+json.get("text"));
+					}else {
+						byte [] decodedBytes = Base64.getDecoder().decode(""+json.get("text"));
+						String decodedString = new String(decodedBytes);
+						cf.setValue(decodedString);
+					}
 					am.getCustomFields().add(cf);
 				}
 				
@@ -257,15 +319,6 @@ public class Engagement  extends FSActionSupport{
 					sess.setAttribute("Files",null);
 			}catch(Exception ex){
 				ex.printStackTrace();
-			}
-			
-			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-			if(amgr.checkIfExtended()){
-				try{
-					amgr.execute(em, am, AssessmentManager.Operation.Create);
-				}catch(Exception ex){
-					ex.printStackTrace();
-				}
 			}
 			
 			
@@ -297,13 +350,19 @@ public class Engagement  extends FSActionSupport{
 			EmailThread emailThread = new EmailThread(am, "New Assessment Assigned to You", email);
 			TaskQueueExecutor.getInstance().execute(emailThread);
 			
+			// Run All extensions
+			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+			amgr.execute(am, AssessmentManager.Operation.Create);
+			
 			return this.SUCCESSJSON;
 			
 			
 		}else if(action != null && action.equals("search") ){
+			
 			String comma = "";
 			boolean first=true;
 			String mongoQuery = "{ ";
+			String statusName="";
 			if(appName != null && !appName.equals("") && !appName.equals("-1")){
 				if (first )
 					first = false;
@@ -338,19 +397,102 @@ public class Engagement  extends FSActionSupport{
 					first = false;
 				mongoQuery += comma + " 'appId' : '" + this.appid + "' ";
 			}
-			if(statusName != null && !statusName.trim().equals("")) {
+			if(sdate != null && !sdate.equals("") && edate != null && !edate.equals("")) {
 				if( !first ){
 					comma = ",";
 				}else
 					first = false;
-				mongoQuery += comma + " 'status' : '" + this.statusName.trim() + "' ";
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ssZ");
+				mongoQuery += comma + " 'start': { '$gte': ISODate('"+sdf.format(sdate)+"'), '$lte': ISODate('"+sdf.format(edate)+"')} ";
+				
 			}
-			mongoQuery += " } ";
-			//EntityManager em = HibHelper.getEM();
+			if(statusId != null) {
+				Status status = em.find(Status.class, this.statusId);
+				statusName = status.getName();
+				if( !first ){
+					comma = ",";
+				}else
+					first = false;
+				SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'hh:mm:ssZ");
+				String now = sdf.format(new Date());
+				if( statusName.equals("Scheduled")) {
+					mongoQuery += comma + " '$or': ["
+							+ " { '$and': ["
+								+ " { 'start': { '$gte': ISODate('"+now +"')} },"
+								+ " { 'status': { '$exists': false } }"
+								+ "]"
+							+ "}, "
+							+ " { 'status' : '"+statusName+"' } "
+							+ "]";
+				}
+				else if( statusName.equals("In Progress")) {
+					mongoQuery += comma + " '$or': ["
+							+ " { '$and': ["
+								+ " { 'start': { '$lte': ISODate('"+now +"')} },"
+								+ " { 'end': { '$gte': ISODate('"+now +"')} },"
+								+ " { 'status': { '$exists': false } }"
+								+ "]"
+							+ "}, "
+							+ " { 'status' : '"+statusName+"' } "
+							+ "]";
+				}
+				else if( statusName.equals("Past Due")) {
+					mongoQuery += comma + " '$or': ["
+							+ " { '$and': ["
+								+ " { 'end': { '$lte': ISODate('"+now +"')} },"
+								+ " { 'status': { '$exists': false } }"
+								+ "]"
+							+ "}, "
+							+ " { 'status' : '"+statusName+"' } "
+							+ "]";
+				}
+				else if( statusName.equals("Completed")) {
+					mongoQuery += comma + " '$or': ["
+							+ " { '$and': ["
+								+ " { 'completed': { '$exists': true } },"
+								+ " { 'status': { '$exists': false } }"
+								+ "]"
+							+ "}, "
+							+ " { 'status' : '"+statusName+"' } "
+							+ "]";
+				}
+				else {
+					mongoQuery += comma + " 'status': '" + statusName +"' ";
+				}
+			}
+            if(restrictedToTeam != null) {
+				if( !first ){
+					comma = ",";
+				}else
+					first = false;
+                
+                String userQuery = "{\"team_id\": " + restrictedToTeam.getId() + "}";
+                List<User> teamUsers = em.createNativeQuery(userQuery, User.class).getResultList();
+                
+                if (!teamUsers.isEmpty()) {
+                    mongoQuery += comma + "'assessor': { '$in': [";
+                    boolean firstUser = true;
+                    for (User u : teamUsers) {
+                        if (!firstUser) mongoQuery += ", ";
+                        mongoQuery += ""+ u.getId();
+                        firstUser = false;
+                    }
+                    mongoQuery += "]}";
+                }
+            }
+				
+			
+			String dir = request.getParameter("order[0][dir]");
+			
+			String colNum = request.getParameter("order[0][column]");
+			mongoQuery += " }";
 			String CountQuery = "db.Assessment.count(" + mongoQuery + ")";
 			this.count = ((Long)em.createNativeQuery(CountQuery).getSingleResult()).intValue();
+			String sortedQuery = "db.Assessment.find({ '$query' :" + mongoQuery + ", "
+					+ " '$orderby': { '" + convertColNumToName(colNum) +"' : " + convertDir(dir) + " } })";
 			
-			this.assessments = (List<Assessment>)em.createNativeQuery(mongoQuery, Assessment.class)
+			
+			this.assessments = (List<Assessment>)em.createNativeQuery(sortedQuery, Assessment.class)
 					.setMaxResults(this.length)
 					.setFirstResult(this.start)
 					.getResultList();
@@ -410,20 +552,15 @@ public class Engagement  extends FSActionSupport{
 			
 			
 			
-			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
-			if(amgr.checkIfExtended()){
-				try{
-					amgr.execute(em, a, AssessmentManager.Operation.Delete);
-				}catch(Exception ex){
-					ex.printStackTrace();
-				}
-			}
 			
 			AuditLog.audit(this, "Assessment " + a.getAppId() + " " + a.getName() 
 			+ " Deleted" , AuditLog.UserAction, AuditLog.CompAssessment, a.getId(), false);
 
 			em.createNativeQuery("db.Assessment.remove({ '_id': " + a.getId() + " })").executeUpdate();
 			HibHelper.getInstance().commit();
+			
+			Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
+			amgr.execute(a, AssessmentManager.Operation.Delete);
 			
 			return SUCCESSJSON;
 				
@@ -432,6 +569,28 @@ public class Engagement  extends FSActionSupport{
 		
 		//session.close();
 		return SUCCESS;
+	}
+	
+	private String convertColNumToName(String number) {
+		switch(number) {
+			case "0": return "appId";
+			case "1": return "name";
+			case "2": return "status";
+			case "3": return "assessor";
+			case "4": return "type";
+			case "5": return "campaign";
+			case "6": return "start";
+			case "7": return "end";
+			case "8": return "completed";
+			default: return "appId";
+		}
+	}
+	private String convertDir(String dir) {
+		switch(dir) {
+			case "desc": return "-1";
+			case "asc": return "1";
+			default: return "-1";
+		}
 	}
 
 	
@@ -464,13 +623,7 @@ public class Engagement  extends FSActionSupport{
 	}
 	
 	public List<User> getRemediation(){
-		List<User> rem = new ArrayList<User>();
-		for(User u : users){
-			if(u.getPermissions().isRemediation()){
-				rem.add(u);
-			}
-		}
-		return rem;
+        return remediation;
 	}
 	public List<Teams> getTeams() {
 		return teams;
@@ -634,6 +787,10 @@ public class Engagement  extends FSActionSupport{
 	public void setSearch(String search) {
 		this.search = search;
 	}
+	
+	public void setOrder(List<Object> order) {
+		this.order = order;
+	}
 
 
 
@@ -652,36 +809,26 @@ public class Engagement  extends FSActionSupport{
 		Pattern p = Pattern.compile(emailRegex);
 		String [] emails = this.distro.split(";");
 		for(String mail : emails) {
-			Matcher m = p.matcher(mail.trim());
+			Matcher m = p.matcher(mail.toLowerCase().trim());
 			if(m.matches())
 				continue;
-			else
+			else {
 				addActionError("Email Address is not Valid");
+			}
 		}
 		
 	}
 
-
-
-
-
-	public List<String> getStatus() {
-		return status;
+	public List<String> getRatings() {
+		return ratings;
 	}
 
-
-
-
-	public void setStatusName(String statusName) {
-		this.statusName = statusName;
+	public void setRatingName(String ratingName) {
+		this.ratingName = ratingName;
 	}
 
-
-
-
-
-	public String getDefaultStatus() {
-		return defaultStatus;
+	public String getDefaultRating() {
+		return defaultRating;
 	}
 	
 	public String getBack() {
@@ -692,19 +839,16 @@ public class Engagement  extends FSActionSupport{
 		this.back = back;
 	}
 	
+	public void setStatusName(String statusName) {
+		this.statusName = statusName;
+	}
+	public void setStatusId(Long statusId) {
+		this.statusId = statusId;
+	}
 	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-	
-
+	public List<Status> getStatuses(){
+		return this.statuses;
+	}
 	
 
 }

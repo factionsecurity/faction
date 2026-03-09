@@ -1,1 +1,25 @@
-**/node_modules
+# Docker ignore file for memory testing builds
+
+# Ignore test results and heap dumps (will be mounted as volumes)
+memory-test-results/
+heap-dumps/
+logs/
+
+# Ignore Git
+.git
+.gitignore
+
+# Ignore IDE files
+.idea/
+.vscode/
+*.iml
+
+# Ignore build artifacts (except target/faction.war which we need)
+target/*
+!target/faction.war
+
+# Ignore OS files
+.DS_Store
+
+# Ignore documentation (not needed in container)
+*.md

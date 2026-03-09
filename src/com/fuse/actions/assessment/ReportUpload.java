@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.ServletContext;
+import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.struts2.ServletActionContext;
 import org.apache.struts2.convention.annotation.Action;
@@ -88,7 +89,7 @@ public class ReportUpload extends FSActionSupport{
 	@Action(value="testReport", results={
 			@Result(name="vulnData",location="/WEB-INF/jsp/report/vulndataJSON.jsp")
 	})
-	public String testReport(){
+	public String testReport() throws ParserConfigurationException{
 		if(!(this.isAcadmin() || this.isAcmanager()))
 			return "login";
 		ParseXML parse = new ParseXML();
@@ -96,7 +97,7 @@ public class ReportUpload extends FSActionSupport{
 		List<CustomType> cts = em.createQuery("from CustomType").getResultList();
 		List<Vulnerability>vulns = parse.parseXML(file_data, 1l,
 				map.getListname(), map.getMapping(), map.getMapRating(), map.getVulnMap(), 
-				map.getDefaultVuln(), map.getCustomFields(), cts, false,false);
+				map.getDefaultVuln(), map.getCustomFields(), cts, false);
 		
 		JSONArray jarray = new JSONArray();
 		for(Vulnerability v : vulns){
@@ -247,17 +248,23 @@ public class ReportUpload extends FSActionSupport{
 		List<CustomType> types = (List<CustomType>)em.createQuery("from CustomType").getResultList();
 		
 		
-		List<Vulnerability> vulns = parse.parseXML(file_data, -1l, map.getListname(), map.getMapping(), 
-				map.getMapRating(), map.getVulnMap(), map.getDefaultVuln(), 
-				map.getCustomFields(), types,false,false);
+		List<Vulnerability> vulns;
+		try {
+			vulns = parse.parseXML(file_data, -1l, map.getListname(), map.getMapping(), 
+					map.getMapRating(), map.getVulnMap(), map.getDefaultVuln(), 
+					map.getCustomFields(), types,false);
+			HibHelper.getInstance().preJoin();
+			em.joinTransaction();
+			a.getVulns().addAll(vulns);
+			em.persist(a);
+			HibHelper.getInstance().commit();
+			
+			return SUCCESS;
+		} catch (ParserConfigurationException e) {
+			e.printStackTrace();
+			return ERROR;
+		}
 		
-		HibHelper.getInstance().preJoin();
-		em.joinTransaction();
-		a.getVulns().addAll(vulns);
-		em.persist(a);
-		HibHelper.getInstance().commit();
-		
-		return SUCCESS;
 		
 	}
 	

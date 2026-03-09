@@ -1,9 +1,14 @@
 package com.fuse.dao;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.TableGenerator;
 import javax.persistence.Transient;
 
@@ -22,6 +27,8 @@ public class CustomType {
 	private String defaultValue = "";
 	private Integer fieldType = 0;
 	private Boolean deleted = false;
+	@OneToMany(fetch = FetchType.EAGER)
+	private List<AssessmentType> assessmentTypes = new ArrayList<>();
 	static public enum FieldType { STRING(0), BOOLEAN(1), LIST(2);
 		int value;
 		FieldType(int v){
@@ -121,6 +128,12 @@ public class CustomType {
 		this.deleted = deleted;
 	}
 
+	public void setAssessmentTypes(List<AssessmentType>types) {
+		this.assessmentTypes = types;
+	}
+	public List<AssessmentType> getAssessmentTypes() {
+		return this.assessmentTypes;
+	}
 	@Transient
 	public String getTypeStr(){
 		switch(this.type){

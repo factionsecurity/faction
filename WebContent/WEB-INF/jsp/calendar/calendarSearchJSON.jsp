@@ -26,7 +26,8 @@
 	"userid" : "<s:property value="assessor.id"/>",
 	"username" : "<s:property value="assessor.fname"/> <s:property value="assessor.lname"/>",
 	"start" : "<s:date name="start" format="MM/dd/yyyy"/>",
-	"end" : "<s:date name="end" format="MM/dd/yyyy"/>"
+	"end" : "<s:date name="end" format="MM/dd/yyyy"/>",
+	"status": "<s:property value="workflowStatus"/>"
 	}
 </s:iterator>
 

@@ -9,7 +9,7 @@ require('../scripts/fileupload/css/fileinput.css');
 import '../scripts/fileupload/js/fileinput.min';
 require('./checklist.css');
   
-  function addQuestion(el){
+global.addQuestion = function addQuestion(el){
 	  let data = encodeURIComponent($("#newQuest").val());
 	  data="question="+ data;
 	  data+="&checklist=" + $("#list").val();
@@ -20,7 +20,9 @@ require('./checklist.css');
 			  let id = resp.id;
 			  $("#questionTable").DataTable().row.add(
 					  [ id, 
-						  "<textarea class='form-control' style='min-width: 100%' id='q" + id +"'>"+$($("<div />").html($("#newQuest").val())).text()+"</textarea>", 
+						  "<textarea class='form-control' style='min-width: 100%' id='q" 
+						  + id +"'>"
+						  +$($("<div />").html( entityEncode($("#newQuest").val()) )).text()+"</textarea>", 
 						  "<button class='btn btn-primary' onclick='saveQuestion("+ id + ")'><span class='fa fa-save'></span></button> <button class='btn btn-danger' onclick='deleteQuestion(this," + $("#list").val() +"," + id +")'><span class='fa fa-trash'></span></button>"]
 			).draw();
 			$("#newQuest").val("");
@@ -229,13 +231,8 @@ require('./checklist.css');
 		  
 		  
 	  });
-	 /* 
-	  <s:iterator value="lists.get(0).types" var="id">
-	  	$("#t${id }").prop('checked', true);
-	  </s:iterator>
-      */
 	  
   });
   $('.add-question').on('click', (event) => {
-      addQuestion(this);
+	global.addQuestion(this);
   });

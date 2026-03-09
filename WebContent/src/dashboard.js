@@ -16,6 +16,13 @@ function accept(nid, el){
     
 $(function(){
 
+	$("#clearNotifications").click(() =>{
+		console.log("click");
+		$.get("clearNotifications").done( () => {
+    	let table=$('#notify').DataTable();
+    	table.clear().draw();
+		});
+	})
       
   let noteConfig = {
     mode: "balloon",
