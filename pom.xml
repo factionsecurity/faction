@@ -409,7 +409,7 @@
 		<dependency>
 			<groupId>org.pac4j</groupId>
 			<artifactId>pac4j-jwt</artifactId>
-			<version>4.5.7</version>
+			<version>4.5.9</version>
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
