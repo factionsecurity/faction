@@ -9,10 +9,12 @@
 		<filter-name>corsFilter</filter-name>
 		<url-pattern>/oauth/*</url-pattern>
 	</filter-mapping>
+	
 	<filter-mapping>
 		<filter-name>clearSavedRequestFilter</filter-name>
-		<url-pattern>/oauth/*</url-pattern>
+		<url-pattern>/oauth/callback</url-pattern>
 	</filter-mapping>
+	
 	<filter-mapping>
 		<filter-name>callbackFilter</filter-name>
 		<url-pattern>/oauth/callback</url-pattern>
