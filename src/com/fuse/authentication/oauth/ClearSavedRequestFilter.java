@@ -20,7 +20,7 @@ public class ClearSavedRequestFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpSession session = request.getSession(false);
 
-        if (session != null && request.getRequestURI().contains("/saml2/callback")) {
+        if (session != null) {
             // Remove pac4j's saved original request so it won't form-POST replay it
             session.removeAttribute(Pac4jConstants.REQUESTED_URL);
         }
