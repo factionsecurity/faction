@@ -10,7 +10,7 @@
 		<connection>scm:git:https://github.com/factionsecurity/faction.git</connection>
 		<developerConnection>
 			scm:git:https://github.com/factionsecurity/faction.git</developerConnection>
-		<tag>1.7.0</tag>
+		<tag>1.7.5</tag>
 	</scm>
 	<properties>
 		<aws.java.sdk.version>2.18.16</aws.java.sdk.version>
@@ -164,7 +164,6 @@
 			<groupId>org.apache.struts</groupId>
 			<artifactId>struts2-junit-plugin</artifactId>
 			<version>6.8.0</version>
-			<scope>test</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.struts</groupId>
@@ -174,7 +173,7 @@
 		<dependency>
 			<groupId>org.springframework.security</groupId>
 			<artifactId>spring-security-crypto</artifactId>
-			<version>6.3.8</version>
+			<version>3.1.7.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.el</groupId>
