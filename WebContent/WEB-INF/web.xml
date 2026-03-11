@@ -10,6 +10,10 @@
 		<url-pattern>/oauth/*</url-pattern>
 	</filter-mapping>
 	<filter-mapping>
+		<filter-name>clearSavedRequestFilter</filter-name>
+		<url-pattern>/oauth/*</url-pattern>
+	</filter-mapping>
+	<filter-mapping>
 		<filter-name>callbackFilter</filter-name>
 		<url-pattern>/oauth/callback</url-pattern>
 		<dispatcher>REQUEST</dispatcher>
@@ -45,6 +49,11 @@
 	
 	<filter-mapping>
 		<filter-name>corsFilter</filter-name>
+		<url-pattern>/saml2/*</url-pattern>
+	</filter-mapping>
+	
+	<filter-mapping>
+		<filter-name>clearSavedRequestFilter</filter-name>
 		<url-pattern>/saml2/*</url-pattern>
 	</filter-mapping>
 	
