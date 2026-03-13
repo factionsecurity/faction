@@ -44,6 +44,96 @@ export class FactionEditor {
 
         return button;
     }
+    createAICustomButton(id) {
+        const button = document.createElement('button');
+        button.className = 'ai-summary-button';
+        button.type = 'button';
+        button.innerHTML = `<i class="fa fa-robot" style="font-size: 14px;"></i>`;
+        button.title = 'Custom Prompt';
+
+        // Add click event
+        button.addEventListener('click', () => {
+            this.showAICustomModal(id);
+        });
+
+        return button;
+    }
+    showAICustomModal(id) {
+        const _this = this;
+        $.confirm({
+            title: 'Ask AI',
+            content: 'Enter Query Using this Text?<br><textarea id="customPrompt" cols="50"></textArea><br>',
+            type: 'blue',
+            buttons: {
+                confirm: {
+                    text: 'Generate',
+                    btnClass: 'btn-primary',
+                    action: function () {
+                        _this.generateAICustom(id);
+                    }
+                },
+                cancel: {
+                    text: 'Cancel',
+                    btnClass: 'btn-secondary'
+                }
+            }
+        });
+    }
+    generateAICustom(id) {
+        const _this = this;
+
+        // Show loading overlay
+        const editorEl = document.querySelector(`#${id}`);
+		const prompt = document.querySelector("#customPrompt").value;
+        const overlay = document.createElement('div');
+        overlay.className = 'editor-upload-overlay';
+        overlay.innerHTML = `
+            <div class="editor-upload-spinner">
+                <div class="spinner-icon"></div>
+                <div class="spinner-text">Generating AI summary...</div>
+            </div>
+        `;
+        editorEl.style.position = 'relative';
+        editorEl.appendChild(overlay);
+
+        // Make AJAX call to generate AI summary
+        const data = {
+            assessmentId: this.assessmentId,
+			prompt: prompt,
+			context: this.getEditorText(id),
+            _token: global._token
+        };
+
+        $.post('GenerateAIResponse', data)
+            .done(function (response) {
+                overlay.remove();
+                if (response.result === 'success') {
+                    // Decode Base64 response and replace editor content with AI-generated summary
+                    const decodedSummary = _this.b64DecodeUnicode(response.summary);
+                    _this.editors[id].setHTML(decodedSummary, false);
+
+                    $.alert({
+                        title: 'Success',
+                        content: 'AI summary generated successfully!',
+                        type: 'green'
+                    });
+                } else {
+                    $.alert({
+                        title: 'Error',
+                        content: response.message || 'Failed to generate AI summary',
+                        type: 'red'
+                    });
+                }
+            })
+            .fail(function () {
+                overlay.remove();
+                $.alert({
+                    title: 'Error',
+                    content: 'Network error occurred while generating AI summary',
+                    type: 'red'
+                });
+            });
+    }
 
     createAISummaryButton(id) {
         const button = document.createElement('button');
@@ -281,11 +371,19 @@ export class FactionEditor {
                 ['hr', 'ul', 'ol', 'indent', 'outdent'],
                 ['table', 'image', 'link'],
                 ['code', 'codeblock'],
-                [{
+                [
+				{
                     el: this.createAISummaryButton(id),
                     name: 'aiSummary',
                     tooltip: 'Generate AI Summary'
-                }],
+                },
+				{
+                    el: this.createAICustomButton(id),
+                    name: 'aiSummary',
+                    tooltip: 'Generate AI Response'
+                },
+				
+				],
                 ['scrollSync']
             ],
             i18n: {

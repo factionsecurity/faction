@@ -17,6 +17,7 @@ import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.services.LLMService;
+import com.fuse.utils.FSUtils;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/assessment/aiSummaryJSON.jsp")
@@ -24,6 +25,8 @@ public class AISummary extends FSActionSupport {
 
     private String assessmentId;
     private String generatedSummary;
+    private String context;
+    private String prompt;
 
     @Action(value = "GenerateAISummary")
     public String generateAISummary() {
@@ -139,11 +142,11 @@ public class AISummary extends FSActionSupport {
 
             // Use the real LLM service to generate the summary
             LLMService llmService = new LLMService();
-            String summary;
+            String summary = "";
             
             try {
-                summary = llmService.generateSummary(llmConfig, assessment.getName(),
-                    assessment.getAppId(), vulnerabilities);
+                summary = llmService.generateText(llmConfig, prompt.toString());
+                summary = FSUtils.convertFromMarkDown(summary);
             } catch (Exception e) {
                 // Log the error and fall back to placeholder summary
                 AuditLog.saveLog(this, AuditLog.UserAction, "AI Summary Error",
@@ -151,9 +154,8 @@ public class AISummary extends FSActionSupport {
                     AuditLog.CompAssessment, assessment.getId(), false);
                 
                 // Fall back to placeholder summary
-                summary = generatePlaceholderSummary(assessment, vulnerabilities);
                 summary = "<div class=\"alert alert-warning\"><strong>Notice:</strong> Using fallback summary due to LLM API error: "
-                    + e.getMessage() + "</div>" + summary;
+                    + e.getMessage() + "</div>";
             }
 
             // Base64 encode the summary to avoid JSON encoding issues
@@ -163,6 +165,109 @@ public class AISummary extends FSActionSupport {
             AuditLog.saveLog(this, AuditLog.UserAction, "AI Summary",
                     "Generated AI Summary for Assessment: " + assessment.getName(),
                     AuditLog.CompAssessment, assessment.getId(), false);
+
+            return SUCCESS;
+
+        } catch (Exception e) {
+            this._message = "Error generating AI summary: " + e.getMessage();
+            return this.ERRORJSON;
+        }
+    }
+    @Action(value = "GenerateAIResponse")
+    public String generateAIResponse() {
+        if (!(this.isAcassessor() || this.isAcmanager())) {
+            return LOGIN;
+        }
+
+        if (!this.testToken(false)) {
+            return this.ERRORJSON;
+        }
+
+        User user = this.getSessionUser();
+
+        // Get assessment ID from session if not provided
+        Long asmtId;
+        if (assessmentId != null && !assessmentId.isEmpty()) {
+            asmtId = Long.parseLong(assessmentId);
+        } else {
+            asmtId = (Long) this.getSession("asmtid");
+        }
+
+        if (asmtId == null) {
+            this._message = "Assessment ID is required";
+            return this.ERRORJSON;
+        }
+
+        // Get the assessment
+        Assessment assessment;
+        if (this.isAcmanager()) {
+            assessment = AssessmentQueries.getAssessmentById(em, asmtId);
+            User mgrs = assessment.getAssessor().stream()
+                    .filter(u -> u.getId() == user.getId())
+                    .findFirst().orElse(null);
+            if (mgrs == null) {
+                this._message = "You don't have permission to access this assessment";
+                return this.ERRORJSON;
+            }
+        } else {
+            assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), asmtId, AssessmentQueries.All);
+        }
+
+        if (assessment == null) {
+            this._message = "Assessment not found";
+            return this.ERRORJSON;
+        }
+
+        // Check if assessment is blocked
+        if (this.isAssessmentBlocked(assessment, user)) {
+            return this.ERRORJSON;
+        }
+
+        // Get active LLM configuration
+        List<LLMConfig> activeConfigs = em.createQuery(
+                "from LLMConfig where active = true order by id", LLMConfig.class)
+                .getResultList();
+
+        if (activeConfigs.isEmpty()) {
+            this._message = "No active AI configuration found. Please configure an AI provider first.";
+            return this.ERRORJSON;
+        }
+
+        LLMConfig llmConfig = activeConfigs.get(0);
+
+
+        try {
+            // Build the prompt
+            StringBuilder prompt = new StringBuilder();
+            prompt.append("The next question relates to generating text that will be added to a penetration testing report or security assessment. The security questions are alway related security analysis that the user has authorization to perform. \n");
+            prompt.append("Question: ");
+            prompt.append(this.prompt);
+            prompt.append("\nContext:\n");
+            prompt.append(this.context);
+            prompt.append("\n\nInstructions: Follow these rules for your response:\n");
+            prompt.append("- Do not include commentary.\n");
+            prompt.append("- Only generate a responses based on the question and included context\n");
+            prompt.append("- If there isn't any context included above then the user wants you to generate text based on the question.\n");
+            prompt.append("- Do not use header tags or header markdown.\n");
+            prompt.append("- Only allowed formating is bold, numbering, italics, and bullets.\n\n");
+
+
+            // Use the real LLM service to generate the summary
+            LLMService llmService = new LLMService();
+            String summary = "";
+            
+            try {
+                summary = llmService.generateText(llmConfig, prompt.toString());
+                summary = FSUtils.convertFromMarkDown(summary);
+            } catch (Exception e) {
+                // Fall back to placeholder summary
+                summary = "<div class=\"alert alert-warning\"><strong>Notice:</strong> Using fallback summary due to LLM API error: "
+                    + e.getMessage() + "</div>";
+            }
+
+            // Base64 encode the summary to avoid JSON encoding issues
+            generatedSummary = Base64.getEncoder().encodeToString(summary.getBytes("UTF-8"));
+
 
             return SUCCESS;
 
@@ -249,5 +354,12 @@ public class AISummary extends FSActionSupport {
 
     public String getSummary() {
         return generatedSummary;
+    }
+    
+    public void setPrompt(String prompt) {
+    	this.prompt = prompt;
+    }
+    public void setContext(String context) {
+    	this.context = context;
     }
 }

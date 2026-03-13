@@ -155,7 +155,7 @@
 
                                                 <div class="form-group">
                                                     <label>Provider: *</label>
-                                                    <select class="form-control select2" style="width: 100%;"
+                                                    <select class="form-control" style="width: 100%;"
                                                         id="provider">
                                                         <option value="">Select Provider</option>
                                                         <option value="OPENAI">OpenAI</option>

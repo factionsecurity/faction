@@ -48,6 +48,30 @@ public class LLMService {
                 throw new IllegalArgumentException("Unsupported provider: " + config.getProvider());
         }
     }
+    /**
+     * Generate AI summary using the configured LLM provider
+     */
+    public String generateText(LLMConfig config,String prompt) throws Exception {
+        
+        // Normalize provider name for case-insensitive matching
+        String provider = config.getProvider();
+        if (provider != null) {
+            provider = provider.trim().toUpperCase();
+        }
+        
+        switch (provider) {
+            case "OPENAI":
+                return callOpenAI(config, prompt);
+            case "AZURE OPENAI":
+                return callAzureOpenAI(config, prompt);
+            case "CLAUDE":
+                return callClaude(config, prompt);
+            case "AWS BEDROCK":
+                return callAWSBedrock(config, prompt);
+            default:
+                throw new IllegalArgumentException("Unsupported provider: " + config.getProvider());
+        }
+    }
 
     /**
      * Build the prompt for vulnerability summary generation

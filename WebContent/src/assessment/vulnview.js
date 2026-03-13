@@ -82,7 +82,7 @@ class SSE {
 				 });
 			 } else {
 				 console.log('Connection error', 'error');
-				 $.alert({
+				 /*$.alert({
 					 title: 'Connection Error',
 					 content: 'There was an error with the real-time connection. Attempting to reconnect...',
 					 type: 'orange',
@@ -91,7 +91,7 @@ class SSE {
 					 buttons: {
 						 ok: function () { }
 					 }
-				 });
+				 });*/
 			 }
 		 };
 	 }

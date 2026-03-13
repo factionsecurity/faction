@@ -261,7 +261,7 @@ global.editConfig = function editConfig(configId) {
     currentConfigId = configId;
 
     $.post('GetLLMConfig', {
-        configId: 'config' + configId,
+        configId: configId,
         '_token': $('[name="_token"]').val()
     })
         .done(function (data) {
