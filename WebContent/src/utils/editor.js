@@ -44,19 +44,71 @@ export class FactionEditor {
 
         return button;
     }
-    createAICustomButton(id) {
+    createAIDropdownButton(id) {
+        const _this = this;
+
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position: relative; display: inline-block;';
+
         const button = document.createElement('button');
         button.className = 'ai-summary-button';
         button.type = 'button';
-        button.innerHTML = `<i class="fa fa-robot" style="font-size: 14px;"></i>`;
-        button.title = 'Custom Prompt';
+        button.title = 'AI Tools';
+        button.innerHTML = `<i class="fa fa-robot" style="font-size: 14px;"></i> <i class="fa fa-caret-down" style="font-size: 10px; margin-left: 2px;"></i>`;
 
-        // Add click event
-        button.addEventListener('click', () => {
-            this.showAICustomModal(id);
+        const menu = document.createElement('div');
+        menu.className = 'ai-toolbar-dropdown';
+        menu.style.cssText = [
+            'display: none',
+            'position: absolute',
+            'top: calc(100% + 4px)',
+            'left: 0',
+            'z-index: 9999',
+            'background: #1e2a3a',
+            'border: 1px solid #3a5068',
+            'border-radius: 4px',
+            'box-shadow: 0 4px 12px rgba(0,0,0,0.4)',
+            'min-width: 190px',
+            'padding: 4px 0'
+        ].join(';');
+
+        const items = [
+            {
+                label: '<i class="fa fa-file-text-o" style="margin-right:7px;"></i>Create Executive Summary',
+                action: () => { _this.showAISummaryModal(id); }
+            },
+            {
+                label: '<i class="fa fa-pencil" style="margin-right:7px;"></i>Update This Text',
+                action: () => { _this.showAICustomModal(id); }
+            }
+        ];
+
+        items.forEach(item => {
+            const menuItem = document.createElement('div');
+            menuItem.innerHTML = item.label;
+            menuItem.style.cssText = 'padding: 8px 14px; cursor: pointer; font-size: 13px; color: #cdd9e5; white-space: nowrap;';
+            menuItem.addEventListener('mouseenter', () => { menuItem.style.background = '#2d4a6b'; });
+            menuItem.addEventListener('mouseleave', () => { menuItem.style.background = ''; });
+            menuItem.addEventListener('click', (e) => {
+                e.stopPropagation();
+                menu.style.display = 'none';
+                item.action();
+            });
+            menu.appendChild(menuItem);
         });
 
-        return button;
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = menu.style.display === 'block';
+            document.querySelectorAll('.ai-toolbar-dropdown').forEach(m => { m.style.display = 'none'; });
+            menu.style.display = isOpen ? 'none' : 'block';
+        });
+
+        document.addEventListener('click', () => { menu.style.display = 'none'; });
+
+        wrapper.appendChild(button);
+        wrapper.appendChild(menu);
+        return wrapper;
     }
     showAICustomModal(id) {
         const _this = this;
@@ -133,21 +185,6 @@ export class FactionEditor {
                     type: 'red'
                 });
             });
-    }
-
-    createAISummaryButton(id) {
-        const button = document.createElement('button');
-        button.className = 'ai-summary-button';
-        button.type = 'button';
-        button.innerHTML = `<i class="fa fa-robot" style="font-size: 14px;"></i>`;
-        button.title = 'Generate AI Summary';
-
-        // Add click event
-        button.addEventListener('click', () => {
-            this.showAISummaryModal(id);
-        });
-
-        return button;
     }
 
     showAISummaryModal(id) {
@@ -372,18 +409,12 @@ export class FactionEditor {
                 ['table', 'image', 'link'],
                 ['code', 'codeblock'],
                 [
-				{
-                    el: this.createAISummaryButton(id),
-                    name: 'aiSummary',
-                    tooltip: 'Generate AI Summary'
-                },
-				{
-                    el: this.createAICustomButton(id),
-                    name: 'aiSummary',
-                    tooltip: 'Generate AI Response'
-                },
-				
-				],
+                    {
+                        el: this.createAIDropdownButton(id),
+                        name: 'aiTools',
+                        tooltip: 'AI Tools'
+                    }
+                ],
                 ['scrollSync']
             ],
             i18n: {
