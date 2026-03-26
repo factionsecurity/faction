@@ -38,35 +38,44 @@ public class LLMService {
         switch (provider) {
             case "OPENAI":
                 return callOpenAI(config, prompt);
+            case "OPENAI_COMPATIBLE":
+                return callOpenAICompatible(config, prompt);
             case "AZURE OPENAI":
+            case "AZURE_OPENAI":
                 return callAzureOpenAI(config, prompt);
             case "CLAUDE":
                 return callClaude(config, prompt);
             case "AWS BEDROCK":
+            case "AWS_BEDROCK":
                 return callAWSBedrock(config, prompt);
             default:
                 throw new IllegalArgumentException("Unsupported provider: " + config.getProvider());
         }
     }
+
     /**
      * Generate AI summary using the configured LLM provider
      */
-    public String generateText(LLMConfig config,String prompt) throws Exception {
-        
+    public String generateText(LLMConfig config, String prompt) throws Exception {
+
         // Normalize provider name for case-insensitive matching
         String provider = config.getProvider();
         if (provider != null) {
             provider = provider.trim().toUpperCase();
         }
-        
+
         switch (provider) {
             case "OPENAI":
                 return callOpenAI(config, prompt);
+            case "OPENAI_COMPATIBLE":
+                return callOpenAICompatible(config, prompt);
             case "AZURE OPENAI":
+            case "AZURE_OPENAI":
                 return callAzureOpenAI(config, prompt);
             case "CLAUDE":
                 return callClaude(config, prompt);
             case "AWS BEDROCK":
+            case "AWS_BEDROCK":
                 return callAWSBedrock(config, prompt);
             default:
                 throw new IllegalArgumentException("Unsupported provider: " + config.getProvider());
@@ -78,10 +87,12 @@ public class LLMService {
      */
     private String buildPrompt(String assessmentName, String appId, List<Vulnerability> vulnerabilities) {
         StringBuilder prompt = new StringBuilder();
-        prompt.append("Please analyze the following security vulnerabilities from an assessment and create a high-level executive summary. ");
+        prompt.append("Please analyze the following security vulnerabilities from an assessment and create a high-level executive summary using a vulnerability assessment report. ");
         prompt.append("Focus on the overall risk posture, key themes, and recommendations. ");
-        prompt.append("Keep the summary professional and concise (2-3 paragraphs). ");
-        prompt.append("Format the response as HTML with appropriate headings and paragraphs.\n\n");
+        prompt.append("Keep the summary professional and concise (2-3 paragraphs).\n");
+        prompt.append("Format the response as HTML.\n");
+        prompt.append("Limit your formating to bold, italics, bullets, and links.\n");
+        prompt.append("Do not use headings like H1, H2.\n\n");
         prompt.append("Assessment: ").append(assessmentName).append("\n");
         prompt.append("Application ID: ").append(appId).append("\n\n");
         prompt.append("Vulnerabilities:\n");
@@ -140,6 +151,50 @@ public class LLMService {
 
             return handleResponse(connection);
             
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    /**
+     * Call an OpenAI-compatible API (LM Studio, Ollama, etc.)
+     * Uses the same request/response format as OpenAI but with a required custom base URL
+     * and an optional API key.
+     */
+    private String callOpenAICompatible(LLMConfig config, String prompt) throws Exception {
+        String baseUrl = config.getBaseUrl();
+        if (baseUrl == null || baseUrl.trim().isEmpty()) {
+            throw new IllegalArgumentException("Base URL is required for OpenAI Compatible provider");
+        }
+        baseUrl = baseUrl.trim().replaceAll("/+$", "");
+
+        URL url = new URL(baseUrl + "/chat/completions");
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+        try {
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            String apiKey = config.getApiKey();
+            if (apiKey != null && !apiKey.trim().isEmpty()) {
+                connection.setRequestProperty("Authorization", "Bearer " + FSUtils.decryptPassword(apiKey));
+            }
+            connection.setDoOutput(true);
+            connection.setConnectTimeout(TIMEOUT_MS);
+            connection.setReadTimeout(TIMEOUT_MS);
+
+            String requestBody = String.format(
+                "{\"model\": \"%s\", \"messages\": [{\"role\": \"user\", \"content\": %s}], \"max_tokens\": 1500}",
+                config.getModel(),
+                objectMapper.writeValueAsString(prompt)
+            );
+
+            try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), StandardCharsets.UTF_8)) {
+                writer.write(requestBody);
+                writer.flush();
+            }
+
+            return handleResponse(connection);
+
         } finally {
             connection.disconnect();
         }

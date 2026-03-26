@@ -75,6 +75,7 @@
                                                         <td>
                                                             <span class="label label-info">
                                                                 <s:if test="provider == 'OPENAI'">OpenAI</s:if>
+                                                                <s:elseif test="provider == 'OPENAI_COMPATIBLE'">OpenAI Compatible</s:elseif>
                                                                 <s:elseif test="provider == 'AZURE_OPENAI'">Azure OpenAI
                                                                 </s:elseif>
                                                                 <s:elseif test="provider == 'AWS_BEDROCK'">AWS Bedrock
@@ -159,6 +160,7 @@
                                                         id="provider">
                                                         <option value="">Select Provider</option>
                                                         <option value="OPENAI">OpenAI</option>
+                                                        <option value="OPENAI_COMPATIBLE">OpenAI Compatible (LM Studio)</option>
                                                         <option value="AZURE_OPENAI">Azure OpenAI</option>
                                                         <option value="AWS_BEDROCK">AWS Bedrock</option>
                                                         <option value="CLAUDE">Claude</option>
@@ -283,6 +285,30 @@
                                                             </option>
                                                             <option value="claude-3-haiku-20240307">Claude 3 Haiku
                                                             </option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <!-- OpenAI Compatible Fields (LM Studio) -->
+                                                <div id="openai-compatible-fields" class="provider-fields">
+                                                    <h4 class="text-primary">OpenAI Compatible Configuration
+                                                        <small>(LM Studio, Ollama, etc.)</small>
+                                                    </h4>
+                                                    <div class="form-group">
+                                                        <label>Base URL: *</label>
+                                                        <input class="form-control" id="openai_compatible_baseUrl"
+                                                            placeholder="http://localhost:1234/v1">
+                                                        <p class="help-block">The base URL of your OpenAI-compatible server. Models will load automatically when you enter the URL.</p>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>API Key: <small class="text-muted">(optional)</small></label>
+                                                        <input type="password" class="form-control" id="openai_compatible_apiKey"
+                                                            placeholder="Leave empty if not required">
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Model: *</label>
+                                                        <select class="form-control" id="openai_compatible_model">
+                                                            <option value="">Enter Base URL above to load models</option>
                                                         </select>
                                                     </div>
                                                 </div>

@@ -8,6 +8,7 @@ import 'bootstrap';
 import 'datatables.net';
 import 'datatables.net-bs';
 import 'jquery';
+import 'jquery-confirm';
 import 'select2';
 
 var currentConfigId = null;
@@ -58,6 +59,14 @@ $(document).ready(function () {
     $(document).on('blur', '#openai_baseUrl', function () {
         var provider = $('#provider').val();
         if (provider === 'OPENAI' && $('#openai_apiKey').val().trim() !== '') {
+            loadProviderModelsWithCredentials();
+        }
+    });
+
+    // Load models for OpenAI Compatible when base URL is entered
+    $(document).on('blur', '#openai_compatible_baseUrl', function () {
+        var provider = $('#provider').val();
+        if (provider === 'OPENAI_COMPATIBLE' && $(this).val().trim() !== '') {
             loadProviderModelsWithCredentials();
         }
     });
@@ -126,6 +135,9 @@ function showProviderFields() {
             case 'CLAUDE':
                 fieldId = 'claude-fields';
                 break;
+            case 'OPENAI_COMPATIBLE':
+                fieldId = 'openai-compatible-fields';
+                break;
         }
 
         if (fieldId) {
@@ -165,6 +177,13 @@ function loadProviderModelsWithCredentials() {
         return;
     }
 
+    // OpenAI Compatible servers (LM Studio, Ollama, etc.) run locally in the user's browser context,
+    // so fetch their models directly from the browser instead of routing through the Faction server.
+    if (provider === 'OPENAI_COMPATIBLE') {
+        loadOpenAICompatibleModelsDirect();
+        return;
+    }
+
     var credentials = collectProviderCredentials(provider);
     if (!credentials) {
         return;
@@ -198,6 +217,62 @@ function loadProviderModelsWithCredentials() {
 }
 
 /**
+ * Fetch models directly from an OpenAI-compatible server (e.g. LM Studio) via the browser.
+ * Server-side fetching won't work because the local server URL is only reachable from
+ * the user's browser, not from the Faction application server.
+ */
+function loadOpenAICompatibleModelsDirect() {
+    var baseUrl = $('#openai_compatible_baseUrl').val().trim();
+    if (!baseUrl) {
+        return;
+    }
+
+    var modelsUrl = baseUrl.replace(/\/+$/, '') + '/models';
+    var apiKey = $('#openai_compatible_apiKey').val().trim();
+
+    var ajaxHeaders = {};
+    if (apiKey) {
+        ajaxHeaders['Authorization'] = 'Bearer ' + apiKey;
+    }
+
+    $.ajax({
+        url: modelsUrl,
+        method: 'GET',
+        headers: ajaxHeaders
+    })
+        .done(function (data) {
+            var models = [];
+            if (data && data.data && Array.isArray(data.data)) {
+                // Standard OpenAI format: { data: [{ id: "..." }] }
+                models = $.map(data.data, function (m) {
+                    return { value: m.id, label: m.id };
+                });
+            } else if (data && data.models && Array.isArray(data.models)) {
+                // LM Studio format: { models: [{ key: "...", display_name: "...", type: "llm" }] }
+                models = $.map(data.models, function (m) {
+                    if (m.type === 'embedding') return null; // skip embedding models
+                    var value = m.key || m.id;
+                    var label = m.display_name ? m.display_name + ' (' + value + ')' : value;
+                    return { value: value, label: label };
+                });
+            }
+            populateModelSelect('OPENAI_COMPATIBLE', models);
+            if (models.length > 0) {
+                $('#testResult').text('Loaded ' + models.length + ' models from server').addClass('text-success').removeClass('text-danger');
+                setTimeout(function () {
+                    $('#testResult').text('').removeClass('text-success text-danger');
+                }, 3000);
+            } else {
+                $('#testResult').text('Connected but no models found').addClass('text-danger').removeClass('text-success');
+            }
+        })
+        .fail(function () {
+            $('#testResult').text('Could not reach server at ' + baseUrl).addClass('text-danger').removeClass('text-success');
+            console.log('Failed to load models from: ' + modelsUrl);
+        });
+}
+
+/**
  * Collect credentials for the given provider
  */
 function collectProviderCredentials(provider) {
@@ -220,6 +295,16 @@ function collectProviderCredentials(provider) {
             if (!apiKey || apiKey.trim() === '') return null;
 
             credentials.apiKey = apiKey;
+            break;
+
+        case 'OPENAI_COMPATIBLE':
+            var compatBaseUrl = $('#openai_compatible_baseUrl').val();
+            if (!compatBaseUrl || compatBaseUrl.trim() === '') return null;
+            credentials.baseUrl = compatBaseUrl;
+            var compatApiKey = $('#openai_compatible_apiKey').val();
+            if (compatApiKey && compatApiKey.trim() !== '') {
+                credentials.apiKey = compatApiKey;
+            }
             break;
 
         case 'AZURE_OPENAI':
@@ -258,16 +343,17 @@ function populateModelSelect(provider, data) {
  * Edit configuration - load data from server
  */
 global.editConfig = function editConfig(configId) {
-    currentConfigId = configId;
-
     $.post('GetLLMConfig', {
         configId: configId,
         '_token': $('[name="_token"]').val()
     })
         .done(function (data) {
             if (data) {
-                populateForm(data);
+                // Open the modal first so clearForm() fires before we populate,
+                // then restore the ID that openConfigModal() resets to null.
                 openConfigModal(true);
+                currentConfigId = configId;
+                populateForm(data);
             } else {
                 showErrorMessage('Failed to load configuration data');
             }
@@ -282,19 +368,20 @@ global.editConfig = function editConfig(configId) {
  */
 function populateForm(config) {
     $('#configName').val(config.name || '');
-    $('#provider').val(config.provider || '').trigger('change');
 
-    // Set provider-specific fields based on provider type
+    // Set provider and show fields WITHOUT triggering the change event, which would
+    // fire loadProviderModels() asynchronously and race against setting the model value.
+    $('#provider').val(config.provider || '');
+    showProviderFields();
+
     if (config.provider) {
-        var prefix = config.provider.toLowerCase().replace('_', '_');
-
-        // Common fields
-        $('#' + prefix + '_model').val(config.model || '');
+        var savedModel = config.model || '';
 
         switch (config.provider) {
             case 'OPENAI':
                 $('#openai_apiKey').val(''); // Never populate password fields
                 $('#openai_baseUrl').val(config.baseUrl || '');
+                loadModelsAndSelect(config.provider, savedModel);
                 break;
 
             case 'AZURE_OPENAI':
@@ -302,21 +389,49 @@ function populateForm(config) {
                 $('#azure_endpoint').val(config.endpoint || '');
                 $('#azure_deployment').val(config.deployment || '');
                 $('#azure_apiVersion').val(config.apiVersion || '');
+                loadModelsAndSelect(config.provider, savedModel);
                 break;
 
             case 'AWS_BEDROCK':
                 $('#bedrock_accessKey').val(''); // Never populate password fields
                 $('#bedrock_secretKey').val(''); // Never populate password fields
                 $('#bedrock_region').val(config.region || '');
+                loadModelsAndSelect(config.provider, savedModel);
                 break;
 
             case 'CLAUDE':
                 $('#claude_apiKey').val(''); // Never populate password fields
+                loadModelsAndSelect(config.provider, savedModel);
+                break;
+
+            case 'OPENAI_COMPATIBLE':
+                $('#openai_compatible_baseUrl').val(config.baseUrl || '');
+                $('#openai_compatible_apiKey').val(''); // Never populate password fields
+                // Inject the saved model as a selected option; user can re-load from the server
+                if (savedModel) {
+                    var sel = $('#openai_compatible_model');
+                    sel.empty().append('<option value="' + savedModel + '">' + savedModel + '</option>');
+                }
                 break;
         }
     }
 
     $('#configActive').prop('checked', config.active === true);
+}
+
+/**
+ * Load models for a provider and select a specific value once loaded
+ */
+function loadModelsAndSelect(provider, modelToSelect) {
+    $.post('GetProviderModels', {
+        provider: provider,
+        '_token': $('[name="_token"]').val()
+    }).done(function (data) {
+        populateModelSelect(provider, data);
+        if (modelToSelect) {
+            $('#' + provider.toLowerCase() + '_model').val(modelToSelect);
+        }
+    });
 }
 
 /**
@@ -330,7 +445,7 @@ function saveConfiguration() {
     var formData = collectFormData();
 
     if (currentConfigId) {
-        formData.configId = 'config' + currentConfigId;
+        formData.configId = currentConfigId;
     }
 
     formData._token = $('[name="_token"]').val();
@@ -340,12 +455,8 @@ function saveConfiguration() {
     $.post('SaveLLMConfig', formData)
         .done(function (data) {
             if (data.result === 'success') {
-                showSuccessMessage('Configuration saved successfully');
                 $('#configModal').modal('hide');
-                // Reload page to refresh the table
-                setTimeout(function () {
-                    window.location.reload();
-                }, 1000);
+                window.location.reload();
             } else {
                 showErrorMessage(data.message || 'Failed to save configuration');
             }
@@ -412,6 +523,15 @@ function validateForm() {
                     errors.push('API Key is required for Claude');
                 }
                 break;
+
+            case 'OPENAI_COMPATIBLE':
+                if (!$('#openai_compatible_baseUrl').val().trim()) {
+                    errors.push('Base URL is required for OpenAI Compatible');
+                }
+                if (!$('#openai_compatible_model').val()) {
+                    errors.push('Model is required — enter the Base URL to load available models');
+                }
+                break;
         }
     }
 
@@ -461,6 +581,12 @@ function collectFormData() {
             data.apiKey = $('#claude_apiKey').val();
             data.model = $('#claude_model').val();
             break;
+
+        case 'OPENAI_COMPATIBLE':
+            data.baseUrl = $('#openai_compatible_baseUrl').val();
+            data.apiKey = $('#openai_compatible_apiKey').val();
+            data.model = $('#openai_compatible_model').val();
+            break;
     }
 
     return data;
@@ -483,13 +609,13 @@ function testConnection() {
     $.post('TestLLMConnection', formData)
         .done(function (data) {
             if (data.result === 'success') {
-                $('#testResult').text('Connection successful!').addClass('text-success');
+                $.alert({ type: 'green', title: 'Connection Successful', content: 'The connection test passed successfully.', columnClass: 'small' });
             } else {
-                $('#testResult').text('Connection failed: ' + (data.message || 'Unknown error')).addClass('text-danger');
+                $.alert({ type: 'red', title: 'Connection Failed', content: data.message || 'Unable to connect. Please check your settings.', columnClass: 'small' });
             }
         })
         .fail(function () {
-            $('#testResult').text('Connection test failed').addClass('text-danger');
+            $.alert({ type: 'red', title: 'Connection Failed', content: 'Request error. Please check your settings and try again.', columnClass: 'small' });
         })
         .always(function () {
             $('#testConnectionBtn').prop('disabled', false).html('<i class="fa fa-plug"></i> Test Connection');
@@ -501,18 +627,18 @@ function testConnection() {
  */
 global.testConfig = function testConfig(configId) {
     $.post('TestLLMConnection', {
-        configId: 'config' + configId,
+        configId: configId,
         '_token': $('[name="_token"]').val()
     })
         .done(function (data) {
             if (data.result === 'success') {
-                showSuccessMessage('Connection test successful!');
+                $.alert({ type: 'green', title: 'Connection Successful', content: 'The connection test passed successfully.', columnClass: 'small' });
             } else {
-                showErrorMessage('Connection test failed: ' + (data.message || 'Unknown error'));
+                $.alert({ type: 'red', title: 'Connection Failed', content: data.message || 'Unable to connect. Please check your settings.', columnClass: 'small' });
             }
         })
         .fail(function () {
-            showErrorMessage('Connection test failed');
+            $.alert({ type: 'red', title: 'Connection Failed', content: 'Request error. Please check your settings and try again.', columnClass: 'small' });
         });
 }
 
@@ -520,48 +646,37 @@ global.testConfig = function testConfig(configId) {
  * Delete configuration with confirmation
  */
 global.deleteConfig = function deleteConfig(configId, configName) {
-    if (confirm('Are you sure you want to delete the configuration "' + configName + '"?')) {
-        $.post('DeleteLLMConfig', {
-            configId: configId,
-            '_token': $('[name="_token"]').val()
-        })
-            .done(function (data) {
-                if (data.result === 'success') {
-                    showSuccessMessage('Configuration deleted successfully');
-                    // Reload page to refresh the table
-                    setTimeout(function () {
-                        window.location.reload();
-                    }, 1000);
-                } else {
-                    showErrorMessage(data.message || 'Failed to delete configuration');
+    $.confirm({
+        title: 'Delete Configuration',
+        content: 'Are you sure you want to delete <b>' + configName + '</b>?',
+        type: 'red',
+        columnClass: 'small',
+        buttons: {
+            confirm: {
+                text: 'Delete',
+                btnClass: 'btn-danger',
+                action: function () {
+                    $.post('DeleteLLMConfig', {
+                        configId: configId,
+                        '_token': $('[name="_token"]').val()
+                    })
+                        .done(function (data) {
+                            if (data.result === 'success') {
+                                window.location.reload();
+                            } else {
+                                $.alert({ type: 'red', title: 'Error', content: data.message || 'Failed to delete configuration', columnClass: 'small' });
+                            }
+                        })
+                        .fail(function () {
+                            $.alert({ type: 'red', title: 'Error', content: 'Error deleting configuration', columnClass: 'small' });
+                        });
                 }
-            })
-            .fail(function () {
-                showErrorMessage('Error deleting configuration');
-            });
-    }
+            },
+            cancel: function () {}
+        }
+    });
 }
 
-/**
- * Show success message
- */
-function showSuccessMessage(message) {
-    // Use existing notification system if available, otherwise use alert
-    if (typeof showMessage === 'function') {
-        showMessage(message, 'success');
-    } else {
-        alert(message);
-    }
-}
-
-/**
- * Show error message
- */
 function showErrorMessage(message) {
-    // Use existing notification system if available, otherwise use alert
-    if (typeof showMessage === 'function') {
-        showMessage(message, 'error');
-    } else {
-        alert(message);
-    }
+    $.alert({ type: 'red', title: 'Error', content: message, columnClass: 'small' });
 }

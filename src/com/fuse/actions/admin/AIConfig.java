@@ -30,6 +30,7 @@ public class AIConfig extends FSActionSupport {
 
     private List<LLMConfig> llmConfigs;
     private LLMConfig selectedConfig;
+    private String name;
     private String provider;
     private String model;
     private String apiKey;
@@ -113,6 +114,7 @@ public class AIConfig extends FSActionSupport {
             }
 
             // Set basic properties
+            config.setName(this.name);
             config.setProvider(this.provider);
             config.setModel(this.model);
             config.setActive(this.active);
@@ -195,11 +197,28 @@ public class AIConfig extends FSActionSupport {
         }
 
         try {
-            // Create a temporary config for testing
-            LLMConfig testConfig = new LLMConfig();
-            testConfig.setProvider(this.provider);
-            testConfig.setModel(this.model);
-            setProviderProperties(testConfig);
+            LLMConfig testConfig;
+            if (configId != null && configId > 0) {
+                // Testing a saved config — look it up and decrypt its credentials
+                LLMConfig saved = em.find(LLMConfig.class, configId);
+                if (saved == null) {
+                    this._message = "Configuration not found";
+                    return this.ERRORJSON;
+                }
+                testConfig = buildDecryptedTestConfig(saved);
+            } else {
+                // Testing from the add/edit form — use raw form values
+                testConfig = new LLMConfig();
+                testConfig.setProvider(this.provider);
+                testConfig.setModel(this.model);
+                testConfig.setBaseUrl(this.baseUrl);
+                testConfig.setEndpoint(this.endpoint);
+                testConfig.setDeployment(this.deployment);
+                testConfig.setRegion(this.region);
+                testConfig.setApiKey(this.apiKey);
+                testConfig.setAccessKey(this.accessKey);
+                testConfig.setSecretKey(this.secretKey);
+            }
 
             boolean connectionSuccessful = testConnection(testConfig);
 
@@ -231,7 +250,11 @@ public class AIConfig extends FSActionSupport {
 
         try {
             // If API credentials are provided, try to fetch real models
-            if (provider != null && apiKey != null && !apiKey.trim().isEmpty()) {
+            boolean canFetchDynamic = provider != null && (
+                (apiKey != null && !apiKey.trim().isEmpty()) ||
+                ("OPENAI_COMPATIBLE".equals(provider) && baseUrl != null && !baseUrl.trim().isEmpty())
+            );
+            if (canFetchDynamic) {
                 List<String> dynamicModels = fetchModelsFromAPI();
                 if (dynamicModels != null && !dynamicModels.isEmpty()) {
                     // Convert to the format expected by the frontend
@@ -264,6 +287,8 @@ public class AIConfig extends FSActionSupport {
         switch (provider.toUpperCase()) {
             case "OPENAI":
                 return fetchOpenAIModels();
+            case "OPENAI_COMPATIBLE":
+                return fetchOpenAICompatibleModels();
             case "CLAUDE":
                 return fetchClaudeModels();
             case "AZURE_OPENAI":
@@ -275,6 +300,54 @@ public class AIConfig extends FSActionSupport {
             default:
                 return null;
         }
+    }
+
+    private List<String> fetchOpenAICompatibleModels() {
+        try {
+            if (baseUrl == null || baseUrl.trim().isEmpty()) {
+                return null;
+            }
+            String url = baseUrl.trim();
+            if (!url.endsWith("/")) url += "/";
+            URL urlObj = new URL(url + "models");
+            HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
+            connection.setRequestMethod("GET");
+            if (apiKey != null && !apiKey.trim().isEmpty()) {
+                connection.setRequestProperty("Authorization", "Bearer " + apiKey);
+            }
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
+
+            int responseCode = connection.getResponseCode();
+            if (responseCode == 200) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                StringBuilder response = new StringBuilder();
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    response.append(line);
+                }
+                reader.close();
+
+                ObjectMapper mapper = new ObjectMapper();
+                JsonNode jsonResponse = mapper.readTree(response.toString());
+                JsonNode data = jsonResponse.get("data");
+
+                List<String> models = new ArrayList<>();
+                if (data != null && data.isArray()) {
+                    for (JsonNode model : data) {
+                        JsonNode id = model.get("id");
+                        if (id != null) {
+                            models.add(id.asText());
+                        }
+                    }
+                }
+                return models.isEmpty() ? null : models;
+            }
+            connection.disconnect();
+        } catch (Exception e) {
+            // Return null to indicate failure
+        }
+        return null;
     }
 
     private List<String> fetchOpenAIModels() {
@@ -386,6 +459,9 @@ public class AIConfig extends FSActionSupport {
                 case "OPENAI":
                     modelNames = Arrays.asList("gpt-4", "gpt-4-turbo", "gpt-3.5-turbo", "gpt-3.5-turbo-16k");
                     break;
+                case "OPENAI_COMPATIBLE":
+                    // No static models — loaded dynamically from the server's /models endpoint
+                    break;
                 case "AZURE_OPENAI":
                     modelNames = Arrays.asList("gpt-35-turbo", "gpt-4", "gpt-4-turbo", "gpt-4-32k");
                     break;
@@ -448,6 +524,12 @@ public class AIConfig extends FSActionSupport {
                 }
                 break;
 
+            case "OPENAI_COMPATIBLE":
+                if (this.isNullString(this.baseUrl)) {
+                    return "Base URL is required for OpenAI Compatible";
+                }
+                break;
+
             default:
                 return "Invalid provider selected";
         }
@@ -476,7 +558,34 @@ public class AIConfig extends FSActionSupport {
             case "CLAUDE":
                 config.setApiKey(FSUtils.encryptPassword(this.apiKey));
                 break;
+
+            case "OPENAI_COMPATIBLE":
+                config.setBaseUrl(this.baseUrl);
+                if (!this.isNullString(this.apiKey)) {
+                    config.setApiKey(FSUtils.encryptPassword(this.apiKey));
+                }
+                break;
         }
+    }
+
+    private LLMConfig buildDecryptedTestConfig(LLMConfig saved) {
+        LLMConfig test = new LLMConfig();
+        test.setProvider(saved.getProvider());
+        test.setModel(saved.getModel());
+        test.setBaseUrl(saved.getBaseUrl());
+        test.setEndpoint(saved.getEndpoint());
+        test.setDeployment(saved.getDeployment());
+        test.setRegion(saved.getRegion());
+        if (saved.getApiKey() != null && !saved.getApiKey().isEmpty()) {
+            test.setApiKey(FSUtils.decryptPassword(saved.getApiKey()));
+        }
+        if (saved.getAccessKey() != null && !saved.getAccessKey().isEmpty()) {
+            test.setAccessKey(FSUtils.decryptPassword(saved.getAccessKey()));
+        }
+        if (saved.getSecretKey() != null && !saved.getSecretKey().isEmpty()) {
+            test.setSecretKey(FSUtils.decryptPassword(saved.getSecretKey()));
+        }
+        return test;
     }
 
     private boolean testConnection(LLMConfig config) {
@@ -489,6 +598,8 @@ public class AIConfig extends FSActionSupport {
                 return testAWSBedrockConnection(config);
             case "CLAUDE":
                 return testClaudeConnection(config);
+            case "OPENAI_COMPATIBLE":
+                return testOpenAICompatibleConnection(config);
             default:
                 return false;
         }
@@ -528,6 +639,32 @@ public class AIConfig extends FSActionSupport {
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             connection.setRequestMethod("GET");
             connection.setRequestProperty("api-key", config.getApiKey());
+            connection.setConnectTimeout(10000);
+            connection.setReadTimeout(10000);
+
+            int responseCode = connection.getResponseCode();
+            connection.disconnect();
+            return responseCode == 200;
+
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean testOpenAICompatibleConnection(LLMConfig config) {
+        try {
+            String url = config.getBaseUrl();
+            if (url == null || url.trim().isEmpty()) {
+                return false;
+            }
+            url = url.trim();
+            if (!url.endsWith("/")) url += "/";
+            URL urlObj = new URL(url + "models");
+            HttpURLConnection connection = (HttpURLConnection) urlObj.openConnection();
+            connection.setRequestMethod("GET");
+            if (config.getApiKey() != null && !config.getApiKey().trim().isEmpty()) {
+                connection.setRequestProperty("Authorization", "Bearer " + config.getApiKey());
+            }
             connection.setConnectTimeout(10000);
             connection.setReadTimeout(10000);
 
@@ -585,6 +722,14 @@ public class AIConfig extends FSActionSupport {
     }
 
     // Getters and Setters
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
     public List<LLMConfig> getLlmConfigs() {
         return llmConfigs;
     }

@@ -100,16 +100,31 @@ public class AISummary extends FSActionSupport {
         try {
             // Build the prompt
             StringBuilder prompt = new StringBuilder();
-            prompt.append(
-                    "Please analyze the following security vulnerabilities from an assessment and create a high-level executive summary in a pentesting report. ");
-            prompt.append("Focus on the overall risk posture, key themes, and recommendations. ");
-            prompt.append("You must follow these rules:\n");
-            prompt.append("- Keep the summary professional and concise.\n");
-            prompt.append("- Start with an introductory summary (1-2 paragraphs).\n");
-            prompt.append("- Follow with a bulleted list of the findings ordered by severity and a brief description.\n");
-            prompt.append("- Finish with a one to two paragraph conclusion with recommendations. \n");
-            prompt.append("- Do not include titles or headings. Bullets and numbering are ok.\n\n");
-            prompt.append("\n\n");
+            prompt.append("You are a cybersecurity report writer. Your job is to write an executive summary \n");
+            prompt.append("section for a penetration testing report based on the vulnerabilities listed below.\n");
+            prompt.append("Follow this EXACT structure — do not add, remove, or reorder any section:\n\n");
+
+            prompt.append("SECTION 1 — INTRODUCTION (2 short paragraphs)\n");
+            prompt.append("Write 2 paragraphs summarizing the overall security posture and the purpose of the assessment. \n");
+            prompt.append("Do not list findings here.\n\n");
+
+            prompt.append("SECTION 2 — KEY FINDINGS (bulleted list)\n");
+            prompt.append("Write one bullet per finding. Order them from most severe to least severe.\n");
+            prompt.append("Each bullet must follow this format exactly:\n");
+            prompt.append("- <b>(Critical/High/Medium/Low) –[Finding Name]</b>: [One sentence description.]\n\n");
+
+            prompt.append("SECTION 3 — RECOMMENDATIONS (2 short paragraphs)\n");
+            prompt.append("Write 2 paragraphs. Summarize the risk and give 2 to 3 actionable recommendations.\n\n");
+
+            prompt.append("STRICT FORMATTING RULES — follow every rule exactly:\n");
+            prompt.append("1. Do NOT use any headers, titles, or labels like \"Section 1\" in your output. Write flowing text only.\n");
+            prompt.append("2. Do NOT use bold, italics, or underline.\n");
+            prompt.append("3. Use bullet points ONLY in the Key Findings section.\n");
+            prompt.append("4. Do NOT use numbered lists anywhere.\n");
+            prompt.append("5. Write in a formal, professional tone. Avoid jargon.\n");
+            prompt.append("6. Keep the full summary under 400 words.\n\n");
+
+            prompt.append("Here are the vulnerabilities to summarize:\n");
             prompt.append("Assessment Name: ").append(assessment.getName()).append("\n");
             prompt.append("Assessment Type: ").append(assessment.getType().getType()).append("\n");
             prompt.append("Vulnerabilities:\n");
