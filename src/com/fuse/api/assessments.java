@@ -1,5 +1,7 @@
 package com.fuse.api;
 
+import java.awt.Color;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -39,6 +41,7 @@ import com.fuse.api.util.DateParam;
 import com.fuse.api.util.Support;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AssessmentType;
+import com.fuse.dao.Image;
 import com.fuse.dao.Campaign;
 import com.fuse.dao.Category;
 import com.fuse.dao.CustomField;
@@ -53,6 +56,7 @@ import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.dao.query.VulnerabilityQueries;
 import com.fuse.servlets.EventStreamServlet;
 import com.fuse.utils.FSUtils;
+import com.fuse.utils.ImageBorderUtil;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -1615,6 +1619,70 @@ public class assessments {
             }
         } finally {
             em.close();
+        }
+    }
+
+    /*
+     * uploadImage - Upload an image to an assessment and return its GUID and markdown link
+     */
+    @POST
+    @ApiOperation(value = "Upload an image to an assessment.", notes = "Accepts a base64-encoded image (data URI format). Returns the image GUID and a markdown link for embedding.", position = 35)
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Not Authorized"),
+            @ApiResponse(code = 400, message = "Bad Request."),
+            @ApiResponse(code = 200, message = "Returns the image GUID and markdown link.") })
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/image/{aid}")
+    public Response uploadImage(
+            @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
+            @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
+            @ApiParam(value = "Base64-encoded image (data URI, e.g. data:image/png;base64,...)", required = true) @FormParam("encodedImage") String encodedImage) {
+
+        EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+        try {
+            User u = Support.getUser(em, apiKey);
+            if (u != null && (u.getPermissions().isAssessor() || u.getPermissions().isManager())) {
+
+                Assessment assessment = AssessmentQueries.getAssessment(em, u, aid);
+                if (assessment == null) {
+                    return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+                }
+
+                Image image = new Image();
+                image.setBase64Image(outlineImage(encodedImage));
+
+                HibHelper.getInstance().preJoin();
+                em.joinTransaction();
+                assessment.getImages().add(image);
+                em.persist(assessment);
+                HibHelper.getInstance().commit();
+
+                String guid = image.getGuid();
+                JSONObject result = new JSONObject();
+                result.put("guid", guid);
+                result.put("markdown", "![](getImage?id=" + assessment.getId() + ":" + guid + ")");
+                return Response.status(200).entity(result.toJSONString()).build();
+
+            } else {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+        } finally {
+            em.close();
+        }
+    }
+
+    private String outlineImage(String encodedImage) {
+        if (encodedImage == null || encodedImage.isEmpty())
+            return encodedImage;
+        try {
+            String[] parts = encodedImage.split(",");
+            String contentType = parts[0].split(";")[0].replace("data:", "");
+            byte[] imageData = java.util.Base64.getDecoder().decode(parts[1]);
+            imageData = ImageBorderUtil.addBorder(imageData, 1, Color.GRAY);
+            return "data:" + contentType + ";base64," + java.util.Base64.getEncoder().encodeToString(imageData);
+        } catch (IOException e) {
+            return encodedImage;
         }
     }
 
