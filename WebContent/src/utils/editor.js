@@ -6,8 +6,6 @@ import '@toast-ui/editor-plugin-table-merged-cell/dist/toastui-editor-plugin-tab
 import '@toast-ui/editor/dist/toastui-editor.css';
 import DOMPurify from 'dompurify';
 import 'tui-color-picker/dist/tui-color-picker.css';
-import TurndownService from 'turndown';
-let html2md = new TurndownService()
 require('./editor.css')
 
 export class FactionEditor {
@@ -15,6 +13,12 @@ export class FactionEditor {
         this.editors = {}
         this.initialHTML = {}
         this.assessmentId = assessmentId
+        this.vulnId = null
+        this.showExecutiveSummary = true
+    }
+
+    setVulnId(vulnId) {
+        this.vulnId = vulnId;
     }
 
     customHTMLSanitizer = (html) => {
@@ -72,16 +76,17 @@ export class FactionEditor {
             'padding: 4px 0'
         ].join(';');
 
-        const items = [
-            {
+        const items = [];
+        if (_this.showExecutiveSummary) {
+            items.push({
                 label: '<i class="fa fa-file-text-o" style="margin-right:7px;"></i>Create Executive Summary',
                 action: () => { _this.showAISummaryModal(id); }
-            },
-            {
-                label: '<i class="fa fa-pencil" style="margin-right:7px;"></i>Update This Text',
-                action: () => { _this.showAICustomModal(id); }
-            }
-        ];
+            });
+        }
+        items.push({
+            label: '<i class="fa fa-pencil" style="margin-right:7px;"></i>Update This Text',
+            action: () => { _this.showAICustomModal(id); }
+        });
 
         items.forEach(item => {
             const menuItem = document.createElement('div');
@@ -114,14 +119,14 @@ export class FactionEditor {
         const _this = this;
         $.confirm({
             title: 'Ask AI',
-            content: 'Enter Query Using this Text?<br><textarea id="customPrompt" cols="50"></textArea><br>',
+            content: 'What would you like to do?<br><textarea id="customPrompt" cols="50" rows="4" placeholder="e.g. Summarize from the details field, combine with another vulnerability, rewrite in simpler language..."></textarea><br>',
             type: 'blue',
             buttons: {
                 confirm: {
                     text: 'Generate',
                     btnClass: 'btn-primary',
                     action: function () {
-                        _this.generateAICustom(id);
+                        _this.generateAIWithTools(id);
                     }
                 },
                 cancel: {
@@ -131,48 +136,47 @@ export class FactionEditor {
             }
         });
     }
-    generateAICustom(id) {
+
+    generateAIWithTools(id) {
         const _this = this;
 
-        // Show loading overlay
         const editorEl = document.querySelector(`#${id}`);
-		const prompt = document.querySelector("#customPrompt").value;
+        const prompt = document.querySelector("#customPrompt").value;
         const overlay = document.createElement('div');
         overlay.className = 'editor-upload-overlay';
         overlay.innerHTML = `
             <div class="editor-upload-spinner">
                 <div class="spinner-icon"></div>
-                <div class="spinner-text">Generating AI summary...</div>
+                <div class="spinner-text">AI is thinking...</div>
             </div>
         `;
         editorEl.style.position = 'relative';
         editorEl.appendChild(overlay);
 
-        // Make AJAX call to generate AI summary
         const data = {
             assessmentId: this.assessmentId,
-			prompt: prompt,
-			context: this.getEditorText(id),
+            prompt: prompt,
+            context: this.getEditorText(id),
+            vulnId: this.vulnId || '',
             _token: global._token
         };
 
-        $.post('GenerateAIResponse', data)
+        $.post('GenerateAIWithTools', data)
             .done(function (response) {
                 overlay.remove();
                 if (response.result === 'success') {
-                    // Decode Base64 response and replace editor content with AI-generated summary
                     const decodedSummary = _this.b64DecodeUnicode(response.summary);
                     _this.editors[id].setHTML(decodedSummary, false);
 
                     $.alert({
-                        title: 'Success',
-                        content: 'AI summary generated successfully!',
+                        title: 'Done',
+                        content: 'AI response applied.',
                         type: 'green'
                     });
                 } else {
                     $.alert({
                         title: 'Error',
-                        content: response.message || 'Failed to generate AI summary',
+                        content: response.message || 'Failed to generate AI response',
                         type: 'red'
                     });
                 }
@@ -181,7 +185,7 @@ export class FactionEditor {
                 overlay.remove();
                 $.alert({
                     title: 'Error',
-                    content: 'Network error occurred while generating AI summary',
+                    content: 'Network error occurred',
                     type: 'red'
                 });
             });

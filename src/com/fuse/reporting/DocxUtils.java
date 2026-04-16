@@ -210,6 +210,12 @@ public class DocxUtils {
         MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "checkTables");
         try {
             List<Vulnerability> filteredVulns = this.getFilteredVulns(section);
+			Boolean hasVulns = !filteredVulns.isEmpty();
+			this.removeSectionTagsOrRemoveSection(section, hasVulns);
+			
+			if(!hasVulns) {
+				return;
+			}
 
             List<Object> tables = getAllElementFromObject(mlp.getMainDocumentPart(), Tbl.class);
             for (Object table : tables) {
@@ -904,11 +910,54 @@ public class DocxUtils {
             }
         }
     }
+    
+    private void removeSectionTagsOrRemoveSection(String sectionName, Boolean hasVulns) {
+        try {
+			int begin = -1;
+			int end = -1;
+
+			if (Strings.isNullOrEmpty(sectionName)) {
+				begin = getIndex(mlp.getMainDocumentPart(), "${if-section}");
+				end = getIndex(mlp.getMainDocumentPart(), "${end-section}");
+			} else if (sectionName != null && sectionName.equals("Default")) {
+				begin = getIndex(mlp.getMainDocumentPart(), "${if-section}");
+				end = getIndex(mlp.getMainDocumentPart(), "${end-section}");
+			} else if (sectionName != null) {
+				begin = getIndex(mlp.getMainDocumentPart(), "${if-section " + sectionName + "}");
+				end = getIndex(mlp.getMainDocumentPart(), "${if-section " + sectionName + "}");
+			}
+			if (begin == -1)
+				return;
+			if (end == -1)
+				return;
+			
+			// remove only the tags
+        	if(hasVulns) {
+					mlp.getMainDocumentPart().getContent().remove(end);
+					mlp.getMainDocumentPart().getContent().remove(begin);
+			// remove everything between the tags
+        	}else {
+				for (int i = end; i >= begin; i--) {
+					mlp.getMainDocumentPart().getContent().remove(i);
+				}
+        	}
+        }catch(Exception ex) {
+        	ex.printStackTrace();
+        }
+    }
 
     @ProfileMethod("Process findings section and populate with vulnerability data")
     private void setFindings(String section, String customCSS)
             throws JAXBException, Docx4JException {
         MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "setFindings");
+        List<Vulnerability> filteredVulns = this.getFilteredVulns(section);
+        Boolean hasVulns = !filteredVulns.isEmpty();
+        this.removeSectionTagsOrRemoveSection(section, hasVulns);
+        
+        if(!hasVulns) {
+        	return;
+        }
+        
         try {
             int begin = -1;
             int end = -1;
@@ -989,7 +1038,6 @@ public class DocxUtils {
             SimpleDateFormat formatter;
             formatter = new SimpleDateFormat("MM/dd/yyyy");
 
-            List<Vulnerability> filteredVulns = this.getFilteredVulns(section);
 
             // No issues found in this section
             if (filteredVulns == null || filteredVulns.size() == 0) {

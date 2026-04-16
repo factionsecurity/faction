@@ -70,7 +70,7 @@ class SSE {
 			 if (_this.eventSource.readyState === EventSource.CLOSED) {
 				 console.log('Connection closed', 'error');
 				 _this.eventSource = null;
-				 $.alert({
+				 /*$.alert({
 					 title: 'Connection Lost',
 					 content: 'Real-time connection has been disconnected. Changes from other users may not appear until you refresh the page.',
 					 type: 'red',
@@ -79,7 +79,7 @@ class SSE {
 					 buttons: {
 						 ok: function () { }
 					 }
-				 });
+				 });*/
 			 } else {
 				 console.log('Connection error', 'error');
 				 /*$.alert({
@@ -342,6 +342,7 @@ class VulnerabilityView {
         this.clearLockTimeout = {};
         $(".select2").select2();
 		this.editors = new FactionEditor(assessmentId);
+        this.editors.showExecutiveSummary = false;
 
         this.vulntable = $('#vulntable').DataTable({
             "paging": false,
@@ -1517,6 +1518,7 @@ class VulnerabilityView {
     
     getVuln(id) {
         this.vulnId = id;
+        this.editors.setVulnId(id);
 
         this.disableAutoSave()
         this.deleteVulnForm();

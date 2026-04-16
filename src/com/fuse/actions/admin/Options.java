@@ -117,8 +117,8 @@ public class Options extends FSActionSupport {
 		this.feedChecked = EMS.getEnablefeed() == null || !EMS.getEnablefeed() ? "" : "checked";
 		this.randChecked = EMS.getEnableRandAppId() == null || !EMS.getEnableRandAppId() ? "" : "checked";
 		this.selfPeerReview = EMS.getSelfPeerReview() == null || !EMS.getSelfPeerReview() ? "" : "checked";
-		this.title[0] = EMS.getBoldTitle() == null ? "FACTION" : EMS.getBoldTitle();
-		this.title[1] = EMS.getOtherTitle() == null ? "community" : EMS.getOtherTitle();
+		this.title[0] = EMS.getBoldTitle() == null ? this.title[0] : EMS.getBoldTitle();
+		this.title[1] = EMS.getOtherTitle() == null ? this.title[1] : EMS.getOtherTitle();
 		
 		
 

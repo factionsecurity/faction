@@ -42,9 +42,8 @@ public class Profile extends FSActionSupport{
 	private String contentType;
     private String filename;
     private String apiKey;
+    private String copilotToken;
 
-    
-    
     @Action(value="DeleteProfileImage", results={
 			@Result(name="uploadedJson",location="/WEB-INF/jsp/profile/uploadedJson.jsp")
 		})
@@ -295,8 +294,43 @@ public class Profile extends FSActionSupport{
 	public String getApiKey() {
 		return apiKey;
 	}
-	
-	
-	
+
+	@Action(value = "SaveCopilotToken", results = {
+		@Result(name = "successJson", location = "/WEB-INF/jsp/successJson.jsp"),
+		@Result(name = "errorJson", location = "/WEB-INF/jsp/errorJson.jsp")
+	})
+	public String saveCopilotToken() {
+		user = this.getSessionUser();
+		if (user == null) {
+			return LOGIN;
+		}
+		if (!this.testToken(false)) {
+			return this.ERRORJSON;
+		}
+
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		User dbUser = em.find(User.class, user.getId());
+		dbUser.setCopilotToken(this.copilotToken != null ? this.copilotToken.trim() : "");
+		em.merge(dbUser);
+		HibHelper.getInstance().commit();
+
+		// Keep session user in sync
+		user.setCopilotToken(this.copilotToken != null ? this.copilotToken.trim() : "");
+		this.JSESSION.put("user", user);
+
+		AuditLog.audit(this, "User updated their GitHub Copilot token", AuditLog.Login, false);
+
+		this._message = "GitHub Copilot token saved";
+		return this.SUCCESSJSON;
+	}
+
+	public String getCopilotToken() {
+		return copilotToken;
+	}
+
+	public void setCopilotToken(String copilotToken) {
+		this.copilotToken = copilotToken;
+	}
 
 }

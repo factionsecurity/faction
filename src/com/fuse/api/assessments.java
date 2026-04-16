@@ -418,6 +418,7 @@ public class assessments {
                     return Response.status(401).entity(String.format(Support.ERROR, "No Assessment")).build();
                 for (Assessment a : asmts) {
                     for (Vulnerability v : a.getVulns()) {
+                    	v.updateRiskLevels();
                         AssessmentQueries.updateImages(a, v);
                         v.updateRiskLevels(em);
                         VulnerabilityDTO dto = VulnerabilityDTO.fromEntity(v);

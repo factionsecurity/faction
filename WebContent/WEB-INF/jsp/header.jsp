@@ -1,6 +1,7 @@
 <%@page import="org.apache.struts2.components.Include" %>
     <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
         <%@ taglib prefix="s" uri="/struts-tags" %>
+        <%@ page import="com.fuse.utils.InternalConfig" %>
             <!DOCTYPE html>
             <html>
 
@@ -261,16 +262,19 @@
                                 <s:property value="activeChecklist" />
                                 <s:property value="activeUsers" />
                                 <s:property value="activeOptions" />
-                                <s:property value="activeAIConfig" />">
+                                <s:property value="activeAIConfig" /> ">
                                 <a href="#"><i class="glyphicon glyphicon-cog"></i> <span>Admin</span> <i
                                         class="fa fa-angle-left pull-right"></i></a>
                                 <ul class="treeview-menu">
                                     <s:if test="acadmin == true ">
                                         <li class="<s:property value=" activeUsers" />"><a href="Users">Users</a></li>
                                     </s:if>
-                                    <s:if test="acadmin == true ">
-                                        <li class="<s:property value=" activeAIConfig" />"><a href="AIConfig"><i
-                                                class="fa fa-robot"></i> AI Config</a></li>
+                                    <%
+    									pageContext.setAttribute("isOSS", com.fuse.utils.InternalConfig.isOSS());
+									%>
+                                    <s:if test="!#attr.isOSS && (acmanager || acadmin)">
+                                        <li class="<s:property value=" activeAIConfig" />"><a 
+                                        href="AIConfig">AI Config</a></li>
                                     </s:if>
                                     <s:if test="acmanager || acadmin || acengagement">
                                         <li class="<s:property value=" activeOptions" />" ><a

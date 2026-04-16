@@ -12,6 +12,7 @@ import javax.persistence.TableGenerator;
 import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fuse.utils.FSUtils;
 
 @Entity
 public class User {
@@ -53,6 +54,8 @@ public class User {
 	private String authMethod;
 	@JsonIgnore
 	private String ldapUserDn = "";
+	@JsonIgnore
+	private String copilotToken; // encrypted
 
 	public User(Long id, String first, String last) {
 		this.fname = first;
@@ -225,7 +228,22 @@ public class User {
 	public void setLdapUserDn(String ldapUserDn) {
 		this.ldapUserDn = ldapUserDn;
 	}
-	
-	
+
+	public String getCopilotToken() {
+		return copilotToken == null ? "" : FSUtils.decryptPassword(copilotToken);
+	}
+
+	public void setCopilotToken(String copilotToken) {
+		if (copilotToken != null && !copilotToken.trim().isEmpty()) {
+			this.copilotToken = FSUtils.encryptPassword(copilotToken.trim());
+		} else {
+			this.copilotToken = null;
+		}
+	}
+
+	@Transient
+	public boolean hasCopilotToken() {
+		return copilotToken != null && !copilotToken.isEmpty();
+	}
 
 }

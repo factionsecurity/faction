@@ -48,7 +48,7 @@ $(document).ready(function () {
     });
 
     // Add event handlers for API key fields to reload models when credentials are entered
-    $(document).on('blur', '#openai_apiKey, #claude_apiKey', function () {
+    $(document).on('blur', '#openai_apiKey, #claude_apiKey, #github_copilot_apiKey', function () {
         var provider = $('#provider').val();
         if (provider && $(this).val().trim() !== '') {
             loadProviderModelsWithCredentials();
@@ -104,8 +104,8 @@ function clearForm() {
     $('.provider-fields').removeClass('active');
 
     // Clear all provider-specific fields
-    $('input[id^="openai_"], input[id^="azure_"], input[id^="bedrock_"], input[id^="claude_"]').val('');
-    $('select[id^="openai_"], select[id^="azure_"], select[id^="bedrock_"], select[id^="claude_"]').val('');
+    $('input[id^="openai_"], input[id^="azure_"], input[id^="bedrock_"], input[id^="claude_"], input[id^="github_copilot_"]').val('');
+    $('select[id^="openai_"], select[id^="azure_"], select[id^="bedrock_"], select[id^="claude_"], select[id^="github_copilot_"]').val('');
 
     $('#configActive').prop('checked', true);
 }
@@ -137,6 +137,9 @@ function showProviderFields() {
                 break;
             case 'OPENAI_COMPATIBLE':
                 fieldId = 'openai-compatible-fields';
+                break;
+            case 'GITHUB_COPILOT':
+                fieldId = 'github-copilot-fields';
                 break;
         }
 
@@ -307,6 +310,12 @@ function collectProviderCredentials(provider) {
             }
             break;
 
+        case 'GITHUB_COPILOT':
+            var copilotApiKey = $('#github_copilot_apiKey').val();
+            if (!copilotApiKey || copilotApiKey.trim() === '') return null;
+            credentials.apiKey = copilotApiKey;
+            break;
+
         case 'AZURE_OPENAI':
         case 'AWS_BEDROCK':
             // These providers don't support dynamic model fetching via simple API calls
@@ -381,7 +390,7 @@ function populateForm(config) {
             case 'OPENAI':
                 $('#openai_apiKey').val(''); // Never populate password fields
                 $('#openai_baseUrl').val(config.baseUrl || '');
-                loadModelsAndSelect(config.provider, savedModel);
+                loadModelsAndSelect(config.id, config.provider, savedModel);
                 break;
 
             case 'AZURE_OPENAI':
@@ -389,19 +398,19 @@ function populateForm(config) {
                 $('#azure_endpoint').val(config.endpoint || '');
                 $('#azure_deployment').val(config.deployment || '');
                 $('#azure_apiVersion').val(config.apiVersion || '');
-                loadModelsAndSelect(config.provider, savedModel);
+                loadModelsAndSelect(config.id, config.provider, savedModel);
                 break;
 
             case 'AWS_BEDROCK':
                 $('#bedrock_accessKey').val(''); // Never populate password fields
                 $('#bedrock_secretKey').val(''); // Never populate password fields
                 $('#bedrock_region').val(config.region || '');
-                loadModelsAndSelect(config.provider, savedModel);
+                loadModelsAndSelect(config.id, config.provider, savedModel);
                 break;
 
             case 'CLAUDE':
                 $('#claude_apiKey').val(''); // Never populate password fields
-                loadModelsAndSelect(config.provider, savedModel);
+                loadModelsAndSelect(config.id, config.provider, savedModel);
                 break;
 
             case 'OPENAI_COMPATIBLE':
@@ -413,17 +422,37 @@ function populateForm(config) {
                     sel.empty().append('<option value="' + savedModel + '">' + savedModel + '</option>');
                 }
                 break;
+
+            case 'GITHUB_COPILOT':
+                $('#github_copilot_apiKey').val(''); // Never populate password fields
+                loadModelsAndSelect(config.id, config.provider, savedModel);
+                break;
         }
     }
 
-    $('#configActive').prop('checked', config.active === true);
+    $('#configActive').prop('checked', config.active === "true");
 }
 
 /**
  * Load models for a provider and select a specific value once loaded
  */
-function loadModelsAndSelect(provider, modelToSelect) {
+function loadModelsAndSelectbk(provider, modelToSelect) {
     $.post('GetProviderModels', {
+        provider: provider,
+        '_token': $('[name="_token"]').val()
+    }).done(function (data) {
+        populateModelSelect(provider, data);
+        if (modelToSelect) {
+            $('#' + provider.toLowerCase() + '_model').val(modelToSelect);
+        }
+    });
+}
+/**
+ * Load models for a provider and select a specific value once loaded
+ */
+function loadModelsAndSelect(configId, provider, modelToSelect) {
+    $.post('GetProviderModels', {
+		configId: configId,
         provider: provider,
         '_token': $('[name="_token"]').val()
     }).done(function (data) {
@@ -490,13 +519,13 @@ function validateForm() {
         switch (provider) {
             case 'OPENAI':
                 if (!$('#openai_apiKey').val().trim()) {
-                    errors.push('API Key is required for OpenAI');
+                    // errors.push('API Key is required for OpenAI');
                 }
                 break;
 
             case 'AZURE_OPENAI':
                 if (!$('#azure_apiKey').val().trim()) {
-                    errors.push('API Key is required for Azure OpenAI');
+                    //errors.push('API Key is required for Azure OpenAI');
                 }
                 if (!$('#azure_endpoint').val().trim()) {
                     errors.push('Endpoint is required for Azure OpenAI');
@@ -508,10 +537,10 @@ function validateForm() {
 
             case 'AWS_BEDROCK':
                 if (!$('#bedrock_accessKey').val().trim()) {
-                    errors.push('Access Key is required for AWS Bedrock');
+                    //errors.push('Access Key is required for AWS Bedrock');
                 }
                 if (!$('#bedrock_secretKey').val().trim()) {
-                    errors.push('Secret Key is required for AWS Bedrock');
+                    //errors.push('Secret Key is required for AWS Bedrock');
                 }
                 if (!$('#bedrock_region').val().trim()) {
                     errors.push('Region is required for AWS Bedrock');
@@ -520,7 +549,7 @@ function validateForm() {
 
             case 'CLAUDE':
                 if (!$('#claude_apiKey').val().trim()) {
-                    errors.push('API Key is required for Claude');
+                    //errors.push('API Key is required for Claude');
                 }
                 break;
 
@@ -530,6 +559,12 @@ function validateForm() {
                 }
                 if (!$('#openai_compatible_model').val()) {
                     errors.push('Model is required — enter the Base URL to load available models');
+                }
+                break;
+
+            case 'GITHUB_COPILOT':
+                if (!$('#github_copilot_model').val()) {
+                    errors.push('Model is required for GitHub Copilot');
                 }
                 break;
         }
@@ -586,6 +621,11 @@ function collectFormData() {
             data.baseUrl = $('#openai_compatible_baseUrl').val();
             data.apiKey = $('#openai_compatible_apiKey').val();
             data.model = $('#openai_compatible_model').val();
+            break;
+
+        case 'GITHUB_COPILOT':
+            data.apiKey = $('#github_copilot_apiKey').val();
+            data.model = $('#github_copilot_model').val();
             break;
     }
 

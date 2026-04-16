@@ -161,8 +161,8 @@
                                                         <option value="">Select Provider</option>
                                                         <option value="OPENAI">OpenAI</option>
                                                         <option value="OPENAI_COMPATIBLE">OpenAI Compatible (LM Studio)</option>
-                                                        <option value="AZURE_OPENAI">Azure OpenAI</option>
-                                                        <option value="AWS_BEDROCK">AWS Bedrock</option>
+                                                        <!-- <option value="AZURE_OPENAI">Azure OpenAI</option>
+                                                        <option value="AWS_BEDROCK">AWS Bedrock</option> -->
                                                         <option value="CLAUDE">Claude</option>
                                                     </select>
                                                 </div>
@@ -310,6 +310,34 @@
                                                         <select class="form-control" id="openai_compatible_model">
                                                             <option value="">Enter Base URL above to load models</option>
                                                         </select>
+                                                    </div>
+                                                </div>
+
+                                                <!-- GitHub Copilot Fields -->
+                                                <div id="github-copilot-fields" class="provider-fields">
+                                                    <h4 class="text-primary">GitHub Copilot Configuration</h4>
+                                                    <div class="alert alert-info">
+                                                        <i class="fa fa-info-circle"></i>
+                                                        GitHub Copilot is <strong>per-user</strong>. Each user must add
+                                                        their own GitHub token under <strong>Profile Settings</strong>.
+                                                        No shared API key is stored here.
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>Model: *</label>
+                                                        <select class="form-control" id="github_copilot_model">
+                                                            <option value="">Select Model</option>
+                                                            <option value="gpt-4o">GPT-4o</option>
+                                                            <option value="gpt-4o-mini">GPT-4o Mini</option>
+                                                            <option value="gpt-4">GPT-4</option>
+                                                            <option value="o1-mini">o1 Mini</option>
+                                                            <option value="o1-preview">o1 Preview</option>
+                                                        </select>
+                                                        <p class="help-block">Enter a GitHub token below to reload models available on your Copilot plan.</p>
+                                                    </div>
+                                                    <div class="form-group">
+                                                        <label>GitHub Token: <small class="text-muted">(used to load models only — not saved here)</small></label>
+                                                        <input type="password" class="form-control" id="github_copilot_apiKey"
+                                                            placeholder="github_pat_...">
                                                     </div>
                                                 </div>
 
