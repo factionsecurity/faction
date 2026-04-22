@@ -126,7 +126,7 @@ public class FSUtils {
 				ArrayList<String> updated = new ArrayList<String>();
 				Boolean preSection=false;
 				for (String line : out.split("\n")) {
-					line = line.replaceAll("^[ ]+", "");
+					//line = line.replaceAll("^[ ]+", "");
 					if(line.contains("<code>")) {
 						preSection = true;
 					}
