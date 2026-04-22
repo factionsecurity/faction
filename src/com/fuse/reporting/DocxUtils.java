@@ -452,7 +452,7 @@ public class DocxUtils {
             if(!content.isEmpty()) {
 				content = replacement(content);
 				// fix extra spaces
-				// content = content.replaceAll("\n", "<br />");
+				content = content.replaceAll("\n", "<br />");
 				// content = content.replaceAll("</p><p><br /></p><p>", "<br
 				// /></p><p>");//replace extra space
 				content = content.replaceAll("<p><br /></p>", "");// replace extra space
