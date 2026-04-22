@@ -154,6 +154,21 @@ let iceConfig = {
 	]
 };
 
+function escapeCodeBlockTags(el) {
+	if (!el || !el.value) return;
+	const temp = document.createElement('div');
+	temp.innerHTML = el.value;
+	temp.querySelectorAll('code, pre').forEach(block => {
+		block.querySelectorAll('script, iframe, object, embed').forEach(dangerous => {
+			dangerous.parentNode.replaceChild(
+				document.createTextNode(dangerous.outerHTML),
+				dangerous
+			);
+		});
+	});
+	el.value = temp.innerHTML;
+}
+
 function updateVulnEditors() {
 	$.each($("[id^=vuln_]"), function(_id, obj) {
 		let id = $(obj).attr("id");
@@ -163,7 +178,8 @@ function updateVulnEditors() {
 		console.log(id);
 		if (id.indexOf("notes") == -1) {
 			editorConfig.allowedClassNames = ".*";
-			editors[id] = suneditor.create(id, editorConfig)
+			escapeCodeBlockTags(obj);
+			editors[id] = suneditor.create(obj, editorConfig)
 			setUpTracking(editors[id]);
 			editors[id].onKeyDown = function(contents, core) {
 				queueSave(id);

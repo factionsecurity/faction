@@ -834,4 +834,8 @@ public class TrackChanges extends FSActionSupport {
 	public List<String> getSections(){
 		return this.sections;
 	}
+	
+	public String replaceNewline(String content) {
+		return content.replaceAll("\n", "<br />");
+	}
 }

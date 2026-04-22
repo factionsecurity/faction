@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
@@ -168,9 +170,9 @@ public class Comment {
 		json.put("catName",""+ v.getCategory().getName());
 		json.put("catId",(Long) v.getCategory().getId());
 		json.put("name", v.getName());
-		json.put("desc", v.getDescription());
-		json.put("rec", v.getRecommendation());
-		json.put("details", v.getDetails());
+		json.put("desc", replaceNewLine(v.getDescription()));
+		json.put("rec", replaceNewLine(v.getRecommendation()));
+		json.put("details", replaceNewLine(v.getDetails()));
 		json.put("cvss_score", v.getCvssScore());
 		json.put("cvss_string", v.getCvssString());
 		json.put("section", v.getSection());
@@ -194,6 +196,10 @@ public class Comment {
 		this.vulnerabilities.add(json.toJSONString());
 
 	}
+	@Transient
+	private String replaceNewLine(String content) {
+		return content == null? "": content.replaceAll("\n", "<br />");
+	}
 
 
 	@Transient
@@ -210,8 +216,8 @@ public class Comment {
 
 	@Transient
 	public void copyAssessment(Assessment a, boolean blankNotes) {
-		this.summary1 = (a.getSummary() == null ? "<p></p>" : a.getSummary());
-		this.summary2 = (a.getRiskAnalysis() == null ? "<p></p>" : a.getRiskAnalysis());
+		this.summary1 = replaceNewLine((a.getSummary() == null ? "<p></p>" : a.getSummary()));
+		this.summary2 = replaceNewLine((a.getRiskAnalysis() == null ? "<p></p>" : a.getRiskAnalysis()));
 		this.summary1_notes = ("<p></p>");
 		this.summary2_notes = ("<p></p>");
 		this.type=a.getType();
@@ -233,12 +239,29 @@ public class Comment {
 		this.vulnerabilities = vulnsClone;
 		
 	}
+	
+	@Transient
+	public String replaceNewlineInCode(String content) {
+	    StringBuffer result = new StringBuffer();
+	    // (?s) enables DOTALL so . matches newlines too
+	    Pattern pattern = Pattern.compile("(?s)(<code>)(.*?)(</code>)");
+	    Matcher matcher = pattern.matcher(content);
+
+	    while (matcher.find()) {
+	        String inner = matcher.group(2).replaceAll("<br />", "\n");
+	        inner = Matcher.quoteReplacement("<code>" + inner + "</code>");
+	        matcher.appendReplacement(result, inner);
+	    }
+
+	    matcher.appendTail(result);
+	    return result.toString();
+	}
 
 	@Transient
 	public Assessment exportAssessment(EntityManager em) throws ParseException {
 		Assessment a = new Assessment();
-		a.setSummary(this.summary1);
-		a.setRiskAnalysis(this.summary2);
+		a.setSummary(replaceNewlineInCode(this.summary1));
+		a.setRiskAnalysis(replaceNewlineInCode(this.summary2));
 		a.setPr_sum_notes(this.summary1_notes);
 		a.setPr_risk_notes(this.summary2_notes);
 		a.setType(this.type);
@@ -255,12 +278,12 @@ public class Comment {
 			}else {
 				v.setCategory(dv.getCategory());
 			}
-			v.setDescription("" + (vuln.get("desc") == null ? "" : vuln.get("desc")));
-			v.setRecommendation("" + (vuln.get("rec") == null ? "" : vuln.get("rec")));
+			v.setDescription(replaceNewlineInCode("" + (vuln.get("desc") == null ? "" : vuln.get("desc"))));
+			v.setRecommendation(replaceNewlineInCode("" + (vuln.get("rec") == null ? "" : vuln.get("rec"))));
 			v.setDefaultVuln(dv);
 			v.setImpact((Long) vuln.get("impact"));
 			v.setOverall((Long) vuln.get("overall"));
-			v.setDetails(""+vuln.get("details"));
+			v.setDetails(replaceNewlineInCode(""+vuln.get("details")));
 			v.setDetail_notes(""+ vuln.get("detail_notes"));
 			v.setLikelyhood((Long) vuln.get("likelihood"));
 			v.setDesc_notes("" + (vuln.get("desc_notes") == null ? "" : vuln.get("desc_notes")));
