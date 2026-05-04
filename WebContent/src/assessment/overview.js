@@ -405,6 +405,47 @@ $(function() {
 
 		});
 	});
+	$("#uploadReportBtn").click(function() {
+		$('#uploadReportError').hide();
+		$('#uploadReportFile').val('');
+		$('#uploadReportModal').modal('show');
+	});
+
+	$("#doUploadReport").click(function() {
+		var file = $('#uploadReportFile')[0].files[0];
+		if (!file) {
+			$('#uploadReportError').text('Please select a file.').show();
+			return;
+		}
+		var ext = file.name.split('.').pop().toLowerCase();
+		if (ext !== 'docx' && ext !== 'pdf') {
+			$('#uploadReportError').text('Only .docx and .pdf files are allowed.').show();
+			return;
+		}
+		var formData = new FormData();
+		formData.append('uploadReport', file);
+		formData.append('_token', global._token);
+		$('#doUploadReport').prop('disabled', true).text('Uploading...');
+		$.ajax({
+			url: 'UploadFinalReport',
+			type: 'POST',
+			data: formData,
+			processData: false,
+			contentType: false,
+			success: function(resp) {
+				global._token = resp.token;
+				$('#uploadReportModal').modal('hide');
+				location.reload();
+			},
+			error: function(xhr) {
+				var msg = 'Upload failed.';
+				try { msg = JSON.parse(xhr.responseText).message || msg; } catch(e) {}
+				$('#uploadReportError').text(msg).show();
+				$('#doUploadReport').prop('disabled', false).text('Upload');
+			}
+		});
+	});
+
 	$("#finalize").click(function() {
 		$(".content").loading({ overlay: true, base: 0.3 });
 		$.confirm({

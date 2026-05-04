@@ -19,14 +19,20 @@ public class AccessControlInterceptor extends AbstractInterceptor{
 		
 		User user = (User) ServletActionContext.getRequest().getSession(true).getAttribute("user");
 		
-		if(user != null){
+		if (user != null) {
 			ActionContext.getContext().put("user", user);
 			ActionContext.getContext().put("isAdmin", user.getPermissions().isAdmin());
 			ActionContext.getContext().put("isManager", user.getPermissions().isManager());
 			ActionContext.getContext().put("isAssessor", user.getPermissions().isAssessor());
 			ActionContext.getContext().put("isEngagement", user.getPermissions().isEngagement());
 			ActionContext.getContext().put("isRemediation", user.getPermissions().isRemediation());
-			
+		} else {
+			// Allow unauthenticated access only to the root namespace (login, reset, setup).
+			// All other namespaces require an active session.
+			String namespace = invocation.getProxy().getNamespace();
+			if (!"/".equals(namespace)) {
+				return "login";
+			}
 		}
 		return invocation.invoke();
 	}

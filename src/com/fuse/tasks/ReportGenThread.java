@@ -33,14 +33,13 @@ public class ReportGenThread implements Runnable{
 	public ReportGenThread(String host, Assessment asmt, List<User> notifiers, boolean retest){
 		this.host = host;
 		this.asmt = asmt;
-		this.notifiers = notifiers;
+		this.notifiers = new ArrayList<>(notifiers);
 		this.isRetest=retest;
 	}
 	public ReportGenThread(String host, Assessment asmt, List<User> notifiers){
 		this.host = host;
 		this.asmt = asmt;
-		this.notifiers = notifiers;
-		
+		this.notifiers = new ArrayList<>(notifiers);
 	}
 	public ReportGenThread(String host, Assessment asmt, User notifiers){
 		this.host = host;

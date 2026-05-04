@@ -71,7 +71,7 @@
 	
 	<bs:mco colsize="12">
 		<br>
-		<span><i> Currently Uploaded to : <br>${selectedTemplate.filename }</i></span>
+		<span><i> Download Template: <br><s:if test="selectedTemplate.filename != null && !selectedTemplate.filename.isEmpty() && selectedTemplate.saveInDB"><a href="downloadTemplate?id=${selectedTemplate.id}">${selectedTemplate.filename}</a></s:if><s:else>${selectedTemplate.filename}</s:else></i></span>
 	</bs:mco>
 	
 </form>

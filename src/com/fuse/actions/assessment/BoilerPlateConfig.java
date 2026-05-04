@@ -60,6 +60,7 @@ public class BoilerPlateConfig extends FSActionSupport {
 
 	@Action(value = "tempDelete")
 	public String tempDelete() {
+		if (this.getSessionUser() == null) return LOGIN;
 		BoilerPlate bp = (BoilerPlate) em.createQuery("from BoilerPlate where id = :id")
 				.setParameter("id", this.tmpId).getResultList()
 				.stream().findFirst().orElse(null);
@@ -72,6 +73,7 @@ public class BoilerPlateConfig extends FSActionSupport {
 	}
 	@Action(value = "tempActive")
 	public String tempActive() {
+		if (this.getSessionUser() == null) return LOGIN;
 		BoilerPlate bp = (BoilerPlate) em.createQuery("from BoilerPlate where id = :id")
 				.setParameter("id", this.tmpId).getResultList()
 				.stream().findFirst().orElse(null);
@@ -87,7 +89,13 @@ public class BoilerPlateConfig extends FSActionSupport {
 	@Action(value = "tempSearchDetail", results = {
 			@Result(name = "tempSearchDetailJson", location = "/WEB-INF/jsp/assessment/tempSearchDetailJSON.jsp") })
 	public String searchTemplateDetail() {
-		BoilerPlate bp = em.find(BoilerPlate.class, this.tmpId);
+		if (this.getSessionUser() == null) return LOGIN;
+		BoilerPlate bp = (BoilerPlate) em
+				.createQuery("from BoilerPlate where id = :id and (global = true or user = :user)")
+				.setParameter("id", this.tmpId)
+				.setParameter("user", this.getSessionUser())
+				.getResultList().stream().findFirst().orElse(null);
+		if (bp == null) return this.ERRORJSON;
 		boilers = new ArrayList();
 		boilers.add(bp);
 
@@ -96,6 +104,7 @@ public class BoilerPlateConfig extends FSActionSupport {
 	@Action(value = "globalSave", results = {
 			@Result(name = "tempSearchJson", location = "/WEB-INF/jsp/assessment/tempSearchJSON.jsp") })
 	public String globalSaveTemplate() {
+		if (this.getSessionUser() == null) return LOGIN;
 		BoilerPlate bp = (BoilerPlate) em
 				.createQuery(
 						"from BoilerPlate where id=:id and global=true")
