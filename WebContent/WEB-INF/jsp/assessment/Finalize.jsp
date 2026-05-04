@@ -61,6 +61,9 @@
 				</span>
 		</div>
 		</s:if>
+		  <div style="margin-top:10px;">
+			<bs:button color="info" size="md" colsize="3" text="Upload Report" id="uploadReportBtn"></bs:button>
+		  </div>
           
        </div>
      </li>
@@ -153,4 +156,30 @@
 	
 </bs:mco>
 </bs:row>
+
+<!-- Upload Report Modal -->
+<div class="modal fade" id="uploadReportModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content" style="background-color:#192338; color:#fff;">
+      <div class="modal-header" style="border-bottom-color:#0f1a2b;">
+        <button type="button" class="close" style="color:#fff; opacity:0.8;" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Upload Report</h4>
+      </div>
+      <div class="modal-body">
+        <p>Upload a <strong>.docx</strong> or <strong>.pdf</strong> to replace the current report.</p>
+        <form id="uploadReportForm" enctype="multipart/form-data">
+          <div class="form-group">
+		  <input type="file" name="uploadReport" id="uploadReportFile" accept=".docx,.pdf" required="" class="form-control" style="background-color: #192338;color:#fff;border-color:#0f1a2b;">
+          </div>
+          <div id="uploadReportError" class="alert alert-danger" style="display:none;"></div>
+        </form>
+      </div>
+      <div class="modal-footer" style="border-top-color:#0f1a2b;">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="doUploadReport">Upload</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 
