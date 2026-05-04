@@ -15,12 +15,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.Part;
 
+import java.net.URLEncoder;
+
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.fuse.dao.Files;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
+import com.fuse.utils.FSUtils;
 
 /**
  * Servlet implementation class fileUpload
@@ -105,7 +108,12 @@ public class fileUpload extends HttpServlet {
 			Files f = new Files();
 			f.setUuid(uuid);
 			f.setContentType(filePart.getContentType());
-			f.setName(getFileName(filePart));
+			String fileName = getFileName(filePart);
+			if (!isSafeFileName(fileName)) {
+				response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Invalid file name");
+				return;
+			}
+			f.setName(fileName);
 			byte[] bytes = new byte[(int) filePart.getSize()];
 			filePart.getInputStream().read(bytes);
 			f.setRealFile(bytes);
@@ -155,14 +163,14 @@ public class fileUpload extends HttpServlet {
 						+ "' class='file-preview-image' />\"], ";
 			} else if (f.getContentType().contains("text")) {
 				// try {
-				json += "\"initialPreview\": [\"<pre class='file-preview-text' title='" + f.getName()
+				json += "\"initialPreview\": [\"<pre class='file-preview-text' title='" + StringEscapeUtils.escapeHtml4(f.getName())
 						+ "' style='width:100%;height:158px;' >"
 						+ StringEscapeUtils.escapeJson(new String(f.getRealFile())) + "</pre>";
 				json += "\"], ";
 
 			} else {
 				json += "\"initialPreview\": [\"<object class='file-object'  type='" + f.getContentType()
-						+ "' height='160px' width='160px'>" + "<param name='movie' value='" + f.getName() + "'>"
+						+ "' height='160px' width='160px'>" + "<param name='movie' value='" + StringEscapeUtils.escapeHtml4(f.getName()) + "'>"
 						+ "<param name='controller' value='true'>" + "<param name='allowFullScreen' value='true'>"
 						+ "<param name='allowScriptAccess' value='always'>" + "<param name='autoPlay' value='false'>"
 						+ "<param name='autoStart' value='false'>" + "<param name='quality' value='high'>"
@@ -175,12 +183,12 @@ public class fileUpload extends HttpServlet {
 				json += "\"], ";
 			}
 			if (apid != null && !apid.equals("")) {
-				json += "\"initialPreviewConfig\" : [" + "{ " + "\"caption\": \"" + f.getName() + "\", "
+				json += "\"initialPreviewConfig\" : [" + "{ " + "\"caption\": \"" + StringEscapeUtils.escapeJson(f.getName()) + "\", "
 						+ "\"width\" : \"100px\", " + "\"url\" : \"../service/fileUpload?delid=" + f.getUuid()
-						+ "&apid=" + f.getEntityId() + "&name=" + f.getName() + "\", "
+						+ "&apid=" + f.getEntityId() + "&name=" + URLEncoder.encode(f.getName(), "UTF-8") + "\", "
 						+ "\"downloadUrl\": \"../service/fileUpload?id=" + f.getUuid() + "\",\"key\" : 1}" + "]" + "}";
 			} else {
-				json += "\"initialPreviewConfig\" : [{ \"caption\": \"" + f.getName()
+				json += "\"initialPreviewConfig\" : [{ \"caption\": \"" + StringEscapeUtils.escapeJson(f.getName())
 						+ "\", \"width\" : \"100px\", \"url\" : \"../service/fileUpload?name=" + uuid + "\", "
 						+ "\"downloadUrl\": \"../service/fileUpload?id=" + f.getUuid() + "\",\"key\" : 1}]}";
 			}
@@ -240,6 +248,10 @@ public class fileUpload extends HttpServlet {
 			out.println("{}");
 		}
 
+	}
+
+	private boolean isSafeFileName(String name) {
+		return name != null && !name.isEmpty() && name.matches("[\\w\\s.\\-]+");
 	}
 
 	private String getFileName(Part p) {
