@@ -1,8 +1,10 @@
 package com.fuse.actions.admin;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -66,6 +68,8 @@ public class CMS extends FSActionSupport {
 	private String reportExtension;
 	private List<List<String>> reportSections = new ArrayList<>();
 	private String reportSection;
+	private InputStream templateStream;
+	private String downloadFilename;
 
 	@Action(value = "cms", results = {
 			@Result(name = "templateUpload", location = "/WEB-INF/jsp/cms/TemplateUpload.jsp"),
@@ -226,6 +230,32 @@ public class CMS extends FSActionSupport {
 
 		return SUCCESS;
 	}
+	@Action(value = "downloadTemplate", results = {
+			@Result(
+					name = "download",
+					type = "stream",
+					params = {
+							"inputName", "templateStream",
+							"contentType", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+							"bufferSize", "1024",
+							"contentDisposition", "attachment;filename=\"${downloadFilename}\""
+					}
+			)
+	})
+	public String downloadTemplate() {
+		if (!(this.isAcadmin() || this.isAcengagement() || this.isAcassessor()))
+			return LOGIN;
+		if (id == null) return ERROR;
+		selectedTemplate = (ReportTemplates) em.createQuery("from ReportTemplates where id = :id")
+				.setParameter("id", id).getResultList().stream().findFirst().orElse(null);
+		if (selectedTemplate == null || !selectedTemplate.getSaveInDB()
+				|| selectedTemplate.getBase64EncodedTemplate() == null)
+			return ERROR;
+		templateStream = selectedTemplate.getTemplate();
+		downloadFilename = selectedTemplate.getFilename();
+		return "download";
+	}
+
 	@Action(value = "checkReportValues", results = {
 			@Result( name="ok", type = "httpheader", params = { "status", "202"} ),
 			@Result( name="none",type = "httpheader", params = { "status", "404"} ),
@@ -572,6 +602,13 @@ public class CMS extends FSActionSupport {
 	public void setReportSection(String reportSection) {
 		this.reportSection = reportSection;
 	}
-	
+
+	public InputStream getTemplateStream() {
+		return templateStream;
+	}
+
+	public String getDownloadFilename() {
+		return downloadFilename;
+	}
 
 }
