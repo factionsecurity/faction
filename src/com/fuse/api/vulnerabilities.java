@@ -33,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fuse.api.dto.CategoryDTO;
 import com.fuse.api.dto.CustomFieldDTO;
 import com.fuse.api.dto.DefaultVulnerabilityDTO;
+import com.fuse.api.dto.VulnerabilityCondensedDTO;
 import com.fuse.api.dto.VulnerabilityDTO;
 import com.fuse.dao.APIKeys;
 import com.fuse.dao.Category;
@@ -851,6 +852,71 @@ public class vulnerabilities {
                     v.updateRiskLevels(em);
                     AssessmentQueries.updateImages(em, v);
                     VulnerabilityDTO dto = VulnerabilityDTO.fromEntity(v);
+
+                    // Add custom fields if any
+                    if (v.getCustomFields() != null) {
+                        dto.setCustomFieldsFromEntity(v.getCustomFields());
+                    }
+
+                    dtos.add(dto);
+                }
+
+                // Serialize using Jackson
+                ObjectMapper mapper = new ObjectMapper();
+                String json = mapper.writeValueAsString(dtos);
+                return Response.status(200).entity(json).build();
+
+            } else {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+            return Response.status(400).entity(String.format(Support.ERROR, "Invalid date format")).build();
+        } catch (JsonProcessingException e) {
+            return Response.status(500).entity(String.format(Support.ERROR, "Failed to serialize response")).build();
+        } finally {
+            em.close();
+        }
+    }
+
+    @POST
+    @ApiOperation(value = "Get all vulnerabilities in condensed format", notes = "Returns simplified vulnerability data without large text blocks (description, recommendation, details). Designed for MCP endpoints.", position = 12)
+    @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
+            @ApiResponse(code = 400, message = "Unknown Error"),
+            @ApiResponse(code = 200, message = "List of matching vulnerabilities.") })
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Path("all/condensed")
+    public Response getAllCondensed(
+            @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
+            @ApiParam(value = "Start Date of Search (MM/DD/YYYY)", required = true) @FormParam("start") String start,
+            @ApiParam(value = "End Date of Search (MM/DD/YYYY)", required = false) @FormParam("end") String end) {
+
+        EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+        List<VulnerabilityCondensedDTO> dtos = new ArrayList<>();
+        try {
+
+            User u = Support.getUser(em, apiKey);
+            SimpleDateFormat sdf = new SimpleDateFormat("MM/dd/yyyy");
+            if (u != null && (u.getPermissions().isAssessor() || u.getPermissions().isManager()
+                    || u.getPermissions().isRemediation())) {
+
+                List<Vulnerability> vulns = null;
+                if (end != null) {
+                    vulns = em.createQuery("from Vulnerability as v where v.opened >= :start and v.opened <= :end")
+                            .setParameter("start", sdf.parse(start))
+                            .setParameter("end", sdf.parse(end))
+                            .getResultList();
+                } else {
+                    vulns = em.createQuery("from Vulnerability as v where v.opened >= :start")
+                            .setParameter("start", sdf.parse(start))
+                            .getResultList();
+                }
+
+                for (Vulnerability v : vulns) {
+                    v.updateRiskLevels(em);
+                    AssessmentQueries.updateImages(em, v);
+                    VulnerabilityCondensedDTO dto = VulnerabilityCondensedDTO.fromEntity(v);
 
                     // Add custom fields if any
                     if (v.getCustomFields() != null) {

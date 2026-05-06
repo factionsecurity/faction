@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Assume;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -90,14 +91,11 @@ public abstract class MongoTestBase {
             System.setProperty("FACTION_MONGO_SSL", "false");
             System.out.println("MongoDB started via Testcontainers: " + mongoDBContainer.getHost() + ":" + mongoDBContainer.getMappedPort(27017));
         } catch (IllegalStateException e) {
-            throw new RuntimeException(
-                "Could not find a valid Docker environment. Either:\n" +
-                "1. Start Docker and run: mvn test\n" +
-                "2. Start an external MongoDB and run:\n" +
-                "   export FACTION_MONGO_HOST=localhost\n" +
-                "   export FACTION_MONGO_PORT=27017\n" +
-                "   export FACTION_MONGO_DATABASE=faction-test\n" +
-                "   mvn test",
+            Assume.assumeNoException(
+                "Skipping MongoDB-dependent tests: Docker is not available. " +
+                "To run these tests, start Docker and run: mvn test\n" +
+                "Or use an external MongoDB:\n  export FACTION_MONGO_HOST=localhost\n" +
+                "  export FACTION_MONGO_PORT=27017\n  export FACTION_MONGO_DATABASE=faction-test\n  mvn test",
                 e
             );
         }
