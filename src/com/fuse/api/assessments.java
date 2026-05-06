@@ -1687,6 +1687,7 @@ public class assessments {
     }
 
     private String decodeAndSanitize(String encoded) {
+        if (encoded == null) return "";
         String decoded = "";
         try {
             decoded = new String(Base64.decodeBase64(encoded));
