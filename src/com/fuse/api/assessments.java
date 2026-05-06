@@ -22,6 +22,7 @@ import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -34,27 +35,34 @@ import com.faction.reporting.ReportFeatures;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fuse.api.Events.EnrichedMessage;
+import com.fuse.api.dto.AssessmentCondensedDTO;
 import com.fuse.api.dto.AssessmentDTO;
 import com.fuse.api.dto.CustomTypeDTO;
+import com.fuse.api.dto.VulnerabilityCondensedDTO;
 import com.fuse.api.dto.VulnerabilityDTO;
 import com.fuse.api.util.DateParam;
 import com.fuse.api.util.Support;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AssessmentType;
-import com.fuse.dao.Image;
 import com.fuse.dao.Campaign;
 import com.fuse.dao.Category;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.DefaultVulnerability;
+import com.fuse.dao.FinalReport;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.Image;
 import com.fuse.dao.Note;
 import com.fuse.dao.PeerReview;
+import com.fuse.dao.RiskLevel;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.dao.query.VulnerabilityQueries;
+import com.fuse.reporting.GenerateReport;
 import com.fuse.servlets.EventStreamServlet;
+import com.fuse.tasks.ReportGenThread;
+import com.fuse.tasks.TaskQueueExecutor;
 import com.fuse.utils.FSUtils;
 import com.fuse.utils.ImageBorderUtil;
 
@@ -196,6 +204,175 @@ public class assessments {
         } finally {
             em.close();
         }
+    }
+
+    /*
+     * downloadReport - Download the final report for an assessment
+     */
+    @GET
+    @ApiOperation(value = "Downloads the final report (PDF/DOCX) for an assessment", notes = "Returns the base64-encoded report as a binary download", position = 200)
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Not Authorized"),
+            @ApiResponse(code = 404, message = "Assessment or Report not found"),
+            @ApiResponse(code = 200, message = "Returns the report as a binary download") })
+    @Path("/report/{aid}")
+    public Response downloadReport(
+            @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
+            @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid) {
+
+        EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+        try {
+            User u = Support.getUser(em, apiKey);
+            if (u == null) {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+
+            if (!(u.getPermissions().isAssessor() || u.getPermissions().isManager() || u.getPermissions().isAdmin())) {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+
+            Assessment assessment = AssessmentQueries.getAssessment(em, u, aid);
+            if (assessment == null) {
+                return Response.status(404).entity(String.format(Support.ERROR, "Assessment not found or access denied")).build();
+            }
+
+            FinalReport finalReport = assessment.getFinalReport();
+            if (finalReport == null) {
+                return Response.status(404).entity(String.format(Support.ERROR, "No final report available for this assessment")).build();
+            }
+
+            String b64Rpt = finalReport.getBase64EncodedPdf();
+            if (b64Rpt == null || b64Rpt.isEmpty()) {
+                return Response.status(404).entity(String.format(Support.ERROR, "Report data is empty")).build();
+            }
+
+            byte[] report;
+            try {
+                report = Base64.decodeBase64(b64Rpt.getBytes());
+            } catch (Exception e) {
+                return Response.status(500).entity(String.format(Support.ERROR, "Failed to decode report")).build();
+            }
+
+            if (report == null || report.length == 0) {
+                return Response.status(500).entity(String.format(Support.ERROR, "Report is empty")).build();
+            }
+
+            String contentType;
+            String filename;
+            if (report.length > 3 && report[1] == (byte) 'P' && report[2] == (byte) 'D' && report[3] == (byte) 'F') {
+                contentType = "application/pdf";
+                filename = "Report.pdf";
+            } else {
+                contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                filename = "Report.docx";
+            }
+
+            String extension = finalReport.getFileType();
+            if (extension != null && !extension.isEmpty()) {
+                if (extension.equals("pdf")) {
+                    contentType = "application/pdf";
+                    filename = "Report.pdf";
+                } else {
+                    contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                    filename = "Report.docx";
+                }
+            }
+
+            if (finalReport.getRetest() != null && finalReport.getRetest()) {
+                filename = "Retest " + filename;
+            }
+
+            String downloadFilename = assessment.getName() + " - " + assessment.getType().getType() + " " + filename;
+
+            return buildReportResponse(report, downloadFilename);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(500).entity(String.format(Support.ERROR, "Error downloading report")).build();
+        } finally {
+            em.close();
+        }
+    }
+
+    // Package-private method for testing — bypasses DB and uses pre-built Assessment/User
+    Response invokeDownloadReport(User user, Assessment assessment, Long aid) {
+        try {
+            if (user == null) {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+
+            if (!(user.getPermissions().isAssessor() || user.getPermissions().isManager() || user.getPermissions().isAdmin())) {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+
+            if (assessment == null) {
+                return Response.status(404).entity(String.format(Support.ERROR, "Assessment not found or access denied")).build();
+            }
+
+            FinalReport finalReport = assessment.getFinalReport();
+            if (finalReport == null) {
+                return Response.status(404).entity(String.format(Support.ERROR, "No final report available for this assessment")).build();
+            }
+
+            String b64Rpt = finalReport.getBase64EncodedPdf();
+            if (b64Rpt == null || b64Rpt.isEmpty()) {
+                return Response.status(404).entity(String.format(Support.ERROR, "Report data is empty")).build();
+            }
+
+            byte[] report;
+            report = Base64.decodeBase64(b64Rpt.getBytes());
+
+            if (report == null || report.length == 0) {
+                return Response.status(500).entity(String.format(Support.ERROR, "Report is empty")).build();
+            }
+
+            String filename;
+            if (report.length > 3 && report[1] == (byte) 'P' && report[2] == (byte) 'D' && report[3] == (byte) 'F') {
+                filename = "Report.pdf";
+            } else {
+                filename = "Report.docx";
+            }
+
+            String extension = finalReport.getFileType();
+            if (extension != null && !extension.isEmpty()) {
+                if (extension.equals("pdf")) {
+                    filename = "Report.pdf";
+                } else {
+                    filename = "Report.docx";
+                }
+            }
+
+            if (finalReport.getRetest() != null && finalReport.getRetest()) {
+                filename = "Retest " + filename;
+            }
+
+            String downloadFilename = assessment.getName() + " - " + assessment.getType().getType() + " " + filename;
+
+            return buildReportResponse(report, downloadFilename);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(500).entity(String.format(Support.ERROR, "Error downloading report")).build();
+        }
+    }
+
+    Response buildReportResponse(byte[] report, String filename) {
+        return Response.ok(report)
+            .header("Content-Disposition", "attachment; filename=\"" + sanitizeFilename(filename) + "\"")
+            .header("Cache-Control", "no-cache, no-store, must-revalidate")
+            .header("Pragma", "no-cache")
+            .header("Expires", "0")
+            .build();
+    }
+
+    // Strip CR/LF (header injection) and double quotes / backslashes (filename escape).
+    // Cap length to keep header size sane.
+    static String sanitizeFilename(String filename) {
+        if (filename == null) return "Report";
+        String clean = filename.replaceAll("[\\r\\n\"\\\\]", "_").replaceAll("[\\x00-\\x1f\\x7f]", "_");
+        if (clean.length() > 200) clean = clean.substring(0, 200);
+        if (clean.trim().isEmpty()) return "Report";
+        return clean;
     }
 
     /*
@@ -1195,6 +1372,214 @@ public class assessments {
     }
 
     /*
+     * getCondensedCompleted - get condensed completed assessments with vulnerabilities
+     */
+    @GET
+    @ApiOperation(value = "Gets all completed assessments with vulnerabilities in condensed format", notes = "Same as /completed but includes vulnerabilities with large text blocks (description, recommendation, details) removed. Also removes summary and riskAnalysis from assessments. Designed for MCP endpoints.", position = 55)
+    @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
+            @ApiResponse(code = 400, message = "Bad Request."),
+            @ApiResponse(code = 200, message = "Returns condensed completed assessments") })
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/completed/condensed")
+    public Response getCondensedCompletedAssessments(
+            @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
+            @ApiParam(value = "Start Date (DD/MM/YYYY)", required = true) @QueryParam("start") String start,
+            @ApiParam(value = "End Date (DD/MM/YYYY)", required = false) @QueryParam("end") String end) {
+        EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+        List<AssessmentCondensedDTO> dtos = new ArrayList<>();
+        try {
+            User u = Support.getUser(em, apiKey);
+            if (u != null && (u.getPermissions().isManager())) {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy");
+                Date startDate = null;
+                Date endDate = null;
+
+                try {
+                    startDate = sdf.parse(start);
+                    if (end != null) {
+                        endDate = sdf.parse(end);
+                    }
+                } catch (Exception ex) {
+                    return Response.status(500).entity(String.format(Support.ERROR, "Invalid Date Format")).build();
+                }
+
+                List<Assessment> completed = AssessmentQueries.getAllCompletedAssessmentsByDateRange(em, u, startDate,
+                        endDate);
+                for (Assessment a : completed) {
+                    AssessmentQueries.updateImages(a);
+                    AssessmentCondensedDTO dto = AssessmentCondensedDTO.fromEntityWithVulns(a);
+                    dtos.add(dto);
+                }
+
+                ObjectMapper mapper = new ObjectMapper();
+                String json = mapper.writeValueAsString(dtos);
+                return Response.status(200).entity(json).build();
+
+            } else {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return Response.status(500).entity(String.format(Support.ERROR, "Failed to serialize response")).build();
+        } finally {
+            em.close();
+        }
+
+    }
+
+    /*
+     * generateReport - Generate a new assessment report (async)
+     */
+    @POST
+    @ApiOperation(value = "Generate a new assessment report asynchronously", notes = "Submits report generation to background thread. Returns immediately. Use reportStatus endpoint to check completion.", position = 56)
+    @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
+            @ApiResponse(code = 400, message = "Assessment Does not exist or no templates."),
+            @ApiResponse(code = 200, message = "Report generation started") })
+    @Produces(MediaType.APPLICATION_JSON)
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    @Path("/generateReport/{aid}")
+    public Response generateReport(
+            @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
+            @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
+            @ApiParam(value = "Generate retest report", required = false) @FormParam("retest") String retestStr) {
+
+        EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+        try {
+            User u = Support.getUser(em, apiKey);
+            if (u == null) {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+
+            if (!(u.getPermissions().isAssessor() || u.getPermissions().isManager() || u.getPermissions().isAdmin())) {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+
+            Assessment assessment = AssessmentQueries.getAssessment(em, u, aid);
+            if (assessment == null) {
+                return Response.status(400).entity(String.format(Support.ERROR, "Assessment not found or access denied")).build();
+            }
+
+            Boolean retest = retestStr != null && retestStr.equalsIgnoreCase("true");
+
+            if (assessment.getCompleted() != null && !retest) {
+                return Response.status(400).entity(String.format(Support.ERROR, "Cannot generate report on finalized assessment. Use retest=true to generate a retest report.")).build();
+            }
+
+            if (!AssessmentQueries.checkForReportTemplates(em, assessment, retest)) {
+                return Response.status(400).entity(String.format(Support.ERROR, "There are no report templates for this assessment. Contact your administrator.")).build();
+            }
+
+            Date currentGentime = new Date();
+            if (!retest && assessment.getFinalReport() != null && assessment.getFinalReport().getGentime() != null) {
+                currentGentime = assessment.getFinalReport().getGentime();
+            } else if (retest && assessment.getRetestReport() != null && assessment.getRetestReport().getGentime() != null) {
+                currentGentime = assessment.getRetestReport().getGentime();
+            }
+
+            ReportGenThread reportThread = new ReportGenThread("", assessment, assessment.getAssessor(), retest);
+            TaskQueueExecutor.getInstance().execute(reportThread);
+
+            JSONObject result = new JSONObject();
+            result.put("status", "generating");
+            result.put("assessmentId", aid);
+            result.put("retest", retest);
+            result.put("gentime", String.valueOf(currentGentime.getTime()));
+            return Response.status(200).entity(result.toJSONString()).build();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(500).entity(String.format(Support.ERROR, "Failed to start report generation")).build();
+        } finally {
+            em.close();
+        }
+    }
+
+    /*
+     * reportStatus - Check report generation status
+     */
+    @GET
+    @ApiOperation(value = "Check report generation status", notes = "Returns 202 if report is still being generated, 200 if complete. Pass lastKnownGentime from generateReport response for accurate comparison.", position = 57)
+    @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
+            @ApiResponse(code = 400, message = "Assessment Does not exist."),
+            @ApiResponse(code = 200, message = "Report is complete or no report"),
+            @ApiResponse(code = 202, message = "Report is still generating") })
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/reportStatus/{aid}")
+    public Response reportStatus(
+            @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
+            @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
+            @ApiParam(value = "Check retest report status", required = false) @QueryParam("retest") String retestStr,
+            @ApiParam(value = "Last known gentime (from generateReport response)", required = false) @QueryParam("lastKnownGentime") String lastKnownGentimeStr) {
+
+        EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+        try {
+            User u = Support.getUser(em, apiKey);
+            if (u == null) {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+
+            if (!(u.getPermissions().isAssessor() || u.getPermissions().isManager() || u.getPermissions().isAdmin())) {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+
+            Assessment assessment = AssessmentQueries.getAssessment(em, u, aid);
+            if (assessment == null) {
+                return Response.status(400).entity(String.format(Support.ERROR, "Assessment not found or access denied")).build();
+            }
+
+            Boolean retest = retestStr != null && retestStr.equalsIgnoreCase("true");
+            Date currentGentime = null;
+
+            if (retest) {
+                FinalReport retestReport = assessment.getRetestReport();
+                if (retestReport != null && retestReport.getGentime() != null) {
+                    currentGentime = retestReport.getGentime();
+                }
+            } else {
+                FinalReport finalReport = assessment.getFinalReport();
+                if (finalReport != null && finalReport.getGentime() != null) {
+                    currentGentime = finalReport.getGentime();
+                }
+            }
+
+            JSONObject result = new JSONObject();
+            result.put("assessmentId", aid);
+            result.put("retest", retest);
+            result.put("gentime", currentGentime != null ? String.valueOf(currentGentime.getTime()) : null);
+
+            if (currentGentime == null) {
+                result.put("status", "no_report");
+                return Response.status(200).entity(result.toJSONString()).build();
+            }
+
+            if (lastKnownGentimeStr != null && !lastKnownGentimeStr.isEmpty()) {
+                try {
+                    long lastKnownGentime = Long.parseLong(lastKnownGentimeStr);
+                    if (currentGentime.getTime() == lastKnownGentime) {
+                        result.put("status", "generating");
+                        return Response.status(202).entity(result.toJSONString()).build();
+                    } else {
+                        result.put("status", "complete");
+                        return Response.status(200).entity(result.toJSONString()).build();
+                    }
+                } catch (NumberFormatException e) {
+                    result.put("status", "generating");
+                    return Response.status(202).entity(result.toJSONString()).build();
+                }
+            }
+
+            result.put("status", "generating");
+            return Response.status(202).entity(result.toJSONString()).build();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(500).entity(String.format(Support.ERROR, "Failed to check report status")).build();
+        } finally {
+            em.close();
+        }
+    }
+
+    /*
      * getCustomFieldTypes - Get allowed custom field types for an assessment
      */
     @GET
@@ -1687,6 +2072,7 @@ public class assessments {
     }
 
     private String decodeAndSanitize(String encoded) {
+        if (encoded == null) return "";
         String decoded = "";
         try {
             decoded = new String(Base64.decodeBase64(encoded));
