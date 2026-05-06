@@ -3,6 +3,10 @@ import 'datatables.net';
 import 'datatables.net-bs';
 import 'bootstrap';
 import 'jquery-ui';
+import 'jquery-ui/ui/widgets/datepicker';
+import 'jquery-ui/themes/base/core.css';
+import 'jquery-ui/themes/base/datepicker.css';
+import 'jquery-ui/themes/base/theme.css';
 import 'jquery-confirm';
 import moment from 'moment';
 import 'daterangepicker';
@@ -22,11 +26,11 @@ $(function() {
             "ordering": true,
             "info": true,
             "autoWidth": false,
-            "order": [[5, "desc"]], // Sort by start date by default
+            "order": [[6, "desc"]], // Sort by Start date by default
             "pageLength": 25,
             "columnDefs": [
                 {
-                    "targets": [8], // Findings column
+                    "targets": [0, 10], // Action and Findings columns
                     "searchable": false,
                     "orderable": false
                 }
@@ -34,56 +38,195 @@ $(function() {
         });
     }
     
-    // Date range picker configuration
-    var start = moment().subtract(29, 'days');
-    var end = moment();
+    // Date formatting
+    var displayFormat = 'mm/dd/yy';
+    var submitFormat = 'yy-mm-dd';
     
-    function cb(start, end) {
-        $('#daterange-text').html(start.format('MMM D, YYYY') + ' - ' + end.format('MMM D, YYYY'));
-        $('#startDate').val(start.format('YYYY-MM-DD'));
-        $('#endDate').val(end.format('YYYY-MM-DD'));
+    function updateHiddenFields() {
+        var startDateVal = $('#startDateDisplay').val();
+        var endDateVal = $('#endDateDisplay').val();
+        
+        if (startDateVal) {
+            var parsedStart = $.datepicker.parseDate(displayFormat, startDateVal);
+            if (parsedStart) {
+                $('#startDate').val($.datepicker.formatDate(submitFormat, parsedStart));
+            }
+        }
+        
+        if (endDateVal) {
+            var parsedEnd = $.datepicker.parseDate(displayFormat, endDateVal);
+            if (parsedEnd) {
+                $('#endDate').val($.datepicker.formatDate(submitFormat, parsedEnd));
+            }
+        }
     }
     
-    $('#daterange-btn').daterangepicker({
-        startDate: start,
-        endDate: end,
-        ranges: {
-            'Today': [moment(), moment()],
-            'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
-            'Last 7 Days': [moment().subtract(6, 'days'), moment()],
-            'Last 30 Days': [moment().subtract(29, 'days'), moment()],
-            'This Month': [moment().startOf('month'), moment().endOf('month')],
-            'Last Month': [moment().subtract(1, 'month').startOf('month'), moment().subtract(1, 'month').endOf('month')],
-            'This Year': [moment().startOf('year'), moment()],
-            'All Time': [moment('2010-01-01'), moment()]
-        },
-        opens: 'left',
-        buttonClasses: ['btn', 'btn-sm'],
-        applyClass: 'btn-primary',
-        cancelClass: 'btn-default',
-        separator: ' to ',
-        locale: {
-            applyLabel: 'Submit',
-            cancelLabel: 'Cancel',
-            fromLabel: 'From',
-            toLabel: 'To',
-            customRangeLabel: 'Custom',
-            weekLabel: 'W',
-            daysOfWeek: ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'],
-            monthNames: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'],
-            firstDay: 1
-        }
-    }, cb);
+    function initDatepicker(inputId) {
+        var $input = $('#' + inputId);
+        if ($input.data('datepicker')) return;
+
+        $input.datepicker({
+            dateFormat: displayFormat,
+            beforeShow: function(input, inst) {
+                if (inst.dpDiv) {
+                    inst.dpDiv.addClass('manager-dashboard-datepicker');
+                }
+            },
+            onSelect: function() {
+                updateHiddenFields();
+                hideError($input);
+            }
+        });
+    }
+
+    initDatepicker('startDateDisplay');
+    initDatepicker('endDateDisplay');
     
-    // Set initial date range if values exist
-    if ($('#startDate').val() && $('#endDate').val()) {
-        var existingStart = moment($('#startDate').val());
-        var existingEnd = moment($('#endDate').val());
-        $('#daterange-btn').data('daterangepicker').setStartDate(existingStart);
-        $('#daterange-btn').data('daterangepicker').setEndDate(existingEnd);
-        cb(existingStart, existingEnd);
-    } else {
-        cb(start, end);
+    function showError(input, message) {
+        var errorId = '#' + $(input).attr('id') + 'Error';
+        $(errorId).text(message || 'Please enter a valid date').show();
+        $(input).closest('.form-group').addClass('has-error');
+    }
+    
+    function hideError(input) {
+        var errorId = '#' + $(input).attr('id') + 'Error';
+        $(errorId).hide();
+        $(input).closest('.form-group').removeClass('has-error');
+    }
+    
+    function validateDate(input) {
+        var value = $(input).val().trim();
+        if (!value) {
+            showError(input, 'Date is required');
+            return false;
+        }
+        
+        try {
+            var parsed = $.datepicker.parseDate(displayFormat, value);
+            if (!parsed || isNaN(parsed.getTime())) {
+                showError(input, 'Please enter a valid date (mm/dd/yyyy)');
+                return false;
+            }
+            hideError(input);
+            return true;
+        } catch(e) {
+            showError(input, 'Please enter a valid date (mm/dd/yyyy)');
+            return false;
+        }
+    }
+    
+    $('#startDateBtn').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#startDateDisplay').datepicker('show');
+    });
+
+    $('#endDateBtn').on('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $('#endDateDisplay').datepicker('show');
+    });
+
+
+    // Form validation on submit
+    $('form[action="ManagerDashboard"]').on('submit', function(e) {
+        var valid = true;
+        
+        if (!validateDate($('#startDateDisplay'))) {
+            valid = false;
+        }
+        
+        if (!validateDate($('#endDateDisplay'))) {
+            valid = false;
+        }
+        
+        var startDateVal = $('#startDateDisplay').val();
+        var endDateVal = $('#endDateDisplay').val();
+        
+        if (startDateVal && endDateVal) {
+            var start = $.datepicker.parseDate(displayFormat, startDateVal);
+            var end = $.datepicker.parseDate(displayFormat, endDateVal);
+            if (start > end) {
+                showError($('#endDateDisplay'), 'End date must be after start date');
+                valid = false;
+            }
+        }
+        
+        if (!valid) {
+            e.preventDefault();
+            return false;
+        }
+        
+        updateHiddenFields();
+    });
+    
+    // Quick range selection
+    $('#rangeDropdown li a').on('click', function(e) {
+        e.preventDefault();
+        var range = $(this).data('range');
+        var today = moment();
+        var startDate, endDate;
+        
+        switch(range) {
+            case 'today':
+                startDate = today.clone();
+                endDate = today.clone();
+                $('#rangeLabel').text('Today');
+                break;
+            case 'yesterday':
+                startDate = today.clone().subtract(1, 'days');
+                endDate = today.clone().subtract(1, 'days');
+                $('#rangeLabel').text('Yesterday');
+                break;
+            case '7days':
+                startDate = today.clone().subtract(6, 'days');
+                endDate = today.clone();
+                $('#rangeLabel').text('Last 7 Days');
+                break;
+            case '30days':
+                startDate = today.clone().subtract(29, 'days');
+                endDate = today.clone();
+                $('#rangeLabel').text('Last 30 Days');
+                break;
+            case 'month':
+                startDate = today.clone().startOf('month');
+                endDate = today.clone().endOf('month');
+                $('#rangeLabel').text('This Month');
+                break;
+            case 'lastmonth':
+                startDate = today.clone().subtract(1, 'month').startOf('month');
+                endDate = today.clone().subtract(1, 'month').endOf('month');
+                $('#rangeLabel').text('Last Month');
+                break;
+            case 'year':
+                startDate = today.clone().startOf('year');
+                endDate = today.clone();
+                $('#rangeLabel').text('This Year');
+                break;
+            case 'alltime':
+                startDate = moment('2010-01-01');
+                endDate = today.clone();
+                $('#rangeLabel').text('All Time');
+                break;
+            default:
+                return;
+        }
+        
+        $('#startDateDisplay').val($.datepicker.formatDate(displayFormat, startDate.toDate()));
+        $('#endDateDisplay').val($.datepicker.formatDate(displayFormat, endDate.toDate()));
+        updateHiddenFields();
+        hideError($('#startDateDisplay'));
+        hideError($('#endDateDisplay'));
+    });
+
+    // Set default date range if values don't exist
+    if (!$('#startDateDisplay').val() && !$('#endDateDisplay').val()) {
+        var start = moment().subtract(29, 'days');
+        var end = moment();
+        $('#startDateDisplay').val($.datepicker.formatDate(displayFormat, start.toDate()));
+        $('#endDateDisplay').val($.datepicker.formatDate(displayFormat, end.toDate()));
+        updateHiddenFields();
+        $('#rangeLabel').text('Last 30 Days');
     }
     
     // Auto-refresh statistics every 5 minutes

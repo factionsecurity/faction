@@ -16,5 +16,8 @@
   "license": "MIT",
   "dependencies": {
     "playwright": "^1.40.0"
+  },
+  "devDependencies": {
+    "webpack-cli": "^7.0.2"
   }
 }
