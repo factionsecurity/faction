@@ -89,9 +89,14 @@ public class AssessmentQueries {
 	}
 	
 	public static List<Assessment>getAllCompletedAssessmentsByDateRange(EntityManager em, User user, Date start, Date end){
-		
+
+		// UserOnly users may only access their own assessments while open — no completed access at all
+		if(user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
+			return new ArrayList();
+		}
+
  		String query = "db.Assessment.find({";
-		if(!user.getPermissions().isManager() || user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
+		if(!user.getPermissions().isManager()) {
 			query += "\"assessor\" : "+user.getId() + "," ;
 		}
 		
@@ -249,14 +254,19 @@ public class AssessmentQueries {
 		
 	}
 	public static boolean canAccessAssessment(User user, Assessment asmt) {
-		// User has team only and assessment not in team 
+		if(asmt == null)
+			return false;
+		// User has team only and assessment not in team
 		if(user.getPermissions().getAccessLevel() == Permissions.AccessLevelTeamOnly) {
 			if(!hasTeam(user,asmt))
 				return false;
 		}
-		// User can only access their own assessments
+		// User can only access their own assessments, and only while open
 		if(user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
 			if(!asmt.getAssessor().stream().anyMatch(u -> u.getId() == user.getId())) {
+				return false;
+			}
+			if(asmt.getCompleted() != null) {
 				return false;
 			}
 		}

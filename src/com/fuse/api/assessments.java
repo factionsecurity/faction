@@ -288,7 +288,7 @@ public class assessments {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.status(500).entity(String.format(Support.ERROR, "Error downloading report: " + e.getMessage())).build();
+            return Response.status(500).entity(String.format(Support.ERROR, "Error downloading report")).build();
         } finally {
             em.close();
         }
@@ -352,17 +352,27 @@ public class assessments {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.status(500).entity(String.format(Support.ERROR, "Error downloading report: " + e.getMessage())).build();
+            return Response.status(500).entity(String.format(Support.ERROR, "Error downloading report")).build();
         }
     }
 
     Response buildReportResponse(byte[] report, String filename) {
         return Response.ok(report)
-            .header("Content-Disposition", "attachment; filename=\"" + filename + "\"")
+            .header("Content-Disposition", "attachment; filename=\"" + sanitizeFilename(filename) + "\"")
             .header("Cache-Control", "no-cache, no-store, must-revalidate")
             .header("Pragma", "no-cache")
             .header("Expires", "0")
             .build();
+    }
+
+    // Strip CR/LF (header injection) and double quotes / backslashes (filename escape).
+    // Cap length to keep header size sane.
+    static String sanitizeFilename(String filename) {
+        if (filename == null) return "Report";
+        String clean = filename.replaceAll("[\\r\\n\"\\\\]", "_").replaceAll("[\\x00-\\x1f\\x7f]", "_");
+        if (clean.length() > 200) clean = clean.substring(0, 200);
+        if (clean.trim().isEmpty()) return "Report";
+        return clean;
     }
 
     /*
@@ -1409,7 +1419,8 @@ public class assessments {
                 return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
             }
         } catch (JsonProcessingException e) {
-            return Response.status(500).entity(String.format(Support.ERROR, e.getMessage())).build();
+            e.printStackTrace();
+            return Response.status(500).entity(String.format(Support.ERROR, "Failed to serialize response")).build();
         } finally {
             em.close();
         }
@@ -1477,7 +1488,7 @@ public class assessments {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.status(500).entity(String.format(Support.ERROR, "Failed to start report generation: " + e.getMessage())).build();
+            return Response.status(500).entity(String.format(Support.ERROR, "Failed to start report generation")).build();
         } finally {
             em.close();
         }
@@ -1562,7 +1573,7 @@ public class assessments {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return Response.status(500).entity(String.format(Support.ERROR, "Failed to check report status: " + e.getMessage())).build();
+            return Response.status(500).entity(String.format(Support.ERROR, "Failed to check report status")).build();
         } finally {
             em.close();
         }

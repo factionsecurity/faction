@@ -36,6 +36,7 @@ import com.fuse.api.dto.DefaultVulnerabilityDTO;
 import com.fuse.api.dto.VulnerabilityCondensedDTO;
 import com.fuse.api.dto.VulnerabilityDTO;
 import com.fuse.dao.APIKeys;
+import com.fuse.dao.Assessment;
 import com.fuse.dao.Category;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
@@ -849,8 +850,12 @@ public class vulnerabilities {
                 }
 
                 for (Vulnerability v : vulns) {
+                    Assessment parent = AssessmentQueries.getAssessmentById(em, v.getAssessmentId());
+                    if (!AssessmentQueries.canAccessAssessment(u, parent)) {
+                        continue;
+                    }
                     v.updateRiskLevels(em);
-                    AssessmentQueries.updateImages(em, v);
+                    AssessmentQueries.updateImages(parent, v);
                     VulnerabilityDTO dto = VulnerabilityDTO.fromEntity(v);
 
                     // Add custom fields if any
@@ -914,8 +919,12 @@ public class vulnerabilities {
                 }
 
                 for (Vulnerability v : vulns) {
+                    Assessment parent = AssessmentQueries.getAssessmentById(em, v.getAssessmentId());
+                    if (!AssessmentQueries.canAccessAssessment(u, parent)) {
+                        continue;
+                    }
                     v.updateRiskLevels(em);
-                    AssessmentQueries.updateImages(em, v);
+                    AssessmentQueries.updateImages(parent, v);
                     VulnerabilityCondensedDTO dto = VulnerabilityCondensedDTO.fromEntity(v);
 
                     // Add custom fields if any
