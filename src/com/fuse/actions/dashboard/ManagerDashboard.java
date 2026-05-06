@@ -57,6 +57,7 @@ public class ManagerDashboard extends FSActionSupport {
     private String status;
     private Long assessorId;
     private Long campaignId;
+    private List<Long> severityIds;
     private String searchAction = "";
     
     // Lists for dropdowns
@@ -491,7 +492,23 @@ public class ManagerDashboard extends FSActionSupport {
         } else {
             searchResults = mongoResults;
         }
-        
+
+        // Filter by vulnerability severity: keep assessments that contain
+        // at least one Vulnerability whose overall is in the selected set.
+        if (severityIds != null && !severityIds.isEmpty()) {
+            searchResults = searchResults.stream()
+                    .filter(a -> {
+                        if (a.getVulns() == null) return false;
+                        for (Vulnerability v : a.getVulns()) {
+                            Long o = v.getOverall();
+                            if (o == null || o == -1L) continue;
+                            if (severityIds.contains(o)) return true;
+                        }
+                        return false;
+                    })
+                    .collect(Collectors.toList());
+        }
+
         // Sort by start date descending (MongoDB doesn't guarantee order)
         Collections.sort(searchResults, new Comparator<Assessment>() {
             @Override
@@ -599,6 +616,26 @@ public class ManagerDashboard extends FSActionSupport {
 
     public void setRiskLevels(List<RiskLevel> riskLevels) {
         this.riskLevels = riskLevels;
+    }
+
+    // Risk levels available for severity filtering — excludes entries with no
+    // configured name (null/empty/"unassigned"), matching the convention used
+    // by AssessmentCountHandler.
+    public List<RiskLevel> getActiveRiskLevels() {
+        if (riskLevels == null) return Collections.emptyList();
+        return riskLevels.stream()
+                .filter(rl -> rl.getRisk() != null
+                        && !rl.getRisk().isEmpty()
+                        && !rl.getRisk().toLowerCase().equals("unassigned"))
+                .collect(Collectors.toList());
+    }
+
+    public List<Long> getSeverityIds() {
+        return severityIds;
+    }
+
+    public void setSeverityIds(List<Long> severityIds) {
+        this.severityIds = severityIds;
     }
 
     public int getWeeklyAssessments() {

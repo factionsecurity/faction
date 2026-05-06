@@ -130,12 +130,256 @@
                             margin-right: 10px;
                         }
 
+                        /* Severity checkbox list */
+                        .severity-checkbox-list {
+                            border-radius: 4px;
+                            padding: 8px 10px;
+                            background: #030d1c !important;
+                            max-height: 110px;
+                            overflow-y: auto;
+                        }
+
+                        .severity-checkbox-list label {
+                            display: inline;
+                            font-weight: normal;
+                            margin: 0;
+                            padding: 2px 0;
+                            cursor: pointer;
+                        }
+
+                        .severity-checkbox-list input[type="checkbox"] {
+                            margin-right: 6px;
+                            vertical-align: middle;
+                        }
+
                         /* Other Styles */
                         .search-section {
                             margin-bottom: 20px;
                             padding: 20px;
                             background: #f4f4f4;
                             border-radius: 5px;
+                        }
+
+                        /* Date picker styling */
+                        .manager-dashboard-datepicker.ui-datepicker {
+                            z-index: 10000 !important;
+                            background: #ffffff;
+                            border: none;
+                            border-radius: 12px;
+                            box-shadow: 0 12px 32px rgba(15, 23, 42, 0.18), 0 2px 6px rgba(15, 23, 42, 0.08);
+                            padding: 14px;
+                            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                            font-size: 13px;
+                            color: #1f2937;
+                            width: 280px;
+                        }
+
+                        .manager-dashboard-datepicker .ui-datepicker-header {
+                            background: linear-gradient(135deg, #192338 0%, #2c3a5e 100%);
+                            border: none;
+                            border-radius: 8px;
+                            color: #ffffff;
+                            padding: 8px 6px;
+                            margin-bottom: 10px;
+                            position: relative;
+                        }
+
+                        .manager-dashboard-datepicker .ui-datepicker-title {
+                            font-weight: 600;
+                            font-size: 14px;
+                            letter-spacing: 0.3px;
+                            line-height: 28px;
+                        }
+
+                        .manager-dashboard-datepicker .ui-datepicker-prev,
+                        .manager-dashboard-datepicker .ui-datepicker-next {
+                            top: 50%;
+                            transform: translateY(-50%);
+                            width: 28px;
+                            height: 28px;
+                            border-radius: 50%;
+                            background: rgba(255, 255, 255, 0.18);
+                            border: none;
+                            cursor: pointer;
+                            transition: background 0.15s ease;
+                        }
+
+                        .manager-dashboard-datepicker .ui-datepicker-prev {
+                            left: 6px;
+                        }
+
+                        .manager-dashboard-datepicker .ui-datepicker-next {
+                            right: 6px;
+                        }
+
+                        .manager-dashboard-datepicker .ui-datepicker-prev:hover,
+                        .manager-dashboard-datepicker .ui-datepicker-next:hover,
+                        .manager-dashboard-datepicker .ui-datepicker-prev-hover,
+                        .manager-dashboard-datepicker .ui-datepicker-next-hover {
+                            background: rgba(255, 255, 255, 0.32);
+                            border: none;
+                            top: 50%;
+                            transform: translateY(-50%);
+                        }
+
+                        .manager-dashboard-datepicker .ui-datepicker-prev-hover {
+                            left: 6px;
+                        }
+
+                        .manager-dashboard-datepicker .ui-datepicker-next-hover {
+                            right: 6px;
+                        }
+
+                        .manager-dashboard-datepicker .ui-datepicker-prev .ui-icon,
+                        .manager-dashboard-datepicker .ui-datepicker-next .ui-icon {
+                            background-image: none;
+                            text-indent: -99999px;
+                            overflow: hidden;
+                            display: block;
+                            width: 100%;
+                            height: 100%;
+                            margin: 0;
+                            position: relative;
+                            top: 0;
+                            left: 0;
+                        }
+
+                        .manager-dashboard-datepicker .ui-datepicker-prev .ui-icon::before,
+                        .manager-dashboard-datepicker .ui-datepicker-next .ui-icon::before {
+                            content: '';
+                            position: absolute;
+                            top: 50%;
+                            left: 50%;
+                            width: 8px;
+                            height: 8px;
+                            border-top: 2px solid #ffffff;
+                            border-right: 2px solid #ffffff;
+                            text-indent: 0;
+                            pointer-events: none;
+                        }
+
+                        .manager-dashboard-datepicker .ui-datepicker-prev .ui-icon::before {
+                            transform: translate(-30%, -50%) rotate(-135deg);
+                        }
+
+                        .manager-dashboard-datepicker .ui-datepicker-next .ui-icon::before {
+                            transform: translate(-70%, -50%) rotate(45deg);
+                        }
+
+                        .manager-dashboard-datepicker select.ui-datepicker-month,
+                        .manager-dashboard-datepicker select.ui-datepicker-year {
+                            background: rgba(255, 255, 255, 0.95);
+                            color: #1f2937;
+                            border: none;
+                            border-radius: 6px;
+                            padding: 3px 6px;
+                            font-size: 12px;
+                            font-weight: 500;
+                            margin: 0 2px;
+                        }
+
+                        .manager-dashboard-datepicker table {
+                            margin: 0;
+                            font-size: 13px;
+                            border-collapse: separate;
+                            border-spacing: 2px;
+                        }
+
+                        .manager-dashboard-datepicker th {
+                            color: #94a3b8;
+                            font-weight: 600;
+                            font-size: 11px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                            padding: 6px 0;
+                            border: none;
+                        }
+
+                        .manager-dashboard-datepicker td {
+                            padding: 1px;
+                            border: none;
+                        }
+
+                        .manager-dashboard-datepicker td span,
+                        .manager-dashboard-datepicker td a {
+                            display: block;
+                            text-align: center;
+                            padding: 7px 0;
+                            border: none;
+                            background: transparent;
+                            color: #1f2937;
+                            border-radius: 8px;
+                            font-weight: 500;
+                            transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+                        }
+
+                        .manager-dashboard-datepicker td a:hover {
+                            background: #eef2f7;
+                            color: #1f2937;
+                            transform: scale(1.05);
+                        }
+
+                        .manager-dashboard-datepicker td .ui-state-highlight {
+                            background: #eef0f5;
+                            color: #192338;
+                            font-weight: 700;
+                        }
+
+                        .manager-dashboard-datepicker td .ui-state-active,
+                        .manager-dashboard-datepicker td a.ui-state-active {
+                            background: linear-gradient(135deg, #192338 0%, #2c3a5e 100%);
+                            color: #ffffff;
+                            font-weight: 600;
+                            box-shadow: 0 4px 10px rgba(25, 35, 56, 0.4);
+                        }
+
+                        .manager-dashboard-datepicker td.ui-datepicker-other-month span,
+                        .manager-dashboard-datepicker td.ui-datepicker-other-month a {
+                            color: #cbd5e1;
+                        }
+
+                        .manager-dashboard-datepicker td.ui-datepicker-unselectable span {
+                            color: #cbd5e1;
+                            opacity: 0.6;
+                        }
+
+                        .input-group.date {
+                            position: relative;
+                        }
+
+                        .input-group.date .input-group-addon {
+                            cursor: pointer;
+                            background-color: #3c8dbc;
+                            border-color: #3c8dbc;
+                            color: white;
+                            cursor: pointer;
+                        }
+                        .input-group-addon {
+                            cursor: pointer;
+                            background-color: #030d1c !important;
+                            border-color: #030d1c !important;
+                            color: white;
+                            cursor: pointer;
+                        }
+
+                        .input-group.date .input-group-addon:hover {
+                            background-color: #367fa9;
+                            border-color: #367fa9;
+                        }
+
+                        /* Quick range dropdown styling */
+                        #rangeDropdown li a {
+                            padding: 8px 15px;
+                        }
+
+                        #rangeDropdown li a:hover {
+                            background-color: #f5f5f5;
+                        }
+
+                        #rangeDropdown li a i {
+                            margin-right: 8px;
+                            width: 16px;
+                            text-align: center;
                         }
                     </style>
 
@@ -285,22 +529,53 @@
                                             <s:hidden name="searchAction" value="search" />
                                             <s:hidden name="_token" value="%{_token}" />
                                             <bs:row>
-                                                <bs:mco colsize="3">
-                                                    <div class="form-group">
-                                                        <label>Date Range:</label>
-                                                        <div class="input-group">
-                                                            <button type="button" class="btn btn-primary pull-right"
-                                                                id="daterange-btn">
-                                                                <i class="fa fa-calendar"></i> <span
-                                                                    id="daterange-text">Select Date Range</span>
-                                                                <i class="fa fa-caret-down"></i>
-                                                            </button>
-                                                        </div>
-                                                        <s:hidden name="startDate" id="startDate" />
-                                                        <s:hidden name="endDate" id="endDate" />
-                                                    </div>
-                                                </bs:mco>
-                                                <bs:mco colsize="3">
+                                                <bs:mco colsize="4">
+													<bs:row>
+														<bs:mco colsize="4">
+															<div class="form-group">
+																<label>Start Date:</label>
+																<div class="input-group">
+																	<input type="text" class="form-control" id="startDateDisplay" value="<s:date name="startDate" format="MM/dd/yyyy" />" placeholder="mm/dd/yyyy" />
+																	<span class="input-group-addon" id="startDateBtn"><i class="fa fa-calendar"></i></span>
+																	<s:hidden name="startDate" id="startDate" />
+																</div>
+																<span class="help-block date-error" id="startDateError" style="color: #dd4b39; display: none; margin-top: 4px;">Please enter a valid date</span>
+															</div>
+														</bs:mco>
+														<bs:mco colsize="4">
+															<div class="form-group">
+																<label>End Date:</label>
+																<div class="input-group">
+																	<input type="text" class="form-control" id="endDateDisplay" value="<s:date name="endDate" format="MM/dd/yyyy" />" placeholder="mm/dd/yyyy" />
+																	<span class="input-group-addon" id="endDateBtn"><i class="fa fa-calendar"></i></span>
+																	<s:hidden name="endDate" id="endDate" />
+																</div>
+																<span class="help-block date-error" id="endDateError" style="color: #dd4b39; display: none; margin-top: 4px;">Please enter a valid date</span>
+															</div>
+														</bs:mco>
+														<bs:mco colsize="4">
+															<div class="form-group">
+																<label>Quick Ranges:</label>
+																<div class="btn-group" style="width: 100%">
+																	<button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown">
+																		<i class="fa fa-clock-o"></i> <span id="rangeLabel">Select Range</span> <span class="caret"></span>
+																	</button>
+																	<ul class="dropdown-menu" role="menu" id="rangeDropdown">
+																		<li><a href="#" data-range="today"><i class="fa fa-calendar"></i> Today</a></li>
+																		<li><a href="#" data-range="yesterday"><i class="fa fa-calendar"></i> Yesterday</a></li>
+																		<li><a href="#" data-range="7days"><i class="fa fa-calendar"></i> Last 7 Days</a></li>
+																		<li><a href="#" data-range="30days"><i class="fa fa-calendar"></i> Last 30 Days</a></li>
+																		<li><a href="#" data-range="month"><i class="fa fa-calendar"></i> This Month</a></li>
+																		<li><a href="#" data-range="lastmonth"><i class="fa fa-calendar"></i> Last Month</a></li>
+																		<li><a href="#" data-range="year"><i class="fa fa-calendar"></i> This Year</a></li>
+																		<li><a href="#" data-range="alltime"><i class="fa fa-calendar"></i> All Time</a></li>
+																	</ul>
+																</div>
+															</div>
+														</bs:mco>
+													</bs:row>
+												</bs:mco>
+                                                <bs:mco colsize="4">
                                                     <div class="form-group">
                                                         <label>Assessment Type:</label>
                                                         <s:select name="typeId" list="assessmentTypes" listKey="id"
@@ -308,7 +583,7 @@
                                                             cssClass="form-control" />
                                                     </div>
                                                 </bs:mco>
-                                                <bs:mco colsize="3">
+                                                <bs:mco colsize="4">
                                                     <div class="form-group">
                                                         <label>Team:</label>
                                                         <s:select name="teamId" list="teams" listKey="id"
@@ -316,7 +591,9 @@
                                                             headerValue="-- All Teams --" cssClass="form-control" />
                                                     </div>
                                                 </bs:mco>
-                                                <bs:mco colsize="3">
+                                            </bs:row>
+                                            <bs:row>
+                                                <bs:mco colsize="4">
                                                     <div class="form-group">
                                                         <label>Status:</label>
                                                         <s:select name="status" list="statuses" listKey="id"
@@ -324,9 +601,7 @@
                                                             headerValue="-- All Statuses --" cssClass="form-control" />
                                                     </div>
                                                 </bs:mco>
-                                            </bs:row>
-                                            <bs:row>
-                                                <bs:mco colsize="3">
+                                                <bs:mco colsize="4">
                                                     <div class="form-group">
                                                         <label>Assessor:</label>
                                                         <s:select name="assessorId" list="assessors" listKey="id"
@@ -334,7 +609,7 @@
                                                             headerValue="-- All Assessors --" cssClass="form-control" />
                                                     </div>
                                                 </bs:mco>
-                                                <bs:mco colsize="3">
+                                                <bs:mco colsize="4">
                                                     <div class="form-group">
                                                         <label>Campaign:</label>
                                                         <s:select name="campaignId" list="campaigns" listKey="id"
@@ -342,7 +617,19 @@
                                                             headerValue="-- All Campaigns --" cssClass="form-control" />
                                                     </div>
                                                 </bs:mco>
-                                                <bs:mco colsize="3">
+                                            </bs:row>
+                                            <bs:row>
+                                                <bs:mco colsize="4">
+                                                    <div class="form-group">
+                                                        <label>Severity:</label>
+                                                        <div class="severity-checkbox-list">
+                                                            <s:checkboxlist name="severityIds" list="activeRiskLevels"
+                                                                listKey="riskId" listValue="risk" />
+                                                        </div>
+                                                        <span class="help-block" style="font-size: 11px; color: #777; margin-top: 4px;">Matches assessments containing at least one vulnerability of the selected severities.</span>
+                                                    </div>
+                                                </bs:mco>
+                                                <bs:mco colsize="4">
                                                     <div class="form-group">
                                                         <label>&nbsp;</label>
                                                         <button type="submit" class="btn btn-block btn-primary btn-md">
@@ -350,7 +637,7 @@
                                                         </button>
                                                     </div>
                                                 </bs:mco>
-                                                <bs:mco colsize="3">
+                                                <bs:mco colsize="4">
                                                     <div class="form-group">
                                                         <label>&nbsp;</label>
 														<div class="btn btn-block btn-success btn-md" id="exportCsvBtn"
@@ -519,6 +806,12 @@
                                                             href="EditAssessment?action=get&aid=<s:property value='id'/>"
                                                             class="" title="Edit Assessment">
                                                             <i class="fa fa-pencil"></i>
+                                                        </a>
+                                                        &nbsp;
+                                                        <a target="_blank"
+                                                            href="../service/Report.pdf?id=<s:property value='id'/>"
+                                                            title="Download Report">
+                                                            <i class="fa fa-download"></i>
                                                         </a>
                                                     </td>
                                                     <td>
