@@ -2,7 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.faction</groupId>
 	<artifactId>faction</artifactId>
-	<version>1.7.7-SNAPSHOT</version>
+	<version>1.8.4-SNAPSHOT</version>
 	<packaging>war</packaging>
 	<name>Faction</name>
 	<scm>
@@ -10,7 +10,7 @@
 		<connection>scm:git:https://github.com/factionsecurity/faction.git</connection>
 		<developerConnection>
 			scm:git:https://github.com/factionsecurity/faction.git</developerConnection>
-		<tag>1.7.5</tag>
+		<tag>1.8.3</tag>
 	</scm>
 	<properties>
 		<aws.java.sdk.version>2.18.16</aws.java.sdk.version>
@@ -102,7 +102,7 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.21.1</version>
+			<version>2.25.4</version>
 		</dependency>
 		<dependency>
 			<groupId>javax.servlet</groupId>
@@ -457,6 +457,12 @@
 			<groupId>org.mockito</groupId>
 			<artifactId>mockito-core</artifactId>
 			<version>3.10.0</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.testcontainers</groupId>
+			<artifactId>mongodb</artifactId>
+			<version>1.20.4</version>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

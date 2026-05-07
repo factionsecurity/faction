@@ -84,7 +84,8 @@ public class assessments {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/queue")
     public Response getAssessments(
-            @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey) {
+            @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
+            @ApiParam(value = "Include base64-encoded images (default false). When false, returns links to Faction images; when true, converts images to base64 data URLs.", required = false) @QueryParam("includeBase64Images") Boolean includeBase64Images) {
 
         EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
         List<AssessmentDTO> dtos = new ArrayList<>();
@@ -95,7 +96,9 @@ public class assessments {
                     List<Assessment> asmts = AssessmentQueries.getAssessmentsByUserId(em, u, u.getId(),
                             AssessmentQueries.OnlyNonCompleted);
                     for (Assessment a : asmts) {
-                        AssessmentQueries.updateImages(a);
+                        if (Boolean.TRUE.equals(includeBase64Images)) {
+                            AssessmentQueries.updateImages(a);
+                        }
                         AssessmentDTO dto = AssessmentDTO.fromEntity(a);
 
                         // Add custom fields if any
@@ -141,7 +144,8 @@ public class assessments {
     @Path("/{aid}")
     public Response getAssessment(
             @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
-            @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid) {
+            @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
+            @ApiParam(value = "Include base64-encoded images (default false). When false, returns links to Faction images; when true, converts images to base64 data URLs.", required = false) @QueryParam("includeBase64Images") Boolean includeBase64Images) {
 
         EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
         try {
@@ -185,7 +189,9 @@ public class assessments {
                 }
 
                 // Convert to DTO
-                AssessmentQueries.updateImages(assessment);
+                if (Boolean.TRUE.equals(includeBase64Images)) {
+                    AssessmentQueries.updateImages(assessment);
+                }
                 AssessmentDTO dto = AssessmentDTO.fromEntity(assessment);
 
                 // Add custom fields from the assessment entity
@@ -585,7 +591,8 @@ public class assessments {
     @Path("/vulns/{aid}")
     public Response getVulns(
             @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
-            @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid) {
+            @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
+            @ApiParam(value = "Include base64-encoded images (default false). When false, returns links to Faction images; when true, converts images to base64 data URLs.", required = false) @QueryParam("includeBase64Images") Boolean includeBase64Images) {
 
         EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
         List<VulnerabilityDTO> dtos = new ArrayList<>();
@@ -599,8 +606,10 @@ public class assessments {
                     return Response.status(401).entity(String.format(Support.ERROR, "No Assessment")).build();
                 for (Assessment a : asmts) {
                     for (Vulnerability v : a.getVulns()) {
-                    	v.updateRiskLevels();
-                        AssessmentQueries.updateImages(a, v);
+                        if (Boolean.TRUE.equals(includeBase64Images)) {
+                            AssessmentQueries.updateImages(a, v);
+                        }
+                        v.updateRiskLevels();
                         v.updateRiskLevels(em);
                         VulnerabilityDTO dto = VulnerabilityDTO.fromEntity(v);
 
@@ -643,7 +652,8 @@ public class assessments {
     @Path("/history/{appid}")
     public Response getHistory(
             @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
-            @ApiParam(value = "Application ID Header", required = true) @PathParam("appid") String appid) {
+            @ApiParam(value = "Application ID Header", required = true) @PathParam("appid") String appid,
+            @ApiParam(value = "Include base64-encoded images (default false). When false, returns links to Faction images; when true, converts images to base64 data URLs.", required = false) @QueryParam("includeBase64Images") Boolean includeBase64Images) {
 
         EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
         List<VulnerabilityDTO> dtos = new ArrayList<>();
@@ -657,7 +667,9 @@ public class assessments {
                     return Response.status(401).entity(String.format(Support.ERROR, "No Assessment")).build();
                 for (Assessment a : asmts) {
                     for (Vulnerability v : a.getVulns()) {
-                        AssessmentQueries.updateImages(a, v);
+                        if (Boolean.TRUE.equals(includeBase64Images)) {
+                            AssessmentQueries.updateImages(a, v);
+                        }
                         v.updateRiskLevels(em);
                         VulnerabilityDTO dto = VulnerabilityDTO.fromEntity(v);
 
@@ -746,7 +758,8 @@ public class assessments {
     @Path("/vuln/{vid}")
     public Response getVuln(
             @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
-            @ApiParam(value = "Vulnerability ID", required = true) @PathParam("vid") Long vid) {
+            @ApiParam(value = "Vulnerability ID", required = true) @PathParam("vid") Long vid,
+            @ApiParam(value = "Include base64-encoded images (default false). When false, returns links to Faction images; when true, converts images to base64 data URLs.", required = false) @QueryParam("includeBase64Images") Boolean includeBase64Images) {
 
         EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
         List<VulnerabilityDTO> dtos = new ArrayList<>();
@@ -778,7 +791,9 @@ public class assessments {
                     v.setDetails(v.getDetails());
                 }
 
-                AssessmentQueries.updateImages(em, v);
+                if (Boolean.TRUE.equals(includeBase64Images)) {
+                    AssessmentQueries.updateImages(em, v);
+                }
                 v.updateRiskLevels(em);
                 VulnerabilityDTO dto = VulnerabilityDTO.fromEntity(v);
 
@@ -1323,7 +1338,8 @@ public class assessments {
     public Response getCompletedAssessments(
             @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
             @ApiParam(value = "Start Date (DD/MM/YYYY)", required = true) @FormParam("start") String start,
-            @ApiParam(value = "End Date (DD/MM/YYYY)", required = false) @FormParam("end") String end) {
+            @ApiParam(value = "End Date (DD/MM/YYYY)", required = false) @FormParam("end") String end,
+            @ApiParam(value = "Include base64-encoded images (default false). When false, returns links to Faction images; when true, converts images to base64 data URLs.", required = false) @QueryParam("includeBase64Images") Boolean includeBase64Images) {
         EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
         List<AssessmentDTO> dtos = new ArrayList<>();
         try {
@@ -1345,7 +1361,9 @@ public class assessments {
                 List<Assessment> completed = AssessmentQueries.getAllCompletedAssessmentsByDateRange(em, u, startDate,
                         endDate);
                 for (Assessment a : completed) {
-                    AssessmentQueries.updateImages(a);
+                    if (Boolean.TRUE.equals(includeBase64Images)) {
+                        AssessmentQueries.updateImages(a);
+                    }
                     AssessmentDTO dto = AssessmentDTO.fromEntity(a);
 
                     // Add custom fields if any
@@ -1384,7 +1402,8 @@ public class assessments {
     public Response getCondensedCompletedAssessments(
             @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
             @ApiParam(value = "Start Date (DD/MM/YYYY)", required = true) @QueryParam("start") String start,
-            @ApiParam(value = "End Date (DD/MM/YYYY)", required = false) @QueryParam("end") String end) {
+            @ApiParam(value = "End Date (DD/MM/YYYY)", required = false) @QueryParam("end") String end,
+            @ApiParam(value = "Include base64-encoded images (default false). When false, returns links to Faction images; when true, converts images to base64 data URLs.", required = false) @QueryParam("includeBase64Images") Boolean includeBase64Images) {
         EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
         List<AssessmentCondensedDTO> dtos = new ArrayList<>();
         try {
@@ -1406,7 +1425,9 @@ public class assessments {
                 List<Assessment> completed = AssessmentQueries.getAllCompletedAssessmentsByDateRange(em, u, startDate,
                         endDate);
                 for (Assessment a : completed) {
-                    AssessmentQueries.updateImages(a);
+                    if (Boolean.TRUE.equals(includeBase64Images)) {
+                        AssessmentQueries.updateImages(a);
+                    }
                     AssessmentCondensedDTO dto = AssessmentCondensedDTO.fromEntityWithVulns(a);
                     dtos.add(dto);
                 }
