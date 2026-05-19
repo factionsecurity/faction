@@ -134,9 +134,3 @@ Extensions will also allow custom bar charts to your reports:
 
 Generated report with graphics:
 ![image](https://github.com/factionsecurity/faction/assets/2343831/abf9b5d4-2638-411d-a57c-89fcd5819976)
-
-
-
-
-
-
