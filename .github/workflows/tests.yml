@@ -1,0 +1,59 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: mvn test
+    runs-on: ubuntu-latest
+
+    services:
+      mongo:
+        image: mongo:5
+        ports:
+          - 27017:27017
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Wait for MongoDB
+        run: |
+          for i in {1..30}; do
+            if (echo > /dev/tcp/localhost/27017) >/dev/null 2>&1; then
+              echo "MongoDB is up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "MongoDB did not start in time" >&2
+          exit 1
+
+      - name: Run tests
+        run: |
+          mvn -B test \
+            -DFACTION_MONGO_HOST=localhost \
+            -DFACTION_MONGO_PORT=27017 \
+            -DFACTION_MONGO_DATABASE=faction-test
+
+      - name: Upload surefire reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          if-no-files-found: ignore
