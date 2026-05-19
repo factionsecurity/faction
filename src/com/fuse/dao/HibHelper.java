@@ -42,10 +42,9 @@ public class HibHelper {
 				properties.put("hibernate.ogm.datastore.password", FSUtils.getEnv("FACTION_MONGO_PASSWORD"));
 
 				properties.put("hibernate.ogm.datastore.host", FSUtils.getEnv("FACTION_MONGO_HOST"));
-				properties.put("hibernate.ogm.datastore.database", System.getenv("FACTION_MONGO_DATABASE"));
-				properties.put("hibernate.ogm.datastore.port", System.getenv("FACTION_MONGO_PORT"));
-				properties.put("hibernate.ogm.mongodb.authentication_database", System.getenv("FACTION_MONGO_AUTH_DATABASE"));
-				//if(!System.getenv("FACTION_MONGO_AUTH_DATABASE").equals(""))
+				properties.put("hibernate.ogm.datastore.database", FSUtils.getEnv("FACTION_MONGO_DATABASE"));
+				properties.put("hibernate.ogm.datastore.port", FSUtils.getEnv("FACTION_MONGO_PORT"));
+				properties.put("hibernate.ogm.mongodb.authentication_database", FSUtils.getEnv("FACTION_MONGO_AUTH_DATABASE"));
 				properties.put("hibernate.ogm.mongodb.retryWrites", "false");
 				properties.put("hibernate.ogm.mongodb.connectTimeoutMS", "3000");
 				properties.put("hibernate.ogm.mongodb.readPreference", "secondaryPreferred");

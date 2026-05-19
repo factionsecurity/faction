@@ -8,6 +8,7 @@ import java.util.*;
 
 import com.fuse.dao.*;
 import com.fuse.api.dto.*;
+import com.opencsv.CSVReader;
 
 /**
  * Unit tests for Vulnerabilities REST API endpoint logic.
@@ -441,5 +442,382 @@ public class VulnerabilitiesUnitTest {
         cat.setId(1L);
         cat.setName("Injection");
         return cat;
+    }
+
+    // --- CSV Upload Helper Tests (vulnerabilities.buildHeaderMap / getCol / etc.) ---
+
+    @Test
+    public void testBuildHeaderMapLowercasesAndIndexes() {
+        String[] header = { "Id", "Name", "CategoryId", "Description" };
+        Map<String, Integer> map = vulnerabilities.buildHeaderMap(header);
+
+        assertEquals(Integer.valueOf(0), map.get("id"));
+        assertEquals(Integer.valueOf(1), map.get("name"));
+        assertEquals(Integer.valueOf(2), map.get("categoryid"));
+        assertEquals(Integer.valueOf(3), map.get("description"));
+    }
+
+    @Test
+    public void testBuildHeaderMapIgnoresBlankAndNullCells() {
+        String[] header = { "Id", "", null, "Name" };
+        Map<String, Integer> map = vulnerabilities.buildHeaderMap(header);
+
+        assertEquals(Integer.valueOf(0), map.get("id"));
+        assertEquals(Integer.valueOf(3), map.get("name"));
+        assertFalse("blank header should be skipped", map.containsKey(""));
+    }
+
+    @Test
+    public void testBuildHeaderMapTrimsWhitespace() {
+        String[] header = { "  Id  ", " Name " };
+        Map<String, Integer> map = vulnerabilities.buildHeaderMap(header);
+
+        assertEquals(Integer.valueOf(0), map.get("id"));
+        assertEquals(Integer.valueOf(1), map.get("name"));
+    }
+
+    @Test
+    public void testBuildHeaderMapKeepsFirstOccurrenceOfDuplicate() {
+        String[] header = { "Name", "Other", "name" };
+        Map<String, Integer> map = vulnerabilities.buildHeaderMap(header);
+        assertEquals("first occurrence wins", Integer.valueOf(0), map.get("name"));
+    }
+
+    @Test
+    public void testGetColResolvesByPrimaryName() {
+        String[] line = { "1", "SQL Injection", "" };
+        Map<String, Integer> col = new HashMap<>();
+        col.put("id", 0);
+        col.put("name", 1);
+
+        assertEquals("SQL Injection", vulnerabilities.getCol(line, col, "name"));
+        assertEquals("1", vulnerabilities.getCol(line, col, "id"));
+    }
+
+    @Test
+    public void testGetColFallsBackToAlias() {
+        String[] line = { "1", "SQL Injection" };
+        Map<String, Integer> col = new HashMap<>();
+        col.put("vulnname", 1);
+
+        assertEquals("alias should resolve when primary is missing",
+                "SQL Injection", vulnerabilities.getCol(line, col, "name", "vulnname"));
+    }
+
+    @Test
+    public void testGetColReturnsNullWhenMissing() {
+        String[] line = { "1" };
+        Map<String, Integer> col = new HashMap<>();
+        col.put("id", 0);
+
+        assertNull(vulnerabilities.getCol(line, col, "categoryname"));
+    }
+
+    @Test
+    public void testGetColTolratesShortRow() {
+        String[] line = { "1" };
+        Map<String, Integer> col = new HashMap<>();
+        col.put("id", 0);
+        col.put("description", 4);
+
+        // index 4 doesn't exist on this line — should return null rather than throw
+        assertNull(vulnerabilities.getCol(line, col, "description"));
+    }
+
+    @Test
+    public void testLegacyPositionalMapHasAllExpectedColumns() {
+        Map<String, Integer> map = vulnerabilities.legacyPositionalMap();
+        assertEquals(Integer.valueOf(0), map.get("id"));
+        assertEquals(Integer.valueOf(1), map.get("name"));
+        assertEquals(Integer.valueOf(1), map.get("vulnname"));
+        assertEquals(Integer.valueOf(2), map.get("categoryid"));
+        assertEquals(Integer.valueOf(3), map.get("categoryname"));
+        assertEquals(Integer.valueOf(4), map.get("description"));
+        assertEquals(Integer.valueOf(5), map.get("recommendation"));
+        assertEquals(Integer.valueOf(6), map.get("severityid"));
+        assertEquals(Integer.valueOf(7), map.get("impactid"));
+        assertEquals(Integer.valueOf(8), map.get("likelihoodid"));
+        assertEquals(Integer.valueOf(9), map.get("isactive"));
+        assertEquals(Integer.valueOf(9), map.get("active"));
+        assertEquals(Integer.valueOf(10), map.get("cvss31score"));
+        assertEquals(Integer.valueOf(11), map.get("cvss31string"));
+        assertEquals(Integer.valueOf(12), map.get("cvss40score"));
+        assertEquals(Integer.valueOf(13), map.get("cvss40string"));
+        assertEquals(Integer.valueOf(14), map.get("customfields"));
+    }
+
+    @Test
+    public void testIsBlankDetectsNullAndWhitespace() {
+        assertTrue(vulnerabilities.isBlank(null));
+        assertTrue(vulnerabilities.isBlank(""));
+        assertTrue(vulnerabilities.isBlank("   "));
+        assertFalse(vulnerabilities.isBlank(" x "));
+    }
+
+    @Test
+    public void testNullIfBlankTrimsAndNullsOutEmpty() {
+        assertNull(vulnerabilities.nullIfBlank(null));
+        assertNull(vulnerabilities.nullIfBlank(""));
+        assertNull(vulnerabilities.nullIfBlank("   "));
+        assertEquals("hello", vulnerabilities.nullIfBlank("  hello  "));
+    }
+
+    @Test
+    public void testUnescapeNewlinesRestoresLiteralEscapes() {
+        // Download writes literal "\r" and "\n"; upload should restore actual control chars.
+        assertEquals("a\nb", vulnerabilities.unescapeNewlines("a\\nb"));
+        assertEquals("a\rb", vulnerabilities.unescapeNewlines("a\\rb"));
+        assertEquals("a\r\nb", vulnerabilities.unescapeNewlines("a\\r\\nb"));
+    }
+
+    @Test
+    public void testUnescapeNewlinesNullSafe() {
+        assertEquals("", vulnerabilities.unescapeNewlines(null));
+    }
+
+    @Test
+    public void testUnescapeNewlinesLeavesNonEscapesAlone() {
+        // A real backslash followed by anything other than r/n should pass through.
+        String input = "C:\\Users\\test";
+        assertEquals(input, vulnerabilities.unescapeNewlines(input));
+    }
+
+    // --- CSV Parser Config Tests (backslash preservation) ---
+
+    @Test
+    public void testCsvReaderPreservesBackslashesInQuotedFields() throws Exception {
+        // Default opencsv parser eats backslash-as-escape; buildCsvReader must turn that off
+        // so JSON custom fields and HTML descriptions round-trip cleanly.
+        String csv = "Id,Description\n" +
+                "1,\"<a href='x'>\\r literal</a>\"\n";
+        CSVReader reader = vulnerabilities.buildCsvReader(csv);
+        String[] header = reader.readNext();
+        String[] row = reader.readNext();
+
+        assertEquals("Id", header[0]);
+        assertEquals("Description", header[1]);
+        assertEquals("1", row[0]);
+        // Backslash must survive intact
+        assertTrue("backslash should not be consumed: " + row[1],
+                row[1].contains("\\r literal"));
+    }
+
+    @Test
+    public void testCsvReaderHandlesEmbeddedJsonCustomFields() throws Exception {
+        String csv = "Id,CustomFields\n" +
+                "1,\"[{\"\"Key\"\":\"\"CWE\"\",\"\"Value\"\":\"\"79\"\"}]\"\n";
+        CSVReader reader = vulnerabilities.buildCsvReader(csv);
+        reader.readNext(); // header
+        String[] row = reader.readNext();
+
+        assertEquals("1", row[0]);
+        assertEquals("[{\"Key\":\"CWE\",\"Value\":\"79\"}]", row[1]);
+    }
+
+    @Test
+    public void testCsvReaderHandlesMultilineQuotedFields() throws Exception {
+        String csv = "Id,Recommendation\n" +
+                "1,\"line one\nline two\"\n";
+        CSVReader reader = vulnerabilities.buildCsvReader(csv);
+        reader.readNext(); // header
+        String[] row = reader.readNext();
+
+        assertEquals("line one\nline two", row[1]);
+    }
+
+    // --- End-to-end column mapping (header → field) ---
+
+    @Test
+    public void testHeaderDrivenLookupReproducesDownloadColumns() {
+        String[] header = {
+                "Id", "Name", "CategoryId", "CategoryName", "Description",
+                "Recommendation", "SeverityId", "ImpactId", "LikelihoodId",
+                "isActive", "CVSS31Score", "CVSS31String", "CVSS40Score",
+                "CVSS40String", "CustomFields"
+        };
+        String[] row = {
+                "2", "Allowed HTTP methods", "3", "Server Misconfiguration",
+                "<p>desc</p>", "<p>rec</p>", "0", "0", "0", "true",
+                "0", "CVSS:3.1/AV:N", "0", "CVSS:4.0/AV:N",
+                "[{\"Key\":\"CWE\",\"Value\":\"79\"}]"
+        };
+        Map<String, Integer> col = vulnerabilities.buildHeaderMap(header);
+
+        assertEquals("2", vulnerabilities.getCol(row, col, "id"));
+        assertEquals("Allowed HTTP methods", vulnerabilities.getCol(row, col, "name", "vulnname"));
+        assertEquals("3", vulnerabilities.getCol(row, col, "categoryid"));
+        assertEquals("Server Misconfiguration", vulnerabilities.getCol(row, col, "categoryname"));
+        assertEquals("<p>desc</p>", vulnerabilities.getCol(row, col, "description"));
+        assertEquals("<p>rec</p>", vulnerabilities.getCol(row, col, "recommendation"));
+        assertEquals("true", vulnerabilities.getCol(row, col, "isactive", "active"));
+        assertEquals("CVSS:3.1/AV:N", vulnerabilities.getCol(row, col, "cvss31string", "cvssstring"));
+        assertEquals("CVSS:4.0/AV:N", vulnerabilities.getCol(row, col, "cvss40string"));
+        assertEquals("[{\"Key\":\"CWE\",\"Value\":\"79\"}]",
+                vulnerabilities.getCol(row, col, "customfields"));
+    }
+
+    @Test
+    public void testHeaderDrivenLookupSurvivesColumnReorder() {
+        // User reorders columns in Excel before uploading — header-driven mapping must follow.
+        String[] header = { "Name", "Id", "CategoryName", "Description" };
+        String[] row = { "XSS", "7", "Injection", "<p>script</p>" };
+        Map<String, Integer> col = vulnerabilities.buildHeaderMap(header);
+
+        assertEquals("7", vulnerabilities.getCol(row, col, "id"));
+        assertEquals("XSS", vulnerabilities.getCol(row, col, "name"));
+        assertEquals("Injection", vulnerabilities.getCol(row, col, "categoryname"));
+        assertEquals("<p>script</p>", vulnerabilities.getCol(row, col, "description"));
+    }
+
+    @Test
+    public void testHeaderDrivenLookupTolratesMissingOptionalColumns() {
+        // CSV without CustomFields column — getCol returns null instead of throwing.
+        String[] header = { "Id", "Name", "CategoryName", "Description" };
+        String[] row = { "1", "XSS", "Injection", "<p>x</p>" };
+        Map<String, Integer> col = vulnerabilities.buildHeaderMap(header);
+
+        assertNull(vulnerabilities.getCol(row, col, "customfields"));
+        assertNull(vulnerabilities.getCol(row, col, "cvss31score", "cvssscore"));
+    }
+
+    @Test
+    public void testRoundTripPreservesDescriptionAndCustomFields() throws Exception {
+        // Regression: user reported uploading a downloaded CSV blanked everything out.
+        // Verify the actual bug-report shape parses and every field is recoverable.
+        String csv = "Id,Name,CategoryId,CategoryName,Description,Recommendation," +
+                "SeverityId,ImpactId,LikelihoodId,isActive,CVSS31Score,CVSS31String," +
+                "CVSS40Score,CVSS40String,CustomFields\n" +
+                "\"2\",\"Allowed HTTP methods\",\"3\",\"Server Misconfiguration\"," +
+                "\"<p>There are a number of <code>OPTIONS</code> methods.</p> \\r <br/>\"," +
+                "\"<p>Use <code>GET</code> and\\nblock all others.</p>\"," +
+                "\"0\",\"0\",\"0\",\"true\",\"0\",\"CVSS:3.1/AV:N/AC:L\"," +
+                "\"0\",\"CVSS:4.0/AV:N/AC:L\"," +
+                "\"[{\"\"Key\"\":\"\"CWE\"\",\"\"Value\"\":\"\"16\"\"},{\"\"Key\"\":\"\"Priority\"\",\"\"Value\"\":\"\"1.0\"\"}]\"\n";
+
+        CSVReader reader = vulnerabilities.buildCsvReader(csv);
+        String[] header = reader.readNext();
+        String[] row = reader.readNext();
+        Map<String, Integer> col = vulnerabilities.buildHeaderMap(header);
+
+        assertEquals("2", vulnerabilities.getCol(row, col, "id"));
+        assertEquals("Allowed HTTP methods", vulnerabilities.getCol(row, col, "name"));
+        assertEquals("3", vulnerabilities.getCol(row, col, "categoryid"));
+        assertEquals("Server Misconfiguration", vulnerabilities.getCol(row, col, "categoryname"));
+
+        // Description: backslash survived CSV parse, then unescapeNewlines turns \r into actual CR.
+        String description = vulnerabilities.unescapeNewlines(
+                vulnerabilities.getCol(row, col, "description"));
+        assertTrue("description must keep <code> tag: " + description,
+                description.contains("<code>OPTIONS</code>"));
+        assertTrue("description literal \\r must be restored to \\r",
+                description.contains("\r"));
+
+        // Recommendation: \n in download becomes a real newline after unescape.
+        String recommendation = vulnerabilities.unescapeNewlines(
+                vulnerabilities.getCol(row, col, "recommendation"));
+        assertTrue("recommendation must include <code>GET</code>",
+                recommendation.contains("<code>GET</code>"));
+        assertTrue("recommendation literal \\n must be restored to newline",
+                recommendation.contains("\n"));
+
+        // CVSS strings round-trip intact.
+        assertEquals("CVSS:3.1/AV:N/AC:L", vulnerabilities.getCol(row, col, "cvss31string"));
+        assertEquals("CVSS:4.0/AV:N/AC:L", vulnerabilities.getCol(row, col, "cvss40string"));
+
+        // CustomFields column is JSON parseable and round-trips both entries.
+        String customFieldsJson = vulnerabilities.getCol(row, col, "customfields");
+        assertNotNull("CustomFields column must be present", customFieldsJson);
+        com.fasterxml.jackson.databind.ObjectMapper mapper =
+                new com.fasterxml.jackson.databind.ObjectMapper();
+        List<CustomFieldDTO> fields = mapper.readValue(customFieldsJson,
+                new com.fasterxml.jackson.core.type.TypeReference<List<CustomFieldDTO>>() {});
+        assertEquals(2, fields.size());
+        assertEquals("CWE", fields.get(0).getKey());
+        assertEquals("16", fields.get(0).getValue());
+        assertEquals("Priority", fields.get(1).getKey());
+        assertEquals("1.0", fields.get(1).getValue());
+    }
+
+    @Test
+    public void testCsvWithJustHeaderProducesNoDataRows() throws Exception {
+        String csv = "Id,Name,CategoryName,Description\n";
+        CSVReader reader = vulnerabilities.buildCsvReader(csv);
+        String[] header = reader.readNext();
+        String[] row = reader.readNext();
+
+        assertNotNull(header);
+        assertNull("no data rows", row);
+    }
+
+    // --- Search escape helpers ---
+
+    @Test
+    public void testEscapeMongoRegexLeavesPlainTextAlone() {
+        assertEquals("SQL Injection", vulnerabilities.escapeMongoRegex("SQL Injection"));
+        assertEquals("hello world", vulnerabilities.escapeMongoRegex("hello world"));
+    }
+
+    @Test
+    public void testEscapeMongoRegexEscapesParens() {
+        // Regression: "(Timeroasting)" used to be parsed as a regex group and matched zero chars.
+        assertEquals("SNTP Information Disclosure \\(Timeroasting\\)",
+                vulnerabilities.escapeMongoRegex("SNTP Information Disclosure (Timeroasting)"));
+    }
+
+    @Test
+    public void testEscapeMongoRegexEscapesAllMetacharacters() {
+        // Each metachar must be backslash-prefixed once.
+        assertEquals("\\\\\\.\\[\\]\\{\\}\\(\\)\\*\\+\\?\\^\\$\\|\\/\\-",
+                vulnerabilities.escapeMongoRegex("\\.[]{}()*+?^$|/-"));
+    }
+
+    @Test
+    public void testEscapeMongoRegexHandlesSlashAndDash() {
+        // Regression: "LLMNR/NBT-NS Spoofing" — slash routes oddly via path params, so users
+        // hit GET /default/search?name= instead. We still want the regex to match literally.
+        String escaped = vulnerabilities.escapeMongoRegex("LLMNR/NBT-NS Spoofing");
+        assertEquals("LLMNR\\/NBT\\-NS Spoofing", escaped);
+    }
+
+    @Test
+    public void testEscapeMongoRegexNullSafe() {
+        assertEquals("", vulnerabilities.escapeMongoRegex(null));
+    }
+
+    @Test
+    public void testJsonStringEscapeEscapesQuoteAndBackslash() {
+        assertEquals("a\\\\b\\\"c", vulnerabilities.jsonStringEscape("a\\b\"c"));
+    }
+
+    @Test
+    public void testJsonStringEscapeEscapesControlCharacters() {
+        assertEquals("line1\\nline2", vulnerabilities.jsonStringEscape("line1\nline2"));
+        assertEquals("a\\tb", vulnerabilities.jsonStringEscape("a\tb"));
+        assertEquals("\\u0001", vulnerabilities.jsonStringEscape(""));
+    }
+
+    @Test
+    public void testJsonStringEscapeNullSafe() {
+        assertEquals("", vulnerabilities.jsonStringEscape(null));
+    }
+
+    @Test
+    public void testEscapeAndJsonComposesCleanly() {
+        // The full pipeline: regex-escape first, then JSON-escape so the resulting string
+        // is safe to inline into a double-quoted JSON literal.
+        String input = "SNTP Information Disclosure (Timeroasting)";
+        String pattern = vulnerabilities.jsonStringEscape(vulnerabilities.escapeMongoRegex(input));
+        // After JSON parsing the regex should see "SNTP Information Disclosure \(Timeroasting\)",
+        // i.e. escaped parens that match the literal characters.
+        assertEquals("SNTP Information Disclosure \\\\(Timeroasting\\\\)", pattern);
+    }
+
+    @Test
+    public void testEscapePreventsJsonInjection() {
+        // A name like {"$ne": ""} must not break out of the JSON string context.
+        String injection = "\" }, \"$ne\": \"";
+        String pattern = vulnerabilities.jsonStringEscape(vulnerabilities.escapeMongoRegex(injection));
+        assertFalse("escaped pattern must not contain a raw closing quote: " + pattern,
+                pattern.contains("\","));
     }
 }

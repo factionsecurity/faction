@@ -698,6 +698,11 @@ public class FSUtils {
 	
 	public static String getEnv(String ENV_VAR) {
 		String var = System.getenv(ENV_VAR);
+		// Fall back to JVM system properties so tests (and other callers) can
+		// inject values without needing real OS environment variables.
+		if (var == null) {
+			var = System.getProperty(ENV_VAR);
+		}
 		return var == null ? "" : var;
 	}
 	
