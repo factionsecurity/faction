@@ -495,13 +495,115 @@ $(function() {
 
 //<!-- History section -->
 $(function() {
-	$('#history').DataTable({
+	var historyTableOpts = {
 		"paging": true,
 		"lengthChange": false,
 		"searching": true,
 		"ordering": true,
 		"info": true,
-		"autoWidth": true
+		"autoWidth": true,
+		"columnDefs": [{ "orderable": false, "targets": -1 }]
+	};
+	$('#openHistory').DataTable(historyTableOpts);
+	$('#closedHistory').DataTable(historyTableOpts);
+
+	// Recalculate column widths when a (sub)tab becomes visible so tables that
+	// were rendered while hidden lay out correctly.
+	$('a[data-toggle="tab"], a[data-toggle="pill"]').on('shown.bs.tab', function() {
+		$.fn.dataTable.tables({ visible: true, api: true }).columns.adjust();
+	});
+
+	function markFindingAdded(btn) {
+		$(btn).closest('td').html('<span class="text-muted"><i class="fa fa-check"></i> Added</span>');
+	}
+
+	// Clone a single historical finding into the current assessment.
+	$(document).on('click', '.add-finding-btn', function() {
+		var btn = this;
+		var vulnid = $(btn).data('vulnid');
+		var data = "id=" + assessmentId;
+		data += "&vulnid=" + vulnid;
+		data += "&_token=" + global._token;
+		$(btn).prop('disabled', true);
+		$.post("AddHistoryFinding", data).done(function(resp) {
+			global._token = resp.token;
+			if (typeof resp.message == "undefined") {
+				markFindingAdded(btn);
+				alertMessage(resp, "Finding added to this assessment.");
+			} else {
+				$(btn).prop('disabled', false);
+				alertMessage(resp);
+			}
+		});
+	});
+
+	// Clone every open finding from prior assessments into the current one.
+	$("#addOpenFindings").click(function() {
+		$.confirm({
+			title: "Add Open Findings",
+			content: "Clone all open findings from previous assessments into this assessment?",
+			type: "blue",
+			columnClass: 'small',
+			buttons: {
+				confirm: function() {
+					var data = "id=" + assessmentId;
+					data += "&_token=" + global._token;
+					$.post("AddHistoryFinding", data).done(function(resp) {
+						global._token = resp.token;
+						if (typeof resp.message == "undefined") {
+							$("#openHistory").find(".add-finding-btn").each(function(i, b) {
+								markFindingAdded(b);
+							});
+							alertMessage(resp, "Open findings added to this assessment.");
+						} else {
+							alertMessage(resp);
+						}
+					});
+				},
+				cancel: function() {}
+			}
+		});
+	});
+
+	// Move the detail panel to <body> so position:fixed is relative to the
+	// viewport regardless of any transformed ancestor.
+	$("#vulnDetailPanel, #vulnDetailOverlay").appendTo("body");
+
+	function openVulnDetail(vulnid) {
+		$("#vulnDetailBody").html('<div style="text-align:center;padding:40px;"><i class="fa fa-spinner fa-spin fa-2x"></i></div>');
+		$("#vulnDetailOverlay").show();
+		$("#vulnDetailPanel").addClass("open");
+		$.get("HistoryVulnDetail", "vulnid=" + vulnid).done(function(resp) {
+			if (resp && typeof resp == "object") {
+				if (resp.token) global._token = resp.token;
+				$("#vulnDetailBody").html('<div class="alert alert-danger">' + (resp.message || "Unable to load finding details.") + '</div>');
+			} else {
+				$("#vulnDetailBody").html(resp);
+			}
+		}).fail(function() {
+			$("#vulnDetailBody").html('<div class="alert alert-danger">Failed to load finding details.</div>');
+		});
+	}
+
+	function closeVulnDetail() {
+		$("#vulnDetailPanel").removeClass("open");
+		$("#vulnDetailOverlay").hide();
+	}
+
+	// Clicking a history row opens the detail panel, but not when the click lands
+	// on the Add button or a link inside the row.
+	$(document).on("click", ".history-row", function(e) {
+		if ($(e.target).closest(".add-finding-btn, a").length)
+			return;
+		var vulnid = $(this).data("vulnid");
+		if (vulnid)
+			openVulnDetail(vulnid);
+	});
+
+	$(document).on("click", "#vulnDetailClose, #vulnDetailOverlay", closeVulnDetail);
+	$(document).on("keydown", function(e) {
+		if (e.key === "Escape")
+			closeVulnDetail();
 	});
 
 	var colors = ["#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"];

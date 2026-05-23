@@ -22,9 +22,11 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -455,6 +457,203 @@ public class AssessmentView extends FSActionSupport {
 
 	private Long cfid;
 	private String cfValue;
+	private Long vulnid;
+
+	public void setVulnid(Long vulnid) {
+		this.vulnid = vulnid;
+	}
+
+	/**
+	 * Clones one or more findings from this application's history into the current
+	 * assessment. When a {@code vulnid} is supplied a single finding is cloned;
+	 * otherwise every open finding from prior finalized assessments is carried
+	 * over. Findings whose tracking id already exists on the current assessment are
+	 * skipped so repeated clicks never create duplicates.
+	 */
+	@Action(value = "AddHistoryFinding")
+	public String addHistoryFinding() {
+		if (!(this.isAcassessor() || this.isAcmanager()))
+			return LOGIN;
+
+		if (!this.testToken(false))
+			return this.ERRORJSON;
+
+		User user = this.getSessionUser();
+		Long asmtId = SessionAsmtId();
+
+		Assessment current;
+		if (this.isAcmanager()) {
+			current = AssessmentQueries.getAssessmentById(em, asmtId);
+		} else {
+			current = AssessmentQueries.getAssessmentByUserId(em, user.getId(), asmtId, AssessmentQueries.All);
+		}
+
+		if (current == null) {
+			this._message = "Assessment not found.";
+			return this.ERRORJSON;
+		}
+
+		if (this.isAssessmentBlocked(current, user)) {
+			return this.ERRORJSON;
+		}
+
+		List<RiskLevel> levels = em.createQuery("from RiskLevel order by riskId").getResultList();
+		List<Vulnerability> appVulns = VulnerabilityQueries.getVulnerabilitiesByAppId(em, current.getAppId(), levels,
+				true);
+
+		// Tracking IDs already on this assessment so we never create duplicates.
+		Set<String> existingTracking = new HashSet<>();
+		for (Vulnerability cv : current.getVulns()) {
+			if (cv.getTracking() != null && !cv.getTracking().isEmpty())
+				existingTracking.add(cv.getTracking());
+		}
+
+		boolean single = this.vulnid != null && this.vulnid > 0;
+		List<Vulnerability> toClone = new ArrayList<Vulnerability>();
+		for (Vulnerability v : appVulns) {
+			if (v.getAssessmentId() == current.getId())
+				continue; // never clone from the current assessment into itself
+			if (single) {
+				if (v.getId() == this.vulnid) {
+					toClone.add(v);
+					break;
+				}
+			} else if (v.getClosed() == null) {
+				toClone.add(v); // bulk add carries over open findings only
+			}
+		}
+
+		if (single && toClone.isEmpty()) {
+			this._message = "Finding could not be found.";
+			return this.ERRORJSON;
+		}
+
+		int added = 0;
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		try {
+			for (Vulnerability src : toClone) {
+				if (src.getTracking() != null && existingTracking.contains(src.getTracking()))
+					continue; // already carried over
+				Vulnerability clone = cloneVulnerability(src, current, user);
+				current.getVulns().add(clone);
+				if (clone.getTracking() != null)
+					existingTracking.add(clone.getTracking());
+				added++;
+			}
+			em.persist(current);
+			AuditLog.audit(this, added + " finding(s) added to assessment from history.", AuditLog.UserAction,
+					AuditLog.CompAssessment, current.getId(), false);
+		} finally {
+			HibHelper.getInstance().commit();
+		}
+
+		if (added == 0) {
+			this._message = single ? "This finding has already been added to the assessment."
+					: "There are no new open findings to add.";
+			return this.ERRORJSON;
+		}
+
+		return this.SUCCESSJSON;
+	}
+
+	private Vulnerability cloneVulnerability(Vulnerability src, Assessment target, User user) {
+		Vulnerability clone = new Vulnerability();
+		clone.setAssessmentId(target.getId());
+		clone.setAssessorId(user.getId());
+		clone.setName(src.getName());
+		clone.setCategory(src.getCategory());
+		clone.setDefaultVuln(src.getDefaultVuln());
+		clone.setDescription(src.getDescription());
+		clone.setRecommendation(src.getRecommendation());
+		clone.setDetails(src.getDetails());
+		clone.setCvssString(src.getCvssString());
+		clone.setCvssScore(src.getCvssScore());
+		clone.setImpact(src.getImpact());
+		clone.setLikelyhood(src.getLikelyhood());
+		clone.setOverall(src.getOverall());
+		clone.setTracking(src.getTracking());
+
+		String section = src.getSection();
+		if (section != null && !section.equals("Default"))
+			clone.setSection(section);
+
+		List<CustomField> fields = new ArrayList<CustomField>();
+		if (src.getCustomFields() != null) {
+			for (CustomField cf : src.getCustomFields()) {
+				CustomField nf = new CustomField();
+				nf.setType(cf.getType());
+				nf.setValue(cf.getValue());
+				fields.add(nf);
+			}
+		}
+		clone.setCustomFields(fields);
+
+		return clone;
+	}
+
+	private Vulnerability detailVuln;
+	private Assessment detailAssessment;
+
+	public Vulnerability getDetailVuln() {
+		return detailVuln;
+	}
+
+	public Assessment getDetailAssessment() {
+		return detailAssessment;
+	}
+
+	/**
+	 * Returns a read-only HTML fragment with the full details of a single finding
+	 * from this application's history, used to populate the history side panel.
+	 * Access is limited to findings that belong to the same application as the
+	 * current assessment.
+	 */
+	@Action(value = "HistoryVulnDetail", results = {
+			@Result(name = "vulnDetail", location = "/WEB-INF/jsp/assessment/vulnDetailPanel.jsp") })
+	public String historyVulnDetail() {
+		if (!(this.isAcassessor() || this.isAcmanager()))
+			return LOGIN;
+
+		if (this.vulnid == null) {
+			this._message = "No finding specified.";
+			return this.ERRORJSON;
+		}
+
+		User user = this.getSessionUser();
+		Long asmtId = SessionAsmtId();
+
+		Assessment current;
+		if (this.isAcmanager()) {
+			current = AssessmentQueries.getAssessmentById(em, asmtId);
+		} else {
+			current = AssessmentQueries.getAssessmentByUserId(em, user.getId(), asmtId, AssessmentQueries.All);
+		}
+
+		if (current == null) {
+			this._message = "Assessment not found.";
+			return this.ERRORJSON;
+		}
+
+		Vulnerability v = em.find(Vulnerability.class, this.vulnid);
+		if (v == null) {
+			this._message = "Finding not found.";
+			return this.ERRORJSON;
+		}
+
+		detailAssessment = AssessmentQueries.getAssessmentById(em, v.getAssessmentId());
+		// Only allow viewing findings that belong to the same application.
+		if (detailAssessment == null || detailAssessment.getAppId() == null
+				|| !detailAssessment.getAppId().equals(current.getAppId())) {
+			this._message = "You do not have access to this finding.";
+			return this.ERRORJSON;
+		}
+
+		v.updateRiskLevels(em);
+		detailVuln = v;
+
+		return "vulnDetail";
+	}
 
 	@Action(value = "UpdateAsmtCF")
 	public String UpdateAsmtCF() {
@@ -998,22 +1197,53 @@ public class AssessmentView extends FSActionSupport {
 
 	private List<History> createHistory(Assessment a, List<RiskLevel> levels) {
 		List<Vulnerability> vulns = VulnerabilityQueries.getVulnerabilitiesByAppId(em, a.getAppId(), levels, true);
+
+		String assessors = "";
+		for (User u : a.getAssessor()) {
+			assessors += u.getFname() + " " + u.getLname() + "; ";
+		}
+
+		// Tracking IDs already present on the current assessment so that findings
+		// which have already been carried over can be flagged in the UI.
+		Set<String> existingTracking = new HashSet<>();
+		if (a.getVulns() != null) {
+			for (Vulnerability cv : a.getVulns()) {
+				if (cv.getTracking() != null && !cv.getTracking().isEmpty())
+					existingTracking.add(cv.getTracking());
+			}
+		}
+
 		List<History> h = new ArrayList();
 		for (Vulnerability v : vulns) {
-			String assessors = "";
-			for (User u : a.getAssessor()) {
-				assessors += u.getFname() + " " + u.getLname() + "; ";
-			}
 			v.updateRiskLevels(em);
 			Long currentId = v.getAssessmentId();
 			Assessment currentAssessment = AssessmentQueries.getAssessmentById(em, currentId);
 			String reportId = currentAssessment.getFinalReport() == null? null : currentAssessment.getFinalReport().getFilename();
-			History obj = new History(v.getOpened(), v.getClosed(), v.getName(),
-					reportId, v.getOverallStr(), assessors);
+			boolean alreadyAdded = v.getTracking() != null && existingTracking.contains(v.getTracking());
+			History obj = new History(v.getId(), v.getOpened(), v.getClosed(), v.getName(),
+					reportId, v.getOverallStr(), assessors, alreadyAdded);
 			h.add(obj);
 		}
 		return h;
 
+	}
+
+	public List<History> getOpenHistory() {
+		List<History> open = new ArrayList<History>();
+		for (History hi : history) {
+			if (hi.getClosed() == null)
+				open.add(hi);
+		}
+		return open;
+	}
+
+	public List<History> getClosedHistory() {
+		List<History> closed = new ArrayList<History>();
+		for (History hi : history) {
+			if (hi.getClosed() != null)
+				closed.add(hi);
+		}
+		return closed;
 	}
 
 	public Boolean getNotowner() {
