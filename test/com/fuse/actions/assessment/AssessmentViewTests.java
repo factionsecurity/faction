@@ -580,12 +580,14 @@ public class AssessmentViewTests {
     @Test
     public void testHistoryEntity() {
         History h = new History(
+        	1l,
             new Date(),
             null,
             "SQL Injection",
             "report.pdf",
             "High",
-            "adminuser"
+            "adminuser",
+            false
         );
 
         assertEquals("Vuln should match", "SQL Injection", h.getVuln());
