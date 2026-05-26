@@ -17,6 +17,7 @@ import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.VulnerabilityQueries;
 import com.fuse.utils.Combo;
 import com.fuse.utils.FSUtils;
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.mongodb.BasicDBObject;
 
 @Namespace("/portal")
@@ -379,6 +380,20 @@ public class OpenVulns extends FSActionSupport {
 
 	public void setCount(Long count) {
 		this.count = count;
+	}
+
+	/**
+	 * Escapes a value for safe inclusion inside a JSON string literal. Struts'
+	 * escapeJavaScript escapes a single quote as \' which is NOT a valid JSON
+	 * escape sequence and breaks JSON.parse on the client (the DataTable). This
+	 * produces strictly valid JSON: it escapes ", \\ and control characters and
+	 * leaves single quotes untouched.
+	 */
+	public String jsonEscape(String value) {
+		if (value == null) {
+			return "";
+		}
+		return new String(JsonStringEncoder.getInstance().quoteAsString(value));
 	}
 	
 
