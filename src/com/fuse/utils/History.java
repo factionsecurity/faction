@@ -3,20 +3,33 @@ package com.fuse.utils;
 import java.util.Date;
 
 public class History {
+	private Long id;
 	private Date opened;
 	private Date closed;
 	private String vuln;
 	private String report;
 	private String severity;
 	private String assessor;
+	private boolean alreadyAdded;
 
-	public History(Date opened, Date closed, String vuln, String Report, String severity, String assessor) {
+	public History(Long id, Date opened, Date closed, String vuln, String Report, String severity, String assessor,
+			boolean alreadyAdded) {
+		this.id = id;
 		this.opened = opened;
 		this.closed = closed;
 		this.vuln = vuln;
 		this.report = Report != null ? Report.replace("/tmp/", "") : null;
 		this.severity = severity;
 		this.assessor = assessor;
+		this.alreadyAdded = alreadyAdded;
+	}
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 	public Date getOpened() {
@@ -66,6 +79,13 @@ public class History {
 	public void setAssessor(String assessor) {
 		this.assessor = assessor;
 	}
-	
+
+	public boolean isAlreadyAdded() {
+		return alreadyAdded;
+	}
+
+	public void setAlreadyAdded(boolean alreadyAdded) {
+		this.alreadyAdded = alreadyAdded;
+	}
 
 }
