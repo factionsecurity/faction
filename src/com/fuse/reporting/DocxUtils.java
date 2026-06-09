@@ -832,8 +832,12 @@ public class DocxUtils {
 
             // Pattern to match image links with both regular and HTML-encoded formats
             // Captures: assessment_id and image_guid
-            Pattern imagePattern = Pattern.compile(
+            /*Pattern imagePattern = Pattern.compile(
                     "<img[^>]+src=\"getImage\\?id(=|&#61;)" + aid + ":([^\"\\s>]+)\"[^>]*>",
+                    Pattern.CASE_INSENSITIVE);*/
+            
+            Pattern imagePattern = Pattern.compile(
+                    "<img[^>]+src=\"getImage\\?id(=|&#61;)[0-9]+:([^\"\\s>]+)\"[^>]*>",
                     Pattern.CASE_INSENSITIVE);
 
             // First pass: find all referenced GUIDs
@@ -924,7 +928,7 @@ public class DocxUtils {
 				end = getIndex(mlp.getMainDocumentPart(), "${end-section}");
 			} else if (sectionName != null) {
 				begin = getIndex(mlp.getMainDocumentPart(), "${if-section " + sectionName + "}");
-				end = getIndex(mlp.getMainDocumentPart(), "${if-section " + sectionName + "}");
+				end = getIndex(mlp.getMainDocumentPart(), "${end-section " + sectionName + "}");
 			}
 			if (begin == -1)
 				return;

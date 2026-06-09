@@ -177,6 +177,18 @@ td:first-child {
 #details {
 	background-color: white
 }
+
+.hideSection {
+	display:none;
+}
+.sectionName::after {
+	content: "\A";
+  	white-space: pre;
+}
+.sectionName {
+    border: solid 1px;
+    padding: 0px 4px 0px 4px;
+}
 </style>
 
 <div class="row">
@@ -488,9 +500,12 @@ td:first-child {
 								<td data-sort="${overall}">
 								</s:else>
 								<span class="vulnName"><s:property
-											value="name" /></span><br> <span class="category"> <s:property
-											value="category.name" /></span><BR> <span class="severity"><s:property
-											value="overallStr" /></span></td>
+											value="name" /></span><br> 
+											<span class="category"> <s:property value="category.name" /></span><BR> 
+											<span class="severity"><s:property
+											value="overallStr" /></span><br>
+											<span class="sectionName <s:if test="section == ''">hideSection</s:if>"><s:property value="sectionPretty"/></span>
+											</td>
 								<td><span class="vulnControl vulnControl-delete"
 									id="deleteVuln<s:property value="id"/>"
 									<s:if test="hideit">disabled</s:if>><i

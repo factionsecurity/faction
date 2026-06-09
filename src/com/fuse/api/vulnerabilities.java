@@ -713,9 +713,26 @@ public class vulnerabilities {
             target.setCategory(cat);
         } else {
             Category cat = em.find(Category.class, dto.getCategoryId());
-            if (cat == null) {
+            // If the cat name has changed then we update it
+            if(cat != null && !cat.getName().equals(dto.getCategoryName())) {
+                cat.setName(dto.getCategoryName());
+                HibHelper.getInstance().preJoin();
+                em.joinTransaction();
+                em.persist(cat);
+                HibHelper.getInstance().commit();
+            }
+            // If the cat is not found then we create it.
+            else if (cat == null && dto.getCategoryName() != null && !dto.getCategoryName().isEmpty()) {
+                cat = new Category();
+                cat.setName(dto.getCategoryName());
+                HibHelper.getInstance().preJoin();
+                em.joinTransaction();
+                em.persist(cat);
+                HibHelper.getInstance().commit();
+            } 
+            else if (cat == null) {
                 result.errorResponse = Response.status(400)
-                        .entity(String.format(Support.ERROR, "Category ID does not exist")).build();
+                        .entity(String.format(Support.ERROR, "Category ID or Name does not exist for " + dto.getName())).build();
                 return result;
             }
             target.setCategory(cat);
