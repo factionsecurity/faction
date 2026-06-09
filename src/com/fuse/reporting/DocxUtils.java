@@ -432,6 +432,7 @@ public class DocxUtils {
                             customCSS, "summary2"));
             replaceHTML(mlp.getMainDocumentPart(), map, false);
             replaceAssessment(customCSS);
+            insertPageBreaks();
             updateDocWithExtensions(customCSS);
 
             return mlp;
@@ -914,6 +915,15 @@ public class DocxUtils {
             }
         }
     }
+    private void insertPageBreaks() {
+        int breakIndex = getIndex(mlp.getMainDocumentPart(), "${pageBreak}");
+    	while(breakIndex > 0) {
+    		System.out.println("Adding PageBreak");
+            addPageBreak(mlp, breakIndex);
+            breakIndex = getIndex(mlp.getMainDocumentPart(), "${pageBreak}");
+    	}
+    	
+    }
     
     private void removeSectionTagsOrRemoveSection(String sectionName, Boolean hasVulns) {
         try {
@@ -937,8 +947,10 @@ public class DocxUtils {
 			
 			// remove only the tags
         	if(hasVulns) {
-					mlp.getMainDocumentPart().getContent().remove(end);
-					mlp.getMainDocumentPart().getContent().remove(begin);
+        			/// DOn't need this because getIndex deletes the element at that index. 
+        			//remove in reverse order so it does not break the index and remove the wrong element
+					//mlp.getMainDocumentPart().getContent().remove(end);
+					//mlp.getMainDocumentPart().getContent().remove(begin);
 			// remove everything between the tags
         	}else {
 				for (int i = end; i >= begin; i--) {
