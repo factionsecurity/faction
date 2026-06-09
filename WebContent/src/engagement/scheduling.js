@@ -407,9 +407,6 @@ function checkForms() {
 		if (getEditorText("notes").trim() == "") {
 			optional[index++] = "Do you want to add Assessment Notes?";
 		}
-		if ($("#distlist").val().trim() == "") {
-			optional[index++] = "Do you want to add to the Distribution List?";
-		}
 
 		if ($("#campName").val().trim() == "" || $("#campName").val().trim() == "-1") {
 			optional[index++] = "Do you want to add to a Campaign?";
