@@ -637,12 +637,21 @@
                                                         </button>
                                                     </div>
                                                 </bs:mco>
-                                                <bs:mco colsize="4">
+                                                <bs:mco colsize="2">
                                                     <div class="form-group">
                                                         <label>&nbsp;</label>
-														<div class="btn btn-block btn-success btn-md" id="exportCsvBtn"
-															onclick="exportToCSV()">
-															<i class="fa fa-download"></i> Export to CSV
+														<div class="btn btn-block btn-success btn-md" id="exportAssessmentsCsvBtn"
+															onclick="exportAssessmentsToCSV()">
+															<i class="fa fa-download"></i> Export Assessments to CSV
+														</div>
+													</div>
+												 </bs:mco>
+                                                <bs:mco colsize="2">
+                                                    <div class="form-group">
+                                                        <label>&nbsp;</label>
+														<div class="btn btn-block btn-info btn-md" id="exportVulnsCsvBtn"
+															onclick="exportVulnerabilitiesToCSV()">
+															<i class="fa fa-download"></i> Export Vulnerabilities to CSV
 														</div>
 													</div>
 												 </bs:mco>
@@ -868,7 +877,7 @@
                     <jsp:include page="../footer.jsp" />
 
                     <script type="text/javascript">
-                        function exportToCSV() {
+                        function exportAssessmentsToCSV() {
                             // Get the current search parameters from the form
                             var form = document.querySelector('form[action="ManagerDashboard"]');
                             var formData = new FormData(form);
@@ -877,6 +886,39 @@
                             var exportForm = document.createElement('form');
                             exportForm.method = 'POST';
                             exportForm.action = 'ManagerDashboardExportCSV';
+                            exportForm.style.display = 'none';
+
+                            // Copy all search parameters to the export form
+                            for (var pair of formData.entries()) {
+                                var input = document.createElement('input');
+                                input.type = 'hidden';
+                                input.name = pair[0];
+                                input.value = pair[1];
+                                exportForm.appendChild(input);
+                            }
+
+                            // Add search action to ensure export uses search logic
+                            var searchActionInput = document.createElement('input');
+                            searchActionInput.type = 'hidden';
+                            searchActionInput.name = 'searchAction';
+                            searchActionInput.value = 'search';
+                            exportForm.appendChild(searchActionInput);
+
+                            // Submit the form
+                            document.body.appendChild(exportForm);
+                            exportForm.submit();
+                            document.body.removeChild(exportForm);
+                        }
+
+                        function exportVulnerabilitiesToCSV() {
+                            // Get the current search parameters from the form
+                            var form = document.querySelector('form[action="ManagerDashboard"]');
+                            var formData = new FormData(form);
+
+                            // Create a new form for CSV export
+                            var exportForm = document.createElement('form');
+                            exportForm.method = 'POST';
+                            exportForm.action = 'ManagerDashboardExportVulnerabilitiesCSV';
                             exportForm.style.display = 'none';
 
                             // Copy all search parameters to the export form
