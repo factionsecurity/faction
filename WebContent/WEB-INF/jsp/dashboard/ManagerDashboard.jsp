@@ -801,13 +801,19 @@
                                 </bs:mco>
                             </bs:row>
 
-                            <!-- Assessments Table (Always shown) -->
+                            <!-- Results Tables (tabbed) -->
                             <bs:row>
                                 <bs:mco colsize="12">
-                                    <bs:box type="primary" title="Assessments">
-                                        <bs:datatable
-                                            columns="Action,AppId,Name,Type,Team,Assessor,Start,End,Completed,Status,Findings"
-                                            classname="table-striped" id="searchResults">
+                                    <div class="nav-tabs-custom">
+                                        <ul class="nav nav-tabs">
+                                            <li class="active"><a href="#tab_assessments" data-toggle="tab"><i class="fa fa-tasks"></i> Assessments</a></li>
+                                            <li><a href="#tab_vulnerabilities" data-toggle="tab"><i class="fa fa-bug"></i> Vulnerabilities</a></li>
+                                        </ul>
+                                        <div class="tab-content">
+                                            <div class="tab-pane active" id="tab_assessments">
+                                                <bs:datatable
+                                                    columns="Action,AppId,Name,Type,Team,Assessor,Start,End,Completed,Status,Findings"
+                                                    classname="table-striped" id="searchResults">
                                             <s:iterator value="searchResults" status="stat" var="asmt">
                                                 <tr>
                                                     <td>
@@ -864,8 +870,42 @@
                                                     </td>
                                                 </tr>
                                             </s:iterator>
-                                        </bs:datatable>
-                                    </bs:box>
+                                                </bs:datatable>
+                                            </div><!-- /#tab_assessments -->
+                                            <div class="tab-pane" id="tab_vulnerabilities">
+                                                <bs:datatable
+                                                    columns="Action,Vulnerability,Assessment,AppId,Severity,CVSS,Category,Opened,Closed,Status,Tracking"
+                                                    classname="table-striped" id="vulnResults">
+                                                    <s:iterator value="vulnerabilityResults" var="vrow">
+                                                        <tr class="vuln-detail-row" data-vulnid="<s:property value='vulnId'/>" style="cursor: pointer;">
+                                                            <td>
+                                                                <a target="_blank"
+                                                                    href="EditAssessment?action=get&aid=<s:property value='assessmentId'/>"
+                                                                    title="Open Assessment">
+                                                                    <i class="fa fa-pencil"></i>
+                                                                </a>
+                                                            </td>
+                                                            <td><s:property value="name" /></td>
+                                                            <td><s:property value="assessmentName" /></td>
+                                                            <td><s:property value="appId" /></td>
+                                                            <td>
+                                                                <span class="badge"
+                                                                    style="background-color: <s:property value='severityColorMap[#vrow.severity]'/>; color: white; padding: 3px 8px; font-weight: bold; font-size: 12px;">
+                                                                    <s:property value="severity" />
+                                                                </span>
+                                                            </td>
+                                                            <td><s:property value="cvssScore" /></td>
+                                                            <td><s:property value="category" /></td>
+                                                            <td><s:date name="opened" format="yyyy-MM-dd" /></td>
+                                                            <td><s:date name="closed" format="yyyy-MM-dd" /></td>
+                                                            <td><s:property value="status" /></td>
+                                                            <td><s:property value="tracking" /></td>
+                                                        </tr>
+                                                    </s:iterator>
+                                                </bs:datatable>
+                                            </div><!-- /#tab_vulnerabilities -->
+                                        </div><!-- /.tab-content -->
+                                    </div><!-- /.nav-tabs-custom -->
                                 </bs:mco>
                             </bs:row>
 
@@ -873,6 +913,55 @@
                         <!-- /.content -->
                     </div>
                     <!-- /.content-wrapper -->
+
+                    <!-- Slide-out panel showing full vulnerability details for the clicked row -->
+                    <style>
+                        .vuln-detail-overlay {
+                            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                            background: rgba(0,0,0,0.4); z-index: 1040; display: none;
+                        }
+                        .vuln-detail-panel {
+                            position: fixed; top: 0; right: 0; height: 100%;
+                            width: 640px; max-width: 95%;
+                            background: #fff; z-index: 1050;
+                            box-shadow: -2px 0 12px rgba(0,0,0,0.3);
+                            transform: translateX(100%); transition: transform .25s ease;
+                            display: flex; flex-direction: column;
+                        }
+                        .vuln-detail-panel.open { transform: translateX(0); }
+                        .vuln-detail-panel .vuln-detail-topbar {
+                            padding: 12px 18px; border-bottom: 1px solid rgba(255,255,255,0.15);
+                            display: flex; justify-content: space-between; align-items: center;
+                            background: #225080;
+                        }
+                        .vuln-detail-panel .vuln-detail-topbar h4 { margin: 0; font-size: 18px; color: #fff; }
+                        .vuln-detail-panel .vuln-detail-topbar .btn-box-tool { color: #fff; }
+                        .vuln-detail-panel .vuln-detail-body {
+                            padding: 18px; overflow-y: auto; flex: 1;
+                            background: #0f1522; color: #c9d3e0;
+                        }
+                        .vuln-detail-panel .vuln-detail-body a { color: #6fb0ff; }
+                        .vuln-detail-panel .vuln-detail-section-title {
+                            margin-top: 20px; padding-bottom: 5px; border-bottom: 1px solid rgba(255,255,255,0.15);
+                            font-weight: bold; color: #fff;
+                        }
+                        .vuln-detail-panel .vuln-detail-content { word-wrap: break-word; }
+                        .vuln-detail-panel .vuln-detail-content img { max-width: 100%; height: auto; }
+                        .vuln-detail-panel .vuln-detail-body table { color: #c9d3e0; }
+                        .vuln-detail-panel .vuln-detail-body table td,
+                        .vuln-detail-panel .vuln-detail-body table th { border-color: rgba(255,255,255,0.12); }
+                        .vuln-detail-panel .vuln-detail-meta th { color: #8a97a8; }
+                    </style>
+                    <div id="vulnDetailOverlay" class="vuln-detail-overlay"></div>
+                    <div id="vulnDetailPanel" class="vuln-detail-panel">
+                        <div class="vuln-detail-topbar">
+                            <h4>Vulnerability Details</h4>
+                            <button type="button" id="vulnDetailClose" class="btn btn-box-tool" aria-label="Close">
+                                <i class="fa fa-times fa-lg"></i>
+                            </button>
+                        </div>
+                        <div id="vulnDetailBody" class="vuln-detail-body"></div>
+                    </div>
 
                     <jsp:include page="../footer.jsp" />
 

@@ -37,7 +37,69 @@ $(function() {
             ]
         });
     }
-    
+
+    // Vulnerabilities tab table
+    if ($('#vulnResults').length > 0) {
+        $('#vulnResults').DataTable({
+            "paging": true,
+            "lengthChange": true,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "autoWidth": false,
+            "order": [[7, "desc"]], // Sort by Opened date by default
+            "pageLength": 25,
+            "columnDefs": [
+                {
+                    "targets": [0], // Action column
+                    "searchable": false,
+                    "orderable": false
+                }
+            ]
+        });
+    }
+
+    // Vulnerability detail slide-out panel (mirrors the assessment history panel).
+    // Move the panel to <body> so position:fixed is relative to the viewport
+    // regardless of any transformed ancestor.
+    $("#vulnDetailPanel, #vulnDetailOverlay").appendTo("body");
+
+    function openVulnDetail(vulnid) {
+        $("#vulnDetailBody").html('<div style="text-align:center;padding:40px;"><i class="fa fa-spinner fa-spin fa-2x"></i></div>');
+        $("#vulnDetailOverlay").show();
+        $("#vulnDetailPanel").addClass("open");
+        $.get("ManagerDashboardVulnDetail", "vulnid=" + vulnid).done(function(resp) {
+            if (resp && typeof resp == "object") {
+                $("#vulnDetailBody").html('<div class="alert alert-danger">' + (resp.message || "Unable to load finding details.") + '</div>');
+            } else {
+                $("#vulnDetailBody").html(resp);
+            }
+        }).fail(function() {
+            $("#vulnDetailBody").html('<div class="alert alert-danger">Failed to load finding details.</div>');
+        });
+    }
+
+    function closeVulnDetail() {
+        $("#vulnDetailPanel").removeClass("open");
+        $("#vulnDetailOverlay").hide();
+    }
+
+    // Clicking a vulnerability row opens the detail panel, except when the click
+    // lands on a link inside the row (e.g. the Open Assessment icon).
+    $(document).on("click", ".vuln-detail-row", function(e) {
+        if ($(e.target).closest("a").length)
+            return;
+        var vulnid = $(this).data("vulnid");
+        if (vulnid)
+            openVulnDetail(vulnid);
+    });
+
+    $(document).on("click", "#vulnDetailClose, #vulnDetailOverlay", closeVulnDetail);
+    $(document).on("keydown", function(e) {
+        if (e.key === "Escape")
+            closeVulnDetail();
+    });
+
     // Date formatting
     var displayFormat = 'mm/dd/yy';
     var submitFormat = 'yy-mm-dd';
