@@ -56,3 +56,6 @@ vtrack-os/.project
 
 .externalToolBuilders/
 .claude/*
+
+.zed/
+logs/

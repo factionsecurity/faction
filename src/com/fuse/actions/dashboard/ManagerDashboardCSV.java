@@ -324,20 +324,9 @@ public class ManagerDashboardCSV extends FSActionSupport {
         // range
         if (startDate != null && endDate != null) {
             endDate.setDate(endDate.getDate() + 1);
-            query.append("$and: [");
-            query
-                .append(" { \"start\": {$lte: ISODate(\"")
-                .append(sdf.format(endDate))
-                .append("\")}}, ");
-            query.append(" { $or: [ ");
-            query
-                .append("   { \"completed\": { $exists: true, $gte: ISODate(\"")
-                .append(sdf.format(startDate))
-                .append("\")}}");
-            query.append("   ,");
-            query.append("   { \"completed\": {$exists: false}},");
-            query.append("  ]}");
-            query.append("]");
+            query.append(
+                AssessmentSearchQuery.dateOverlapCondition(startDate, endDate, sdf)
+            );
             hasConditions = true;
         }
 

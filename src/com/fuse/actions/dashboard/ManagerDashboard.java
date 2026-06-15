@@ -423,16 +423,9 @@ public class ManagerDashboard extends FSActionSupport {
             endDate = cal.getTime();
         
             
-            // Query assessments for current month
-            query.append("$and: [");
-            query.append(" { \"start\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}}, ");
-            query.append(" { $or: [ ");
-            query.append("   { \"completed\": { $exists: true, $gte: ISODate(\"")
-            								.append(sdf.format(startDate)).append("\")}}");
-            query.append("   ,");
-            query.append("   { \"completed\": {$exists: false}},");
-            query.append("  ]}");
-            query.append("]}");
+            // Query assessments overlapping the current month
+            query.append(AssessmentSearchQuery.dateOverlapCondition(startDate, endDate, sdf));
+            query.append("}");
             results = em.createNativeQuery(query.toString(), Assessment.class).getResultList();
             searchResults = results;
             return;
@@ -444,15 +437,7 @@ public class ManagerDashboard extends FSActionSupport {
         // Build date range condition
         if (startDate != null && endDate != null) {
         	endDate.setDate(endDate.getDate()+1);
-            query.append("$and: [");
-            query.append(" { \"start\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}}, ");
-            query.append(" { $or: [ ");
-            query.append("   { \"completed\": { $exists: true, $gte: ISODate(\"")
-            								.append(sdf.format(startDate)).append("\")}}");
-            query.append("   ,");
-            query.append("   { \"completed\": {$exists: false}},");
-            query.append("  ]}");
-            query.append("]");
+            query.append(AssessmentSearchQuery.dateOverlapCondition(startDate, endDate, sdf));
             hasConditions = true;
         }
         
