@@ -161,6 +161,12 @@ $(function() {
 		minFileCount: 0,
 		maxFileCount: 5,
 		allowedFileExtensions: ['csv']
+	}).on("filebatchselected", function() {
+		// Reset the result tables for each new batch of uploads.
+		resetAssessmentUploadResults();
+	}).on("fileuploaded", function(event, data) {
+		// Fired once per file when uploadAsync is true; accumulate results across files.
+		renderAssessmentUploadResults(data.response);
 	});
 
 	let TMPresVal = $("#reservation").val().trim();
@@ -400,9 +406,6 @@ function checkForms() {
 
 		if (getEditorText("notes").trim() == "") {
 			optional[index++] = "Do you want to add Assessment Notes?";
-		}
-		if ($("#distlist").val().trim() == "") {
-			optional[index++] = "Do you want to add to the Distribution List?";
 		}
 
 		if ($("#campName").val().trim() == "" || $("#campName").val().trim() == "-1") {
@@ -898,5 +901,91 @@ function entityDecode(encoded){
 	let textArea = document.createElement("textarea");
 	textArea.innerHTML = encoded;
 	return textArea.innerText;
-	
+
+}
+
+function htmlEscape(value){
+	if(value === null || typeof value === "undefined") return "";
+	return String(value)
+		.replace(/&/g, "&amp;")
+		.replace(/</g, "&lt;")
+		.replace(/>/g, "&gt;")
+		.replace(/"/g, "&quot;")
+		.replace(/'/g, "&#39;");
+}
+
+// Clear the assessment-upload result tables before a new batch of files is uploaded.
+function resetAssessmentUploadResults(){
+	$("#uploadAddedBody").html("");
+	$("#uploadWarningsBody").html("");
+	$("#uploadErrorsBody").html("");
+	$("#uploadAddedCount").text("");
+	$("#uploadWarningsCount").text("");
+	$("#uploadErrorsCount").text("");
+	$("#uploadAddedWrap").hide();
+	$("#uploadWarningsWrap").hide();
+	$("#uploadErrorsWrap").hide();
+}
+
+// Append the added assessments and errors from a single uploadAssessment response.
+function renderAssessmentUploadResults(response){
+	if(!response) return;
+	if(typeof response === "string"){
+		try { response = JSON.parse(response); } catch(e){ return; }
+	}
+
+	let added = response.added || [];
+	let warnings = response.warnings || [];
+	let errors = response.errors || [];
+
+	added.forEach(function(a){
+		let editUrl = "EditAssessment?action=get&aid=" + encodeURIComponent(a.id);
+		$("#uploadAddedBody").append(
+			"<tr>" +
+				"<td>" + htmlEscape(a.appId) + "</td>" +
+				"<td>" + htmlEscape(a.name) + "</td>" +
+				"<td><a href='" + htmlEscape(editUrl) + "' target='_blank' rel='noopener'>" +
+					"<i class='fa fa-pencil'></i> Edit</a></td>" +
+			"</tr>"
+		);
+	});
+
+	warnings.forEach(function(w){
+		$("#uploadWarningsBody").append(
+			"<tr>" +
+				"<td>" + htmlEscape(w.row) + "</td>" +
+				"<td>" + htmlEscape(w.appId) + "</td>" +
+				"<td>" + htmlEscape(w.name) + "</td>" +
+				"<td>" + htmlEscape(w.message) + "</td>" +
+			"</tr>"
+		);
+	});
+
+	errors.forEach(function(e){
+		$("#uploadErrorsBody").append(
+			"<tr>" +
+				"<td>" + htmlEscape(e.row) + "</td>" +
+				"<td>" + htmlEscape(e.appId) + "</td>" +
+				"<td>" + htmlEscape(e.name) + "</td>" +
+				"<td>" + htmlEscape(e.message) + "</td>" +
+			"</tr>"
+		);
+	});
+
+	let addedCount = $("#uploadAddedBody tr").length;
+	let warningCount = $("#uploadWarningsBody tr").length;
+	let errorCount = $("#uploadErrorsBody tr").length;
+
+	if(addedCount > 0){
+		$("#uploadAddedCount").text(addedCount);
+		$("#uploadAddedWrap").show();
+	}
+	if(warningCount > 0){
+		$("#uploadWarningsCount").text(warningCount);
+		$("#uploadWarningsWrap").show();
+	}
+	if(errorCount > 0){
+		$("#uploadErrorsCount").text(errorCount);
+		$("#uploadErrorsWrap").show();
+	}
 }

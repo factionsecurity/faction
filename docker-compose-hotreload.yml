@@ -1,0 +1,33 @@
+services:
+  faction-mongo:
+    image: mongo:8.0
+    ports:
+      - "27017:27017"
+    volumes:
+      - "~/.faction/data2:/data/db"
+  tomcat-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev-hotreload
+      target: dev_base
+    volumes:
+      # Mount exploded WAR directory for hot reload
+      - ./target/faction:/usr/local/tomcat/webapps/ROOT
+    environment:
+      - "FACTION_MONGO_HOST=faction-mongo"
+      - "FACTION_MONGO_DATABASE=faction"
+      - "FACTION_SECRET_KEY=faction_encryption_key"
+      - "FACTION_OAUTH_CALLBACK=http://localhost:8080"
+      # Enable JVM hot reload + remote debugger (JDWP) on port 8000.
+      # Attach your IDE to localhost:8000; suspend=n so the app starts normally.
+      - "JAVA_OPTS=-Dfile.encoding=UTF-8 -Xms512m -Xmx1024m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000"
+    links:
+      - faction-mongo
+    command: ["/usr/local/tomcat/bin/catalina.sh", "run"]
+    ports:
+      - "8080:8080"
+      - "8000:8000"
+      # Optional: JMX port for monitoring
+      - "9090:9090"
+    depends_on:
+      - faction-mongo

@@ -572,7 +572,19 @@ class VulnerabilityView {
             $(`.sev${risk}`).css("border-left-color", `${colors[colorCount]}`)
             $(box).css("color", colors[colorCount--]);
         });
+		this.updateSectionColors();
     }
+	updateSectionColors(){
+		const sections = $(".sectionName")
+		let _this = this;
+		sections.each((index, section) => {
+			let sectionText = section.innerHTML;
+			let color = _this.getColorHex(sectionText);
+			section.style.borderColor = color;
+			section.style.color = color;
+			
+		})
+	}
     updateSeverityCount(box, sevId) {
         let count = Array.from($("#vulntable td")).filter(td => $(td).attr('data-sort') == sevId).length;
         window.postMessage({ "type": "updateVuln", "sevId": sevId, "count": count })
@@ -735,10 +747,9 @@ class VulnerabilityView {
 				}else if(key.indexOf("rtCust") == 0){
 					this.editors.setEditorContents(key, value, true)
 				}
-				
 			}
 			// Update the Left table with user updates
-			if(key == 'title' || key == 'update'){
+			if(key == 'title' || key == 'update' || key == 'reportSection'){
 				// Get the row that matches this current vuln
 				let row = Array.from($("#vulntable tbody tr")).filter((el) => $(el).data('vulnid') == id);
 				
@@ -750,10 +761,18 @@ class VulnerabilityView {
 					if (key == 'title' && vulnName != value) {
 						$(row[0]).find(".vulnName")[0].innerHTML = value;
 						
+					}else if(key == "reportSection"){
+						$(row[0]).find(".sectionName")[0].innerHTML = value.replace("_", " ")
+						if(value == "" || value == "Default"){
+							$(row[0]).find(".sectionName")[0].classList.add("hideSection")
+						}else{
+							$(row[0]).find(".sectionName")[0].classList.remove("hideSection")
+						}
+						this.updateSectionColors()
 					// Update will return the entire vulnerability object
 					}else if(key == 'update'){
-						
 						$(row[0]).find(".vulnName")[0].innerHTML = value.title;
+						$(row[0]).find(".sectionName")[0].innerHTML = value.reportSection.replace("_", " ");
 						$(row[0]).find(".category")[0].innerHTML = value.categoryName;
 						$(row[0]).find(".severity")[0].innerHTML = value.overallName;
 						$(row[0]).children()[0].className = `sev${value.overallName}`
@@ -1485,6 +1504,14 @@ class VulnerabilityView {
             _this.queue.push('vulnerability', _this.vulnId, "likelyhood", $(this).val());
         });
         $("#reportSection").on('input', function (event) {
+			let selectedSection = $(".selected").find(".sectionName")[0]
+            selectedSection.innerHTML = entityEncode($(this).val())
+			if($(this).val() == "" || $(this).val() == "Default"){
+            	selectedSection.classList.add("hideSection")
+			}else{
+            	selectedSection.classList.remove("hideSection")
+				_this.updateSectionColors();
+			}
             _this.queue.push('vulnerability', _this.vulnId, "reportSection", $(this).val());
         });
         $("#dcategory").on('input', function (event) {
@@ -1625,6 +1652,40 @@ b64DecodeUnicode(str) {
         return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
     }).join(''));
 }
+
+	getColorHex(text) {
+	  text = text.replace("_", " ")
+	  let hash = 0;
+	  for (let i = 0; i < text.length; i++) {
+		hash = ((hash << 5) - hash) + text.charCodeAt(i);
+		hash = hash & hash;
+	  }
+
+	  const hue = Math.abs(hash) % 360;
+	  const saturation = 70;
+	  const lightness = 80;
+
+	  // HSL to Hex conversion
+	  const h = hue / 60;
+	  const s = saturation / 100;
+	  const l = lightness / 100;
+
+	  const c = (1 - Math.abs(2 * l - 1)) * s;
+	  const x = c * (1 - Math.abs((h % 2) - 1));
+	  const m = l - c / 2;
+
+	  let r = 0, g = 0, b = 0;
+
+	  if (h < 1) [r, g, b] = [c, x, 0];
+	  else if (h < 2) [r, g, b] = [x, c, 0];
+	  else if (h < 3) [r, g, b] = [0, c, x];
+	  else if (h < 4) [r, g, b] = [0, x, c];
+	  else if (h < 5) [r, g, b] = [x, 0, c];
+	  else [r, g, b] = [c, 0, x];
+
+	  const toHex = (val) => Math.round((val + m) * 255).toString(16).padStart(2, '0');
+	  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+	}
 
 }
 

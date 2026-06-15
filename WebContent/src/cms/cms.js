@@ -172,7 +172,7 @@ $(function(){
 								$("#imgForm").submit();
 								setTimeout( function(){
                             		document.location=document.location;
-								}, 2000);
+								}, 10000);
 							}else{
                             	document.location=document.location;
 							}

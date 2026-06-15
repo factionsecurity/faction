@@ -1,0 +1,140 @@
+# mise tasks — replicates .zed/tasks.json
+# Run with:  mise run <task>     List with:  mise tasks
+# Docs: https://mise.jdx.dev/tasks/
+
+#
+# Build
+#
+[tasks."build:install"]
+description = "Build: Maven Clean Install"
+run = "mvn clean install -DskipTests"
+
+[tasks."build:compile"]
+description = "Build: Maven Compile"
+run = "mvn compile"
+
+[tasks."build:package"]
+description = "Build: Maven Package (WAR)"
+run = "mvn clean package -DskipTests"
+
+[tasks."build:quick"]
+description = "Build: Quick Build (No Tests)"
+run = "mvn clean compile war:war -DskipTests"
+
+[tasks."maven:clean"]
+description = "Maven: Clean"
+run = "mvn clean"
+
+[tasks."maven:verify"]
+description = "Maven: Verify"
+run = "mvn verify"
+
+#
+# Test
+#
+[tasks."test:all"]
+description = "Test: Run All Tests"
+run = "mvn test -DFACTION_MONGO_HOST=localhost -DFACTION_MONGO_PORT=27017 -DFACTION_MONGO_DATABASE=faction-test"
+
+[tasks."test:single"]
+description = "Test: Run Single Test Class (usage: mise run test:single -- MyTestClass)"
+usage = '''
+arg "<test_class>" help="Test class name to run"
+'''
+run = "mvn test -Dtest={{arg(name='test_class')}} -DFACTION_MONGO_HOST=localhost -DFACTION_MONGO_PORT=27017 -DFACTION_MONGO_DATABASE=faction-test"
+
+[tasks."test:no-it"]
+description = "Test: Run Tests (Skip Integration)"
+run = "mvn test -DskipITs -DFACTION_MONGO_HOST=localhost -DFACTION_MONGO_PORT=27017 -DFACTION_MONGO_DATABASE=faction-test"
+
+#
+# Run — Dev Environment (Docker Compose)
+#
+[tasks."dev:up"]
+description = "Run: Start Dev Environment (Docker Compose)"
+run = "docker-compose -f docker-compose-dev.yml up --build"
+
+[tasks."dev:up-detached"]
+description = "Run: Start Dev Environment (Detached)"
+run = "docker-compose -f docker-compose-dev.yml up -d --build"
+
+[tasks."dev:down"]
+description = "Run: Stop Dev Environment"
+run = "docker-compose -f docker-compose-dev.yml down"
+
+[tasks."dev:logs"]
+description = "Run: View Dev Logs"
+run = "docker-compose -f docker-compose-dev.yml logs -f tomcat-service"
+
+[tasks."dev:mongo"]
+description = "Run: Start MongoDB Only"
+run = "docker-compose -f docker-compose-dev.yml up -d faction-mongo"
+
+#
+# HotReload
+#
+[tasks."hotreload:start"]
+description = "HotReload: Start (First Time)"
+run = "mvn clean package -DskipTests && docker-compose -f docker-compose-hotreload.yml up -d --build"
+
+[tasks."hotreload:deploy"]
+description = "HotReload: Quick Deploy"
+run = "mvn war:exploded -DskipTests"
+
+[tasks."hotreload:restart"]
+description = "HotReload: Restart Tomcat"
+run = "docker-compose -f docker-compose-hotreload.yml restart tomcat-service"
+
+[tasks."hotreload:logs"]
+description = "HotReload: View Logs"
+run = "docker-compose -f docker-compose-hotreload.yml logs -f tomcat-service"
+
+[tasks."hotreload:stop"]
+description = "HotReload: Stop"
+run = "docker-compose -f docker-compose-hotreload.yml down"
+
+#
+# Info
+#
+[tasks."info:deps"]
+description = "Maven: Dependency Tree"
+run = "mvn dependency:tree"
+
+[tasks."info:pom"]
+description = "Maven: Effective POM"
+run = "mvn help:effective-pom"
+
+#
+# Debug
+#
+[tasks."debug:attach"]
+description = "Debug: Attach Debugger on Port 5005"
+run = "echo 'Start app with: MAVEN_OPTS=\"-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005\" mvn tomcat7:run'"
+
+#
+# Deploy
+#
+[tasks."deploy:war"]
+description = "Deploy: Copy WAR to Tomcat"
+run = "cp target/faction.war /usr/local/tomcat/webapps/ 2>/dev/null || echo 'Update path to your Tomcat webapps directory'"
+
+#
+# Database
+#
+[tasks."db:shell"]
+description = "Database: Mongo Shell"
+run = "docker exec -it $(docker-compose -f docker-compose-hotreload.yml ps -q faction-mongo 2>/dev/null || docker-compose -f docker-compose-dev.yml ps -q faction-mongo) mongosh -u faction_mongo_user -p faction_mongo_pass faction"
+
+#
+# Quality
+#
+[tasks."quality:checkstyle"]
+description = "Code Quality: Run Checkstyle"
+run = "mvn checkstyle:check || echo 'Checkstyle not configured - add plugin to pom.xml'"
+
+#
+# Frontend
+#
+[tasks."frontend:build"]
+description = "Project: Build Frontend Assets"
+run = "./buildJSAssets.sh"

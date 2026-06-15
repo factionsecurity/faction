@@ -26,6 +26,7 @@ import com.fuse.dao.Teams;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.Campaign;
+import com.fuse.dao.query.AssessmentQueries;
 import java.util.stream.Collectors;
 
 @Namespace("/portal")
@@ -37,6 +38,12 @@ public class ManagerDashboard extends FSActionSupport {
     private Map<String, Map<String, Integer>> vulnerabilityStats = new HashMap<>();
     private List<Assessment> searchResults = new ArrayList<>();
     private List<Vulnerability> recentVulnerabilities = new ArrayList<>();
+    private List<VulnerabilityRow> vulnerabilityResults = new ArrayList<>();
+
+    // Vulnerability detail side panel
+    private Long vulnid;
+    private Vulnerability detailVuln;
+    private Assessment detailAssessment;
     
     // Filtered data statistics
     private Map<String, Integer> filteredSeverityStats = new LinkedHashMap<>();
@@ -95,11 +102,40 @@ public class ManagerDashboard extends FSActionSupport {
         
         // Always load assessments (search or default view)
         performAssessmentSearch();
-        
+
         // Calculate statistics for filtered data
         calculateFilteredStatistics();
 
+        // Collect the vulnerabilities opened in the selected date range for the
+        // vulnerabilities tab (mirrors the vulnerability CSV export).
+        collectVulnerabilities();
+
         return SUCCESS;
+    }
+
+    // Renders the vulnerability detail side panel for the vulnerabilities tab,
+    // reusing the same JSP as the assessment history panel. Manager-only, since the
+    // manager dashboard already exposes vulnerabilities across every assessment.
+    @Action(value = "ManagerDashboardVulnDetail", results = {
+            @Result(name = "vulnDetail", location = "/WEB-INF/jsp/assessment/vulnDetailPanel.jsp") })
+    public String vulnDetail() {
+        if (!this.isAcmanager()) {
+            return LOGIN;
+        }
+        if (this.vulnid == null) {
+            return LOGIN;
+        }
+
+        Vulnerability v = em.find(Vulnerability.class, this.vulnid);
+        if (v == null) {
+            return LOGIN;
+        }
+
+        v.updateRiskLevels(em);
+        detailVuln = v;
+        detailAssessment = AssessmentQueries.getAssessmentById(em, v.getAssessmentId());
+
+        return "vulnDetail";
     }
 
     private void loadDropdownData() {
@@ -387,16 +423,9 @@ public class ManagerDashboard extends FSActionSupport {
             endDate = cal.getTime();
         
             
-            // Query assessments for current month
-            query.append("$and: [");
-            query.append(" { \"start\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}}, ");
-            query.append(" { $or: [ ");
-            query.append("   { \"completed\": { $exists: true, $gte: ISODate(\"")
-            								.append(sdf.format(startDate)).append("\")}}");
-            query.append("   ,");
-            query.append("   { \"completed\": {$exists: false}},");
-            query.append("  ]}");
-            query.append("]}");
+            // Query assessments overlapping the current month
+            query.append(AssessmentSearchQuery.dateOverlapCondition(startDate, endDate, sdf));
+            query.append("}");
             results = em.createNativeQuery(query.toString(), Assessment.class).getResultList();
             searchResults = results;
             return;
@@ -408,15 +437,7 @@ public class ManagerDashboard extends FSActionSupport {
         // Build date range condition
         if (startDate != null && endDate != null) {
         	endDate.setDate(endDate.getDate()+1);
-            query.append("$and: [");
-            query.append(" { \"start\": {$lte: ISODate(\"").append(sdf.format(endDate)).append("\")}}, ");
-            query.append(" { $or: [ ");
-            query.append("   { \"completed\": { $exists: true, $gte: ISODate(\"")
-            								.append(sdf.format(startDate)).append("\")}}");
-            query.append("   ,");
-            query.append("   { \"completed\": {$exists: false}},");
-            query.append("  ]}");
-            query.append("]");
+            query.append(AssessmentSearchQuery.dateOverlapCondition(startDate, endDate, sdf));
             hasConditions = true;
         }
         
@@ -521,7 +542,122 @@ public class ManagerDashboard extends FSActionSupport {
         });
     }
 
+    // Build the vulnerability rows for the vulnerabilities tab: every vulnerability
+    // opened within the selected date range, across the assessments in the current
+    // search results. Kept in sync with ManagerDashboardVulnerabilitiesCSV.
+    private void collectVulnerabilities() {
+        vulnerabilityResults = new ArrayList<>();
+        for (Assessment asmt : searchResults) {
+            for (Vulnerability vuln : getVulnerabilitiesInDateRange(asmt.getId())) {
+                VulnerabilityRow row = new VulnerabilityRow();
+                row.setAssessmentId(asmt.getId());
+                row.setAssessmentName(asmt.getName());
+                row.setAppId(asmt.getAppId());
+                row.setVulnId(vuln.getId());
+                row.setName(vuln.getName());
+                row.setSeverity(getRiskLevelName(vuln.getOverall()));
+                row.setCvssScore(vuln.getCvssScore());
+                row.setCategory(vuln.getCategory() != null ? vuln.getCategory().getName() : "");
+                row.setOpened(vuln.getOpened());
+                row.setClosed(vuln.getClosed());
+                row.setStatus(vuln.getClosed() != null ? "Closed" : "Open");
+                row.setTracking(vuln.getTracking());
+                vulnerabilityResults.add(row);
+            }
+        }
+    }
+
+    private List<Vulnerability> getVulnerabilitiesInDateRange(Long assessmentId) {
+        List<Vulnerability> allVulns = em.createQuery(
+                "from Vulnerability where assessmentId = :aid", Vulnerability.class)
+                .setParameter("aid", assessmentId)
+                .getResultList();
+
+        // Filter by opened date if a date range is specified
+        if (startDate != null && endDate != null) {
+            Date adjustedEndDate = new Date(endDate.getTime());
+            adjustedEndDate.setDate(adjustedEndDate.getDate() + 1); // Include end date
+
+            return allVulns.stream()
+                    .filter(v -> v.getOpened() != null)
+                    .filter(v -> !v.getOpened().before(startDate) && v.getOpened().before(adjustedEndDate))
+                    .collect(Collectors.toList());
+        }
+
+        // If no date range, return vulnerabilities that have an opened date
+        return allVulns.stream()
+                .filter(v -> v.getOpened() != null)
+                .collect(Collectors.toList());
+    }
+
+    // Row backing the vulnerabilities tab table. Pairs a vulnerability with the
+    // assessment it belongs to so the JSP can render assessment context without a
+    // direct entity relationship.
+    public static class VulnerabilityRow {
+        private Long assessmentId;
+        private String assessmentName;
+        private String appId;
+        private Long vulnId;
+        private String name;
+        private String severity;
+        private String cvssScore;
+        private String category;
+        private Date opened;
+        private Date closed;
+        private String status;
+        private String tracking;
+
+        public Long getAssessmentId() { return assessmentId; }
+        public void setAssessmentId(Long assessmentId) { this.assessmentId = assessmentId; }
+        public String getAssessmentName() { return assessmentName; }
+        public void setAssessmentName(String assessmentName) { this.assessmentName = assessmentName; }
+        public String getAppId() { return appId; }
+        public void setAppId(String appId) { this.appId = appId; }
+        public Long getVulnId() { return vulnId; }
+        public void setVulnId(Long vulnId) { this.vulnId = vulnId; }
+        public String getName() { return name; }
+        public void setName(String name) { this.name = name; }
+        public String getSeverity() { return severity; }
+        public void setSeverity(String severity) { this.severity = severity; }
+        public String getCvssScore() { return cvssScore; }
+        public void setCvssScore(String cvssScore) { this.cvssScore = cvssScore; }
+        public String getCategory() { return category; }
+        public void setCategory(String category) { this.category = category; }
+        public Date getOpened() { return opened; }
+        public void setOpened(Date opened) { this.opened = opened; }
+        public Date getClosed() { return closed; }
+        public void setClosed(Date closed) { this.closed = closed; }
+        public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
+        public String getTracking() { return tracking; }
+        public void setTracking(String tracking) { this.tracking = tracking; }
+    }
+
     // Getters and Setters
+    public List<VulnerabilityRow> getVulnerabilityResults() {
+        return vulnerabilityResults;
+    }
+
+    public void setVulnerabilityResults(List<VulnerabilityRow> vulnerabilityResults) {
+        this.vulnerabilityResults = vulnerabilityResults;
+    }
+
+    public Long getVulnid() {
+        return vulnid;
+    }
+
+    public void setVulnid(Long vulnid) {
+        this.vulnid = vulnid;
+    }
+
+    public Vulnerability getDetailVuln() {
+        return detailVuln;
+    }
+
+    public Assessment getDetailAssessment() {
+        return detailAssessment;
+    }
+
     public Map<String, Integer> getAssessmentStats() {
         return assessmentStats;
     }

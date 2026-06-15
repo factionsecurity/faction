@@ -432,6 +432,7 @@ public class DocxUtils {
                             customCSS, "summary2"));
             replaceHTML(mlp.getMainDocumentPart(), map, false);
             replaceAssessment(customCSS);
+            insertPageBreaks();
             updateDocWithExtensions(customCSS);
 
             return mlp;
@@ -832,8 +833,12 @@ public class DocxUtils {
 
             // Pattern to match image links with both regular and HTML-encoded formats
             // Captures: assessment_id and image_guid
-            Pattern imagePattern = Pattern.compile(
+            /*Pattern imagePattern = Pattern.compile(
                     "<img[^>]+src=\"getImage\\?id(=|&#61;)" + aid + ":([^\"\\s>]+)\"[^>]*>",
+                    Pattern.CASE_INSENSITIVE);*/
+            
+            Pattern imagePattern = Pattern.compile(
+                    "<img[^>]+src=\"getImage\\?id(=|&#61;)[0-9]+:([^\"\\s>]+)\"[^>]*>",
                     Pattern.CASE_INSENSITIVE);
 
             // First pass: find all referenced GUIDs
@@ -910,6 +915,15 @@ public class DocxUtils {
             }
         }
     }
+    private void insertPageBreaks() {
+        int breakIndex = getIndex(mlp.getMainDocumentPart(), "${pageBreak}");
+    	while(breakIndex > 0) {
+    		System.out.println("Adding PageBreak");
+            addPageBreak(mlp, breakIndex);
+            breakIndex = getIndex(mlp.getMainDocumentPart(), "${pageBreak}");
+    	}
+    	
+    }
     
     private void removeSectionTagsOrRemoveSection(String sectionName, Boolean hasVulns) {
         try {
@@ -924,7 +938,7 @@ public class DocxUtils {
 				end = getIndex(mlp.getMainDocumentPart(), "${end-section}");
 			} else if (sectionName != null) {
 				begin = getIndex(mlp.getMainDocumentPart(), "${if-section " + sectionName + "}");
-				end = getIndex(mlp.getMainDocumentPart(), "${if-section " + sectionName + "}");
+				end = getIndex(mlp.getMainDocumentPart(), "${end-section " + sectionName + "}");
 			}
 			if (begin == -1)
 				return;
@@ -933,8 +947,10 @@ public class DocxUtils {
 			
 			// remove only the tags
         	if(hasVulns) {
-					mlp.getMainDocumentPart().getContent().remove(end);
-					mlp.getMainDocumentPart().getContent().remove(begin);
+        			/// DOn't need this because getIndex deletes the element at that index. 
+        			//remove in reverse order so it does not break the index and remove the wrong element
+					//mlp.getMainDocumentPart().getContent().remove(end);
+					//mlp.getMainDocumentPart().getContent().remove(begin);
 			// remove everything between the tags
         	}else {
 				for (int i = end; i >= begin; i--) {

@@ -65,6 +65,7 @@ import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
 import com.fuse.utils.FSUtils;
 import com.fuse.utils.ImageBorderUtil;
+import com.fuse.utils.InternalConfig;
 
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -609,7 +610,6 @@ public class assessments {
                         if (Boolean.TRUE.equals(includeBase64Images)) {
                             AssessmentQueries.updateImages(a, v);
                         }
-                        v.updateRiskLevels();
                         v.updateRiskLevels(em);
                         VulnerabilityDTO dto = VulnerabilityDTO.fromEntity(v);
 
@@ -1647,13 +1647,19 @@ public class assessments {
                 List<CustomTypeDTO> vulnerabilityFields = new ArrayList<>();
 
                 for (CustomType ct : assessmentCustomTypes) {
-                    if (ct.getAssessmentTypes().isEmpty() || ct.getAssessmentTypes().contains(assessmentType)) {
+                    if ( 
+                        (ct.getAssessmentTypes().isEmpty() && InternalConfig.isOSS())
+                        || ct.getAssessmentTypes().contains(assessmentType)
+                    ) {
                         assessmentFields.add(CustomTypeDTO.fromEntity(ct));
                     }
                 }
 
                 for (CustomType ct : vulnCustomTypes) {
-                    if (ct.getAssessmentTypes().isEmpty() || ct.getAssessmentTypes().contains(assessmentType)) {
+                    if (
+                        (ct.getAssessmentTypes().isEmpty() && InternalConfig.isOSS())
+                        || ct.getAssessmentTypes().contains(assessmentType)
+                    ) {
                         vulnerabilityFields.add(CustomTypeDTO.fromEntity(ct));
                     }
                 }
