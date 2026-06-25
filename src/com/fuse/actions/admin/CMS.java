@@ -65,7 +65,6 @@ public class CMS extends FSActionSupport {
 	private String file_dataContentType;
 	private String file_dataFilename;
 	private String message;
-	private String reportExtension;
 	private List<List<String>> reportSections = new ArrayList<>();
 	private String reportSection;
 	private InputStream templateStream;
@@ -201,11 +200,6 @@ public class CMS extends FSActionSupport {
 					selectedTemplate.setTeam(team);
 					selectedTemplate.setType(type);
 					selectedTemplate.setRetest(retest);
-					if(Arrays.asList(ReportFeatures.getReportOptions()).stream().anyMatch(this.reportExtension::equals)) {
-						selectedTemplate.setFileType(this.reportExtension);
-					}else {
-						selectedTemplate.setFileType("docx");
-					}
 				}
 				HibHelper.getInstance().preJoin();
 				em.joinTransaction();
@@ -582,14 +576,6 @@ public class CMS extends FSActionSupport {
 
 	public String getMessage() {
 		return message;
-	}
-	
-	public void setReportExtension(String reportExtension) {
-		this.reportExtension = reportExtension;
-		
-	}
-	public List<String> getFileTypes(){
-		return Arrays.asList(ReportFeatures.getReportOptions());
 	}
 	
 	public Boolean getSectionsEnabled() {

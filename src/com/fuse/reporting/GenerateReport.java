@@ -151,7 +151,7 @@ public class GenerateReport {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			mlp.save(baos);
 			byte[] finalReport = baos.toByteArray();
-			byte [] updatedReport = ReportFeatures.finalizeReport(finalReport, base.getFileType());
+			byte [] updatedReport = ReportFeatures.finalizeReport(finalReport, "docx");
 			String docx = Base64.encodeBase64String(updatedReport);
 			return docx;
 		} catch (Exception ex) {
@@ -366,7 +366,7 @@ public class GenerateReport {
 
 			byte[] finalReport = (baos.toByteArray());
 			
-			return ReportFeatures.finalizeReport(finalReport, base.getFileType());
+			return ReportFeatures.finalizeReport(finalReport, "docx");
 
 		} catch (Exception ex) {
 			ex.printStackTrace();

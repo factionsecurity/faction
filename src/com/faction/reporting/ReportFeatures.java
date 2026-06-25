@@ -6,10 +6,6 @@ public class ReportFeatures {
         return report;
     }
 
-    public static String [] getReportOptions() {
-        return new String[] {"docx"};
-    }
-
     public static Boolean allowSections(){
         return false;
     }
