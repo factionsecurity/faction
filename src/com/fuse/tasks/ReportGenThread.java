@@ -1,19 +1,15 @@
 package com.fuse.tasks;
 
-import java.util.Date;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
-import javax.persistence.EntityManagerFactory;
-import javax.persistence.Persistence;
-import javax.transaction.TransactionManager;
-
-import org.hibernate.Hibernate;
 
 import com.fuse.dao.Assessment;
 import com.fuse.dao.FinalReport;
+import com.fuse.dao.FinalReportVariant;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Notification;
 import com.fuse.dao.User;
@@ -73,33 +69,31 @@ public class ReportGenThread implements Runnable{
 			em.joinTransaction();
 			Assessment a = em.find(Assessment.class, id);
 			if(a.getFinalReport() == null && !isRetest){
-				String guid = UUID.randomUUID().toString();
 				FinalReport fr = new FinalReport();
 				fr.setRetest(false);
-				fr.setFilename(guid);
-				fr.setBase64EncodedPdf(this.report);
+				fr.setFilename(UUID.randomUUID().toString());
 				fr.setGentime(new Date());
-				fr.setFileType(generated[1]);
+				fr.getVariants().addAll(buildVariants(generated));
 				em.persist(fr);
 				a.setFinalReport(fr);
 			}else if(!isRetest){
-				a.getFinalReport().setBase64EncodedPdf(this.report);
-				a.getFinalReport().setFileType(fileType);
-				a.getFinalReport().setGentime(new Date());
+				FinalReport fr = a.getFinalReport();
+				fr.getVariants().clear();
+				fr.getVariants().addAll(buildVariants(generated));
+				fr.setGentime(new Date());
 			}else if(isRetest && a.getRetestReport() == null){
-				String guid = UUID.randomUUID().toString();
 				FinalReport fr = new FinalReport();
 				fr.setRetest(true);
-				fr.setFilename(guid);
-				fr.setBase64EncodedPdf(this.report);
-				fr.setFileType(fileType);
+				fr.setFilename(UUID.randomUUID().toString());
 				fr.setGentime(new Date());
+				fr.getVariants().addAll(buildVariants(generated));
 				em.persist(fr);
 				a.setRetestReport(fr);
 			}else if(isRetest){
-				a.getRetestReport().setBase64EncodedPdf(this.report);
-				a.getFinalReport().setFileType(fileType);
-				a.getRetestReport().setGentime(new Date());
+				FinalReport fr = a.getRetestReport();
+				fr.getVariants().clear();
+				fr.getVariants().addAll(buildVariants(generated));
+				fr.setGentime(new Date());
 			}
 				
 			em.persist(a);
@@ -132,7 +126,12 @@ public class ReportGenThread implements Runnable{
 		return report;
 	}
 
-	
-
-	
+	protected List<FinalReportVariant> buildVariants(String[] generated) {
+		List<FinalReportVariant> variants = new ArrayList<>();
+		FinalReportVariant docx = new FinalReportVariant();
+		docx.setFileType("docx");
+		docx.setBase64Content(generated[0]);
+		variants.add(docx);
+		return variants;
+	}
 }

@@ -1,7 +1,7 @@
 package com.fuse.dao;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -15,6 +15,9 @@ import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.TableGenerator;
 import javax.persistence.Transient;
+
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 public class FinalReport{
@@ -38,6 +41,9 @@ public class FinalReport{
 	private Boolean largeFile=false;
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<FinalReportPart>parts = new ArrayList<>();
+	@Getter @Setter
+	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<FinalReportVariant> variants = new ArrayList<>();
 	
 	public Long getId() {
 		return id;
@@ -110,7 +116,24 @@ public class FinalReport{
 	public void setParts(List<FinalReportPart>parts) {
 		this.parts = parts;
 	}
-	@Transient	
+	/**
+	 * Returns the format variants for this report. For records created after the
+	 * multi-format change, returns the stored variant list. For legacy records
+	 * (variants list empty), synthesizes a single variant from the old fields so
+	 * callers never need to know which path they took.
+	 */
+	@Transient
+	public List<FinalReportVariant> getEffectiveVariants() {
+		if (variants != null && !variants.isEmpty()) {
+			return variants;
+		}
+		FinalReportVariant legacy = new FinalReportVariant();
+		legacy.setFileType(this.getFileType());
+		legacy.initFromLegacy(this.base64EncodedPdf, this.largeFile, this.parts);
+		return Collections.singletonList(legacy);
+	}
+
+	@Transient
 	private String[] chunk(String largeString){
 		int chunkSize = 15_000_000;
 		return largeString.split("(?<=\\G.{" + chunkSize + "})");

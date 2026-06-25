@@ -3,10 +3,8 @@ package com.fuse.reporting;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.Properties;
 import java.util.UUID;
 
 import javax.persistence.EntityManager;
@@ -14,6 +12,7 @@ import javax.persistence.EntityManager;
 import org.apache.commons.codec.binary.Base64;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 
+import com.faction.reporting.ReportFeatures;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AssessmentType;
 import com.fuse.dao.ReportOptions;
@@ -27,8 +26,6 @@ import com.fuse.utils.FSUtils;
 import com.fuse.utils.MethodProfiler;
 import com.fuse.utils.reporttemplate.ReportTemplate;
 import com.fuse.utils.reporttemplate.ReportTemplateFactory;
-
-import com.faction.reporting.ReportFeatures;
 
 public class GenerateReport {
 
@@ -211,9 +208,9 @@ public class GenerateReport {
 
 			String docx = Base64
 					.encodeBase64String(
-							ReportFeatures.finalizeReport(finalReport, base.getFileType())
+							ReportFeatures.finalizeReport(finalReport, "docx")
 					);
-			return new String [] {docx, base.getFileType()};
+			return new String [] {docx, "docx"};
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
