@@ -20,10 +20,10 @@
           <button type="button" class="btn btn-block btn-primary btn-md dropdown-toggle" data-toggle="dropdown">
             Download Report <span class="caret"></span>
           </button>
-          <ul class="dropdown-menu" style="width:100%">
-            <li><a href="DownloadReport?aid=<s:property value="assessment.id"/>&format=docx" target="_blank" rel="noopener noreferrer">Word (.docx)</a></li>
-            <li><a href="DownloadReport?aid=<s:property value="assessment.id"/>&format=pdf" target="_blank" rel="noopener noreferrer">PDF</a></li>
-            <li><a href="DownloadReport?aid=<s:property value="assessment.id"/>&format=encryptedpdf" target="_blank" rel="noopener noreferrer">Encrypted PDF</a></li>
+          <ul class="dropdown-menu" style="width:100%; background-color:#192338; border-color:#0f1a2b;">
+            <li><a href="DownloadReport?aid=<s:property value="assessment.id"/>&format=docx" target="_blank" rel="noopener noreferrer" style="color:#fff;">Word (.docx)</a></li>
+            <li><a href="DownloadReport?aid=<s:property value="assessment.id"/>&format=pdf" target="_blank" rel="noopener noreferrer" style="color:#fff;">PDF</a></li>
+            <li><a href="DownloadReport?aid=<s:property value="assessment.id"/>&format=encryptedpdf" target="_blank" rel="noopener noreferrer" style="color:#fff;">Encrypted PDF</a></li>
           </ul>
         </div>
       </div>
