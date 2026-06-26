@@ -72,6 +72,8 @@ public class Users extends FSActionSupport {
 	private String oauthClientSecret;
 	private String oauthDiscoveryURI;
 	private String saml2MetaUrl;
+	private Boolean samlForceAuthn;
+	private Integer samlMaxAuthLifetime;
 
 	@Action(value = "Users")
 	public String execute() {
@@ -95,6 +97,8 @@ public class Users extends FSActionSupport {
 			this.oauthClientId = ems.getOauthClientId();
 			this.oauthDiscoveryURI = ems.getOauthDiscoveryURI();
 			this.saml2MetaUrl = ems.getSaml2MetaUrl();
+			this.samlForceAuthn = ems.getSamlForceAuthn();
+			this.samlMaxAuthLifetime = ems.getSamlMaxAuthLifetime();
 		}
 
 		return SUCCESS;
@@ -761,6 +765,8 @@ public class Users extends FSActionSupport {
 		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
 				.findFirst().orElse(new SystemSettings());
 		settings.setSaml2MetaUrl(this.saml2MetaUrl);
+		settings.setSamlForceAuthn(this.samlForceAuthn != null && this.samlForceAuthn);
+		settings.setSamlMaxAuthLifetime(this.samlMaxAuthLifetime);
 		settings.createKeystoreIfNotExists();
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
@@ -1102,6 +1108,18 @@ public class Users extends FSActionSupport {
 	}
 	public String getSaml2MetaUrl() {
 		return this.saml2MetaUrl;
+	}
+	public void setSamlForceAuthn(Boolean samlForceAuthn) {
+		this.samlForceAuthn = samlForceAuthn;
+	}
+	public Boolean getSamlForceAuthn() {
+		return this.samlForceAuthn;
+	}
+	public void setSamlMaxAuthLifetime(Integer samlMaxAuthLifetime) {
+		this.samlMaxAuthLifetime = samlMaxAuthLifetime;
+	}
+	public Integer getSamlMaxAuthLifetime() {
+		return this.samlMaxAuthLifetime;
 	}
 	
 	

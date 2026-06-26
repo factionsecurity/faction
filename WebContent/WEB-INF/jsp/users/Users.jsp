@@ -235,6 +235,18 @@
 							<div class="row">
 								<bs:inputgroup name="App Federation Metadata Url" colsize="12" id="saml2MetaUrl"
 									placeholder=""><s:property value="saml2MetaUrl" /></bs:inputgroup>
+								<div class="col-sm-4">
+									<div class="form-group">
+										<label>Force Re-authentication</label>
+										<div class="form-control" style="background: #0000">
+											<input class="icheckbox_minimal-blue" type="checkbox"
+												id="samlForceAuthn" <s:if test="samlForceAuthn">checked</s:if> />
+										</div>
+										<small class="text-muted">Uncheck to reuse an existing IdP session (seamless SSO).</small>
+									</div>
+								</div>
+								<bs:inputgroup name="Max Authentication Age (seconds)" colsize="4" id="samlMaxAuthLifetime"
+									placeholder="86400"><s:property value="samlMaxAuthLifetime" /></bs:inputgroup>
 								<bs:button color="primary" id="saml2Save" text="Save" size="md"
 									colsize="4" addlabel="true"></bs:button>
 							</div>
