@@ -229,6 +229,24 @@
 				<div class="row">
 					<div class="box box-primary">
 						<div class="box-header with-border">
+							<h3 class="box-title">GitHub Configuration</h3>
+						</div>
+						<div class="box-body">
+							<div class="row">
+								<bs:inputgroup name="Client Id" colsize="4" id="githubClientId"
+									placeholder=""><s:property value="githubClientId" /></bs:inputgroup>
+								<bs:inputgroup name="Client Secret" colsize="4"
+									id="githubClientSecret" password="true"
+									placeholder=""></bs:inputgroup>
+								<bs:button color="primary" id="githubSave" text="Save" size="md"
+									colsize="4" addlabel="true"></bs:button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="box box-primary">
+						<div class="box-header with-border">
 							<h3 class="box-title">SAML2 Configuration</h3>
 						</div>
 						<div class="box-body">

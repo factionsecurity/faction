@@ -142,5 +142,5 @@ run = "mvn checkstyle:check || echo 'Checkstyle not configured - add plugin to p
 #
 [tasks."frontend:build"]
 description = "Project: Build Frontend Assets"
-run = "npm install; npm run build"
+run = "npm install --legacy-peer-deps &&  npm run build"
 dir = "WebContent"

@@ -29,6 +29,8 @@ import org.pac4j.core.client.Client;
 import org.pac4j.core.client.Clients;
 import org.pac4j.core.client.direct.AnonymousClient;
 import org.pac4j.core.config.Config;
+import org.pac4j.oauth.client.GitHubClient;
+import org.pac4j.oauth.profile.OAuth20Profile;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.saml.client.SAML2Client;
@@ -36,6 +38,7 @@ import org.pac4j.saml.config.SAML2Configuration;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.UrlResource;
 
+import com.fuse.authentication.oauth.GitHubEmailFetcher;
 import com.fuse.authentication.oauth.SecurityConfigFactory;
 import com.fuse.authentication.oauth.SecurityFilterWrapper;
 import com.fuse.utils.FSUtils;
@@ -90,6 +93,8 @@ public class SystemSettings {
 	private String oauthClientId;
 	private String oauthClientSecret;
 	private String oauthDiscoveryURI;
+	private String githubClientId;
+	private String githubClientSecret;
 	private Integer inactiveDays;
 	@ElementCollection
 	private List<String> status = new ArrayList<String>();
@@ -426,6 +431,24 @@ public class SystemSettings {
 		this.oauthClientId = oauthClientId;
 	}
 
+	public String getGithubClientId() {
+		return githubClientId;
+	}
+
+	public void setGithubClientId(String githubClientId) {
+		this.githubClientId = githubClientId;
+	}
+
+	// Stores the encrypted GitHub OAuth client secret (encrypted by the admin action,
+	// like oauthClientSecret); decrypted only when building the client.
+	public String getGithubClientSecret() {
+		return githubClientSecret;
+	}
+
+	public void setGithubClientSecret(String githubClientSecret) {
+		this.githubClientSecret = githubClientSecret;
+	}
+
 	public void setOauthClientSecret(String oauthClientSecret) {
 		this.oauthClientSecret = oauthClientSecret;
 	}
@@ -637,7 +660,34 @@ public class SystemSettings {
 		}catch(Exception ex) {
 			System.out.println(ex);
 		}
-		
+		try {
+			if (this.githubClientId != null && !this.githubClientId.trim().isEmpty()) {
+				GitHubClient github = new GitHubClient(this.githubClientId,
+						this.githubClientSecret == null ? "" : FSUtils.decryptPassword(this.githubClientSecret));
+				github.setName("githubClient");
+				github.setScope("user:email");
+				github.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK") + "/github/callback");
+				github.setAuthorizationGenerator((ctx, profile) -> {
+					profile.addRole("ROLE_USER");
+					// GitHub's OAuth profile carries no email, so fetch the verified
+					// primary email via the API token and expose it as the "email"
+					// attribute that AccessControl matches users on.
+					if (profile.getAttribute("email") == null && profile instanceof OAuth20Profile) {
+						OAuth20Profile ghProfile = (OAuth20Profile) profile;
+						String email = GitHubEmailFetcher.primaryVerifiedEmail(ghProfile.getAccessToken());
+						if (email != null) {
+							ghProfile.addAttribute("email", email);
+						}
+					}
+					return Optional.ofNullable(profile);
+				});
+				github.init();
+				clients.add(github);
+			}
+		}catch(Exception ex) {
+			System.out.println(ex);
+		}
+
 		Clients configuredClients = new Clients();
 		configuredClients.setClients(clients);
 		configuredClients.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback");

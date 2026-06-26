@@ -92,7 +92,11 @@ public class AccessControl {
 				}
 				
 				if(email != null) {
-					String query = String.format("{'email': {$regex: '^%s$', $options: 'i'}}",FSUtils.sanitizeMongo(email));
+					// sanitizeMongo regex-escapes metacharacters (e.g. "." -> "\."), but those
+					// backslashes must also be escaped for the surrounding JSON string, otherwise
+					// the BSON JSON parser rejects "\." as an invalid JSON escape sequence.
+					String emailRegex = FSUtils.sanitizeMongo(email).replace("\\", "\\\\");
+					String query = String.format("{'email': {$regex: '^%s$', $options: 'i'}}", emailRegex);
 					List<User> users = em.createNativeQuery(query, User.class).getResultList();
 					User tmp = null;
 					if(users.size() == 0) {
