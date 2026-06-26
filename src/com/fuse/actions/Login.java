@@ -315,6 +315,17 @@ public class Login extends FSActionSupport {
 
 		}else {
 
+			// Decide whether to show the SSO option on the login page. Only show it
+			// when SAML2 is actually configured, otherwise the SSO entry point would
+			// forward to /saml2 with no client and 404.
+			SystemSettings ss = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+					.findFirst().orElse(null);
+			if (ss != null && ss.getSaml2MetaUrl() != null && !ss.getSaml2MetaUrl().trim().isEmpty()) {
+				this.useSSO = true;
+				this.ssoURL = request.getContextPath() + "/sso/saml";
+			} else {
+				this.useSSO = false;
+			}
 			return SUCCESS;
 		}
 

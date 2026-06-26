@@ -1,6 +1,7 @@
 # mise tasks — replicates .zed/tasks.json
 # Run with:  mise run <task>     List with:  mise tasks
 # Docs: https://mise.jdx.dev/tasks/
+
 [tools]
 node = '16'
 java = '17'

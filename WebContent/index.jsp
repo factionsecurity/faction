@@ -52,9 +52,6 @@
 								<button type="submit" class="btn btn-primary pull-right btn-lg" style="background-color: #a64ed0; border-color: #a64ed0;">Sign
 									in</button>
 							</div>
-							<div class="box-footer" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
-								<a href="${pageContext.request.contextPath}/sso/saml" class="btn btn-warning btn-block btn-lg">SSO Sign In</a>
-							</div>
 							<!-- /.box-footer -->
 						</form>
 						<br>
@@ -63,11 +60,12 @@
 						<div style="color:white; float:right">
 							<a href="reset.action" style="color:#030D1C"> Reset Your Password</a>
 						</div>
-						<br><br>
 						<s:if test="useSSO">
-									<button style="width:100%" class="btn btn-warning pull-right btn-lg" onClick="document.location='startOAuth'">SSO Sign
-									in</button>
-									</s:if>
+							<div style="text-align:center; margin-top: 30px; background-color: #a64ed0; border-radius: 10px; padding: 5px; color:white">
+								<a href="${pageContext.request.contextPath}/sso/saml" class="btn btn-block btn-lg " style="color: white">SSO Sign In</a>
+								</div>
+						</s:if>
+						<br><br>
 						<s:if test="failed==true">
 							<div id="errorMsg" class="alert alert-danger alert-dismissable" style="padding-top:10px; margin-top:20px">
 								<h4>

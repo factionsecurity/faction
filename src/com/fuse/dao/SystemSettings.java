@@ -107,6 +107,8 @@ public class SystemSettings {
 	private String saml2MetaUrl;
 	private String keystore;
 	private String keystorePassword;
+	private Boolean samlForceAuthn;
+	private Integer samlMaxAuthLifetime;
 	
 	
 	public void initSMTPSettings() {
@@ -560,9 +562,32 @@ public class SystemSettings {
 	public String getSaml2MetaUrl() {
 		return this.saml2MetaUrl;
 	}
-	
+
 	public void setSaml2MetaUrl(String saml2MetaUrl) {
 		this.saml2MetaUrl = saml2MetaUrl;
+	}
+
+	// Controls the SAML ForceAuthn flag on the AuthnRequest. When true the IdP must
+	// re-authenticate the user on every login; when false an existing IdP session is
+	// reused (seamless SSO). Defaults to true to preserve prior behavior.
+	public Boolean getSamlForceAuthn() {
+		return this.samlForceAuthn == null ? true : this.samlForceAuthn;
+	}
+
+	public void setSamlForceAuthn(Boolean samlForceAuthn) {
+		this.samlForceAuthn = samlForceAuthn;
+	}
+
+	// Max age (seconds) of the IdP AuthnInstant pac4j will accept. With seamless SSO
+	// (ForceAuthn off) the IdP reuses an existing session, so the AuthnInstant can be
+	// hours old; the pac4j default of 3600 (1h) rejects those. Default to 24h so
+	// IdP-initiated/seamless logins work; admins can tune to their IdP session policy.
+	public Integer getSamlMaxAuthLifetime() {
+		return (this.samlMaxAuthLifetime == null || this.samlMaxAuthLifetime <= 0) ? 86400 : this.samlMaxAuthLifetime;
+	}
+
+	public void setSamlMaxAuthLifetime(Integer samlMaxAuthLifetime) {
+		this.samlMaxAuthLifetime = samlMaxAuthLifetime;
 	}
 	
 	public void setKeystorePassword(String password) {
@@ -652,8 +677,9 @@ public class SystemSettings {
 		 config.setServiceProviderEntityId(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
 		 config.setAuthnRequestSigned(true);  // Azure requires signed Authn requests
 		 config.setWantsAssertionsSigned(true);
-		 config.setForceAuth(true);
+		 config.setForceAuth(getSamlForceAuthn());
 		 config.setAcceptedSkew(120);
+		 config.setMaximumAuthenticationLifetime(getSamlMaxAuthLifetime());
 		 config.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
 		 config.init();
 		return config;
