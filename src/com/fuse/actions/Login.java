@@ -64,6 +64,7 @@ public class Login extends FSActionSupport {
 	private String code;
 	private Boolean useSSO;
 	private String ssoURL;
+	private Boolean useGithub;
 	// private static final String PROTECTED_RESOURCE_URL =
 	// "https://www.googleapis.com/plus/v1/people/me";
 	
@@ -326,6 +327,7 @@ public class Login extends FSActionSupport {
 			} else {
 				this.useSSO = false;
 			}
+			this.useGithub = ss != null && ss.getGithubClientId() != null && !ss.getGithubClientId().trim().isEmpty();
 			return SUCCESS;
 		}
 
@@ -520,6 +522,10 @@ public class Login extends FSActionSupport {
 
 	public String getSsoURL() {
 		return ssoURL;
+	}
+
+	public Boolean getUseGithub() {
+		return useGithub;
 	}
 
 	public String getTier() {

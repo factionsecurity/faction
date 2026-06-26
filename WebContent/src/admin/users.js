@@ -323,6 +323,34 @@ $(function() {
 		});
 
 	});
+
+	function githubSave(callback){
+		let pdata = "githubClientId=" + $("#githubClientId").val();
+		pdata += "&githubClientSecret=" + $("#githubClientSecret").val();
+		pdata += "&_token=" + global._token;
+		$.post("SaveGithub", pdata, function(data) {
+			global._token = data.token;
+			callback(data)
+		});
+
+	}
+	$("#githubSave").on('click', function() {
+		githubSave( (data) => {
+			global._token = data.token;
+			if (data.result == "success") {
+				$.alert("GitHub Settings Saved");
+			} else {
+				$.confirm({
+					title: "Error",
+					content: data.message,
+					buttons: {
+						"OK": function() { return; }
+					}
+				});
+			}
+		});
+
+	});
 	function saml2Save(callback){
 		let pdata = "saml2MetaUrl=" + $("#saml2MetaUrl").val();
 		pdata += "&samlForceAuthn=" + $("#samlForceAuthn").is(':checked');

@@ -45,4 +45,19 @@ public class SSOUrls extends FSActionSupport {
 		return "redirect_to_oauth";
 	}
 
+	@Action( value= "github",
+			results = {
+					@Result(name = "redirect_to_github", location = "/github"),
+					@Result(name = "login", type = "redirect", location = "/")
+			}
+	)
+	public String GitHubRedirect() {
+		// Guard: if GitHub isn't configured, avoid forwarding to /github (no client -> 404).
+		SystemSettings ss = settings();
+		if (ss == null || ss.getGithubClientId() == null || ss.getGithubClientId().trim().isEmpty()) {
+			return "login";
+		}
+		return "redirect_to_github";
+	}
+
 }

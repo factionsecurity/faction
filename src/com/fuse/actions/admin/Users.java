@@ -71,6 +71,8 @@ public class Users extends FSActionSupport {
 	private String oauthClientId;
 	private String oauthClientSecret;
 	private String oauthDiscoveryURI;
+	private String githubClientId;
+	private String githubClientSecret;
 	private String saml2MetaUrl;
 	private Boolean samlForceAuthn;
 	private Integer samlMaxAuthLifetime;
@@ -96,6 +98,7 @@ public class Users extends FSActionSupport {
 			this.ldapObjectClass = ems.getLdapObjectClass();
 			this.oauthClientId = ems.getOauthClientId();
 			this.oauthDiscoveryURI = ems.getOauthDiscoveryURI();
+			this.githubClientId = ems.getGithubClientId();
 			this.saml2MetaUrl = ems.getSaml2MetaUrl();
 			this.samlForceAuthn = ems.getSamlForceAuthn();
 			this.samlMaxAuthLifetime = ems.getSamlMaxAuthLifetime();
@@ -750,7 +753,30 @@ public class Users extends FSActionSupport {
 		//update the odic config in the filter
 		//settings.updateSSOFilters();
 		SecurityConfigFactory.refreshConfig();
-		
+
+		return this.SUCCESSJSON;
+	}
+
+	@Action(value = "SaveGithub")
+	public String saveGithub() {
+		if (!(this.isAcadmin())) {
+			return LOGIN;
+		}
+		if (!this.testToken(false))
+			return this.ERRORJSON;
+
+		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+				.findFirst().orElse(new SystemSettings());
+		settings.setGithubClientId(this.githubClientId);
+		if (this.githubClientSecret != null && !this.githubClientSecret.equals("")) {
+			settings.setGithubClientSecret(FSUtils.encryptPassword(this.githubClientSecret));
+		}
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		em.persist(settings);
+		HibHelper.getInstance().commit();
+		SecurityConfigFactory.refreshConfig();
+
 		return this.SUCCESSJSON;
 	}
 	
@@ -1099,6 +1125,15 @@ public class Users extends FSActionSupport {
 		this.oauthDiscoveryURI = oauthDiscoveryURI;
 	}
 
+	public String getGithubClientId() {
+		return githubClientId;
+	}
+	public void setGithubClientId(String githubClientId) {
+		this.githubClientId = githubClientId;
+	}
+	public void setGithubClientSecret(String githubClientSecret) {
+		this.githubClientSecret = githubClientSecret;
+	}
 	public void setOauthClientSecret(String oauthClientSecret) {
 		this.oauthClientSecret = oauthClientSecret;
 	}

@@ -48,7 +48,54 @@
 			<param-value>isAuthenticated</param-value>
 		</init-param>
 	</filter>
-	
+
+	<filter-mapping>
+		<filter-name>corsFilter</filter-name>
+		<url-pattern>/github/*</url-pattern>
+	</filter-mapping>
+
+	<filter-mapping>
+		<filter-name>clearSavedRequestFilter</filter-name>
+		<url-pattern>/github/callback</url-pattern>
+	</filter-mapping>
+
+	<filter-mapping>
+		<filter-name>githubCallback</filter-name>
+		<url-pattern>/github/callback</url-pattern>
+		<dispatcher>REQUEST</dispatcher>
+	</filter-mapping>
+	<filter>
+		<filter-name>githubCallback</filter-name>
+		<filter-class>com.fuse.authentication.oauth.GitHubCallbackFilterWrapper</filter-class>
+		<init-param>
+			<param-name>defaultClient</param-name>
+			<param-value>githubClient</param-value>
+		</init-param>
+	</filter>
+
+	<filter-mapping>
+		<filter-name>GithubFilter</filter-name>
+		<url-pattern>/github/*</url-pattern>
+		<dispatcher>REQUEST</dispatcher>
+		<dispatcher>FORWARD</dispatcher>
+	</filter-mapping>
+	<filter>
+		<filter-name>GithubFilter</filter-name>
+		<filter-class>com.fuse.authentication.oauth.SecurityFilterWrapper</filter-class>
+		<init-param>
+			<param-name>configFactory</param-name>
+			<param-value>com.fuse.authentication.oauth.SecurityConfigFactory</param-value>
+		</init-param>
+		<init-param>
+			<param-name>clients</param-name>
+			<param-value>githubClient</param-value>
+		</init-param>
+		<init-param>
+			<param-name>authorizers</param-name>
+			<param-value>isAuthenticated</param-value>
+		</init-param>
+	</filter>
+
 	<filter-mapping>
 		<filter-name>corsFilter</filter-name>
 		<url-pattern>/saml2/*</url-pattern>

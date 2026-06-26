@@ -65,6 +65,11 @@
 								<a href="${pageContext.request.contextPath}/sso/saml" class="btn btn-block btn-lg " style="color: white">SSO Sign In</a>
 								</div>
 						</s:if>
+						<s:if test="useGithub">
+							<div style="text-align:center; margin-top: 15px; background-color: #24292e; border-radius: 10px; padding: 5px; color:white">
+								<a href="${pageContext.request.contextPath}/sso/github" class="btn btn-block btn-lg " style="color: white">Sign in with GitHub</a>
+								</div>
+						</s:if>
 						<br><br>
 						<s:if test="failed==true">
 							<div id="errorMsg" class="alert alert-danger alert-dismissable" style="padding-top:10px; margin-top:20px">
