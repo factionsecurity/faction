@@ -14,6 +14,7 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 
+import com.faction.reporting.ReportFeatures;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.FinalReport;
@@ -225,7 +226,9 @@ public class Reports extends FSActionSupport {
 				if(report.length > 3 && report[1] == (byte)'P' && report[2] == (byte)'D' && report[3] == (byte)'F') {
 					contentType = "application/pdf";
 					filename +="pdf";
-						
+					if ("encryptedpdf".equals(format)) {
+						report = ReportFeatures.encryptPdf(report, "foobar");
+					}
 				}else {
 					filename +="docx";
 				}
@@ -301,8 +304,9 @@ public class Reports extends FSActionSupport {
 	private FinalReportVariant selectVariant(FinalReport fr) {
 		List<FinalReportVariant> variants = fr.getEffectiveVariants();
 		if (format != null && !format.isEmpty()) {
+			String lookupFormat = "encryptedpdf".equals(format) ? "pdf" : format;
 			return variants.stream()
-					.filter(v -> format.equals(v.getFileType()))
+					.filter(v -> lookupFormat.equals(v.getFileType()))
 					.findFirst()
 					.orElse(variants.get(0));
 		}
