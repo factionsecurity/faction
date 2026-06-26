@@ -606,6 +606,7 @@ public class SystemSettings {
 			});
 			
 			saml2Client.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
+			saml2Client.setName("saml2Client");
 			//saml2Client.init();
 			clients.add(saml2Client);
 		}catch(Exception ex) {

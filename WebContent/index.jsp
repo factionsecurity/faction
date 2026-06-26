@@ -52,6 +52,9 @@
 								<button type="submit" class="btn btn-primary pull-right btn-lg" style="background-color: #a64ed0; border-color: #a64ed0;">Sign
 									in</button>
 							</div>
+							<div class="box-footer" style="margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee;">
+								<a href="${pageContext.request.contextPath}/sso/saml" class="btn btn-warning btn-block btn-lg">SSO Sign In</a>
+							</div>
 							<!-- /.box-footer -->
 						</form>
 						<br>
