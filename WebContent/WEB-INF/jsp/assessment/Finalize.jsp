@@ -14,7 +14,22 @@
     <s:if test="prEnabled">
       <bs:button color="warning" size="md" colsize="3" text="Submit for Peer Review" id="prsubmit"></bs:button>
     </s:if>
-    <bs:button color="primary" size="md" colsize="3" text="Download Report" id="dlreport"></bs:button>
+    <s:if test="assessment.finalReport.effectiveVariants.size() > 1">
+      <div class="col-md-3">
+        <div class="btn-group" style="width:100%">
+          <button type="button" class="btn btn-block btn-primary btn-md dropdown-toggle" data-toggle="dropdown">
+            Download Report <span class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" style="width:100%">
+            <li><a href="DownloadReport?aid=<s:property value="assessment.id"/>&format=pdf" target="_blank" rel="noopener noreferrer">PDF</a></li>
+            <li><a href="DownloadReport?aid=<s:property value="assessment.id"/>&format=docx" target="_blank" rel="noopener noreferrer">Word (.docx)</a></li>
+          </ul>
+        </div>
+      </div>
+    </s:if>
+    <s:else>
+      <bs:button color="primary" size="md" colsize="3" text="Download Report" id="dlreport"></bs:button>
+    </s:else>
     <bs:button color="danger" size="md" colsize="3" text="Finalize Assessment" id="finalize"></bs:button>
   </s:if>
   </s:if>

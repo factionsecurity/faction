@@ -74,12 +74,14 @@ public class ReportGenThread implements Runnable{
 				fr.setFilename(UUID.randomUUID().toString());
 				fr.setGentime(new Date());
 				fr.getVariants().addAll(buildVariants(generated));
+				fr.setVariantCount(fr.getVariants().size());
 				em.persist(fr);
 				a.setFinalReport(fr);
 			}else if(!isRetest){
 				FinalReport fr = a.getFinalReport();
 				fr.getVariants().clear();
 				fr.getVariants().addAll(buildVariants(generated));
+				fr.setVariantCount(fr.getVariants().size());
 				fr.setGentime(new Date());
 			}else if(isRetest && a.getRetestReport() == null){
 				FinalReport fr = new FinalReport();
@@ -87,12 +89,14 @@ public class ReportGenThread implements Runnable{
 				fr.setFilename(UUID.randomUUID().toString());
 				fr.setGentime(new Date());
 				fr.getVariants().addAll(buildVariants(generated));
+				fr.setVariantCount(fr.getVariants().size());
 				em.persist(fr);
 				a.setRetestReport(fr);
 			}else if(isRetest){
 				FinalReport fr = a.getRetestReport();
 				fr.getVariants().clear();
 				fr.getVariants().addAll(buildVariants(generated));
+				fr.setVariantCount(fr.getVariants().size());
 				fr.setGentime(new Date());
 			}
 				

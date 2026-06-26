@@ -401,10 +401,6 @@ function getSelectedSeverity(){
 }
 //actions
 $(function() {
-	$(".downloadReport").on('click', function(event){
-		const guid = $(this).data("guid");
-		window.open(`DownloadReport?guid=${guid}`, "_blank");
-	});
 	let checkStatus = {};
 	$(".genReport").click(function() {
 		$("#retestRow").html("<td colspan='4'><div class='throbber-loader'>Loading…</div></td>");
