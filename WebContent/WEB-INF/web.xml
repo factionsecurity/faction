@@ -67,6 +67,10 @@
 	<filter>
 		<filter-name>saml2Callback</filter-name>
 		<filter-class>com.fuse.authentication.oauth.SAML2CallbackFilterWrapper</filter-class>
+		<init-param>
+			<param-name>defaultClient</param-name>
+			<param-value>saml2Client</param-value>
+		</init-param>
 	</filter>
 	
 	<filter-mapping>
