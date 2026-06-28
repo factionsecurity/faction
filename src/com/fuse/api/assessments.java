@@ -50,6 +50,7 @@ import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.FinalReport;
+import com.fuse.dao.FinalReportVariant;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Image;
 import com.fuse.dao.Note;
@@ -248,7 +249,12 @@ public class assessments {
                 return Response.status(404).entity(String.format(Support.ERROR, "No final report available for this assessment")).build();
             }
 
-            String b64Rpt = finalReport.getBase64EncodedPdf();
+            FinalReportVariant variant = finalReport.getEffectiveVariants().stream()
+                    .filter(v -> "pdf".equals(v.getFileType()))
+                    .findFirst()
+                    .orElse(finalReport.getEffectiveVariants().get(0));
+
+            String b64Rpt = variant.getBase64Content();
             if (b64Rpt == null || b64Rpt.isEmpty()) {
                 return Response.status(404).entity(String.format(Support.ERROR, "Report data is empty")).build();
             }
@@ -266,23 +272,12 @@ public class assessments {
 
             String contentType;
             String filename;
-            if (report.length > 3 && report[1] == (byte) 'P' && report[2] == (byte) 'D' && report[3] == (byte) 'F') {
+            if ("pdf".equals(variant.getFileType())) {
                 contentType = "application/pdf";
                 filename = "Report.pdf";
             } else {
                 contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
                 filename = "Report.docx";
-            }
-
-            String extension = finalReport.getFileType();
-            if (extension != null && !extension.isEmpty()) {
-                if (extension.equals("pdf")) {
-                    contentType = "application/pdf";
-                    filename = "Report.pdf";
-                } else {
-                    contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-                    filename = "Report.docx";
-                }
             }
 
             if (finalReport.getRetest() != null && finalReport.getRetest()) {
@@ -321,7 +316,12 @@ public class assessments {
                 return Response.status(404).entity(String.format(Support.ERROR, "No final report available for this assessment")).build();
             }
 
-            String b64Rpt = finalReport.getBase64EncodedPdf();
+            FinalReportVariant variant = finalReport.getEffectiveVariants().stream()
+                    .filter(v -> "pdf".equals(v.getFileType()))
+                    .findFirst()
+                    .orElse(finalReport.getEffectiveVariants().get(0));
+
+            String b64Rpt = variant.getBase64Content();
             if (b64Rpt == null || b64Rpt.isEmpty()) {
                 return Response.status(404).entity(String.format(Support.ERROR, "Report data is empty")).build();
             }
@@ -333,21 +333,7 @@ public class assessments {
                 return Response.status(500).entity(String.format(Support.ERROR, "Report is empty")).build();
             }
 
-            String filename;
-            if (report.length > 3 && report[1] == (byte) 'P' && report[2] == (byte) 'D' && report[3] == (byte) 'F') {
-                filename = "Report.pdf";
-            } else {
-                filename = "Report.docx";
-            }
-
-            String extension = finalReport.getFileType();
-            if (extension != null && !extension.isEmpty()) {
-                if (extension.equals("pdf")) {
-                    filename = "Report.pdf";
-                } else {
-                    filename = "Report.docx";
-                }
-            }
+            String filename = "pdf".equals(variant.getFileType()) ? "Report.pdf" : "Report.docx";
 
             if (finalReport.getRetest() != null && finalReport.getRetest()) {
                 filename = "Retest " + filename;
