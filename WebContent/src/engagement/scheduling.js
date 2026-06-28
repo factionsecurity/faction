@@ -2,32 +2,31 @@ require('../scripts/fileupload/css/fileinput.css');
 require('./scheduling.css');
 require('select2/dist/css/select2.min.css')
 require('daterangepicker/daterangepicker.css');
-import '../loading/js/jquery-loading';
-import Editor from '@toast-ui/editor'
-import codeSyntaxHighlight from '@toast-ui/editor-plugin-code-syntax-highlight'
-import colorSyntax from '@toast-ui/editor-plugin-color-syntax'
-import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell'
-import '@toast-ui/editor/dist/toastui-editor.css';
-import 'tui-color-picker/dist/tui-color-picker.css';
+import Editor from '@toast-ui/editor';
+import colorSyntax from '@toast-ui/editor-plugin-color-syntax';
 import '@toast-ui/editor-plugin-color-syntax/dist/toastui-editor-plugin-color-syntax.css';
-import 'jquery';
+import tableMergedCell from '@toast-ui/editor-plugin-table-merged-cell';
+import '@toast-ui/editor/dist/toastui-editor.css';
+import 'bootstrap';
 import 'datatables.net';
 import 'datatables.net-bs';
-import '../scripts/fileupload/js/fileinput.min';
-import 'bootstrap';
-import 'jquery-ui';
-import 'jquery-confirm';
-import '../scripts/jquery.autocomplete.min';
-import * as moment from 'moment';
 import 'daterangepicker';
-import 'select2';
+import 'jquery';
+import 'jquery-confirm';
+import 'jquery-ui';
 import 'jquery.gantt';
-import { marked } from 'marked';
+import * as moment from 'moment';
+import 'select2';
+import 'tui-color-picker/dist/tui-color-picker.css';
+import '../loading/js/jquery-loading';
+import '../scripts/fileupload/js/fileinput.min';
+import '../scripts/jquery.autocomplete.min';
 
 let assessors = {};
 let editors = {
 	notes: {}
 };
+global.editors = editors;
 let initialHTML={};
 global._token = $("#_token")[0].value;
 global.calendar = {};
@@ -176,6 +175,8 @@ $(function() {
 	}
 
 	$(".select2").select2();
+	global.teamSelect = $("#teamName") //need global for extensions
+	global.statusSelect = $("#statusSelect") //need global for extensions
 	if(engName != '') $("#engName").val(engName).trigger("change")
 	if(remName != '') $("#remName").val(remName).trigger("change");
 	if(campName != '') $("#campName").val(campName).trigger("change");

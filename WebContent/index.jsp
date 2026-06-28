@@ -60,11 +60,18 @@
 						<div style="color:white; float:right">
 							<a href="reset.action" style="color:#030D1C"> Reset Your Password</a>
 						</div>
-						<br><br>
+						<br>
 						<s:if test="useSSO">
-									<button style="width:100%" class="btn btn-warning pull-right btn-lg" onClick="document.location='startOAuth'">SSO Sign
-									in</button>
-									</s:if>
+							<div style="text-align:center; margin-top: 15px; background-color: #00a2e9; border-radius: 10px; padding: 5px; color:white">
+								<a href="${pageContext.request.contextPath}/sso/saml" class="btn btn-block btn-lg " style="color: white">SSO Sign In</a>
+								</div>
+						</s:if>
+						<s:if test="useGithub">
+							<div style="text-align:center; margin-top: 15px; background-color: #24292e; border-radius: 10px; padding: 5px; color:white">
+								<a href="${pageContext.request.contextPath}/sso/github" class="btn btn-block btn-lg " style="color: white">Sign in with GitHub</a>
+								</div>
+						</s:if>
+						<br><br>
 						<s:if test="failed==true">
 							<div id="errorMsg" class="alert alert-danger alert-dismissable" style="padding-top:10px; margin-top:20px">
 								<h4>

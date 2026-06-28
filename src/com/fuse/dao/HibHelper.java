@@ -22,10 +22,17 @@ public class HibHelper {
 	private static EntityManagerFactory emf;
 	private EntityManager em;
 
-	private static final HibHelper singleton = new HibHelper();
+ private static HibHelper singleton = new HibHelper();
 
 	public static HibHelper getInstance() {
 		return singleton;
+	}
+
+	/**
+	 * For unit tests only: replace the singleton with a test instance.
+	 */
+	public static void setSingletonForTest(HibHelper instance) {
+		singleton = instance;
 	}
 
 	public EntityManagerFactory getEMF() {

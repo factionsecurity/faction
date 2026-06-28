@@ -29,6 +29,8 @@ import org.pac4j.core.client.Client;
 import org.pac4j.core.client.Clients;
 import org.pac4j.core.client.direct.AnonymousClient;
 import org.pac4j.core.config.Config;
+import org.pac4j.oauth.client.GitHubClient;
+import org.pac4j.oauth.profile.OAuth20Profile;
 import org.pac4j.oidc.client.OidcClient;
 import org.pac4j.oidc.config.OidcConfiguration;
 import org.pac4j.saml.client.SAML2Client;
@@ -36,6 +38,7 @@ import org.pac4j.saml.config.SAML2Configuration;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.UrlResource;
 
+import com.fuse.authentication.oauth.GitHubEmailFetcher;
 import com.fuse.authentication.oauth.SecurityConfigFactory;
 import com.fuse.authentication.oauth.SecurityFilterWrapper;
 import com.fuse.utils.FSUtils;
@@ -90,6 +93,8 @@ public class SystemSettings {
 	private String oauthClientId;
 	private String oauthClientSecret;
 	private String oauthDiscoveryURI;
+	private String githubClientId;
+	private String githubClientSecret;
 	private Integer inactiveDays;
 	@ElementCollection
 	private List<String> status = new ArrayList<String>();
@@ -107,6 +112,8 @@ public class SystemSettings {
 	private String saml2MetaUrl;
 	private String keystore;
 	private String keystorePassword;
+	private Boolean samlForceAuthn;
+	private Integer samlMaxAuthLifetime;
 	
 	
 	public void initSMTPSettings() {
@@ -424,6 +431,24 @@ public class SystemSettings {
 		this.oauthClientId = oauthClientId;
 	}
 
+	public String getGithubClientId() {
+		return githubClientId;
+	}
+
+	public void setGithubClientId(String githubClientId) {
+		this.githubClientId = githubClientId;
+	}
+
+	// Stores the encrypted GitHub OAuth client secret (encrypted by the admin action,
+	// like oauthClientSecret); decrypted only when building the client.
+	public String getGithubClientSecret() {
+		return githubClientSecret;
+	}
+
+	public void setGithubClientSecret(String githubClientSecret) {
+		this.githubClientSecret = githubClientSecret;
+	}
+
 	public void setOauthClientSecret(String oauthClientSecret) {
 		this.oauthClientSecret = oauthClientSecret;
 	}
@@ -560,9 +585,32 @@ public class SystemSettings {
 	public String getSaml2MetaUrl() {
 		return this.saml2MetaUrl;
 	}
-	
+
 	public void setSaml2MetaUrl(String saml2MetaUrl) {
 		this.saml2MetaUrl = saml2MetaUrl;
+	}
+
+	// Controls the SAML ForceAuthn flag on the AuthnRequest. When true the IdP must
+	// re-authenticate the user on every login; when false an existing IdP session is
+	// reused (seamless SSO). Defaults to true to preserve prior behavior.
+	public Boolean getSamlForceAuthn() {
+		return this.samlForceAuthn == null ? true : this.samlForceAuthn;
+	}
+
+	public void setSamlForceAuthn(Boolean samlForceAuthn) {
+		this.samlForceAuthn = samlForceAuthn;
+	}
+
+	// Max age (seconds) of the IdP AuthnInstant pac4j will accept. With seamless SSO
+	// (ForceAuthn off) the IdP reuses an existing session, so the AuthnInstant can be
+	// hours old; the pac4j default of 3600 (1h) rejects those. Default to 24h so
+	// IdP-initiated/seamless logins work; admins can tune to their IdP session policy.
+	public Integer getSamlMaxAuthLifetime() {
+		return (this.samlMaxAuthLifetime == null || this.samlMaxAuthLifetime <= 0) ? 86400 : this.samlMaxAuthLifetime;
+	}
+
+	public void setSamlMaxAuthLifetime(Integer samlMaxAuthLifetime) {
+		this.samlMaxAuthLifetime = samlMaxAuthLifetime;
 	}
 	
 	public void setKeystorePassword(String password) {
@@ -606,12 +654,40 @@ public class SystemSettings {
 			});
 			
 			saml2Client.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
+			saml2Client.setName("saml2Client");
 			//saml2Client.init();
 			clients.add(saml2Client);
 		}catch(Exception ex) {
 			System.out.println(ex);
 		}
-		
+		try {
+			if (this.githubClientId != null && !this.githubClientId.trim().isEmpty()) {
+				GitHubClient github = new GitHubClient(this.githubClientId,
+						this.githubClientSecret == null ? "" : FSUtils.decryptPassword(this.githubClientSecret));
+				github.setName("githubClient");
+				github.setScope("user:email");
+				github.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK") + "/github/callback");
+				github.setAuthorizationGenerator((ctx, profile) -> {
+					profile.addRole("ROLE_USER");
+					// GitHub's OAuth profile carries no email, so fetch the verified
+					// primary email via the API token and expose it as the "email"
+					// attribute that AccessControl matches users on.
+					if (profile.getAttribute("email") == null && profile instanceof OAuth20Profile) {
+						OAuth20Profile ghProfile = (OAuth20Profile) profile;
+						String email = GitHubEmailFetcher.primaryVerifiedEmail(ghProfile.getAccessToken());
+						if (email != null) {
+							ghProfile.addAttribute("email", email);
+						}
+					}
+					return Optional.ofNullable(profile);
+				});
+				github.init();
+				clients.add(github);
+			}
+		}catch(Exception ex) {
+			System.out.println(ex);
+		}
+
 		Clients configuredClients = new Clients();
 		configuredClients.setClients(clients);
 		configuredClients.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/oauth/callback");
@@ -651,8 +727,9 @@ public class SystemSettings {
 		 config.setServiceProviderEntityId(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
 		 config.setAuthnRequestSigned(true);  // Azure requires signed Authn requests
 		 config.setWantsAssertionsSigned(true);
-		 config.setForceAuth(true);
+		 config.setForceAuth(getSamlForceAuthn());
 		 config.setAcceptedSkew(120);
+		 config.setMaximumAuthenticationLifetime(getSamlMaxAuthLifetime());
 		 config.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK")+ "/saml2/callback");
 		 config.init();
 		return config;

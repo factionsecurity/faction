@@ -413,6 +413,11 @@
 		</dependency>
 		<dependency>
 			<groupId>org.pac4j</groupId>
+			<artifactId>pac4j-oauth</artifactId>
+			<version>4.5.7</version>
+		</dependency>
+		<dependency>
+			<groupId>org.pac4j</groupId>
 			<artifactId>pac4j-http</artifactId>
 			<version>4.5.7</version>
 		</dependency>

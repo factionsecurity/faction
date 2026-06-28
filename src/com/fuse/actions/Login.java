@@ -64,6 +64,7 @@ public class Login extends FSActionSupport {
 	private String code;
 	private Boolean useSSO;
 	private String ssoURL;
+	private Boolean useGithub;
 	// private static final String PROTECTED_RESOURCE_URL =
 	// "https://www.googleapis.com/plus/v1/people/me";
 	
@@ -315,6 +316,18 @@ public class Login extends FSActionSupport {
 
 		}else {
 
+			// Decide whether to show the SSO option on the login page. Only show it
+			// when SAML2 is actually configured, otherwise the SSO entry point would
+			// forward to /saml2 with no client and 404.
+			SystemSettings ss = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+					.findFirst().orElse(null);
+			if (ss != null && ss.getSaml2MetaUrl() != null && !ss.getSaml2MetaUrl().trim().isEmpty()) {
+				this.useSSO = true;
+				this.ssoURL = request.getContextPath() + "/sso/saml";
+			} else {
+				this.useSSO = false;
+			}
+			this.useGithub = ss != null && ss.getGithubClientId() != null && !ss.getGithubClientId().trim().isEmpty();
 			return SUCCESS;
 		}
 
@@ -509,6 +522,10 @@ public class Login extends FSActionSupport {
 
 	public String getSsoURL() {
 		return ssoURL;
+	}
+
+	public Boolean getUseGithub() {
+		return useGithub;
 	}
 
 	public String getTier() {

@@ -2,6 +2,11 @@
 # Run with:  mise run <task>     List with:  mise tasks
 # Docs: https://mise.jdx.dev/tasks/
 
+[tools]
+node = '16'
+java = '17'
+maven = '3.9.16'
+
 #
 # Build
 #
@@ -137,4 +142,5 @@ run = "mvn checkstyle:check || echo 'Checkstyle not configured - add plugin to p
 #
 [tasks."frontend:build"]
 description = "Project: Build Frontend Assets"
-run = "./buildJSAssets.sh"
+run = "npm install --legacy-peer-deps &&  npm run build"
+dir = "WebContent"

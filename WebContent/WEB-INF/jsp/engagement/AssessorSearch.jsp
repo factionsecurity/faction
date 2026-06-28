@@ -21,6 +21,7 @@ div[id^='rtCust']{
  </bs:row>
  <bs:row>
    <bs:button size="lg" color="primary" colsize="2" text="<i class='glyphicon glyphicon-plus'></i> Save" id="AddAssessment"></bs:button>
+   <jsp:include page="ExtendedEngagementButtons.jsp"/>
  </bs:row>
  <bs:row>
 	  <bs:mco colsize="12">
