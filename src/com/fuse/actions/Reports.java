@@ -26,6 +26,7 @@ import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.reporting.GenerateReport;
 import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
+import com.fuse.utils.FSUtils;
 import com.opensymphony.xwork2.interceptor.annotations.Before;
 
 import lombok.Setter;
@@ -227,7 +228,12 @@ public class Reports extends FSActionSupport {
 					contentType = "application/pdf";
 					filename +="pdf";
 					if ("encryptedpdf".equals(format)) {
-						report = ReportFeatures.encryptPdf(report, "foobar");
+						if (finalreport == null || finalreport.getEncryptedReportPassword() == null) {
+							System.err.println("DownloadReport: encrypted PDF requested but no report password set for report id=" + (finalreport != null ? finalreport.getId() : "null"));
+							return ERROR;
+						}
+						String password = FSUtils.decryptPassword(finalreport.getEncryptedReportPassword());
+						report = ReportFeatures.encryptPdf(report, password);
 					}
 				}else {
 					filename +="docx";

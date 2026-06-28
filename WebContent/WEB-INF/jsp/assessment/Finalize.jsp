@@ -26,6 +26,17 @@
             <li><a href="DownloadReport?aid=<s:property value="assessment.id"/>&format=encryptedpdf" target="_blank" rel="noopener noreferrer" style="color:#fff;">Encrypted PDF</a></li>
           </ul>
         </div>
+        <s:if test="reportPassword != null && reportPassword != ''">
+          <div class="input-group input-group-sm" style="margin-top:8px;">
+            <input type="password" id="reportPasswordField" class="form-control" value="<s:property value="reportPassword"/>" readonly>
+            <span class="input-group-btn">
+              <button class="btn btn-default" type="button" id="toggleReportPassword">
+                <i class="fa fa-eye"></i>
+              </button>
+            </span>
+          </div>
+          <small class="text-muted">Report encryption password</small>
+        </s:if>
       </div>
     </s:if>
     <s:else>
@@ -172,6 +183,22 @@
 	
 </bs:mco>
 </bs:row>
+
+<script>
+$(document).ready(function() {
+  $("#toggleReportPassword").click(function() {
+    var field = $("#reportPasswordField");
+    var icon = $(this).find("i");
+    if (field.attr("type") === "password") {
+      field.attr("type", "text");
+      icon.removeClass("fa-eye").addClass("fa-eye-slash");
+    } else {
+      field.attr("type", "password");
+      icon.removeClass("fa-eye-slash").addClass("fa-eye");
+    }
+  });
+});
+</script>
 
 <!-- Upload Report Modal -->
 <div class="modal fade" id="uploadReportModal" tabindex="-1" role="dialog">

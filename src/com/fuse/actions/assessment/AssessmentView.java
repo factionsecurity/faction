@@ -4,23 +4,11 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-
-import org.apache.commons.codec.binary.Base64;
-
-import com.fuse.dao.FinalReport;
-import com.fuse.dao.HibHelper;
-
 import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -28,20 +16,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import javax.mail.MessagingException;
 import javax.persistence.EntityManager;
-import javax.servlet.http.HttpSession;
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 
-import org.apache.struts2.ServletActionContext;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 import org.json.simple.JSONObject;
 
+import com.faction.extender.AssessmentManager;
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
@@ -51,6 +38,8 @@ import com.fuse.dao.Comment;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.Files;
+import com.fuse.dao.FinalReport;
+import com.fuse.dao.HibHelper;
 import com.fuse.dao.Notification;
 import com.fuse.dao.PeerReview;
 import com.fuse.dao.RiskLevel;
@@ -59,7 +48,6 @@ import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.dao.query.VulnerabilityQueries;
-import com.faction.extender.AssessmentManager;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
 import com.fuse.tasks.ReportGenThread;
@@ -67,6 +55,8 @@ import com.fuse.tasks.TaskQueueExecutor;
 import com.fuse.utils.FSUtils;
 import com.fuse.utils.History;
 import com.fuse.utils.SendEmail;
+
+import lombok.Getter;
 
 @Namespace("/portal")
 @Result(name = "success", location = "/WEB-INF/jsp/assessment/Assessment.jsp", params = { "contentType", "text/html" })
@@ -107,6 +97,8 @@ public class AssessmentView extends FSActionSupport {
 	private File uploadReport;
 	private String uploadReportContentType;
 	private String uploadReportFilename;
+	@Getter
+	private String reportPassword;
 	
 
 	@Action(value = "Assessment", 
@@ -273,8 +265,14 @@ public class AssessmentView extends FSActionSupport {
 		}
 
 		FSUtils.CheckForUpdatedCustomFields(assessment, em);
+
+		if (assessment.getFinalReport() != null && assessment.getFinalReport().getEncryptedReportPassword() != null) {
+			this.reportPassword = FSUtils.decryptPassword(assessment.getFinalReport().getEncryptedReportPassword());
+		}
+
 		return SUCCESS;
 	}
+
 	
 	@Action(value="DownloadICS",
 			results = { 
