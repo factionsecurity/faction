@@ -176,6 +176,7 @@ $(function() {
 
 	$(".select2").select2();
 	global.teamSelect = $("#teamName") //need global for extensions
+	global.statusSelect = $("#statusSelect") //need global for extensions
 	if(engName != '') $("#engName").val(engName).trigger("change")
 	if(remName != '') $("#remName").val(remName).trigger("change");
 	if(campName != '') $("#campName").val(campName).trigger("change");

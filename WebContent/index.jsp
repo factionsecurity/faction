@@ -60,8 +60,9 @@
 						<div style="color:white; float:right">
 							<a href="reset.action" style="color:#030D1C"> Reset Your Password</a>
 						</div>
+						<br>
 						<s:if test="useSSO">
-							<div style="text-align:center; margin-top: 30px; background-color: #a64ed0; border-radius: 10px; padding: 5px; color:white">
+							<div style="text-align:center; margin-top: 15px; background-color: #00a2e9; border-radius: 10px; padding: 5px; color:white">
 								<a href="${pageContext.request.contextPath}/sso/saml" class="btn btn-block btn-lg " style="color: white">SSO Sign In</a>
 								</div>
 						</s:if>
