@@ -44,6 +44,7 @@ public class FinalReport{
 	@Getter @Setter
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<FinalReportVariant> variants = new ArrayList<>();
+	@Setter
 	private Integer variantCount;
 	@Getter @Setter
 	private String encryptedReportPassword;
@@ -122,9 +123,7 @@ public class FinalReport{
 	public int getVariantCount() {
 		return (variantCount == null || variantCount <= 0) ? 1 : variantCount;
 	}
-	public void setVariantCount(int variantCount) {
-		this.variantCount = variantCount;
-	}
+
 	/**
 	 * Returns the format variants for this report. For records created after the
 	 * multi-format change, returns the stored variant list. For legacy records
