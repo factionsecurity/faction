@@ -233,6 +233,10 @@ public class Reports extends FSActionSupport {
 							return ERROR;
 						}
 						String password = FSUtils.decryptPassword(finalreport.getEncryptedReportPassword());
+						if (password == null || password.isEmpty()) {
+							System.err.println("DownloadReport: failed to decrypt report password for report id=" + finalreport.getId());
+							return ERROR;
+						}
 						report = ReportFeatures.encryptPdf(report, password);
 					}
 				}else {

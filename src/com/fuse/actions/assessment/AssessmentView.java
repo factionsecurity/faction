@@ -267,7 +267,10 @@ public class AssessmentView extends FSActionSupport {
 		FSUtils.CheckForUpdatedCustomFields(assessment, em);
 
 		if (assessment.getFinalReport() != null && assessment.getFinalReport().getEncryptedReportPassword() != null) {
-			this.reportPassword = FSUtils.decryptPassword(assessment.getFinalReport().getEncryptedReportPassword());
+			String pw = FSUtils.decryptPassword(assessment.getFinalReport().getEncryptedReportPassword());
+			if (pw != null && !pw.isEmpty()) {
+				this.reportPassword = pw;
+			}
 		}
 
 		return SUCCESS;
