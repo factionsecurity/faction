@@ -77,7 +77,7 @@
 									</a>
 								</s:else>
 								<s:if test="retest == true">
-								<span class="vulnControl genReport" >
+								<span class="vulnControl genReport" style="display:block; margin-top:20px;">
 									<i class="fa fa-arrows-rotate"></i>
 								</span>
 								</s:if>
