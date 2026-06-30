@@ -1,8 +1,6 @@
 package com.fuse.actions.assessment;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
@@ -15,14 +13,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.mail.MessagingException;
 import javax.persistence.EntityManager;
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
@@ -38,7 +34,6 @@ import com.fuse.dao.Comment;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.Files;
-import com.fuse.dao.FinalReport;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Notification;
 import com.fuse.dao.PeerReview;
@@ -94,9 +89,6 @@ public class AssessmentView extends FSActionSupport {
 	private List<Status> statuses = new ArrayList<>();
 	private Long status;
 	private Boolean hasTemplate = false;
-	private File uploadReport;
-	private String uploadReportContentType;
-	private String uploadReportFilename;
 	@Getter
 	private String reportPassword;
 	
@@ -829,80 +821,6 @@ public class AssessmentView extends FSActionSupport {
 
 	}
 
-	@Action(value = "UploadFinalReport")
-	public String uploadReport() throws Exception {
-		if (!(this.isAcassessor() || this.isAcmanager()))
-			return LOGIN;
-
-		User user = this.getSessionUser();
-		Long asmtId = SessionAsmtId();
-
-		Assessment asmt;
-		if (this.isAcmanager()) {
-			asmt = AssessmentQueries.getAssessmentById(em, asmtId);
-		} else {
-			asmt = AssessmentQueries.getAssessmentByUserId(em, user.getId(), asmtId, AssessmentQueries.All);
-		}
-
-		if (!this.testToken(false))
-			return this.ERRORJSON;
-
-		if (asmt == null || asmt.getCompleted() != null) {
-			this._message = "Assessment not found or already finalized.";
-			return this.ERRORJSON;
-		}
-
-		if (!this.isAcmanager() && asmt.getAssessor().stream().noneMatch(u -> u.getId() == user.getId())) {
-			this._message = "You are not an assessor on this assessment.";
-			return this.ERRORJSON;
-		}
-
-		if (uploadReport == null) {
-			this._message = "No file uploaded.";
-			return this.ERRORJSON;
-		}
-
-		String ct = uploadReportContentType == null ? "" : uploadReportContentType.toLowerCase();
-		String fn = uploadReportFilename == null ? "" : uploadReportFilename.toLowerCase();
-		boolean isPdf = ct.contains("pdf") || fn.endsWith(".pdf");
-		boolean isDocx = ct.contains("wordprocessingml") || fn.endsWith(".docx");
-
-		if (!isPdf && !isDocx) {
-			this._message = "Only .docx and .pdf files are allowed.";
-			return this.ERRORJSON;
-		}
-
-		byte[] fileBytes = new byte[(int) uploadReport.length()];
-		try (FileInputStream fis = new FileInputStream(uploadReport)) {
-			fis.read(fileBytes);
-		}
-		String b64 = Base64.encodeBase64String(fileBytes);
-
-		HibHelper.getInstance().preJoin();
-		em.joinTransaction();
-
-		if (asmt.getFinalReport() == null) {
-			FinalReport fr = new FinalReport();
-			fr.setRetest(false);
-			fr.setFilename(UUID.randomUUID().toString());
-			fr.setBase64EncodedPdf(b64);
-			fr.setGentime(new Date());
-			fr.setFileType(isPdf ? "pdf" : "docx");
-			em.persist(fr);
-			asmt.setFinalReport(fr);
-		} else {
-			asmt.getFinalReport().setBase64EncodedPdf(b64);
-			asmt.getFinalReport().setFileType(isPdf ? "pdf" : "docx");
-			asmt.getFinalReport().setGentime(new Date());
-		}
-
-		em.persist(asmt);
-		HibHelper.getInstance().commit();
-
-		AuditLog.audit(this, "Report uploaded for assessment " + asmt.getName(), AuditLog.CompAssessment, false);
-		return this.SUCCESSJSON;
-	}
-
 	private Map<String, String> jsonSuccessMessage;
 
 	public Map<String, String> getJsonSuccessMessage() {
@@ -1276,18 +1194,6 @@ public class AssessmentView extends FSActionSupport {
 	
 	public void setStatus(Long status) {
 		this.status = status;
-	}
-
-	public void setUploadReport(File uploadReport) {
-		this.uploadReport = uploadReport;
-	}
-
-	public void setUploadReportContentType(String uploadReportContentType) {
-		this.uploadReportContentType = uploadReportContentType;
-	}
-
-	public void setUploadReportFilename(String uploadReportFilename) {
-		this.uploadReportFilename = uploadReportFilename;
 	}
 
 }
