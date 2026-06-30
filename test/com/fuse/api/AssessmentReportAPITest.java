@@ -4,6 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertNotEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,6 +22,8 @@ import com.fuse.dao.Assessment;
 import com.fuse.dao.AssessmentType;
 import com.fuse.dao.Campaign;
 import com.fuse.dao.FinalReport;
+import com.fuse.dao.FinalReportPart;
+import com.fuse.dao.FinalReportVariant;
 import com.fuse.dao.Note;
 import com.fuse.dao.Permissions;
 import com.fuse.dao.User;
@@ -277,6 +282,161 @@ public class AssessmentReportAPITest {
 
         FinalReport fr = asmt.getFinalReport();
         assertNullNull("Final report should be null when not set", fr);
+    }
+
+    // =========================================================================
+    // getEffectiveVariants() — backward compat bridge
+    // =========================================================================
+
+    @Test
+    public void testGetEffectiveVariants_returnsStoredVariantsWhenPresent() {
+        FinalReport fr = new FinalReport();
+        FinalReportVariant v = new FinalReportVariant();
+        v.setFileType("pdf");
+        v.setBase64Content("pdfcontent");
+        fr.getVariants().add(v);
+
+        List<FinalReportVariant> result = fr.getEffectiveVariants();
+
+        assertEquals("Should return stored variants", 1, result.size());
+        assertSame("Should be the same object", v, result.get(0));
+    }
+
+    @Test
+    public void testGetEffectiveVariants_legacyFallback_emptyVariantsList() {
+        // Pre-branch record: no variants stored, content in base64EncodedPdf
+        FinalReport fr = new FinalReport();
+        fr.setFileType("docx");
+        fr.setBase64EncodedPdf("legacydocxcontent");
+        // variants list is empty by default
+
+        List<FinalReportVariant> result = fr.getEffectiveVariants();
+
+        assertEquals("Legacy record should produce exactly 1 synthetic variant", 1, result.size());
+        FinalReportVariant synthesized = result.get(0);
+        assertEquals("Synthesized variant should carry the legacy fileType", "docx", synthesized.getFileType());
+        assertEquals("Synthesized variant should return the legacy content", "legacydocxcontent", synthesized.getBase64Content());
+    }
+
+    @Test
+    public void testGetEffectiveVariants_legacyFallback_preservesFileTypeDefault() {
+        // When fileType is null on FinalReport, getFileType() returns "docx"
+        FinalReport fr = new FinalReport();
+        fr.setBase64EncodedPdf("somecontent");
+
+        List<FinalReportVariant> result = fr.getEffectiveVariants();
+
+        assertEquals("Null fileType should fall back to docx", "docx", result.get(0).getFileType());
+    }
+
+    @Test
+    public void testGetEffectiveVariants_legacyFallback_pdfFileType() {
+        FinalReport fr = new FinalReport();
+        fr.setFileType("pdf");
+        fr.setBase64EncodedPdf("legacypdfcontent");
+
+        List<FinalReportVariant> result = fr.getEffectiveVariants();
+
+        assertEquals("pdf", result.get(0).getFileType());
+        assertEquals("legacypdfcontent", result.get(0).getBase64Content());
+    }
+
+    @Test
+    public void testGetEffectiveVariants_legacyFallback_largeFile() {
+        // Large legacy report: content is split into FinalReportPart objects
+        FinalReport fr = new FinalReport();
+        fr.setFileType("docx");
+        // Build a string over the 15MB chunking threshold
+        char[] chars = new char[16_000_001];
+        java.util.Arrays.fill(chars, 'A');
+        fr.setBase64EncodedPdf(new String(chars)); // triggers chunking in FinalReport
+        assertTrue("Setup: should be largeFile", fr.getLargeFile());
+
+        List<FinalReportVariant> result = fr.getEffectiveVariants();
+
+        assertEquals("Large legacy record should produce 1 synthetic variant", 1, result.size());
+        String assembled = result.get(0).getBase64Content();
+        assertNotNull("Assembled content should not be null", assembled);
+        assertEquals("Assembled length must match original", 16_000_001, assembled.length());
+    }
+
+    @Test
+    public void testGetEffectiveVariants_multipleVariants() {
+        FinalReport fr = new FinalReport();
+        FinalReportVariant docx = new FinalReportVariant();
+        docx.setFileType("docx");
+        FinalReportVariant pdf = new FinalReportVariant();
+        pdf.setFileType("pdf");
+        fr.getVariants().add(docx);
+        fr.getVariants().add(pdf);
+
+        List<FinalReportVariant> result = fr.getEffectiveVariants();
+
+        assertEquals("Should return all stored variants", 2, result.size());
+    }
+
+    // =========================================================================
+    // getVariantCount() — null/zero/negative safety guard
+    // =========================================================================
+
+    @Test
+    public void testVariantCount_nullDefaultsToOne() {
+        FinalReport fr = new FinalReport();
+        // variantCount is null by default
+        assertEquals("Null variantCount should return 1", 1, fr.getVariantCount());
+    }
+
+    @Test
+    public void testVariantCount_zeroDefaultsToOne() {
+        FinalReport fr = new FinalReport();
+        fr.setVariantCount(0);
+        assertEquals("Zero variantCount should return 1", 1, fr.getVariantCount());
+    }
+
+    @Test
+    public void testVariantCount_negativeDefaultsToOne() {
+        FinalReport fr = new FinalReport();
+        fr.setVariantCount(-1);
+        assertEquals("Negative variantCount should return 1", 1, fr.getVariantCount());
+    }
+
+    @Test
+    public void testVariantCount_positivePassesThrough() {
+        FinalReport fr = new FinalReport();
+        fr.setVariantCount(2);
+        assertEquals("Positive variantCount should be returned as-is", 2, fr.getVariantCount());
+    }
+
+    @Test
+    public void testVariantCount_onePassesThrough() {
+        FinalReport fr = new FinalReport();
+        fr.setVariantCount(1);
+        assertEquals(1, fr.getVariantCount());
+    }
+
+    // =========================================================================
+    // encryptedReportPassword — Lombok getter/setter
+    // =========================================================================
+
+    @Test
+    public void testEncryptedReportPassword_nullByDefault() {
+        FinalReport fr = new FinalReport();
+        assertNull("encryptedReportPassword should be null by default", fr.getEncryptedReportPassword());
+    }
+
+    @Test
+    public void testEncryptedReportPassword_storeAndRetrieve() {
+        FinalReport fr = new FinalReport();
+        fr.setEncryptedReportPassword("encrypted:abc123");
+        assertEquals("encrypted:abc123", fr.getEncryptedReportPassword());
+    }
+
+    @Test
+    public void testEncryptedReportPassword_clearWithNull() {
+        FinalReport fr = new FinalReport();
+        fr.setEncryptedReportPassword("encrypted:abc123");
+        fr.setEncryptedReportPassword(null);
+        assertNull("Password should be cleared after setting null", fr.getEncryptedReportPassword());
     }
 
     /**
