@@ -28,8 +28,10 @@ import com.fuse.tasks.TaskQueueExecutor;
 import org.apache.commons.codec.binary.Base64;
 
 /**
- * Servlet implementation class getImage
+ * @deprecated All UI callers have been migrated to the DownloadReport Struts action (/portal/DownloadReport).
+ * The only remaining path is ?test=true (template test DOCX), which has no UI callers and is invoked manually only.
  */
+@Deprecated
 public class getReport extends HttpServlet {
 	private static final long serialVersionUID = 1L;
        

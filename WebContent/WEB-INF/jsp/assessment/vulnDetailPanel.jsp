@@ -36,7 +36,7 @@
 	<s:if test="detailAssessment != null">
 		<tr><th>Assessment</th><td>[<s:property value="detailAssessment.appId"/>] <s:property value="detailAssessment.name"/></td></tr>
 		<s:if test="detailAssessment.finalReport != null">
-			<tr><th>Report</th><td><a href="../service/Report.pdf?guid=<s:property value="detailAssessment.finalReport.filename"/>" target="_blank">Download Report</a></td></tr>
+			<tr><th>Report</th><td><a href="../portal/DownloadReport?guid=<s:property value="detailAssessment.finalReport.filename"/>" target="_blank">Download Report</a></td></tr>
 		</s:if>
 	</s:if>
 </table>

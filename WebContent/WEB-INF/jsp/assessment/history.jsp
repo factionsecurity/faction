@@ -86,7 +86,7 @@
 									<td><s:property value="assessor"/></td>
 									<td>
 										<s:if test="report != null && report != ''">
-											<a href="../service/Report.pdf?guid=<s:property value="report"/>" target="_blank">Download Report</a>
+											<a href="../portal/DownloadReport?guid=<s:property value="report"/>" target="_blank">Download Report</a>
 										</s:if>
 									</td>
 									<td>
@@ -130,7 +130,7 @@
 									<td><s:property value="assessor"/></td>
 									<td>
 										<s:if test="report != null && report != ''">
-											<a href="../service/Report.pdf?guid=<s:property value="report"/>" target="_blank">Download Report</a>
+											<a href="../portal/DownloadReport?guid=<s:property value="report"/>" target="_blank">Download Report</a>
 										</s:if>
 									</td>
 									<td>
