@@ -12,7 +12,10 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 
+import lombok.Getter;
+
 import com.fuse.actions.FSActionSupport;
+import com.fuse.utils.FSUtils;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.Files;
 import com.fuse.dao.FinalReport;
@@ -51,7 +54,8 @@ public class VerificationEdit extends FSActionSupport {
 	private List<RiskLevel> levels = new ArrayList();
 	private Boolean isPass;
 	private String badges;
-	private List<FinalReport>reports = new ArrayList<>(); 
+	private List<FinalReport>reports = new ArrayList<>();
+	@Getter private String reportPassword;
 
 	@Action(value = "VerificationEdit")
 	public String execute() {
@@ -84,6 +88,15 @@ public class VerificationEdit extends FSActionSupport {
 		}
 		if(v.getAssessment().getRetestReport() != null) {
 			reports.add(v.getAssessment().getRetestReport());
+		}
+		FinalReport passwordSource = v.getAssessment().getFinalReport() != null && v.getAssessment().getFinalReport().getEncryptedReportPassword() != null
+				? v.getAssessment().getFinalReport()
+				: v.getAssessment().getRetestReport();
+		if (passwordSource != null && passwordSource.getEncryptedReportPassword() != null) {
+			String pw = FSUtils.decryptPassword(passwordSource.getEncryptedReportPassword());
+			if (pw != null && !pw.isEmpty()) {
+				this.reportPassword = pw;
+			}
 		}
 
 		List<User> users = em.createQuery("from User").getResultList();
