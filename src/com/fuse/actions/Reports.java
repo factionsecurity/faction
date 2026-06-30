@@ -187,12 +187,20 @@ public class Reports extends FSActionSupport {
 
 				} else {
 					finalreport = assessment.getFinalReport();
+					if (finalreport == null) {
+						this._message = "Report not found for this assessment.";
+						return ERROR;
+					}
 					b64Rpt = selectVariant(finalreport).getBase64Content();
 				}
 			} else if (guid != null) {
 
 				finalreport = (FinalReport) em.createQuery("from FinalReport where filename = :guid")
 						.setParameter("guid", guid).getResultList().stream().findFirst().orElse(null);
+				if (finalreport == null) {
+					this._message = "Report not found.";
+					return ERROR;
+				}
 				b64Rpt = selectVariant(finalreport).getBase64Content();
 
 			} else {
@@ -312,6 +320,7 @@ public class Reports extends FSActionSupport {
 	}
 
 	private FinalReportVariant selectVariant(FinalReport fr) {
+		if (fr == null) return null;
 		List<FinalReportVariant> variants = fr.getEffectiveVariants();
 		if (format != null && !format.isEmpty()) {
 			String lookupFormat = "encryptedpdf".equals(format) ? "pdf" : format;
