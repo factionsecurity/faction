@@ -1,6 +1,7 @@
 package com.fuse.actions.assessment;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.InputStream;
 import java.net.URLEncoder;
 import java.time.LocalDateTime;
@@ -13,14 +14,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.mail.MessagingException;
 import javax.persistence.EntityManager;
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
@@ -36,7 +35,6 @@ import com.fuse.dao.Comment;
 import com.fuse.dao.CustomField;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.Files;
-import com.fuse.dao.FinalReport;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Notification;
 import com.fuse.dao.PeerReview;
