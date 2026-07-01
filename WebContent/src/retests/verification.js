@@ -73,10 +73,6 @@ function downloadFile(id) {
 $(function() {
 	getFiles()
 
-	$(".downloadReport").on('click', function(event){
-		const guid = $(this).data("guid");
-		window.open(`DownloadReport?guid=${guid}`, "_blank");
-	})
 	
 	$("#save").click(function() {
 		let pass = $('input:radio[name=r3]:checked').val();

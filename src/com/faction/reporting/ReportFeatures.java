@@ -6,8 +6,8 @@ public class ReportFeatures {
         return report;
     }
 
-    public static String [] getReportOptions() {
-        return new String[] {"docx"};
+    public static byte[] encryptPdf(byte[] pdfBytes, String password) throws Exception {
+        return pdfBytes;
     }
 
     public static Boolean allowSections(){

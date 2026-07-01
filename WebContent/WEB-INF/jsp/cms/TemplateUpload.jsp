@@ -46,19 +46,6 @@
 </bs:select>
 </bs:row>
 <bs:row>
-<bs:select name="Result File Type" colsize="12" id="fileType">
-	<s:iterator value="fileTypes" var="fileType">
-		<s:if test="#fileType.equals(selectedTemplate.fileType)" >
-			<option value="${fileType }" selected="selected">${fileType}</option>
-		</s:if>
-		<s:else>
-			<option value="${fileType }">${fileType}</option>
-			
-		</s:else>
-	</s:iterator>
-</bs:select>
-</bs:row>
-<bs:row>
 <form enctype="multipart/form-data" action="cms" id="imgForm" method="POST" style="display:none">
 	<input type="hidden" id="id" value="${id}" name="id"/>
 	<input type="hidden" id="action" value="templateSave" name="action"/>

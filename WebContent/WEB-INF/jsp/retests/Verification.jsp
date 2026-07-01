@@ -176,9 +176,15 @@
 					</s:else>
 						<td><s:date name="gentime" format="MM-dd-yyyy hh:mm:ss"/></td>
 						<td>
-							<span class="vulnControl downloadReport" data-guid="<s:property value="filename"/>">
-								<i class="fa fa-download"></i>
-							</span>
+							<s:if test="#r.variantCount > 1">
+								<a class="vulnControl" style="display:block" href="DownloadReport?guid=<s:property value="#r.filename"/>&format=docx" target="_blank" rel="noopener noreferrer">DOCX</a>
+								<a class="vulnControl" style="display:block" href="DownloadReport?guid=<s:property value="#r.filename"/>&format=pdf" target="_blank" rel="noopener noreferrer">PDF</a>
+							</s:if>
+							<s:else>
+								<a class="vulnControl" href="DownloadReport?guid=<s:property value="#r.filename"/>" target="_blank" rel="noopener noreferrer">
+									<i class="fa fa-download"></i>
+								</a>
+							</s:else>
 						</td>
 					</tr>
 					</s:iterator>

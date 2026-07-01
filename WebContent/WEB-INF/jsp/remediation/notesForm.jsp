@@ -63,13 +63,19 @@
 						<s:else>
 						<tr>
 						</s:else>
-							<td><s:property value="appName"/> - <s:property value="appType"/> <s:if test="retest == true">Retest</s:if> Report.docx</td>
+							<td><s:property value="appName"/> - <s:property value="appType"/> <s:if test="retest == true">Retest</s:if> Report</td>
 							<td><s:property value="appType"/> <s:if test="retest == true">Retest</s:if></td>
 							<td><s:date name="gentime" format="MM-dd-yyyy hh:mm:ss"/></td>
 							<td>
-								<span class="vulnControl downloadReport" data-guid="<s:property value="filename"/>">
-									<i class="fa fa-download"></i>
-								</span>
+								<s:if test="#r.variantCount > 1">
+									<a class="vulnControl" style="display:block" href="DownloadReport?guid=<s:property value="#r.filename"/>&format=docx" target="_blank" rel="noopener noreferrer">DOCX</a>
+									<a class="vulnControl" style="display:block" href="DownloadReport?guid=<s:property value="#r.filename"/>&format=pdf" target="_blank" rel="noopener noreferrer">PDF</a>
+								</s:if>
+								<s:else>
+									<a class="vulnControl" href="DownloadReport?guid=<s:property value="#r.filename"/>" target="_blank" rel="noopener noreferrer">
+										<i class="fa fa-download"></i>
+									</a>
+								</s:else>
 								<s:if test="retest == true">
 								<span class="vulnControl genReport" >
 									<i class="fa fa-arrows-rotate"></i>

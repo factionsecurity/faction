@@ -16,6 +16,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.spec.KeySpec;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -80,6 +81,17 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 
 public class FSUtils {
+	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+	public static String generatePasswd() {
+		String chars = "abcdefghijklmnopqrstuvwxyz0123456789";
+		StringBuilder sb = new StringBuilder(32);
+		for (int i = 0; i < 32; i++) {
+			sb.append(chars.charAt(SECURE_RANDOM.nextInt(chars.length())));
+		}
+		return sb.toString();
+	}
+
 	private static String INPUT = "Unvalidated Input";
 	private static String SERVER = "Server Misconfiguration";
 	private static String CRYPTO = "Weak Cryptography";

@@ -1,15 +1,24 @@
 package com.fuse.actions;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.util.Base64;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.List;
+
 import javax.servlet.http.HttpSession;
 
 import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
-import com.opensymphony.xwork2.interceptor.annotations.Before;
 
+import com.faction.reporting.ReportFeatures;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.FinalReport;
+import com.fuse.dao.FinalReportVariant;
 import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.Vulnerability;
@@ -17,14 +26,10 @@ import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.reporting.GenerateReport;
 import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
+import com.fuse.utils.FSUtils;
+import com.opensymphony.xwork2.interceptor.annotations.Before;
 
-import java.util.GregorianCalendar;
-import java.util.Base64;
-import java.util.Calendar;
-import java.util.Date;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import lombok.Setter;
 
 @Namespace("/portal")
 public class Reports extends FSActionSupport {
@@ -39,6 +44,8 @@ public class Reports extends FSActionSupport {
 	private String filename;
 	private String contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 	private String guid;
+	@Setter
+	private String format;
 	private InputStream reportStream;
 
 	@Before(priority = 1)
@@ -180,13 +187,13 @@ public class Reports extends FSActionSupport {
 
 				} else {
 					finalreport = assessment.getFinalReport();
-					b64Rpt = finalreport.getBase64EncodedPdf();
+					b64Rpt = selectVariant(finalreport).getBase64Content();
 				}
 			} else if (guid != null) {
 
 				finalreport = (FinalReport) em.createQuery("from FinalReport where filename = :guid")
 						.setParameter("guid", guid).getResultList().stream().findFirst().orElse(null);
-				b64Rpt = finalreport.getBase64EncodedPdf();
+				b64Rpt = selectVariant(finalreport).getBase64Content();
 
 			} else {
 				return ERROR;
@@ -220,7 +227,18 @@ public class Reports extends FSActionSupport {
 				if(report.length > 3 && report[1] == (byte)'P' && report[2] == (byte)'D' && report[3] == (byte)'F') {
 					contentType = "application/pdf";
 					filename +="pdf";
-						
+					if ("encryptedpdf".equals(format)) {
+						if (finalreport == null || finalreport.getEncryptedReportPassword() == null) {
+							System.err.println("DownloadReport: encrypted PDF requested but no report password set for report id=" + (finalreport != null ? finalreport.getId() : "null"));
+							return ERROR;
+						}
+						String password = FSUtils.decryptPassword(finalreport.getEncryptedReportPassword());
+						if (password == null || password.isEmpty()) {
+							System.err.println("DownloadReport: failed to decrypt report password for report id=" + finalreport.getId());
+							return ERROR;
+						}
+						report = ReportFeatures.encryptPdf(report, password);
+					}
 				}else {
 					filename +="docx";
 				}
@@ -293,5 +311,20 @@ public class Reports extends FSActionSupport {
 		return this.reportStream;
 	}
 
-
+	private FinalReportVariant selectVariant(FinalReport fr) {
+		List<FinalReportVariant> variants = fr.getEffectiveVariants();
+		if (format != null && !format.isEmpty()) {
+			String lookupFormat = "encryptedpdf".equals(format) ? "pdf" : format;
+			return variants.stream()
+					.filter(v -> lookupFormat.equals(v.getFileType()))
+					.findFirst()
+					.orElse(variants.get(0));
+		}
+		// Default: prefer PDF if available (preserves prior enterprise behavior),
+		// otherwise return the first available variant.
+		return variants.stream()
+				.filter(v -> "pdf".equals(v.getFileType()))
+				.findFirst()
+				.orElse(variants.get(0));
+	}
 }
