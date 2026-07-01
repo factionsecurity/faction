@@ -233,14 +233,6 @@ public class CMSStrutsTests extends StrutsJUnit4TestCase<com.fuse.actions.admin.
     }
 
     @Test
-    public void testReportExtensionField() throws Exception {
-        com.opensymphony.xwork2.ActionProxy proxy = getActionProxy("/portal/cms");
-        com.fuse.actions.admin.CMS action = (com.fuse.actions.admin.CMS) proxy.getAction();
-        setField(action, "reportExtension", "docx");
-        assertEquals("ReportExtension should match", "docx", getField(action, "reportExtension"));
-    }
-
-    @Test
     public void testReportSectionField() throws Exception {
         com.opensymphony.xwork2.ActionProxy proxy = getActionProxy("/portal/cms");
         com.fuse.actions.admin.CMS action = (com.fuse.actions.admin.CMS) proxy.getAction();

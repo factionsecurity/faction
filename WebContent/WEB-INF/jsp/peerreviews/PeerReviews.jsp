@@ -67,7 +67,7 @@
 			var selectedId = -1;
 			
 			function downPdf(id){	
-				var win = window.open('../service/Report.pdf?id='+id, '_blank');
+				var win = window.open('../portal/DownloadReport?aid='+id, '_blank');
 			}
 			function trackChanges(id){			
 				document.location="TrackChanges?prqueue=true&prid="+id;

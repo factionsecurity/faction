@@ -20,7 +20,7 @@ boolean first =true;
 	 "<s:date name="end" format="MM/dd/yyyy" />",
      "<s:date name="completed" format="MM/dd/yyyy"/>",
      <s:if test="finalReport != null">
-     "<a href='../service/Report.pdf?guid=${finalReport.filename}' >Report</a>",
+     "<a href='../portal/DownloadReport?guid=${finalReport.filename}' >Report</a>",
      </s:if>
      <s:else>
      "",

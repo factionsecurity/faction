@@ -822,12 +822,14 @@
                                                             class="" title="Edit Assessment">
                                                             <i class="fa fa-pencil"></i>
                                                         </a>
+                                                        <s:if test="#asmt.finalReport != null">
                                                         &nbsp;
                                                         <a target="_blank"
-                                                            href="../service/Report.pdf?id=<s:property value='id'/>"
+                                                            href="../portal/DownloadReport?aid=<s:property value='id'/>"
                                                             title="Download Report">
                                                             <i class="fa fa-download"></i>
                                                         </a>
+                                                        </s:if>
                                                     </td>
                                                     <td>
                                                         <s:property value="appId" />

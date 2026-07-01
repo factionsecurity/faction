@@ -55,7 +55,7 @@
 						<bs:box type="primary" title="Reports">
 						<table class="table table-striped table-hover dataTable no-footer">
 						<thead>
-						<tr><th>Report Name</th><th>Type</th><th>Created</th><td style="width:60px"></td></tr>
+						<tr><th>Report Name</th><th>Type</th><th>Created</th><th></th></tr>
 						</thead>
 						<tbody id="reportTable">
 						<s:iterator value="reports" var="r" >
@@ -63,13 +63,22 @@
 						<s:else>
 						<tr>
 						</s:else>
-							<td><s:property value="appName"/> - <s:property value="appType"/> <s:if test="retest == true">Retest</s:if> Report</td>
-							<td><s:property value="appType"/> <s:if test="retest == true">Retest</s:if></td>
-							<td><s:date name="gentime" format="MM-dd-yyyy hh:mm:ss"/></td>
-							<td>
+							<td style="vertical-align:top"><s:property value="appName"/> - <s:property value="appType"/> <s:if test="retest == true">Retest</s:if> Report</td>
+							<td style="vertical-align:top"><s:property value="appType"/> <s:if test="retest == true">Retest</s:if></td>
+							<td style="vertical-align:top"><s:date name="gentime" format="MM-dd-yyyy hh:mm:ss"/></td>
+							<td style="vertical-align:top">
+								<div style="display:inline-block; text-align:center;">
 								<s:if test="#r.variantCount > 1">
-									<a class="vulnControl" style="display:block" href="DownloadReport?guid=<s:property value="#r.filename"/>&format=docx" target="_blank" rel="noopener noreferrer">DOCX</a>
-									<a class="vulnControl" style="display:block" href="DownloadReport?guid=<s:property value="#r.filename"/>&format=pdf" target="_blank" rel="noopener noreferrer">PDF</a>
+									<div class="btn-group">
+										<button type="button" class="btn btn-primary dropdown-toggle" style="margin-top:.25em;" data-toggle="dropdown">
+											Download <span class="caret"></span>
+										</button>
+										<ul class="dropdown-menu" style="background-color:#192338; border-color:#0f1a2b;">
+											<li><a href="DownloadReport?guid=<s:property value="#r.filename"/>&format=docx" target="_blank" rel="noopener noreferrer" style="color:#fff;">Word (.docx)</a></li>
+											<li><a href="DownloadReport?guid=<s:property value="#r.filename"/>&format=pdf" target="_blank" rel="noopener noreferrer" style="color:#fff;">PDF</a></li>
+											<li><a href="DownloadReport?guid=<s:property value="#r.filename"/>&format=encryptedpdf" target="_blank" rel="noopener noreferrer" style="color:#fff;">Encrypted PDF</a></li>
+										</ul>
+									</div>
 								</s:if>
 								<s:else>
 									<a class="vulnControl" href="DownloadReport?guid=<s:property value="#r.filename"/>" target="_blank" rel="noopener noreferrer">
@@ -77,10 +86,11 @@
 									</a>
 								</s:else>
 								<s:if test="retest == true">
-								<span class="vulnControl genReport" >
+								<span class="vulnControl genReport" style="display:block; margin-top:20px;">
 									<i class="fa fa-arrows-rotate"></i>
 								</span>
 								</s:if>
+								</div>
 							</td>
 						</tr>
 						</s:iterator>
@@ -94,9 +104,17 @@
 									<i class="fa fa-arrows-rotate"></i>
 								</span>
 							</td>
+						</tr>
 						</s:if>
 						</tbody>
 						</table>
+						<s:if test="reportPassword != null && reportPassword != ''">
+						<div style="margin-top:10px; text-align:right;">
+							<input type="password" id="remReportPasswordField" value="<s:property value="reportPassword"/>" readonly style="display:inline-block; width:auto; min-width:33ch; vertical-align:middle; font-size:inherit; background-color:#030d1c; color:#fff; padding:.3em;">
+							<a id="toggleRemReportPassword" class="btn btn-default btn-sm" style="cursor:pointer; vertical-align:top; margin:0; padding:.5em .8em;"><i class="fa fa-eye"></i></a>
+							<div><small class="text-muted">Report encryption password</small></div>
+						</div>
+						</s:if>
 						</bs:box>
 					</bs:mco>
 				</bs:row>
@@ -104,11 +122,22 @@
 		</bs:row>
 	</bs:mco>
 </bs:row>
-	
-	
-	
-	
-	
-	
+
+<script>
+$(function() {
+	$("#toggleRemReportPassword").click(function() {
+		var field = $("#remReportPasswordField");
+		var icon = $(this).find("i");
+		if (field.attr("type") === "password") {
+			field.attr("type", "text");
+			icon.removeClass("fa-eye").addClass("fa-eye-slash");
+		} else {
+			field.attr("type", "password");
+			icon.removeClass("fa-eye-slash").addClass("fa-eye");
+		}
+	});
+});
+</script>
+
 	
 	

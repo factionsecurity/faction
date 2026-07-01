@@ -151,8 +151,8 @@ public class VerificationQueue extends FSActionSupport {
 				notif.setAssessorId(user.getId());
 				notif.setCreated(new Date());
 				notif.setMessage("Verification Completed for <b>" + vi.getVulnerability().getName()
-						+ "</b>: <a href='../service/Report.pdf?retest=true&id=" + v.getAssessment().getId()
-						+ "'>Retest Report</a>");
+						+ "</b>: <a href='../portal/DownloadReport?aid=" + v.getAssessment().getId()
+						+ "&retest=true'>Retest Report</a>");
 				em.persist(notif);
 				em.persist(vn);
 				if (verOption == 1l || verOption == 2l) {

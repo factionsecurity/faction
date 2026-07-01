@@ -12,6 +12,8 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 
+import lombok.Getter;
+
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.FinalReport;
@@ -62,6 +64,7 @@ public class RemediationSchedule extends FSActionSupport{
 	private List<FinalReport> reports = new ArrayList<>();
 	private Map<Long,List<String>> status = new HashMap<>();
 	private Map<String,String> controls = new HashMap<>();
+	@Getter private String reportPassword;
 	
 	
 	@Before
@@ -176,6 +179,15 @@ public class RemediationSchedule extends FSActionSupport{
 		}
 		if(assessment.getRetestReport() != null) {
 			reports.add(assessment.getRetestReport());
+		}
+		FinalReport passwordSource = assessment.getFinalReport() != null && assessment.getFinalReport().getEncryptedReportPassword() != null
+				? assessment.getFinalReport()
+				: assessment.getRetestReport();
+		if (passwordSource != null && passwordSource.getEncryptedReportPassword() != null) {
+			String pw = FSUtils.decryptPassword(passwordSource.getEncryptedReportPassword());
+			if (pw != null && !pw.isEmpty()) {
+				this.reportPassword = pw;
+			}
 		}
 		
 		return SUCCESS;
