@@ -37,7 +37,6 @@ public class FinalReport{
 	private String base64EncodedPdf;
 	private Date gentime;
 	private Boolean retest;
-	@Setter
 	private String fileType;
 	private Boolean largeFile=false;
 	@OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
@@ -106,7 +105,9 @@ public class FinalReport{
 	public String getFileType() {
 		return this.fileType == null || this.fileType.equals("")? "docx": this.fileType;
 	}
-
+	public void setFileType(String fileType) {
+		this.fileType = fileType;
+	}
 	public Boolean getLargeFile() {
 		return largeFile;
 	}

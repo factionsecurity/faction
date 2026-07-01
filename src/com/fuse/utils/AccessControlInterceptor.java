@@ -27,10 +27,11 @@ public class AccessControlInterceptor extends AbstractInterceptor{
 			ActionContext.getContext().put("isEngagement", user.getPermissions().isEngagement());
 			ActionContext.getContext().put("isRemediation", user.getPermissions().isRemediation());
 		} else {
-			// Allow unauthenticated access only to the root namespace (login, reset, setup).
+			// Allow unauthenticated access to the root namespace (login, reset, setup)
+			// and to the /sso namespace (SSO entry points that redirect to the IdP).
 			// All other namespaces require an active session.
 			String namespace = invocation.getProxy().getNamespace();
-			if (!"/".equals(namespace)) {
+			if (!"/".equals(namespace) && !"/sso".equals(namespace)) {
 				return "login";
 			}
 		}

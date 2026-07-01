@@ -74,6 +74,7 @@ label{
      <!--  <li><a href="#tab_2" data-toggle="tab">Verifications</a></li>-->
      <li><a href="#tab_3" data-toggle="tab">Search</a></li>
      <li><a href="#tab_4" data-toggle="tab">Upload</a></li>
+     <jsp:include page="EngagementExtendedTabs.jsp" />
    </ul>
    <div class="tab-content">
      <div class="tab-pane active" id="tab_1">
@@ -88,6 +89,7 @@ label{
       <div class="tab-pane" id="tab_4">
 		<jsp:include page="assessmentUpload.jsp" />
      </div><!-- /.tab-pane -->
+     <jsp:include page="EngagementExtendedContent.jsp" />
    </div><!-- /.tab-content -->
  </div><!-- nav-tabs-custom -->
 </div><!-- /.col -->

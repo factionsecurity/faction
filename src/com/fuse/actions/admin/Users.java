@@ -71,7 +71,11 @@ public class Users extends FSActionSupport {
 	private String oauthClientId;
 	private String oauthClientSecret;
 	private String oauthDiscoveryURI;
+	private String githubClientId;
+	private String githubClientSecret;
 	private String saml2MetaUrl;
+	private Boolean samlForceAuthn;
+	private Integer samlMaxAuthLifetime;
 
 	@Action(value = "Users")
 	public String execute() {
@@ -94,7 +98,10 @@ public class Users extends FSActionSupport {
 			this.ldapObjectClass = ems.getLdapObjectClass();
 			this.oauthClientId = ems.getOauthClientId();
 			this.oauthDiscoveryURI = ems.getOauthDiscoveryURI();
+			this.githubClientId = ems.getGithubClientId();
 			this.saml2MetaUrl = ems.getSaml2MetaUrl();
+			this.samlForceAuthn = ems.getSamlForceAuthn();
+			this.samlMaxAuthLifetime = ems.getSamlMaxAuthLifetime();
 		}
 
 		return SUCCESS;
@@ -746,7 +753,30 @@ public class Users extends FSActionSupport {
 		//update the odic config in the filter
 		//settings.updateSSOFilters();
 		SecurityConfigFactory.refreshConfig();
-		
+
+		return this.SUCCESSJSON;
+	}
+
+	@Action(value = "SaveGithub")
+	public String saveGithub() {
+		if (!(this.isAcadmin())) {
+			return LOGIN;
+		}
+		if (!this.testToken(false))
+			return this.ERRORJSON;
+
+		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
+				.findFirst().orElse(new SystemSettings());
+		settings.setGithubClientId(this.githubClientId);
+		if (this.githubClientSecret != null && !this.githubClientSecret.equals("")) {
+			settings.setGithubClientSecret(FSUtils.encryptPassword(this.githubClientSecret));
+		}
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+		em.persist(settings);
+		HibHelper.getInstance().commit();
+		SecurityConfigFactory.refreshConfig();
+
 		return this.SUCCESSJSON;
 	}
 	
@@ -761,6 +791,8 @@ public class Users extends FSActionSupport {
 		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
 				.findFirst().orElse(new SystemSettings());
 		settings.setSaml2MetaUrl(this.saml2MetaUrl);
+		settings.setSamlForceAuthn(this.samlForceAuthn != null && this.samlForceAuthn);
+		settings.setSamlMaxAuthLifetime(this.samlMaxAuthLifetime);
 		settings.createKeystoreIfNotExists();
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
@@ -1093,6 +1125,15 @@ public class Users extends FSActionSupport {
 		this.oauthDiscoveryURI = oauthDiscoveryURI;
 	}
 
+	public String getGithubClientId() {
+		return githubClientId;
+	}
+	public void setGithubClientId(String githubClientId) {
+		this.githubClientId = githubClientId;
+	}
+	public void setGithubClientSecret(String githubClientSecret) {
+		this.githubClientSecret = githubClientSecret;
+	}
 	public void setOauthClientSecret(String oauthClientSecret) {
 		this.oauthClientSecret = oauthClientSecret;
 	}
@@ -1102,6 +1143,18 @@ public class Users extends FSActionSupport {
 	}
 	public String getSaml2MetaUrl() {
 		return this.saml2MetaUrl;
+	}
+	public void setSamlForceAuthn(Boolean samlForceAuthn) {
+		this.samlForceAuthn = samlForceAuthn;
+	}
+	public Boolean getSamlForceAuthn() {
+		return this.samlForceAuthn;
+	}
+	public void setSamlMaxAuthLifetime(Integer samlMaxAuthLifetime) {
+		this.samlMaxAuthLifetime = samlMaxAuthLifetime;
+	}
+	public Integer getSamlMaxAuthLifetime() {
+		return this.samlMaxAuthLifetime;
 	}
 	
 	

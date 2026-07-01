@@ -229,12 +229,42 @@
 				<div class="row">
 					<div class="box box-primary">
 						<div class="box-header with-border">
+							<h3 class="box-title">GitHub Configuration</h3>
+						</div>
+						<div class="box-body">
+							<div class="row">
+								<bs:inputgroup name="Client Id" colsize="4" id="githubClientId"
+									placeholder=""><s:property value="githubClientId" /></bs:inputgroup>
+								<bs:inputgroup name="Client Secret" colsize="4"
+									id="githubClientSecret" password="true"
+									placeholder=""></bs:inputgroup>
+								<bs:button color="primary" id="githubSave" text="Save" size="md"
+									colsize="4" addlabel="true"></bs:button>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="row">
+					<div class="box box-primary">
+						<div class="box-header with-border">
 							<h3 class="box-title">SAML2 Configuration</h3>
 						</div>
 						<div class="box-body">
 							<div class="row">
 								<bs:inputgroup name="App Federation Metadata Url" colsize="12" id="saml2MetaUrl"
 									placeholder=""><s:property value="saml2MetaUrl" /></bs:inputgroup>
+								<div class="col-sm-4">
+									<div class="form-group">
+										<label>Force Re-authentication</label>
+										<div class="form-control" style="background: #0000">
+											<input class="icheckbox_minimal-blue" type="checkbox"
+												id="samlForceAuthn" <s:if test="samlForceAuthn">checked</s:if> />
+										</div>
+										<small class="text-muted">Uncheck to reuse an existing IdP session (seamless SSO).</small>
+									</div>
+								</div>
+								<bs:inputgroup name="Max Authentication Age (seconds)" colsize="4" id="samlMaxAuthLifetime"
+									placeholder="86400"><s:property value="samlMaxAuthLifetime" /></bs:inputgroup>
 								<bs:button color="primary" id="saml2Save" text="Save" size="md"
 									colsize="4" addlabel="true"></bs:button>
 							</div>

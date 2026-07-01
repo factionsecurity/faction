@@ -198,7 +198,8 @@ public class FSUtils {
 	}
 
 	public static String sanitizeMongo(String input) {
-		return input.replaceAll("[\"'{}:]", "");
+		if (input == null) return "";
+		return input.replaceAll("([+?*^${}()|\\[\\]\\\\])", "\\\\$1");
 	}
 
 	public static boolean checkEmail(String email) {
