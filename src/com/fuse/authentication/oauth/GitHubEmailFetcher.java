@@ -16,14 +16,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class GitHubEmailFetcher {
 
 	private static final ObjectMapper MAPPER = new ObjectMapper();
+	public static final String GITHUB_COM_API = "https://api.github.com";
 
 	public static String primaryVerifiedEmail(String accessToken) {
+		return primaryVerifiedEmail(accessToken, GITHUB_COM_API);
+	}
+
+	public static String primaryVerifiedEmail(String accessToken, String apiBaseUrl) {
 		if (accessToken == null || accessToken.trim().isEmpty()) {
 			return null;
 		}
+		if (apiBaseUrl == null || apiBaseUrl.trim().isEmpty()) {
+			apiBaseUrl = GITHUB_COM_API;
+		}
 		HttpURLConnection conn = null;
 		try {
-			URL url = new URL("https://api.github.com/user/emails");
+			URL url = new URL(apiBaseUrl + "/user/emails");
 			conn = (HttpURLConnection) url.openConnection();
 			conn.setRequestMethod("GET");
 			conn.setRequestProperty("Authorization", "token " + accessToken);

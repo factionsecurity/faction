@@ -39,6 +39,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.UrlResource;
 
 import com.fuse.authentication.oauth.GitHubEmailFetcher;
+import com.fuse.authentication.oauth.GitHubEnterpriseClient;
 import com.fuse.authentication.oauth.SecurityConfigFactory;
 import com.fuse.authentication.oauth.SecurityFilterWrapper;
 import com.fuse.utils.FSUtils;
@@ -95,6 +96,7 @@ public class SystemSettings {
 	private String oauthDiscoveryURI;
 	private String githubClientId;
 	private String githubClientSecret;
+	private String githubEnterpriseUrl;
 	private Integer inactiveDays;
 	@ElementCollection
 	private List<String> status = new ArrayList<String>();
@@ -449,6 +451,25 @@ public class SystemSettings {
 		this.githubClientSecret = githubClientSecret;
 	}
 
+	// Base URL of a GitHub Enterprise Server appliance (e.g. https://github.example.com).
+	// Blank/null means authenticate against github.com.
+	public String getGithubEnterpriseUrl() {
+		return githubEnterpriseUrl;
+	}
+
+	public void setGithubEnterpriseUrl(String githubEnterpriseUrl) {
+		if (githubEnterpriseUrl != null) {
+			githubEnterpriseUrl = githubEnterpriseUrl.trim();
+			while (githubEnterpriseUrl.endsWith("/")) {
+				githubEnterpriseUrl = githubEnterpriseUrl.substring(0, githubEnterpriseUrl.length() - 1);
+			}
+			if (githubEnterpriseUrl.isEmpty()) {
+				githubEnterpriseUrl = null;
+			}
+		}
+		this.githubEnterpriseUrl = githubEnterpriseUrl;
+	}
+
 	public void setOauthClientSecret(String oauthClientSecret) {
 		this.oauthClientSecret = oauthClientSecret;
 	}
@@ -662,8 +683,20 @@ public class SystemSettings {
 		}
 		try {
 			if (this.githubClientId != null && !this.githubClientId.trim().isEmpty()) {
-				GitHubClient github = new GitHubClient(this.githubClientId,
-						this.githubClientSecret == null ? "" : FSUtils.decryptPassword(this.githubClientSecret));
+				String githubSecret = this.githubClientSecret == null ? ""
+						: FSUtils.decryptPassword(this.githubClientSecret);
+				// Default to github.com unless a GitHub Enterprise Server URL is configured.
+				GitHubClient github;
+				final String githubApiBase;
+				if (this.githubEnterpriseUrl != null && !this.githubEnterpriseUrl.trim().isEmpty()) {
+					GitHubEnterpriseClient ghe = new GitHubEnterpriseClient(this.githubClientId, githubSecret,
+							this.githubEnterpriseUrl.trim());
+					githubApiBase = ghe.getApiBaseUrl();
+					github = ghe;
+				} else {
+					github = new GitHubClient(this.githubClientId, githubSecret);
+					githubApiBase = GitHubEmailFetcher.GITHUB_COM_API;
+				}
 				github.setName("githubClient");
 				github.setScope("user:email");
 				github.setCallbackUrl(System.getenv("FACTION_OAUTH_CALLBACK") + "/github/callback");
@@ -674,7 +707,8 @@ public class SystemSettings {
 					// attribute that AccessControl matches users on.
 					if (profile.getAttribute("email") == null && profile instanceof OAuth20Profile) {
 						OAuth20Profile ghProfile = (OAuth20Profile) profile;
-						String email = GitHubEmailFetcher.primaryVerifiedEmail(ghProfile.getAccessToken());
+						String email = GitHubEmailFetcher.primaryVerifiedEmail(ghProfile.getAccessToken(),
+								githubApiBase);
 						if (email != null) {
 							ghProfile.addAttribute("email", email);
 						}

@@ -327,6 +327,7 @@ $(function() {
 	function githubSave(callback){
 		let pdata = "githubClientId=" + $("#githubClientId").val();
 		pdata += "&githubClientSecret=" + $("#githubClientSecret").val();
+		pdata += "&githubEnterpriseUrl=" + encodeURIComponent($("#githubEnterpriseUrl").val());
 		pdata += "&_token=" + global._token;
 		$.post("SaveGithub", pdata, function(data) {
 			global._token = data.token;

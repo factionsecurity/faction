@@ -73,6 +73,7 @@ public class Users extends FSActionSupport {
 	private String oauthDiscoveryURI;
 	private String githubClientId;
 	private String githubClientSecret;
+	private String githubEnterpriseUrl;
 	private String saml2MetaUrl;
 	private Boolean samlForceAuthn;
 	private Integer samlMaxAuthLifetime;
@@ -99,6 +100,7 @@ public class Users extends FSActionSupport {
 			this.oauthClientId = ems.getOauthClientId();
 			this.oauthDiscoveryURI = ems.getOauthDiscoveryURI();
 			this.githubClientId = ems.getGithubClientId();
+			this.githubEnterpriseUrl = ems.getGithubEnterpriseUrl();
 			this.saml2MetaUrl = ems.getSaml2MetaUrl();
 			this.samlForceAuthn = ems.getSamlForceAuthn();
 			this.samlMaxAuthLifetime = ems.getSamlMaxAuthLifetime();
@@ -768,6 +770,7 @@ public class Users extends FSActionSupport {
 		SystemSettings settings = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream()
 				.findFirst().orElse(new SystemSettings());
 		settings.setGithubClientId(this.githubClientId);
+		settings.setGithubEnterpriseUrl(this.githubEnterpriseUrl);
 		if (this.githubClientSecret != null && !this.githubClientSecret.equals("")) {
 			settings.setGithubClientSecret(FSUtils.encryptPassword(this.githubClientSecret));
 		}
@@ -1133,6 +1136,12 @@ public class Users extends FSActionSupport {
 	}
 	public void setGithubClientSecret(String githubClientSecret) {
 		this.githubClientSecret = githubClientSecret;
+	}
+	public String getGithubEnterpriseUrl() {
+		return githubEnterpriseUrl;
+	}
+	public void setGithubEnterpriseUrl(String githubEnterpriseUrl) {
+		this.githubEnterpriseUrl = githubEnterpriseUrl;
 	}
 	public void setOauthClientSecret(String oauthClientSecret) {
 		this.oauthClientSecret = oauthClientSecret;

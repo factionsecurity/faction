@@ -238,6 +238,9 @@
 								<bs:inputgroup name="Client Secret" colsize="4"
 									id="githubClientSecret" password="true"
 									placeholder=""></bs:inputgroup>
+								<bs:inputgroup name="GitHub Enterprise URL (optional)" colsize="4"
+									id="githubEnterpriseUrl"
+									placeholder="https://github.example.com (blank = github.com)"><s:property value="githubEnterpriseUrl" /></bs:inputgroup>
 								<bs:button color="primary" id="githubSave" text="Save" size="md"
 									colsize="4" addlabel="true"></bs:button>
 							</div>

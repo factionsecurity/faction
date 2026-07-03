@@ -6,9 +6,6 @@ services:
       - "27017:27017"
     volumes:
       - "~/.faction/data-dev:/data/db"
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=faction_mongo_user
-      - MONGO_INITDB_ROOT_PASSWORD=faction_mongo_pass
   tomcat-service:
     build:
       context: .
@@ -18,16 +15,18 @@ services:
       - "~/.faction/templates:/opt/faction/templates"
       - "~/.faction/modules:/opt/faction/modules"
     environment:
-      - "FACTION_REPORT_STORAGE=local"
-      - "FACTION_MONGO_HOST=faction-mongo"
-      - "FACTION_MONGO_DATABASE=faction"
-      - "FACTION_MONGO_USER=faction_mongo_user"
-      - "FACTION_MONGO_PASSWORD=faction_mongo_pass"
+      - 'CATALINA_OPTS=-Xms1g -Xmx2g -XX:+UseG1GC -XX:+DisableExplicitGC -XX:+UseContainerSupport -XX:MaxRAMPercentage=75'
+      - 'FACTION_REPORT_STORAGE=local'
+      - 'FACTION_MONGO_HOST=faction-mongo'
+      - 'FACTION_MONGO_DATABASE=faction'
+      - 'FACTION_SECRET_KEY=${FACTION_SECRET_KEY:-faction_encryption_key}'
+      - 'FACTION_OAUTH_CALLBACK=http://localhost:8080'
+      - 'FACTION_APPSTORE_ENABLED=true'
       - "FACTION_SECRET_KEY=faction_encryption_key"
       - "FACTION_OAUTH_CALLBACK=http://localhost:8080"
       # Remote debugger (JDWP). Attach your IDE to localhost:8000.
       # suspend=n: the app starts normally; you can attach/detach any time.
-      - "JAVA_OPTS=-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000"
+      - "JAVA_OPTS=-Dfile.encoding=UTF-8 -Xms512m -Xmx1024m -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:8000"
     links:
       - faction-mongo
     command: ["/usr/local/tomcat/bin/catalina.sh", "run"]
