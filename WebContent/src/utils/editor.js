@@ -8,6 +8,10 @@ import DOMPurify from 'dompurify';
 import 'tui-color-picker/dist/tui-color-picker.css';
 require('./editor.css')
 
+// Must stay under Tomcat's maxPostSize (25MB, set in the Dockerfiles); the
+// base64 + URL encoding of the image is what counts against it.
+const MAX_UPLOAD_POST_BYTES = 25 * 1024 * 1024;
+
 export class FactionEditor {
     constructor(assessmentId) {
         this.editors = {}
@@ -472,6 +476,16 @@ export class FactionEditor {
                 const encodedImage = await imageToURL(blob)
                 let data = "encodedImage=" + encodeURIComponent(encodedImage);
                 data += "&assessmentId=" + _this.assessmentId;
+                if (data.length > MAX_UPLOAD_POST_BYTES) {
+                    overlay.remove();
+                    $.alert({
+                        title: 'Image Too Large',
+                        content: 'This image is ' + (blob.size / (1024 * 1024)).toFixed(1)
+                            + 'MB and exceeds the upload limit. Please resize or compress it and try again.',
+                        type: 'red'
+                    });
+                    return;
+                }
                 $.post("UploadImage", data).done(function (resp) {
                     let uuid = resp.message;
                     callback("getImage?id=" + uuid);
@@ -480,6 +494,11 @@ export class FactionEditor {
                 }).fail(function () {
                     // Remove overlay on error too
                     overlay.remove();
+                    $.alert({
+                        title: 'Upload Failed',
+                        content: 'The image could not be uploaded. It may be too large for the server to accept.',
+                        type: 'red'
+                    });
                 });
 
             });
