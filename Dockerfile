@@ -5,6 +5,8 @@ RUN apt-get install curl
 RUN mkdir /opt/faction
 #Fix issue with sending emails
 RUN sed -i 's/^jdk.tls.disabledAlgorithms/# jdk.tls.disabledAlgorithms/' /opt/java/openjdk/conf/security/java.security
+#Raise Tomcat's 2MB POST limit so large base64 image uploads work (25MB)
+RUN sed -i 's/<Connector port="8080"/<Connector maxPostSize="26214400" port="8080"/' /usr/local/tomcat/conf/server.xml
 
               
 
