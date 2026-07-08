@@ -598,11 +598,12 @@ public class DocxUtils {
     private List<Object> wrapHTMLFromCache(Vulnerability v, String field, int count, String customCSS) {
         MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "wrapHTMLFromCache");
         try {
-            // extensions can inject per-assessment content into HTML fields,
-            // so cached XML (which skipped extensions) would be incomplete
-            if (this.reportExtension.isExtended()) {
-                return null;
-            }
+            // Extensions that inject per-vuln content are now run at
+            // pre-compile time (DocxPrecompiler runs updateReport before
+            // the XHTML importer), so the cache is valid even when
+            // extensions are active. Per-assessment extension placeholders
+            // (like ${faction-bar-chart}) live in the report template, not
+            // in per-vuln desc/rec/details fields.
 
             String cachedXml;
             String cachedHash;
@@ -1346,8 +1347,12 @@ public class DocxUtils {
 			content = content.replaceAll("\\$\\{totalClosedVulns\\}", this.totalClosedVulns);
 
 
-			// Run extensions
-			if (this.reportExtension.isExtended()) {
+			// Run extensions — only when the content contains a ${ placeholder
+			// that an extension might handle. This avoids the expensive
+			// full-assessment clone in updateReport() for the 1340+ fields
+			// that have no extension work. Extensions use ${faction-*} by
+			// convention; any extension placeholder will contain "${".
+			if (this.reportExtension.isExtended() && content.contains("${")) {
 				content = this.reportExtension.updateReport(this.assessment, content);
 			}
 
@@ -2388,6 +2393,28 @@ public class DocxUtils {
 				return;
 			}
 
+			// force-initialize lazy collections on the assessment that
+			// Extensions.cloneChecklists() will access. Before the cache
+			// optimization, replacement() called updateReport() for every
+			// field, which initialized these collections early. Now that
+			// we skip those calls, the collections are never initialized.
+			// Re-attach the assessment to a fresh session and touch the
+			// lazy collection so it's loaded before cloneChecklists runs.
+			try {
+				EntityManager em = HibHelper.getInstance().getEM();
+				HibHelper.getInstance().preJoin();
+				em.joinTransaction();
+				Assessment managed = em.merge(this.assessment);
+				if (managed.getAnswers() != null) {
+					managed.getAnswers().size();
+				}
+				HibHelper.getInstance().commit();
+				// copy the initialized collection back to our detached object
+				this.assessment = managed;
+			} catch (Exception ex) {
+				// not critical — extension may not need checklists
+			}
+
 			MainDocumentPart mainPart = mlp.getMainDocumentPart();
 			// look for all P elements in the specified object
 			List<P> paragraphs = this.getParagraphs(mainPart);
@@ -2402,6 +2429,14 @@ public class DocxUtils {
 					ex.printStackTrace();
 				}
 				final String identifier = paragraphText.toString().trim();
+				// skip the expensive updateReport() call (which clones the
+				// entire assessment + all vulns) when this paragraph clearly
+				// has no ${ placeholder that an extension could handle.
+				// Only paragraphs containing ${faction-bar-chart} or similar
+				// extension placeholders will trigger the clone + extension.
+				if (!identifier.contains("${")) {
+					continue;
+				}
 				String html = this.reportExtension.updateReport(this.assessment, identifier);
 				if (html != null && !html.equals(identifier)) {
 					// only pay for the index lookup when the extension

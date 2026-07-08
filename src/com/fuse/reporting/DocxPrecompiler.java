@@ -26,8 +26,10 @@ import org.docx4j.wml.RFonts;
 
 import com.fuse.dao.CustomField;
 import com.fuse.dao.HibHelper;
+import com.fuse.dao.Assessment;
 import com.fuse.dao.Image;
 import com.fuse.dao.Vulnerability;
+import com.fuse.extenderapi.Extensions;
 import com.fuse.utils.FSUtils;
 import com.fuse.utils.LoggingConfig;
 import com.fuse.utils.ReportImageScaler;
@@ -87,10 +89,21 @@ public class DocxPrecompiler {
     private Map<String, byte[]> capturedImages = new HashMap<>();
     private Map<String, String> capturedContentTypes = new HashMap<>();
 
+    // the parent assessment — needed to run report extensions at pre-compile
+    // time so their output is baked into the cached XML
+    private final Assessment assessment;
+    // report extension instance, lazily initialized
+    private Extensions reportExtension;
+
     public DocxPrecompiler(String font, String customCSS) {
+        this(font, customCSS, null);
+    }
+
+    public DocxPrecompiler(String font, String customCSS, Assessment assessment) {
         this.font = font == null ? "Calibri" : font;
         this.customCSS = customCSS == null ? "" : customCSS;
         this.maxImageWidth = ReportImageScaler.configuredMaxWidth();
+        this.assessment = assessment;
     }
 
     /**
@@ -191,9 +204,13 @@ public class DocxPrecompiler {
      * simply left stale and report-time will fall back to live conversion.
      */
     public static void precompileAndPersist(Vulnerability v, String font, String customCSS) {
+        precompileAndPersist(v, font, customCSS, null);
+    }
+
+    public static void precompileAndPersist(Vulnerability v, String font, String customCSS, Assessment assessment) {
         if (v == null) return;
         try {
-            DocxPrecompiler pre = new DocxPrecompiler(font, customCSS);
+            DocxPrecompiler pre = new DocxPrecompiler(font, customCSS, assessment);
             if (pre.compile(v)) {
                 // persist the cached fields — use a fresh EM from the EMF
                 // to avoid closing the shared HibHelper singleton that
@@ -241,6 +258,20 @@ public class DocxPrecompiler {
         content = content.replaceAll("<blockquote>", "<center class='figure'>");
         content = content.replaceAll("</blockquote>", "</center>");
         content = FSUtils.jtidy(content);
+
+        // run report extensions at pre-compile time so their output (e.g.
+        // injected charts, cross-references) is baked into the cached XML.
+        // Only runs when the content contains a ${ placeholder; the
+        // short-circuit inside updateReport() avoids the expensive clone.
+        if (assessment != null && content.contains("${")) {
+            if (reportExtension == null) {
+                reportExtension = new Extensions(HibHelper.getInstance().getEMF(),
+                        Extensions.EventType.REPORT_MANAGER);
+            }
+            if (reportExtension.isExtended()) {
+                content = reportExtension.updateReport(assessment, content);
+            }
+        }
 
         // resolve getImage?id=... links to base64 data URIs
         content = resolveImageLinks(content);
@@ -499,7 +530,7 @@ public class DocxPrecompiler {
     // bump this when the cached XML format changes (namespace normalization,
     // snippet splitting logic, etc.) to invalidate all existing caches and
     // force recompilation on the next migration/save
-    private static final String CACHE_VERSION = "v5";
+    private static final String CACHE_VERSION = "v6";
 
     // SHA-256 hash of font+content+cacheVersion for cache invalidation
     private static String hash(String font, String content) {

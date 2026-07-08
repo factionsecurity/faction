@@ -197,7 +197,12 @@ public class AppBootstrapListener implements ServletContextListener {
                                 continue;
                             }
 
-                            if (pre.compile(v)) {
+                            // fetch the parent assessment so extensions
+                            // can run during pre-compilation
+                            Assessment asmt = v.getAssessmentId() > 0
+                                ? vulnEm.find(Assessment.class, v.getAssessmentId()) : null;
+                            DocxPrecompiler vulnPre = new DocxPrecompiler(font, customCSS, asmt);
+                            if (vulnPre.compile(v)) {
                                 HibHelper.getInstance().preJoin();
                                 vulnEm.joinTransaction();
                                 vulnEm.merge(v);

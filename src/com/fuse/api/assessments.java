@@ -2288,17 +2288,19 @@ public class assessments {
 	private void precompileInBackground(Vulnerability vuln, ReportOptions RPO) {
 		if (vuln == null) return;
 		final Long vulnId = vuln.getId();
+		final Long assessmentId = vuln.getAssessmentId();
 		final String font = RPO != null ? RPO.getFont() : "Calibri";
 		final String css = RPO != null ? RPO.getBodyCss() : "";
 		final String fullCSS = (css != null ? css : "");
 
 		new Thread(() -> {
 			try {
-				EntityManager em = HibHelper.getInstance().getEM();
+				EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 				try {
 					Vulnerability v = em.find(Vulnerability.class, vulnId);
+					Assessment assessment = assessmentId != null ? em.find(Assessment.class, assessmentId) : null;
 					if (v != null) {
-						DocxPrecompiler.precompileAndPersist(v, font, fullCSS);
+						DocxPrecompiler.precompileAndPersist(v, font, fullCSS, assessment);
 					}
 				} finally {
 					em.close();
