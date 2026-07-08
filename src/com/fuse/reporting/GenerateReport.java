@@ -166,6 +166,14 @@ public class GenerateReport {
 
 	public String [] generateDocxReport(Long id, EntityManager em, Boolean isRetest) {
 
+		return this.generateDocxReport(id, em, isRetest, true);
+	}
+
+	// finalize=false skips ReportFeatures.finalizeReport and returns the raw
+	// docx, so callers can run the ToC update and any format conversions in a
+	// single LibreOffice pass instead of one per output format
+	public String [] generateDocxReport(Long id, EntityManager em, Boolean isRetest, Boolean finalize) {
+
 		ReportOptions RPO = FSUtils.getOrCreateReportOptionsIfNotExist(em);
 
 		String customCSS = css + (RPO == null ? "" : RPO.getBodyCss());
@@ -205,13 +213,73 @@ public class GenerateReport {
 			ByteArrayOutputStream baos = new ByteArrayOutputStream();
 			mlp.save(baos);
 			byte[] finalReport = baos.toByteArray();
-
-			String docx = Base64
-					.encodeBase64String(
-							ReportFeatures.finalizeReport(finalReport, "docx")
-					);
+			if (finalize) {
+				finalReport = ReportFeatures.finalizeReport(finalReport, "docx");
+			}
+			String docx = Base64.encodeBase64String(finalReport);
 			return new String [] {docx, "docx"};
 
+		} catch (Exception ex) {
+			ex.printStackTrace();
+		}
+		return null;
+	}
+
+	// experimental raw-XML path: DocxUtils2 mutates document.xml as a string,
+	// bypassing the per-vuln JAXB marshal/unmarshal and growing-tree traversal
+	// of DocxUtils. HTML fragments (desc/rec/details) still go through the
+	// XHTML importer against a scratch package; image rIds are remapped into
+	// the output zip. Hyperlinks and page-break tags are not yet ported.
+	//
+	// returns the same {base64, "docx"} shape as generateDocxReport so report
+	// endpoints can swap implementations behind a flag.
+	public String [] generateDocxReport2(Long id, EntityManager em, Boolean isRetest, Boolean finalize) {
+
+		ReportOptions RPO = FSUtils.getOrCreateReportOptionsIfNotExist(em);
+		String customCSS = css + (RPO == null ? "" : RPO.getBodyCss());
+
+		try {
+			Assessment a = (Assessment) em.createQuery("from Assessment where id = :id").setParameter("id", id)
+					.getResultList().stream().findFirst().orElse(null);
+			for (Vulnerability v : a.getVulns()) {
+				v.updateRiskLevels(em);
+			}
+			String mongoQuery = "{ 'type_id' : " + a.getType().getId() + ", 'team_id' : "
+					+ a.getAssessor().get(0).getTeam().getId() + ", 'retest' : " + isRetest + " }";
+			ReportTemplates base = (ReportTemplates) em.createNativeQuery(mongoQuery, ReportTemplates.class)
+					.getSingleResult();
+
+			InputStream is = null;
+			if (!base.getSaveInDB()) {
+				ReportTemplate report = (new ReportTemplateFactory()).getReportTemplate();
+				is = report.getTemplate(base.getFilename());
+			} else {
+				is = base.getTemplate();
+			}
+
+			// DocxUtils2 reads the template InputStream itself; the scratch
+			// package is loaded inside generateReport after VariablePrepare
+			DocxUtils2 gen = new DocxUtils2(em.getEntityManagerFactory(), a);
+			gen.FONT = RPO.getFont();
+			MethodProfiler.setEnabled(true);
+			byte[] finalReport = gen.generateReport(is, customCSS);
+			MethodProfiler.printReport();
+			MethodProfiler.clearStats();
+
+			// ToC generation still happens via docx4j - re-load the produced
+			// docx, install the TOC field at the ${TOC} placeholder, save
+			// back. This is O(1) with vuln count so it's not a hot path.
+			WordprocessingMLPackage mlp = WordprocessingMLPackage.load(new java.io.ByteArrayInputStream(finalReport));
+			new DocxUtils(mlp, a).tocGenerator(mlp);
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			mlp.save(baos);
+			finalReport = baos.toByteArray();
+
+			if (finalize) {
+				finalReport = ReportFeatures.finalizeReport(finalReport, "docx");
+			}
+			String docx = Base64.encodeBase64String(finalReport);
+			return new String[] { docx, "docx" };
 		} catch (Exception ex) {
 			ex.printStackTrace();
 		}

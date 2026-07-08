@@ -55,12 +55,15 @@ import com.fuse.dao.HibHelper;
 import com.fuse.dao.Image;
 import com.fuse.dao.Note;
 import com.fuse.dao.PeerReview;
+import com.fuse.dao.ReportOptions;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.dao.query.VulnerabilityQueries;
 import com.fuse.reporting.GenerateReport;
+import com.fuse.reporting.DocxPrecompiler;
+import com.fuse.reporting.DocxUtils;
 import com.fuse.servlets.EventStreamServlet;
 import com.fuse.tasks.ReportGenThread;
 import com.fuse.tasks.TaskQueueExecutor;
@@ -2008,6 +2011,9 @@ public class assessments {
                     em.persist(vuln);
                     HibHelper.getInstance().commit();
                     this.broadcastVulnUpdates(u, vuln);
+                    // pre-compile HTML fields in the background so report
+                    // generation can skip XHTMLImporterImpl.convert()
+                    precompileInBackground(vuln, FSUtils.getOrCreateReportOptionsIfNotExist(em));
                 }
 
                 return Response.status(200).entity(Support.SUCCESS).build();
@@ -2273,6 +2279,34 @@ public class assessments {
 		} catch (JsonProcessingException e) {
 			e.printStackTrace();
 		}
+	}
+
+	// Spawns a background thread to pre-compile vuln HTML fields into
+	// cached OOXML, so report generation can skip the expensive
+	// XHTMLImporterImpl.convert() calls. If the precompile fails the cache
+	// stays stale and report-time falls back to live conversion.
+	private void precompileInBackground(Vulnerability vuln, ReportOptions RPO) {
+		if (vuln == null) return;
+		final Long vulnId = vuln.getId();
+		final String font = RPO != null ? RPO.getFont() : "Calibri";
+		final String css = RPO != null ? RPO.getBodyCss() : "";
+		final String fullCSS = (css != null ? css : "");
+
+		new Thread(() -> {
+			try {
+				EntityManager em = HibHelper.getInstance().getEM();
+				try {
+					Vulnerability v = em.find(Vulnerability.class, vulnId);
+					if (v != null) {
+						DocxPrecompiler.precompileAndPersist(v, font, fullCSS);
+					}
+				} finally {
+					em.close();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}, "docx-precompile-" + vulnId).start();
 	}
 
 }

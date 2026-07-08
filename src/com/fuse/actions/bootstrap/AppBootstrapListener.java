@@ -19,10 +19,13 @@ import com.fuse.dao.Status;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Image;
+import com.fuse.dao.ReportOptions;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.Category;
+import com.fuse.reporting.DocxPrecompiler;
+import com.fuse.utils.FSUtils;
 import com.fuse.utils.LoggingConfig;
 
 
@@ -40,6 +43,7 @@ public class AppBootstrapListener implements ServletContextListener {
         
         createDefautlStatusIfNeeded();
         fixAssessmentStatuses();
+        precompileOpenAssessmentVulns();
         
         // Bootstrap method to create assessment with 500 vulnerabilities and 1000 images
         // Uncomment the following line to enable this bootstrap functionality
@@ -108,101 +112,153 @@ public class AppBootstrapListener implements ServletContextListener {
     }
     
     /**
-     * Bootstrap method to create an assessment with 500 vulnerabilities and 1000 images
-     * Uncomment this method to run it during application startup
+     * Pre-compiles HTML fields (desc/rec/details) into cached OOXML for
+     * all vulnerabilities in open assessments. Runs on a background thread
+     * so application startup isn't blocked.
+     *
+     * Skips vulnerabilities that already have a valid cache (hash matches
+     * current content). Vulnerabilities whose cache is stale or missing
+     * are recompiled in batches of 50 to avoid holding too many image
+     * bytes in memory at once.
+     *
+     * This is a one-time migration that populates the cache for existing
+     * data. New and updated vulnerabilities get their cache populated
+     * automatically at save time by the save-path hooks.
      */
-    private void createTestAssessmentWithVulnerabilitiesAndImages() {
-        EntityManager em = null;
-        try {
-            System.out.println("Creating test assessment with 500 vulnerabilities and 1000 images...");
-            em = HibHelper.getInstance().getEMF().createEntityManager();
-            
-            // Create base64 encoded image from faction-logo.png
-            String base64Image = null;
+    private void precompileOpenAssessmentVulns() {
+        new Thread(() -> {
+            EntityManager em = null;
             try {
-                byte[] imageBytes = Files.readAllBytes(Paths.get("/Users/joshsummitt/Code/faction-all/free/faction/WebContent/faction-logo.png"));
-                base64Image = "data:image/png;base64," + Base64.getEncoder().encodeToString(imageBytes);
-            } catch (IOException e) {
-                System.err.println("Error reading faction logo file: " + e.getMessage());
-                return;
+                System.out.println("[DocxPrecompiler] Starting cache migration for open assessments...");
+                em = HibHelper.getInstance().getEMF().createEntityManager();
+
+                // fetch report options once — font/CSS don't change per vuln
+                ReportOptions rpo = FSUtils.getOrCreateReportOptionsIfNotExist(em);
+                String font = rpo != null ? rpo.getFont() : "Calibri";
+                String css = rpo != null ? rpo.getBodyCss() : "";
+                String customCSS = css != null ? css : "";
+
+                // find all OPEN assessment IDs first — Hibernate OGM (MongoDB)
+                // does not support multi-entity JPQL joins, so we can't join
+                // Vulnerability and Assessment in one query
+                List<Long> openAssessmentIds = em.createQuery(
+                    "select a.id from Assessment a " +
+                    "where a.status is null or a.status <> 'Completed'",
+                    Long.class).getResultList();
+
+                if (openAssessmentIds.isEmpty()) {
+                    System.out.println("[DocxPrecompiler] No open assessments found.");
+                    return;
+                }
+
+                // collect vulnerability IDs from those open assessments
+                List<Long> vulnIds = new ArrayList<>();
+                for (Long asmtId : openAssessmentIds) {
+                    vulnIds.addAll(em.createQuery(
+                        "select v.id from Vulnerability v where v.assessmentId = :aid",
+                        Long.class)
+                        .setParameter("aid", asmtId)
+                        .getResultList());
+                }
+
+                if (vulnIds.isEmpty()) {
+                    System.out.println("[DocxPrecompiler] No vulnerabilities found in open assessments.");
+                    return;
+                }
+
+                System.out.println("[DocxPrecompiler] Found " + vulnIds.size()
+                    + " vulnerabilities in open assessments. Pre-compiling in batches of 50...");
+
+                int batchSize = 50;
+                int totalCompiled = 0;
+                int totalSkipped = 0;
+                long startTime = System.currentTimeMillis();
+
+                for (int i = 0; i < vulnIds.size(); i += batchSize) {
+                    int end = Math.min(i + batchSize, vulnIds.size());
+                    List<Long> batchIds = vulnIds.subList(i, end);
+
+                    DocxPrecompiler pre = new DocxPrecompiler(font, customCSS);
+
+                    for (Long vulnId : batchIds) {
+                        EntityManager vulnEm = null;
+                        try {
+                            // fresh EM per vuln — DocxPrecompiler.resolveImages()
+                            // internally calls HibHelper.getEM() and closes it,
+                            // which would close any shared EM we hold onto
+                            vulnEm = HibHelper.getInstance().getEMF().createEntityManager();
+                            Vulnerability v = vulnEm.find(Vulnerability.class, vulnId);
+                            if (v == null) continue;
+
+                            // check if cache is already valid — skip
+                            // to avoid recompiling
+                            if (isCacheValid(v, font)) {
+                                totalSkipped++;
+                                continue;
+                            }
+
+                            if (pre.compile(v)) {
+                                HibHelper.getInstance().preJoin();
+                                vulnEm.joinTransaction();
+                                vulnEm.merge(v);
+                                HibHelper.getInstance().commit();
+                                totalCompiled++;
+                            }
+                        } catch (Exception e) {
+                            System.err.println("[DocxPrecompiler] Error compiling vuln "
+                                + vulnId + ": " + e.getMessage());
+                        } finally {
+                            if (vulnEm != null && vulnEm.isOpen()) {
+                                vulnEm.close();
+                            }
+                        }
+                    }
+
+                    // progress logging
+                    if ((i / batchSize) % 10 == 0 || end == vulnIds.size()) {
+                        long elapsed = System.currentTimeMillis() - startTime;
+                        System.out.println("[DocxPrecompiler] Progress: " + end + "/"
+                            + vulnIds.size() + " processed (" + totalCompiled + " compiled, "
+                            + totalSkipped + " skipped) — " + elapsed + "ms elapsed");
+                    }
+                }
+
+                long elapsed = System.currentTimeMillis() - startTime;
+                System.out.println("[DocxPrecompiler] Migration complete: " + totalCompiled
+                    + " compiled, " + totalSkipped + " skipped (already cached) in "
+                    + elapsed + "ms");
+
+            } catch (Exception e) {
+                System.err.println("[DocxPrecompiler] Migration failed: " + e.getMessage());
+                e.printStackTrace();
+            } finally {
+                if (em != null && em.isOpen()) {
+                    em.close();
+                }
             }
-            
-            // Create 1000 Images
-            List<Image> images = new ArrayList<>();
-            for (int i = 0; i < 1000; i++) {
-                Image image = new Image();
-                image.setBase64Image(base64Image);
-                image.setName("Test Image " + i);
-                image.setContentType("image/png");
-                images.add(image);
-            }
-            
-            // Create Assessment
-            Assessment assessment = new Assessment();
-            assessment.setName("Test Assessment with 500 Vulnerabilities and 1000 Images");
-            assessment.setSummary("This is a test assessment created for development purposes");
-            assessment.setRiskAnalysis("Risk analysis for test assessment");
-            assessment.setStart(new Date());
-            assessment.setEnd(new Date());
-            
-            // Assign user with ID 2 as the assessor
-            User assessor = em.find(User.class, 2L);
-            if (assessor != null) {
-                List<User> assessors = new ArrayList<>();
-                assessors.add(assessor);
-                assessment.setAssessor(assessors);
-            } else {
-                System.err.println("User with ID 2 not found for assessor assignment");
-            }
-            
-            // Set the images to the assessment
-            assessment.setImages(images);
-            
-            // For JTA transactions, use the TransactionManager from HibHelper
-            HibHelper.getInstance().preJoin();
-            em.persist(assessment);
-            em.flush();
-            
-            // Create 500 vulnerabilities with image links (but don't try to set them on the assessment directly)
-            // This avoids the collection management issue with cascade="all-delete-orphan"
-            int imgId=0;
-            for (int i = 0; i < 500; i++) {
-                Vulnerability vuln = new Vulnerability();
-                vuln.setName("Test Vulnerability " + i);
-                vuln.setDescription("This is a test vulnerability description for vulnerability number " + i);
-                vuln.setRecommendation("Recommendation for vulnerability " + i);
-                vuln.setOverall(5L); // Set overall level to 5 (Critical)
-                vuln.setAssessmentId(assessment.getId());
-                
-                // Create the details with image links
-                StringBuilder details = new StringBuilder();
-                details.append("<p>Vulnerability details with images:</p>");
-                
-                // Add image link using a placeholder that will be replaced with actual assessment ID
-                String imageId1 = assessment.getId().toString() + ":" + images.get(imgId++).getGuid();
-                details.append("<img src=\"getImage?id=" + imageId1 + "\" alt=\"image.png\">");
-                String imageId2 = assessment.getId().toString() + ":" + images.get(imgId++).getGuid();
-                details.append("<img src=\"getImage?id=" + imageId2 + "\" alt=\"image.png\">");
-                
-                vuln.setDescription(details.toString());
-                
-                // Persist vulnerability directly rather than trying to manage the collection
-                em.persist(vuln);
-                assessment.getVulns().add(vuln);
-            }
-           
-            em.merge(assessment);
-            HibHelper.getInstance().commit();
-            
-            System.out.println("Successfully created test assessment with 500 vulnerabilities and 1000 images");
-            
-        } catch (Exception e) {
-            System.err.println("Error creating test assessment: " + e.getMessage());
-            e.printStackTrace();
-        } finally {
-            if (em != null && em.isOpen()) {
-                em.close();
-            }
-        }
+        }, "docx-precompile-migration").start();
+    }
+
+    // checks whether a vulnerability's cache is valid for the current font
+    private static boolean isCacheValid(Vulnerability v, String font) {
+        String desc = v.getDescription() != null && !v.getDescription().isEmpty()
+                ? v.getDescription() : (v.getDefaultVuln() != null ? v.getDefaultVuln().getDescription() : "");
+        String rec = v.getRecommendation() != null && !v.getRecommendation().isEmpty()
+                ? v.getRecommendation() : (v.getDefaultVuln() != null ? v.getDefaultVuln().getRecommendation() : "");
+        String details = v.getDetails() != null ? v.getDetails() : "";
+
+        if (!desc.isEmpty() && !DocxPrecompiler.contentHash(font, desc).equals(v.getCachedDescHash()))
+            return false;
+        if (!rec.isEmpty() && !DocxPrecompiler.contentHash(font, rec).equals(v.getCachedRecHash()))
+            return false;
+        if (!details.isEmpty() && !DocxPrecompiler.contentHash(font, details).equals(v.getCachedDetailsHash()))
+            return false;
+
+        // all non-empty fields must have both hash and XML populated
+        if (!desc.isEmpty() && (v.getCachedDescXml() == null)) return false;
+        if (!rec.isEmpty() && (v.getCachedRecXml() == null)) return false;
+        if (!details.isEmpty() && (v.getCachedDetailsXml() == null)) return false;
+
+        return true;
     }
 }
