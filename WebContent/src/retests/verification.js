@@ -73,7 +73,17 @@ function downloadFile(id) {
 $(function() {
 	getFiles()
 
-	
+	$("#open").click(function() {
+		if (reportName && reportName.trim() != "") {
+			window.open(`DownloadReport?guid=${reportName}`, "_blank");
+		} else {
+			$.alert({
+				title: "No Report",
+				content: "No final report has been generated for this assessment yet."
+			});
+		}
+	});
+
 	$("#save").click(function() {
 		let pass = $('input:radio[name=r3]:checked').val();
 		let msgText = pass == '1'? "<span style='color:green'>PASS</span>": "<span style='color:red' >FAIL</span>";
