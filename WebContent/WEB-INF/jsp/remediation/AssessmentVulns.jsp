@@ -40,6 +40,7 @@
 									data-end="<s:property value="controls['verEnd|'+id]"/>"
 									data-vulnname="<s:property value="name"/>"
 									data-devclosed="<s:property value="devClosed"/>"
+									data-stagingclosed="<s:property value="stagingClosed"/>"
 									data-prodclosed="<s:property value="closed"/>"
 									class="<s:if test="vuln.id == id">selected</s:if>">
 								<td class="sev${overallStr}"><input type="checkbox"

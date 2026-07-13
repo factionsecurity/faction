@@ -54,6 +54,7 @@ $(function() {
 	let remNotes= createEditor("RemNotes");
 	let chSevNotes= createEditor("chSevNotes");
 	let nprodNotes = createEditor("nprodNotes");
+	let stagingNotes = createEditor("stagingNotes");
 	let prodNotes = createEditor("prodNotes");
 	let cancelVerNotes= createEditor("cancelVerNotes");
 
@@ -443,6 +444,9 @@ $(function() {
 	$("#closeDev").click(function() {
 		$("#nprodModal").modal('show');
 	});
+	$("#closeStaging").click(function() {
+		$("#stagingModal").modal('show');
+	});
 	$("#closeProd").click(function() {
 		$("#prodModal").modal('show');
 	});
@@ -493,6 +497,19 @@ $(function() {
 		$.post("RemVulnData", data).done(function() {
 			refreshNotes();
 			$("#nprodModal").modal('hide');
+
+		});
+	});
+	//save in staging
+	$("#saveStaging").click(function() {
+		let newNote = stagingNotes.getHTML();
+		let data = "action=closeInStaging";
+		data += `&note=${encodeURIComponent(newNote)}`;
+		data += `&vulnId=${defaultVulnId}`;
+		data += `&verId=${defaultSearchId}`;
+		$.post("RemVulnData", data).done(function() {
+			refreshNotes();
+			$("#stagingModal").modal('hide');
 
 		});
 	});

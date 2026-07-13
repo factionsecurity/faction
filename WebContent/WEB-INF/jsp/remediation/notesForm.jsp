@@ -43,6 +43,7 @@
 					</s:if>
 					<s:if test="(verForm && pass != null) || !verForm">
 					<tr><td> <a id="closeDev"><i class="fa fa-code"></i> Close in Development</a></td></tr>
+					<tr><td> <a id="closeStaging"><i class="fa fa-cubes"></i> Close in Staging</a></td></tr>
 					<tr><td> <a id="closeProd"><i class="fa fa-server"></i> Close in Production</a></td></tr>
 					</s:if>
 					<tr id="closeVerControl"><td> <a id="closeVer"><i class="fa fa-circle-xmark"></i> Cancel or Close Retest</a></td></tr>

@@ -14,6 +14,7 @@
 "<s:date name="vuln.opened"  format="MM/dd/yyyy"/>",
 </s:else>
 "<s:date name="vuln.devClosed" format="MM/dd/yyyy"/>",
+"<s:date name="vuln.stagingClosed" format="MM/dd/yyyy"/>",
 "<s:date name="vuln.closed" format="MM/dd/yyyy"/>",
 {},
 {

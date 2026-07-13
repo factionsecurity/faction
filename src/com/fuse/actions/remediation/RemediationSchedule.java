@@ -112,16 +112,20 @@ public class RemediationSchedule extends FSActionSupport{
 			if(status.get(v.getId()) == null) {
 				status.put(v.getId(), new ArrayList<String>());
 			}
+			String pattern = "MM/dd/yyyy";
+			SimpleDateFormat format = new SimpleDateFormat(pattern);
 			if(v.getDevClosed()!= null) {
-				status.get(v.getId()).add(FSUtils.addBadge("Closed Dev", "blue", "fa-check"));
+				status.get(v.getId()).add(FSUtils.addBadge("Closed Dev (" + format.format(v.getDevClosed()) + ")", "blue", "fa-check"));
+				controls.put("closed|"+v.getId(), "true");
+			}
+			if(v.getStagingClosed()!= null) {
+				status.get(v.getId()).add(FSUtils.addBadge("Closed Staging (" + format.format(v.getStagingClosed()) + ")", "purple", "fa-check"));
 				controls.put("closed|"+v.getId(), "true");
 			}
 			if(v.getClosed()!= null) {
-				status.get(v.getId()).add(FSUtils.addBadge("Closed Prod", "green", "fa-check"));
+				status.get(v.getId()).add(FSUtils.addBadge("Closed Prod (" + format.format(v.getClosed()) + ")", "green", "fa-check"));
 				controls.put("closed|"+v.getId(), "true");
 			}
-			String pattern = "MM/dd/yyyy";
-			SimpleDateFormat format = new SimpleDateFormat(pattern);
 			Verification verification = verifications
 					.stream()
 					.filter( ver -> ver

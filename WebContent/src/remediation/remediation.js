@@ -32,7 +32,7 @@ function updateSelects() {
 	if (rows.length > 0) {
 		$("#vuln_note_select").html("");
 		$("#vuln_history_select").html("");
-		window.location.href="RemediationSchedule?vulnId=" + rows[0][11].vid;
+		window.location.href="RemediationSchedule?vulnId=" + rows[0][12].vid;
 	}
 }
 
@@ -64,16 +64,16 @@ $(function() {
 				
 			},
 			{
-				targets: [8,9],
+				targets: [8,9,10],
 				width: "100px",
 				orderable: true
-				
+
 			},
 			{
 				targets: [0],
 				width: "10px",
 				orderable: false
-				
+
 			},
 			{
 				targets: [5],
@@ -91,7 +91,7 @@ $(function() {
 	$('#vulntable').DataTable().on('draw', function() {
 		clearLoading(".content");
 		$($("#vulntable").DataTable().rows().data()).each(function(a, b) {
-			if (searchId != -1 && b[11].vid == searchId) {
+			if (searchId != -1 && b[12].vid == searchId) {
 				$($("#vulntable").find("tbody").find("tr")[a]).trigger("click");
 
 			}
@@ -158,10 +158,10 @@ $(function() {
 					
 				},
 				{
-					targets: [8,9],
+					targets: [8,9,10],
 					width: "100px",
 					orderable: true
-					
+
 				},
 				{
 					targets: [6,7],
@@ -196,7 +196,7 @@ $(function() {
 	$('#vulntable tbody').on('click', 'tr', function(event) {
 
 		let data = $('#vulntable').DataTable().row(this).data();
-		let isver = data[11].isVer
+		let isver = data[12].isVer
 		if (isver) {
 			if (!$(this).hasClass('selected')) {
 				$.alert({
@@ -208,9 +208,9 @@ $(function() {
 		}
 		if ($('#vulntable').DataTable().rows('.selected').data().length > 0) {
 
-			let prevAID = $('#vulntable').DataTable().rows('.selected').data()[0][11].aid;
+			let prevAID = $('#vulntable').DataTable().rows('.selected').data()[0][12].aid;
 
-			let curAID = data[11].aid;
+			let curAID = data[12].aid;
 			if (prevAID != curAID) {
 				$.alert({ title: "Error", content: "You cannot select a vulnerability from a different application assessment." });
 				return;

@@ -226,6 +226,31 @@ margin-top: 20px;
 		</bs:modal>
 
 
+		<bs:modal modalId="stagingModal" saveId="saveStaging"
+			title="Close in Staging" color="red" closeText="Cancel"
+			saveText="Close in Staging">
+			<bs:row>
+				<bs:mco colsize="12">
+					<h3>
+						Are you sure you want to close this finding in the <b
+							style="color: #605ca8">Staging Environment</b>?
+					</h3>
+					<br>
+					<i>This will <b>not</b> fully mark the item as remediated until
+						it is closed in the production environment.
+					</i>
+					<br>
+				</bs:mco>
+			</bs:row>
+			<bs:row>
+				<bs:mco colsize="12">
+					<b>Add Notes:</b>
+					<div id="stagingNotes" name="stagingNotes"></div>
+				</bs:mco>
+			</bs:row>
+		</bs:modal>
+
+
 		<bs:modal modalId="prodModal" saveId="saveProd" title="Close in Prod"
 			color="red">
 			<bs:row>

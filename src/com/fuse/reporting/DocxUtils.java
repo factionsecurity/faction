@@ -1855,6 +1855,11 @@ public class DocxUtils {
 		} else {
 			nxml = replaceAll(nxml, "closedInDevAt", "", false);
 		}
+		if (v.getStagingClosed() != null) {
+			nxml = replaceAll(nxml, "closedInStagingAt", formatter.format(v.getStagingClosed()), false);
+		} else {
+			nxml = replaceAll(nxml, "closedInStagingAt", "", false);
+		}
 		try {
 			nxml = replaceAll(nxml, "vid", "" + v.getId(), false);
 		} catch (Exception ex) {
