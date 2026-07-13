@@ -86,11 +86,11 @@
 							<bs:row>
 								<bs:mco colsize="6">
 									<div class="form-group"
-										style="font-size: xx-large; padding-left: 30px">
+										style="font-size: x-large; padding-left: 30px">
 										<label> <input type="radio" name="r3"
-											class="flat-green" value="1"> Pass <br /> <input
+											class="flat-green" value="1"> Mitigated <br /> <input
 											type="radio" name="r3" class="flat-red" checked value="0">
-											Fail
+											Not Mitigated
 										</label>
 									</div>
 								</bs:mco>
