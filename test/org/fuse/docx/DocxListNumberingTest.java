@@ -89,6 +89,15 @@ public class DocxListNumberingTest {
 
 		org.junit.Assert.assertTrue("cached XML was not used (tamper marker missing)",
 				docXml.contains("CACHEDMARK1"));
+		java.io.StringWriter sw = new java.io.StringWriter();
+		org.docx4j.TextUtils.extractText(mlp.getMainDocumentPart().getContents(), sw);
+		String docText = sw.toString();
+		org.junit.Assert.assertTrue("colon text corrupted (':8080' lost)",
+				docText.contains("connect to host :8080 as user : admin"));
+		org.junit.Assert.assertFalse("namespace prefix leaked into text: 'w:8080'",
+				docText.contains("w:8080"));
+		org.junit.Assert.assertFalse("namespace prefix leaked into text: 'user w:'",
+				docText.contains("user w:"));
 		org.junit.Assert.assertFalse("legacy v1 cache format must not be used",
 				docXml.contains("POISON"));
 		org.junit.Assert.assertFalse("numbering tokens leaked into the document",
@@ -285,7 +294,10 @@ public class DocxListNumberingTest {
 			poc.setType(pocType);
 			poc.setValue("<ul><li>bullet CF" + i + "-a</li><li>bullet CF" + i + "-b</li></ul>");
 			v.getCustomFields().add(poc);
-			v.setDescription("Desc" + i + "<ul><li>bullet A" + i + "</li><li>bullet B" + i + "</li></ul>");
+			// colon-adjacent text: the precompiler's namespace normalization
+			// must never touch text content (" :80" once became " w:80")
+			v.setDescription("Desc" + i + " connect to host :8080 as user : admin"
+					+ "<ul><li>bullet A" + i + "</li><li>bullet B" + i + "</li></ul>");
 			// production failure shapes: a numbered list followed by a bullet
 			// list in the same field, in both valid and editor-mangled
 			// (ul nested directly inside ol) markup

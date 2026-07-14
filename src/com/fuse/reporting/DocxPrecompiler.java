@@ -551,10 +551,16 @@ public class DocxPrecompiler {
         return sb.toString();
     }
 
-    // normalizes namespace prefixes to the standard OOXML prefixes so
+    // Normalizes namespace prefixes to the standard OOXML prefixes so
     // the report-time splitter can recognize <w:p> elements. The docx4j
     // marshaller assigns arbitrary prefixes (ns2, ns3, etc.) when
     // marshalling standalone nodes outside a document context.
+    //
+    // Every replacement is anchored to XML structure — element names via
+    // the '<'/'</' that cannot appear unescaped in text content, and
+    // attribute names via the trailing '="'. A bare " prefix:" replace
+    // once rewrote TEXT: with an off-by-one that read the usual "w"
+    // prefix as "", every " :" in user content became " w:".
     private static String normalizeNamespaces(String xml) {
         int wIdx = xml.indexOf("=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\"");
         if (wIdx < 0) return xml;
@@ -562,15 +568,16 @@ public class DocxPrecompiler {
         if (xmlnsStart < 0) return xml;
         int colonIdx = xmlnsStart + 6;
         int nsEnd = colonIdx;
-        while (nsEnd < wIdx - 1 && xml.charAt(nsEnd) != '=') {
+        while (nsEnd < wIdx && xml.charAt(nsEnd) != '=') {
             nsEnd++;
         }
         String prefix = xml.substring(colonIdx, nsEnd);
-        if ("w".equals(prefix)) return xml;
-        xml = xml.replace("xmlns:" + prefix + "=", "xmlns:w=");
+        if (prefix.isEmpty() || "w".equals(prefix)) return xml;
+        xml = xml.replace("xmlns:" + prefix + "=\"", "xmlns:w=\"");
         xml = xml.replace("<" + prefix + ":", "<w:");
         xml = xml.replace("</" + prefix + ":", "</w:");
-        xml = xml.replace(" " + prefix + ":", " w:");
+        // attribute prefixes: whitespace + prefix + ":" + name + "=\""
+        xml = xml.replaceAll("(\\s)" + Pattern.quote(prefix) + ":([A-Za-z][A-Za-z0-9]*=\")", "$1w:$2");
         return xml;
     }
 
@@ -610,7 +617,9 @@ public class DocxPrecompiler {
     // v7: numbering definitions captured + tokenized numIds — v6-era
     // caches carried bare scratch-package numIds that collided with the
     // report template's numbering (bullets rendered as decimal).
-    private static final String CACHE_VERSION = "v7";
+    // v8: normalizeNamespaces text-corruption fix — v7 rows may have
+    // " :" in user text stored as " w:".
+    private static final String CACHE_VERSION = "v8";
 
     // SHA-256 hash of version+font+content for cache invalidation
     private static String hash(String font, String content) {

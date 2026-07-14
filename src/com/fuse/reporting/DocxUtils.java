@@ -1147,9 +1147,11 @@ public class DocxUtils {
             while (m.find()) {
                 String snippet = m.group();
                 // normalize the namespace prefix to w: so XmlUtils can
-                // unmarshal it in the standard wordprocessingml context
+                // unmarshal it in the standard wordprocessingml context —
+                // anchored to tag delimiters so text content is never touched
                 String prefix = snippet.substring(1, snippet.indexOf(":p"));
-                snippet = snippet.replace(prefix + ":p", "w:p");
+                snippet = snippet.replace("<" + prefix + ":p", "<w:p");
+                snippet = snippet.replace("</" + prefix + ":p", "</w:p");
                 if (!snippet.contains("xmlns:w=")) {
                     snippet = snippet.replaceFirst("<w:p",
                             "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\""
