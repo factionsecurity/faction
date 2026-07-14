@@ -16,6 +16,7 @@ import com.fuse.dao.Image;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.query.AssessmentQueries;
 import com.fuse.utils.ImageBorderUtil;
+import com.fuse.utils.ReportImageScaler;
 
 @Namespace("/portal")
 public class UploadImage extends FSActionSupport {
@@ -26,6 +27,9 @@ public class UploadImage extends FSActionSupport {
 	public String uploadVulnImage() throws IOException {
 		Image image = new Image();
 		image.setBase64Image(encodedImage);
+		// prepare the report-ready rendition once here so report
+		// generation never has to decode the full-size original
+		ReportImageScaler.prepareReportRendition(image);
 		Assessment assessment = AssessmentQueries.getAssessment(em, getSessionUser(), assessmentId);
 		if(assessment != null) {
 			assessment.getImages().add(image);

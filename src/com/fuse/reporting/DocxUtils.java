@@ -41,6 +41,7 @@ import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.openpackaging.parts.WordprocessingML.FooterPart;
 import org.docx4j.openpackaging.parts.WordprocessingML.HeaderPart;
 import org.docx4j.openpackaging.parts.WordprocessingML.MainDocumentPart;
+import org.docx4j.openpackaging.parts.WordprocessingML.NumberingDefinitionsPart;
 import org.docx4j.openpackaging.parts.relationships.RelationshipsPart;
 import org.docx4j.toc.TocException;
 import org.docx4j.toc.TocGenerator;
@@ -51,6 +52,7 @@ import org.docx4j.wml.CTTxbxContent;
 import org.docx4j.wml.ContentAccessor;
 import org.docx4j.wml.Ftr;
 import org.docx4j.wml.Hdr;
+import org.docx4j.wml.Numbering;
 import org.docx4j.wml.ObjectFactory;
 import org.docx4j.wml.P;
 import org.docx4j.wml.PPrBase.Ind;
@@ -385,6 +387,16 @@ public class DocxUtils {
                 int count = 1;
                 int sevIndex = 0;
                 String prevSev = "";
+                // HTML placeholders get a per-vulnerability suffix
+                // (e.g. ${rec:3}) so every field of the table can be
+                // converted in one batched pass instead of one importer
+                // call per field — the importer's fixed cost (CSS parse,
+                // font metrics, layout setup) dominated this path.
+                // Pre-compiled cache hits skip conversion entirely.
+                List<String[]> fieldSpecs = new ArrayList<>();
+                Set<String> collectedKeys = new HashSet<>();
+                HashMap<String, List<Object>> pendingNodes = new HashMap<>();
+                List<Object[]> pendingRows = new ArrayList<>(); // {Tr row, List<String> row keys}
                 for (Vulnerability v : filteredVulns) {
                     if (prevSev == v.getOverallStr()) {
                         sevIndex++;
@@ -392,9 +404,74 @@ public class DocxUtils {
                         prevSev = v.getOverallStr();
                         sevIndex = 1;
                     }
-                    // Change Colors if need be
                     for (String xml : xmls) {
-                    	String nxml = replaceXml(xml, v, customFieldMap, colorMap, cellMap, null, count, sevIndex); 
+                    	String nxml = replaceXml(xml, v, customFieldMap, colorMap, cellMap, null, count, sevIndex);
+                        List<String> rowKeys = new ArrayList<>();
+
+                        if (xml.contains("${rec}")) {
+                            String key = "${rec:" + count + "}";
+                            nxml = StringUtils.replace(nxml, "${rec}", key);
+                            rowKeys.add(key);
+                            if (collectedKeys.add(key)) {
+                                List<Object> cached = wrapHTMLFromCache(v, "rec", count, customCSS);
+                                if (cached != null) {
+                                    pendingNodes.put(key, cached);
+                                } else {
+                                    fieldSpecs.add(new String[] { key, "rec",
+                                            this.replaceFigureVariables(getRecommendation(v), count) });
+                                }
+                            }
+                        }
+                        if (xml.contains("${desc}")) {
+                            String key = "${desc:" + count + "}";
+                            nxml = StringUtils.replace(nxml, "${desc}", key);
+                            rowKeys.add(key);
+                            if (collectedKeys.add(key)) {
+                                List<Object> cached = wrapHTMLFromCache(v, "desc", count, customCSS);
+                                if (cached != null) {
+                                    pendingNodes.put(key, cached);
+                                } else {
+                                    fieldSpecs.add(new String[] { key, "desc",
+                                            this.replaceFigureVariables(getDescription(v), count) });
+                                }
+                            }
+                        }
+                        if (xml.contains("${details}")) {
+                            String key = "${details:" + count + "}";
+                            nxml = StringUtils.replace(nxml, "${details}", key);
+                            rowKeys.add(key);
+                            if (collectedKeys.add(key)) {
+                                List<Object> cached = wrapHTMLFromCache(v, "details", count, customCSS);
+                                if (cached != null) {
+                                    pendingNodes.put(key, cached);
+                                } else {
+                                    fieldSpecs.add(new String[] { key, "details",
+                                            this.replaceFigureVariables(getDetails(v), count) });
+                                }
+                            }
+                        }
+                        if (v.getCustomFields() != null) {
+                            for (CustomField cf : v.getCustomFields()) {
+                                if (cf.getType().getFieldType() == 3
+                                        && xml.contains("${cf" + cf.getType().getVariable() + "}")) {
+                                    String key = "${cf" + cf.getType().getVariable() + ":" + count + "}";
+                                    nxml = StringUtils.replace(nxml,
+                                            "${cf" + cf.getType().getVariable() + "}", key);
+                                    rowKeys.add(key);
+                                    if (collectedKeys.add(key)) {
+                                        List<Object> cfCached = wrapHTMLFromCache(v,
+                                                "cf:" + cf.getType().getVariable(), count, customCSS);
+                                        if (cfCached != null) {
+                                            pendingNodes.put(key, cfCached);
+                                        } else {
+                                            fieldSpecs.add(new String[] { key, cf.getType().getVariable(),
+                                                    cf.getValue() == null ? "" : cf.getValue() });
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         Tr newrow = (Tr) XmlUtils.unmarshalString(nxml);
 
                         // Replace Hyperlinks
@@ -406,54 +483,42 @@ public class DocxUtils {
                         }
                         this.replaceHyperlink(newrow, "${cvssString link}", v.getCvssString());
 
-                        /*
-                         * for(String match : cellMap.keySet()) changeColorOfCell(newrow, match,
-                         * cellMap.get(match)); for(String match : colorMap.keySet()){ //TODO This
-                         * should be deprecated with new method above changeColorOfText(newrow, match,
-                         * colorMap.get(match)); }
-                         */
-
-                        HashMap<String, List<Object>> detailsMap = new HashMap<>();
-                        if (xml.contains("${rec}")) {
-                        	List<Object> recNodes = wrapHTMLFromCache(v, "rec", count, customCSS);
-                        	if (recNodes == null) {
-	                        	String rec = getRecommendation(v);
-								rec = this.replaceFigureVariables(rec, count);
-								recNodes = wrapHTML(rec, customCSS, "rec");
-                        	}
-							detailsMap.put("${rec}", recNodes);
-                        }
-                        if (xml.contains("${desc}")) {
-                        	List<Object> descNodes = wrapHTMLFromCache(v, "desc", count, customCSS);
-                        	if (descNodes == null) {
-	                        	String desc = getDescription(v);
-								desc = this.replaceFigureVariables(desc, count);
-								descNodes = wrapHTML(desc, customCSS, "desc");
-                        	}
-							detailsMap.put("${desc}", descNodes);
-                        }
-                        if (xml.contains("${details}")) {
-                        	List<Object> detNodes = wrapHTMLFromCache(v, "details", count, customCSS);
-                        	if (detNodes == null) {
-	                        	String details = getDetails(v);
-								details = this.replaceFigureVariables(details, count);
-								detNodes = wrapHTML(details, customCSS, "details");
-                        	}
-							detailsMap.put("${details}", detNodes);
-                        }
-
-                        if (v.getCustomFields() != null) {
-                            for (CustomField cf : v.getCustomFields()) {
-                                if (cf.getType().getFieldType() == 3) {
-                                    detailsMap.put("${cf" + cf.getType().getVariable() + "}",
-                                            wrapHTML(cf.getValue(), customCSS, cf.getType().getVariable()));
-                                }
-                            }
-                        }
-                        replaceHTML(newrow, detailsMap);
                         ((Tbl) table).getContent().add(newrow);
+                        if (!rowKeys.isEmpty()) {
+                            pendingRows.add(new Object[] { newrow, rowKeys });
+                        }
                     }
                     count++;
+                }
+
+                // batch-convert the cache misses, then fill each row. A key
+                // can appear in more than one row of the same vulnerability
+                // (multi-row loop templates); the first row consumes the
+                // converted nodes, later rows insert deep copies — the same
+                // JAXB nodes must never sit in the tree twice.
+                if (!pendingRows.isEmpty()) {
+                    pendingNodes.putAll(convertFieldsBatched(fieldSpecs, customCSS));
+                    HashMap<String, List<Object>> insertedNodes = new HashMap<>();
+                    for (Object[] pending : pendingRows) {
+                        Tr row = (Tr) pending[0];
+                        @SuppressWarnings("unchecked")
+                        List<String> rowKeys = (List<String>) pending[1];
+                        HashMap<String, List<Object>> rowMap = new HashMap<>();
+                        for (String key : rowKeys) {
+                            List<Object> nodes = pendingNodes.remove(key);
+                            if (nodes == null) {
+                                List<Object> used = insertedNodes.get(key);
+                                if (used != null) {
+                                    nodes = deepCopyAll(used);
+                                }
+                            }
+                            if (nodes != null) {
+                                rowMap.put(key, nodes);
+                                insertedNodes.put(key, nodes);
+                            }
+                        }
+                        replaceHTML(row, rowMap);
+                    }
                 }
                 // If no issues are discovered then we just blank out the table.
                 if (filteredVulns == null || filteredVulns.size() == 0) {
@@ -489,6 +554,24 @@ public class DocxUtils {
         try {
             VariablePrepare.prepare(mlp);
 
+            // Assessment-level variable replacement runs BEFORE the findings
+            // are inserted: replacementText marshals the entire main document
+            // part, which is only the template here but 500+ findings big
+            // afterwards. Assessment variables inside finding content are
+            // resolved by the per-field paths — replacement() for live
+            // conversion, applyAssessmentVarsToXml for the pre-compiled
+            // cache — which cover the same variable set.
+            HashMap<String, List<Object>> map = new HashMap();
+
+            map.put("${summary1}",
+                    this.wrapHTML(this.assessment.getSummary() == null ? "" : this.assessment.getSummary(), customCSS,
+                            "summary1"));
+            map.put("${summary2}",
+                    this.wrapHTML(this.assessment.getRiskAnalysis() == null ? "" : this.assessment.getRiskAnalysis(),
+                            customCSS, "summary2"));
+            replaceHTML(mlp.getMainDocumentPart(), map, false);
+            replaceAssessment(customCSS);
+
             // Convert all tables and match and replace values
             checkTables("vulnTable", "Default", customCSS);
             // look for findings areas {fiBegin/fiEnd}
@@ -500,16 +583,6 @@ public class DocxUtils {
                 }
             }
 
-            HashMap<String, List<Object>> map = new HashMap();
-
-            map.put("${summary1}",
-                    this.wrapHTML(this.assessment.getSummary() == null ? "" : this.assessment.getSummary(), customCSS,
-                            "summary1"));
-            map.put("${summary2}",
-                    this.wrapHTML(this.assessment.getRiskAnalysis() == null ? "" : this.assessment.getRiskAnalysis(),
-                            customCSS, "summary2"));
-            replaceHTML(mlp.getMainDocumentPart(), map, false);
-            replaceAssessment(customCSS);
             insertPageBreaks();
             updateDocWithExtensions(customCSS);
 
@@ -541,6 +614,16 @@ public class DocxUtils {
     private static final int MAX_CHUNK_FIELDS = 25;
     private static final int MAX_CHUNK_CHARS = 2 * 1024 * 1024;
 
+    // FACTION_REPORT_BATCH_CONVERT=false forces one conversion per field
+    // (the pre-batching behavior) — an isolation lever for rendering issues
+    private static boolean batchConvertEnabled() {
+        String conf = System.getProperty("FACTION_REPORT_BATCH_CONVERT");
+        if (conf == null || conf.trim().isEmpty()) {
+            conf = System.getenv("FACTION_REPORT_BATCH_CONVERT");
+        }
+        return conf == null || !conf.trim().equalsIgnoreCase("false");
+    }
+
     private String preprocessHTMLContent(String content) {
         if (!content.isEmpty()) {
             content = replacement(content);
@@ -562,13 +645,18 @@ public class DocxUtils {
     }
 
     private XHTMLImporterImpl newImporter() {
-        LoggingConfig.configureOpenHTMLTopDFLogging();
-        XHTMLImporterImpl xhtml = new XHTMLImporterImpl(mlp);
-        RFonts rfonts = Context.getWmlObjectFactory().createRFonts();
-        rfonts.setAscii(this.FONT);
-        XHTMLImporterImpl.addFontMapping("Arial", rfonts);
-        XHTMLImporterImpl.addFontMapping("arial", rfonts);
-        return xhtml;
+        MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "newImporter");
+        try{
+            LoggingConfig.configureOpenHTMLTopDFLogging();
+            XHTMLImporterImpl xhtml = new XHTMLImporterImpl(mlp);
+            RFonts rfonts = Context.getWmlObjectFactory().createRFonts();
+            rfonts.setAscii(this.FONT);
+            XHTMLImporterImpl.addFontMapping("Arial", rfonts);
+            XHTMLImporterImpl.addFontMapping("arial", rfonts);
+            return xhtml;
+         } finally {
+                context.end();
+         }
     }
 
     // ===== pre-compiled cache fast path =====
@@ -581,13 +669,15 @@ public class DocxUtils {
      * XML, then unmarshals to JAXB nodes.
      *
      * Falls back to live conversion (returns null sentinel) when:
-     * - cache is null or hash-stale
-     * - report extensions are active (they can inject per-assessment content)
+     * - cache is null or hash-stale (a CACHE_VERSION bump in the hash
+     *   automatically invalidates every older-format row)
      * - unmarshalling fails (malformed cache)
+     * - numbering tokens can't all be resolved
      *
-     * Image rIds in the cached XML are scoped to the precompiler's scratch
-     * package. They're remapped to fresh rIds in the report package, and
-     * image bytes are copied across.
+     * Image data URIs in the cached XML become real image parts in the
+     * report package (resolveEmbeddedImages); cached numbering definitions
+     * are re-created under freshly allocated ids (spliceCachedNumbering)
+     * so list formats survive the move between packages.
      *
      * @param v        the vulnerability whose cached field to use
      * @param field    "desc", "rec", or "details"
@@ -598,13 +688,6 @@ public class DocxUtils {
     private List<Object> wrapHTMLFromCache(Vulnerability v, String field, int count, String customCSS) {
         MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "wrapHTMLFromCache");
         try {
-            // Extensions that inject per-vuln content are now run at
-            // pre-compile time (DocxPrecompiler runs updateReport before
-            // the XHTML importer), so the cache is valid even when
-            // extensions are active. Per-assessment extension placeholders
-            // (like ${faction-bar-chart}) live in the report template, not
-            // in per-vuln desc/rec/details fields.
-
             String cachedXml;
             String cachedHash;
             String preContent; // content BEFORE replaceFigureVariables
@@ -627,7 +710,33 @@ public class DocxUtils {
                     preContent = replaceAllCf(preContent, v);
                     break;
                 default:
-                    return null;
+                    // "cf:<variable>" — a type-3 (HTML) custom field, cached
+                    // as a marker-delimited entry with its own hash
+                    if (!field.startsWith("cf:")) {
+                        return null;
+                    }
+                    String cfVar = field.substring(3);
+                    String cfValue = null;
+                    if (v.getCustomFields() != null) {
+                        for (CustomField cf : v.getCustomFields()) {
+                            if (cf.getType() != null && cf.getType().getFieldType() == 3
+                                    && cfVar.equals(cf.getType().getVariable())) {
+                                cfValue = cf.getValue();
+                                break;
+                            }
+                        }
+                    }
+                    if (cfValue == null || cfValue.isEmpty()) {
+                        return null;
+                    }
+                    String[] entry = DocxPrecompiler.findCfEntry(v.getCachedCfXml(), cfVar);
+                    if (entry == null) {
+                        return null;
+                    }
+                    cachedHash = entry[0];
+                    cachedXml = entry[1];
+                    preContent = cfValue;
+                    break;
             }
 
             if (cachedXml == null || cachedHash == null) {
@@ -639,25 +748,57 @@ public class DocxUtils {
                 return null;
             }
 
-            // clone the XML so per-vuln substitutions don't mutate the cache
-            String xml = cachedXml;
+            // split the payload into field XML and its numbering definitions
+            String fieldXml = cachedXml;
+            String numberingXml = null;
+            int marker = cachedXml.indexOf(DocxPrecompiler.NUM_DEFS_MARKER);
+            if (marker >= 0) {
+                fieldXml = cachedXml.substring(0, marker);
+                numberingXml = cachedXml.substring(marker + DocxPrecompiler.NUM_DEFS_MARKER.length());
+            }
 
-            // apply assessment-level variable substitutions on the XML text —
-            // ${asmtName} etc. survive as literal text inside <w:t> nodes
-            // because the precompiler didn't resolve them
-            xml = applyAssessmentVarsToXml(xml);
+            // safety net: numbering references without carried definitions
+            // can only come from a pre-v7 cache (bare scratch-package numIds
+            // that resolve against the template's numbering — the bug that
+            // rendered bullets as continued decimal numbers). The version
+            // bump already invalidates those via the hash; never trust one.
+            if (numberingXml == null && fieldXml.contains("w:numId")) {
+                return null;
+            }
 
-            // figure variables: ${Figure#.X} → Figure count.X
-            xml = replaceFigureVariables(xml, count);
+            String xml = fieldXml;
 
-            // {[asmtSEVERITY]} ranked lists (assessment-scoped)
-            xml = loopReplace(xml);
+            // Variable substitution runs dozens of full scans over the
+            // field XML (which can be megabytes with embedded images), so
+            // it is gated on the tokens actually being present — base64
+            // payloads never contain "${" or "{[", so one indexOf each is
+            // a reliable test. Most fields have neither.
+            if (xml.indexOf("${") >= 0) {
+                // assessment-level ${asmtName} etc. survive as literal text
+                // inside <w:t> nodes because the precompiler didn't resolve
+                // them; figure variables: ${Figure#.X} → Figure count.X
+                xml = applyAssessmentVarsToXml(xml);
+                xml = replaceFigureVariables(xml, count);
+            }
+            if (xml.indexOf("{[asmt") >= 0) {
+                // {[asmtSEVERITY]} ranked lists (assessment-scoped)
+                xml = loopReplace(xml);
+            }
 
             // resolve embedded image data URIs to real image parts in the
             // report package. The precompiler embedded "data:image/..." as
             // the r:embed value — we create BinaryParts and replace with
             // valid rIds so Word can display the images
             xml = resolveEmbeddedImages(xml);
+
+            // re-create the field's numbering definitions in the report
+            // package and swap the FCT-NUM tokens for the fresh ids
+            if (numberingXml != null) {
+                xml = spliceCachedNumbering(xml, numberingXml);
+                if (xml == null || xml.contains("FCT-NUM-")) {
+                    return null; // unresolved token — fall back to live
+                }
+            }
 
             // unmarshal the XML string back to JAXB nodes. The cached XML
             // is a concatenation of <w:p> elements — unmarshal each one
@@ -667,9 +808,8 @@ public class DocxUtils {
                 List<String> snippets = splitTopLevelParagraphs(xml);
                 if (snippets.isEmpty()) {
                     // the cached XML doesn't contain recognizable <w:p>
-                    // elements — the marshaller may have used a different
-                    // namespace prefix. Fall back to live conversion rather
-                    // than returning an empty list.
+                    // elements — fall back to live conversion rather than
+                    // returning an empty list.
                     return null;
                 }
                 for (String snippet : snippets) {
@@ -685,14 +825,78 @@ public class DocxUtils {
                 return null; // nothing unmarshalled — fall back to live
             }
 
-            // cache for reuse by other lookups with the same post-replacement content
-            String postContent = replaceFigureVariables(preContent, count);
-            String cacheKey = field + " " + postContent;
-            nodeMap.put(cacheKey, nodes);
-
-            return deepCopyAll(nodes);
+            // returned directly, not through nodeMap: deepCopyAll is a
+            // marshal+unmarshal round trip per node, so storing a shared
+            // copy and cloning it costs more than the unmarshal above —
+            // duplicate content just deserializes again. This also keeps
+            // numbering instances per-field (sharing nodes across fields
+            // would make identical numbered lists continue counting).
+            return nodes;
         } finally {
             context.end();
+        }
+    }
+
+    /**
+     * Re-creates a cached field's numbering definitions inside the report
+     * package and rewrites the field XML's FCT-NUM tokens to the freshly
+     * allocated ids.
+     *
+     * Every cached abstractNum/num gets its own new instance — never
+     * deduplicated or shared. The importer creates one abstractNum per
+     * list, and that per-list identity is exactly what makes numbered
+     * lists restart at 1 for each finding; sharing an abstract across
+     * instances would make Word continue the count across findings.
+     *
+     * @return the field XML with tokens substituted, or null on failure
+     */
+    private String spliceCachedNumbering(String xml, String numberingXml) {
+        try {
+            Numbering cached = (Numbering) XmlUtils.unmarshalString(numberingXml);
+            NumberingDefinitionsPart ndp = mlp.getMainDocumentPart().getNumberingDefinitionsPart();
+            if (ndp == null) {
+                ndp = new NumberingDefinitionsPart();
+                ndp.setJaxbElement(Context.getWmlObjectFactory().createNumbering());
+                mlp.getMainDocumentPart().addTargetPart(ndp);
+            }
+            Numbering target = ndp.getContents();
+
+            long maxAbs = 0;
+            for (Numbering.AbstractNum a : target.getAbstractNum()) {
+                if (a.getAbstractNumId() != null) {
+                    maxAbs = Math.max(maxAbs, a.getAbstractNumId().longValue());
+                }
+            }
+            long maxNum = 0;
+            for (Numbering.Num n : target.getNum()) {
+                if (n.getNumId() != null) {
+                    maxNum = Math.max(maxNum, n.getNumId().longValue());
+                }
+            }
+
+            Map<java.math.BigInteger, java.math.BigInteger> absMap = new HashMap<>();
+            for (Numbering.AbstractNum a : cached.getAbstractNum()) {
+                Numbering.AbstractNum copy = XmlUtils.deepCopy(a);
+                java.math.BigInteger fresh = java.math.BigInteger.valueOf(++maxAbs);
+                absMap.put(a.getAbstractNumId(), fresh);
+                copy.setAbstractNumId(fresh);
+                target.getAbstractNum().add(copy);
+            }
+            for (Numbering.Num n : cached.getNum()) {
+                Numbering.Num copy = XmlUtils.deepCopy(n);
+                java.math.BigInteger fresh = java.math.BigInteger.valueOf(++maxNum);
+                copy.setNumId(fresh);
+                if (copy.getAbstractNumId() != null
+                        && absMap.containsKey(copy.getAbstractNumId().getVal())) {
+                    copy.getAbstractNumId().setVal(absMap.get(copy.getAbstractNumId().getVal()));
+                }
+                target.getNum().add(copy);
+                xml = xml.replace("w:val=\"FCT-NUM-" + n.getNumId() + "\"", "w:val=\"" + fresh + "\"");
+            }
+            return xml;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
@@ -725,6 +929,8 @@ public class DocxUtils {
         xml = StringUtils.replace(xml, "${asmtType}",
                 CData(this.assessment.getType() == null ? "" : this.assessment.getType().getType().trim()));
         xml = replaceDateVariable(xml, "today", new Date());
+        xml = replaceDateVariable(xml, "asmtStart", this.assessment.getStart());
+        xml = replaceDateVariable(xml, "asmtEnd", this.assessment.getEnd());
         xml = StringUtils.replace(xml, "${asmtAccessKey}", CData(this.assessment.getGuid()));
         xml = StringUtils.replace(xml, "${totalOpenVulns}", CData(this.totalOpenVulns));
         xml = StringUtils.replace(xml, "${totalClosedVulns}", CData(this.totalClosedVulns));
@@ -734,6 +940,17 @@ public class DocxUtils {
                 xml = StringUtils.replace(xml, "${riskCount" + i + "}", CData("" + riskCounts[i]));
             }
             xml = StringUtils.replace(xml, "${riskTotal}", CData("" + riskTotal));
+        }
+        // assessment-level text custom fields — with replaceAssessment now
+        // running before the findings are inserted, ${cfX} tokens inside
+        // finding content must be resolved here
+        if (this.assessment.getCustomFields() != null) {
+            for (CustomField cf : this.assessment.getCustomFields()) {
+                if (cf.getType() != null && cf.getType().getFieldType() < 3) {
+                    xml = StringUtils.replace(xml, "${cf" + cf.getType().getVariable() + "}",
+                            CData(cf.getValue() == null ? "" : cf.getValue()));
+                }
+            }
         }
         return xml;
     }
@@ -767,29 +984,34 @@ public class DocxUtils {
             if (rId == null) {
                 try {
                     // decode the data URI and create an image part in the
-                    // report package. createImagePart attaches the part and
-                    // adds a relationship from the main document part.
+                    // report package
                     String[] uriParts = dataUri.substring(5).split(",", 2);
                     byte[] bytes = Base64.getDecoder().decode(uriParts[1]);
-                    org.docx4j.openpackaging.parts.WordprocessingML.BinaryPartAbstractImage imagePart =
-                        org.docx4j.openpackaging.parts.WordprocessingML.BinaryPartAbstractImage
-                            .createImagePart(mlp, bytes);
-                    // getRels() returns the relationships this part has;
-                    // getRelLast() returns the most recently added one,
-                    // which is the relationship from the main document part
-                    org.docx4j.relationships.Relationship rel = imagePart.getRelLast();
-                    if (rel != null) {
-                        rId = rel.getId();
-                    }
+                    String mime = uriParts[0].split(";")[0];
+                    // known formats get the part created directly — the
+                    // probing path below re-parses every image to determine
+                    // format and dimensions, which the cached drawing XML
+                    // already carries from precompile time
+                    rId = addEmbeddedImagePart(bytes, mime);
                     if (rId == null) {
-                        // fallback: try to get rId from the main document
-                        // part's relationships to this image part
-                        rId = mlp.getMainDocumentPart().getRelationshipsPart()
-                            .getRelationships().getRelationship().stream()
-                            .filter(r -> r.getTarget().contains(imagePart.getPartName().getName()))
-                            .map(org.docx4j.relationships.Relationship::getId)
-                            .reduce((first, second) -> second)
-                            .orElse(null);
+                        // unknown format: let docx4j probe it
+                        org.docx4j.openpackaging.parts.WordprocessingML.BinaryPartAbstractImage imagePart =
+                            org.docx4j.openpackaging.parts.WordprocessingML.BinaryPartAbstractImage
+                                .createImagePart(mlp, bytes);
+                        org.docx4j.relationships.Relationship rel = imagePart.getRelLast();
+                        if (rel != null) {
+                            rId = rel.getId();
+                        }
+                        if (rId == null) {
+                            // fallback: find the rId from the main document
+                            // part's relationships to this image part
+                            rId = mlp.getMainDocumentPart().getRelationshipsPart()
+                                .getRelationships().getRelationship().stream()
+                                .filter(r -> r.getTarget().contains(imagePart.getPartName().getName()))
+                                .map(org.docx4j.relationships.Relationship::getId)
+                                .reduce((first, second) -> second)
+                                .orElse(null);
+                        }
                     }
                     if (rId != null) {
                         embeddedImageRIdCache.put(dataUri, rId);
@@ -810,6 +1032,41 @@ public class DocxUtils {
         return sb.toString();
     }
 
+    // sequence for unique media part names; "fctimage" avoids clashing with
+    // the template's own image1.png-style names
+    private int embeddedImagePartCounter = 0;
+
+    // Creates an image part for a known format without docx4j's
+    // createImagePart() probe (which decodes every image to determine
+    // format and dimensions). Returns the relationship id, or null for
+    // formats the caller should hand to the probing path.
+    private String addEmbeddedImagePart(byte[] bytes, String mime) {
+        try {
+            org.docx4j.openpackaging.parts.WordprocessingML.BinaryPartAbstractImage part;
+            if (mime.contains("png")) {
+                part = new org.docx4j.openpackaging.parts.WordprocessingML.ImagePngPart(
+                        new org.docx4j.openpackaging.parts.PartName(
+                                "/word/media/fctimage" + (++embeddedImagePartCounter) + ".png"));
+            } else if (mime.contains("jpeg") || mime.contains("jpg")) {
+                part = new org.docx4j.openpackaging.parts.WordprocessingML.ImageJpegPart(
+                        new org.docx4j.openpackaging.parts.PartName(
+                                "/word/media/fctimage" + (++embeddedImagePartCounter) + ".jpeg"));
+            } else if (mime.contains("gif")) {
+                part = new org.docx4j.openpackaging.parts.WordprocessingML.ImageGifPart(
+                        new org.docx4j.openpackaging.parts.PartName(
+                                "/word/media/fctimage" + (++embeddedImagePartCounter) + ".gif"));
+            } else {
+                return null;
+            }
+            part.setBinaryData(bytes);
+            org.docx4j.relationships.Relationship rel = mlp.getMainDocumentPart().addTargetPart(part);
+            return rel == null ? null : rel.getId();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
     // splits a concatenated XML string into individual top-level paragraph
     // elements, so each can be unmarshaled independently. This avoids deep
     // JAXB call stacks when unmarshaling large snippets.
@@ -825,19 +1082,33 @@ public class DocxUtils {
         while (scan < xml.length()) {
             int pStart = xml.indexOf("<w:p ", scan);
             int pStartPlain = xml.indexOf("<w:p>", scan);
-            int best = Math.max(pStart, pStartPlain);
+            int best;
+            if (pStart < 0) {
+                best = pStartPlain;
+            } else if (pStartPlain < 0) {
+                best = pStart;
+            } else {
+                best = Math.min(pStart, pStartPlain);
+            }
             if (best < 0) {
                 break;
             }
             // find matching </w:p> with depth tracking for nested w:p
             int depth = 0;
-            int i = best;
+            int i = best + 4;
             int end = -1;
             while (i < xml.length()) {
                 int nextOpen = xml.indexOf("<w:p ", i);
                 int nextOpenPlain = xml.indexOf("<w:p>", i);
                 int nextClose = xml.indexOf("</w:p>", i);
-                int bestOpen = Math.max(nextOpen, nextOpenPlain);
+                int bestOpen;
+                if (nextOpen < 0) {
+                    bestOpen = nextOpenPlain;
+                } else if (nextOpenPlain < 0) {
+                    bestOpen = nextOpen;
+                } else {
+                    bestOpen = Math.min(nextOpen, nextOpenPlain);
+                }
                 if (nextClose < 0) break;
                 if (bestOpen >= 0 && bestOpen < nextClose) {
                     depth++;
@@ -867,8 +1138,7 @@ public class DocxUtils {
 
         // fallback: if no <w:p> elements were found, the marshaller may
         // have used a different namespace prefix (e.g. <ns3:p>). Try a
-        // regex-based split on any element whose local name is "p" in the
-        // wordprocessingml namespace.
+        // regex-based split on any element whose local name is "p".
         if (parts.isEmpty() && xml.contains(":p") && xml.contains(":p>")) {
             Pattern altPPattern = Pattern.compile(
                 "<\\w+:p[ >].*?</\\w+:p>",
@@ -1000,7 +1270,7 @@ public class DocxUtils {
 
     private void convertChunk(List<String[]> chunk, String customCSS, HashMap<String, List<Object>> out)
             throws Docx4JException {
-        if (chunk.size() > 1) {
+        if (chunk.size() > 1 && batchConvertEnabled()) {
             try {
                 // preprocess each field (variable replacement, jtidy, images)
                 // exactly as the individual path does
@@ -1341,10 +1611,23 @@ public class DocxUtils {
 					this.assessment.getType() == null ? "" : this.assessment.getType().getType().trim());
 			// content = content.replaceAll("\\$\\{today\\}", formatter.format(new Date()));
 			content = replaceDateVariable(content, "today", new Date());
+			content = replaceDateVariable(content, "asmtStart", this.assessment.getStart());
+			content = replaceDateVariable(content, "asmtEnd", this.assessment.getEnd());
 			content = content.replaceAll("\\$\\{asmtStandND\\}", formatter.format(this.assessment.getEnd()));
 			content = content.replaceAll("\\$\\{asmtAccessKey\\}", this.assessment.getGuid());
 			content = content.replaceAll("\\$\\{totalOpenVulns\\}", this.totalOpenVulns);
 			content = content.replaceAll("\\$\\{totalClosedVulns\\}", this.totalClosedVulns);
+			// assessment-level text custom fields — with replaceAssessment
+			// running before the findings are inserted, ${cfX} tokens inside
+			// finding content must be resolved here
+			if (this.assessment.getCustomFields() != null) {
+				for (CustomField acf : this.assessment.getCustomFields()) {
+					if (acf.getType() != null && acf.getType().getFieldType() < 3) {
+						content = StringUtils.replace(content, "${cf" + acf.getType().getVariable() + "}",
+								acf.getValue() == null ? "" : acf.getValue());
+					}
+				}
+			}
 
 
 			// Run extensions — only when the content contains a ${ placeholder
@@ -1362,6 +1645,11 @@ public class DocxUtils {
 			// as base64 — repairing content afterwards means tidying megabytes
 			// of embedded image data per field
 			content = FSUtils.jtidy(content);
+			// editors emit a <ul> directly inside an <ol> when the list type
+			// changes; jtidy wraps it in <li style="list-style: none"> which
+			// the XHTML importer numbers with the parent list's format
+			// (bullets render as 4,5,6...). Hoist it out to a sibling list.
+			content = hoistMisnestedLists(content);
 			// Downscale oversized images that are already inline in the
 			// content (legacy/imported data); getImage links are downscaled
 			// when they are resolved
@@ -1375,6 +1663,93 @@ public class DocxUtils {
         	context.end();
         }
 
+    }
+
+    private static final Pattern LIST_TAG_PATTERN = Pattern.compile("<(/?)(ol|ul|li)\\b[^>]*>",
+            Pattern.CASE_INSENSITIVE);
+
+    /**
+     * Moves a list wrapped in an otherwise-empty {@code <li>} out to be a
+     * sibling of the enclosing list. Editors emit a list nested directly
+     * inside another list when the list type changes mid-list; the HTML
+     * sanitizer (on save) and jtidy both repair that by wrapping the inner
+     * list in its own {@code <li>}. Browsers render such a wrapper as an
+     * independent list, but the XHTML importer numbers it with the enclosing
+     * list's format — turning bullets into continued numbering. A wrapper
+     * {@code <li>} is one whose entire content is the nested list;
+     * intentional sublists ({@code <li>text<ul>...}) are left untouched.
+     */
+    static String hoistMisnestedLists(String content) {
+        if (content.indexOf("<li") == -1) {
+            return content;
+        }
+        // a hoist can expose another wrapper (nested repairs) — iterate
+        for (int pass = 0; pass < 20; pass++) {
+            Matcher m = LIST_TAG_PATTERN.matcher(content);
+            // stack entries: {tagName, openTagStart, openTagEnd}
+            java.util.Deque<Object[]> stack = new java.util.ArrayDeque<>();
+            int wrapperStart = -1;
+            int wrapperContentStart = -1;
+            int wrapperContentEnd = -1;
+            int wrapperEnd = -1;
+            String parentList = null;
+
+            while (m.find()) {
+                boolean closing = !m.group(1).isEmpty();
+                String tag = m.group(2).toLowerCase();
+                if (!closing) {
+                    stack.push(new Object[] { tag, m.start(), m.end() });
+                } else {
+                    // pop to the matching open tag, tolerating unclosed <li>s
+                    Object[] open = null;
+                    while (!stack.isEmpty()) {
+                        Object[] candidate = stack.pop();
+                        if (candidate[0].equals(tag)) {
+                            open = candidate;
+                            break;
+                        }
+                    }
+                    if (open == null) {
+                        return content; // unbalanced markup — leave untouched
+                    }
+                    if (tag.equals("li")) {
+                        String inner = content.substring((Integer) open[2], m.start()).trim();
+                        boolean wrapsOnlyAList = (inner.startsWith("<ul") || inner.startsWith("<ol"))
+                                && (inner.endsWith("</ul>") || inner.endsWith("</ol>"));
+                        if (wrapsOnlyAList) {
+                            // closed a wrapper li: its parent list is on the stack
+                            Object[] parent = null;
+                            for (Object[] entry : stack) {
+                                if (entry[0].equals("ol") || entry[0].equals("ul")) {
+                                    parent = entry;
+                                    break;
+                                }
+                            }
+                            if (parent != null) {
+                                wrapperStart = (Integer) open[1];
+                                wrapperContentStart = (Integer) open[2];
+                                wrapperContentEnd = m.start();
+                                wrapperEnd = m.end();
+                                parentList = (String) parent[0];
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (wrapperStart == -1) {
+                return content;
+            }
+            String inner = content.substring(wrapperContentStart, wrapperContentEnd);
+            // close the parent list, emit the hoisted list, reopen the parent
+            content = content.substring(0, wrapperStart)
+                    + "</" + parentList + ">" + inner + "<" + parentList + ">"
+                    + content.substring(wrapperEnd);
+            // drop lists left empty by the split (wrapper was first/last item)
+            content = content.replaceAll("<(ol|ul)\\b[^>]*>\\s*</\\1>", "");
+        }
+        return content;
     }
 
     @ProfileMethod("Efficiently replace image links with base64 or remove if not found")
@@ -1467,7 +1842,7 @@ public class DocxUtils {
                             .setParameter("guid", guid)
                             .getSingleResult();
                     if (img != null && img.getBase64Image() != null) {
-                        String base64 = ReportImageScaler.downscaleDataUri(img.getBase64Image(), maxImageWidth);
+                        String base64 = ReportImageScaler.reportUri(img, maxImageWidth);
                         resolved.put(guid, base64);
                         cacheImage(guid, base64);
                     } else {
@@ -1581,7 +1956,12 @@ public class DocxUtils {
                                     .setParameter("guid", guid)
                                     .getSingleResult();
                             if (img != null && img.getBase64Image() != null) {
-                                rawImages.put(guid, img.getBase64Image());
+                                if (ReportImageScaler.isReportReady(img, maxImageWidth)) {
+                                    // rendition prepared at upload — no decode work left
+                                    this.warmedImages.put(guid, ReportImageScaler.reportUri(img, maxImageWidth));
+                                } else {
+                                    rawImages.put(guid, img.getBase64Image());
+                                }
                             } else {
                                 this.imagesNotFound.add(guid);
                             }
@@ -1901,9 +2281,9 @@ public class DocxUtils {
 
                 // Add the vulnerability description and recommandations.
                 // update custom fields inside the html before inserting into the document.
-                // Try pre-compiled cache first — cache hits bypass the expensive
-                // XHTMLImporterImpl.convert() entirely. Cache misses fall through
-                // to the batched conversion below.
+                // Try the pre-compiled cache first — a hit bypasses the
+                // expensive XHTMLImporterImpl.convert() entirely; misses
+                // fall through to the batched conversion below.
                 List<Object> recCached = wrapHTMLFromCache(v, "rec", count, customCSS);
                 if (recCached != null) {
                     detailsMapCache.put("${rec:" + count + "}", recCached);
@@ -1929,8 +2309,15 @@ public class DocxUtils {
                 if (v.getCustomFields() != null) {
                     for (CustomField cf : v.getCustomFields()) {
                         if (cf.getType().getFieldType() == 3) {
-                            fieldSpecs.add(new String[] { "${cf" + cf.getType().getVariable() + ":" + count + "}",
-                                    cf.getType().getVariable(), cf.getValue() == null ? "" : cf.getValue() });
+                            String cfKey = "${cf" + cf.getType().getVariable() + ":" + count + "}";
+                            List<Object> cfCached = wrapHTMLFromCache(v,
+                                    "cf:" + cf.getType().getVariable(), count, customCSS);
+                            if (cfCached != null) {
+                                detailsMapCache.put(cfKey, cfCached);
+                            } else {
+                                fieldSpecs.add(new String[] { cfKey,
+                                        cf.getType().getVariable(), cf.getValue() == null ? "" : cf.getValue() });
+                            }
                         }
                     }
                 }

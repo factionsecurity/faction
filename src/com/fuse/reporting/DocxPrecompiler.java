@@ -1,7 +1,5 @@
 package com.fuse.reporting;
 
-import java.io.ByteArrayOutputStream;
-import java.io.StringWriter;
 import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -13,15 +11,16 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.docx4j.TextUtils;
 import org.docx4j.XmlUtils;
 import org.docx4j.convert.in.xhtml.XHTMLImporterImpl;
 import org.docx4j.jaxb.Context;
 import org.docx4j.openpackaging.exceptions.Docx4JException;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.openpackaging.parts.WordprocessingML.BinaryPart;
+import org.docx4j.openpackaging.parts.WordprocessingML.NumberingDefinitionsPart;
 import org.docx4j.openpackaging.parts.relationships.RelationshipsPart;
 import org.docx4j.relationships.Relationship;
+import org.docx4j.wml.Numbering;
 import org.docx4j.wml.RFonts;
 
 import com.fuse.dao.CustomField;
@@ -43,27 +42,39 @@ import javax.persistence.EntityManager;
  * OOXML at save time, so report generation can skip the expensive
  * XHTMLImporterImpl.convert() call.
  *
- * The pipeline splits the original wrapHTML flow:
+ * The cached XML must be SELF-CONTAINED — a paragraph that references
+ * anything by id is worthless once it leaves the package the conversion
+ * ran in. Two kinds of references are made portable:
  *
- * At save time (this class):
- *   raw HTML → resolve ${cf..} custom fields → resolve getImage links →
- *   jtidy → downscale images → XHTMLImporter.convert() → marshal to XML
- *   string → store on Vulnerability
+ * Images: the importer attaches image parts to the scratch package and
+ * references them by rId. The image bytes are captured and embedded
+ * directly into the cached XML as data URIs (r:embed="data:image/...");
+ * report-time code creates real parts in the report package and swaps in
+ * fresh rIds.
+ *
+ * Numbering: a list paragraph carries only <w:numPr><w:numId w:val="N"/>,
+ * while what N MEANS (bullet vs decimal) lives in the package's
+ * numbering part. The v1 cache stored the bare numId and dropped the
+ * definitions — spliced into a report whose template owned those ids,
+ * bullet lists rendered as continued decimal numbers. Now the scratch
+ * package's entire numbering part is serialized into the cache payload
+ * (behind NUM_DEFS_MARKER) and the field XML's numId references are
+ * rewritten to FCT-NUM-&lt;id&gt; tokens. At report time
+ * DocxUtils.spliceCachedNumbering() re-creates every definition under
+ * freshly allocated ids and substitutes the tokens, so the template's
+ * own numbering is never referenced or disturbed. Each field gets its
+ * own scratch package so the captured numbering is exactly that field's.
  *
  * Assessment-level variables (${asmtName}, ${today}, etc.) are left as
  * literal text inside <w:t> nodes — the importer treats them as plain
- * text. At report time, DocxUtils.wrapHTML resolves them via string
- * replacement on the cached XML, then unmarshals to JAXB nodes.
+ * text. At report time, DocxUtils resolves them via string replacement
+ * on the cached XML, then unmarshals to JAXB nodes.
  *
- * Image rIds produced by the importer are scoped to a throwaway scratch
- * package. cachedImageRIds stores the mapping (importer rId → image
- * bytes) so report-time code can allocate fresh rIds in the real report
- * package and rewrite the references.
- *
- * Cache invalidation: the content hash (SHA-256 of font+content) is
- * stored alongside the XML. At report time, if the hash doesn't match
+ * Cache invalidation: the content hash (SHA-256 of version+font+content)
+ * is stored alongside the XML. At report time, if the hash doesn't match
  * the current content, the cache is stale and wrapHTML falls back to
- * live conversion.
+ * live conversion. Bumping CACHE_VERSION invalidates every existing
+ * cache — including all v1-era rows still in the database.
  */
 public class DocxPrecompiler {
 
@@ -71,21 +82,23 @@ public class DocxPrecompiler {
             "<img[^>]+src=[\"']getImage\\?id(=|&#61;)[0-9]+:([^\"'\\s>]+)[\"'][^>]*>",
             Pattern.CASE_INSENSITIVE);
 
+    /**
+     * Separates the field's paragraph XML from the serialized numbering
+     * definitions in the cached payload. An XML comment can never appear
+     * inside marshalled OOXML, so the split is unambiguous.
+     */
+    public static final String NUM_DEFS_MARKER = "<!--FCT-NUM-DEFS-->";
+
     private final String font;
     private final String customCSS;
     private final int maxImageWidth;
 
-    // scratch package reused across all three field conversions for one
-    // vuln — the importer needs a package to attach image parts to
+    // fresh per field (see compileField) — numbering definitions captured
+    // from it must belong to exactly one field
     private WordprocessingMLPackage scratchPackage;
 
-    // image rIds captured from the scratch package after conversion. The
-    // report-time fast path uses these to copy bytes into the report
-    // package and remap rIds in the cached XML.
-    //
-    // Keyed by importer rId (e.g. "rId3"). Multiple fields on the same
-    // vuln that reference the same image will share the same rId because
-    // they share the same scratch package.
+    // image rIds captured from the scratch package after conversion,
+    // keyed by importer rId (e.g. "rId3"); reset per field
     private Map<String, byte[]> capturedImages = new HashMap<>();
     private Map<String, String> capturedContentTypes = new HashMap<>();
 
@@ -121,36 +134,11 @@ public class DocxPrecompiler {
         String desc = getDescription(v);
         String rec = getRecommendation(v);
         String details = v.getDetails() != null ? v.getDetails() : "";
-
-        // custom-field substitution for details (getDescription/getRecommendation
-        // already applied it via replaceAllCf)
         details = replaceAllCf(details, v);
 
         String descHash = hash(font, desc);
         String recHash = hash(font, rec);
         String detailsHash = hash(font, details);
-
-        boolean needScratch = false;
-        if (desc != null && !desc.isEmpty() && !descHash.equals(v.getCachedDescHash())) {
-            needScratch = true;
-        }
-        if (rec != null && !rec.isEmpty() && !recHash.equals(v.getCachedRecHash())) {
-            needScratch = true;
-        }
-        if (!details.isEmpty() && !detailsHash.equals(v.getCachedDetailsHash())) {
-            needScratch = true;
-        }
-
-        if (!needScratch) {
-            return false;
-        }
-
-        try {
-            this.scratchPackage = WordprocessingMLPackage.createPackage();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
 
         if (desc != null && !desc.isEmpty() && !descHash.equals(v.getCachedDescHash())) {
             try {
@@ -192,7 +180,88 @@ public class DocxPrecompiler {
             }
         }
 
+        // type-3 (HTML) custom fields — entries with a matching hash are
+        // carried over, changed/new values are recompiled
+        try {
+            String rebuiltCf = compileCustomFields(v);
+            String existing = v.getCachedCfXml();
+            if (rebuiltCf == null ? existing != null : !rebuiltCf.equals(existing)) {
+                v.setCachedCfXml(rebuiltCf);
+                updated = true;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            v.setCachedCfXml(null);
+        }
+
         return updated;
+    }
+
+    /**
+     * One cached entry per marker: {@code <!--FCT-CF var hash-->payload}.
+     * The payload is the same self-contained format compileField produces
+     * (paragraph XML, embedded images, numbering behind NUM_DEFS_MARKER).
+     */
+    public static final String CF_ENTRY_PREFIX = "<!--FCT-CF ";
+
+    private String compileCustomFields(Vulnerability v) {
+        if (v.getCustomFields() == null) {
+            return null;
+        }
+        StringBuilder sb = new StringBuilder();
+        for (CustomField cf : v.getCustomFields()) {
+            if (cf.getType() == null || cf.getType().getFieldType() != 3) {
+                continue;
+            }
+            String value = cf.getValue();
+            if (value == null || value.isEmpty()) {
+                continue;
+            }
+            String var = cf.getType().getVariable();
+            String h = hash(font, value);
+            String[] prior = findCfEntry(v.getCachedCfXml(), var);
+            String payload;
+            if (prior != null && prior[0].equals(h)) {
+                payload = prior[1];
+            } else {
+                try {
+                    payload = compileField(value, var);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    continue; // this field falls back to live conversion
+                }
+            }
+            sb.append(CF_ENTRY_PREFIX).append(var).append(' ').append(h).append("-->").append(payload);
+        }
+        return sb.length() == 0 ? null : sb.toString();
+    }
+
+    /**
+     * Finds the cached entry for a custom-field variable.
+     *
+     * @return {hash, payload}, or null when the variable has no entry
+     */
+    public static String[] findCfEntry(String cachedCfXml, String variable) {
+        if (cachedCfXml == null || variable == null) {
+            return null;
+        }
+        int idx = 0;
+        while ((idx = cachedCfXml.indexOf(CF_ENTRY_PREFIX, idx)) != -1) {
+            int headEnd = cachedCfXml.indexOf("-->", idx);
+            if (headEnd < 0) {
+                return null;
+            }
+            String head = cachedCfXml.substring(idx + CF_ENTRY_PREFIX.length(), headEnd);
+            int nextEntry = cachedCfXml.indexOf(CF_ENTRY_PREFIX, headEnd);
+            int sp = head.lastIndexOf(' ');
+            if (sp > 0 && head.substring(0, sp).equals(variable)) {
+                String payload = cachedCfXml.substring(headEnd + 3,
+                        nextEntry < 0 ? cachedCfXml.length() : nextEntry);
+                return new String[] { head.substring(sp + 1), payload };
+            }
+            idx = nextEntry < 0 ? cachedCfXml.length() : nextEntry;
+        }
+        return null;
     }
 
     /**
@@ -245,19 +314,30 @@ public class DocxPrecompiler {
         // - \n → <br/>
         // - blockquote → center.figure
         // - jtidy (HTML cleanup)
+        // - misnested-list repair (ul directly inside ol, editor artifact)
         // - image link resolution (getImage?id= → data URI)
         // - inline image downscaling
         //
         // Do NOT apply:
         // - assessment-level variables (leave ${asmtName} as literal text)
-        // - report extensions (assessment-scoped, can't pre-compile)
         // - loopReplace (assessment-scoped)
+
+        // fresh scratch per field: the numbering part captured below must
+        // contain exactly this field's list definitions and nothing else
+        try {
+            this.scratchPackage = WordprocessingMLPackage.createPackage();
+        } catch (Exception e) {
+            throw new Docx4JException("scratch package creation failed", e);
+        }
+        this.capturedImages.clear();
+        this.capturedContentTypes.clear();
 
         content = content.replaceAll("\n", "<br />");
         content = content.replaceAll("<p><br /></p>", "");
         content = content.replaceAll("<blockquote>", "<center class='figure'>");
         content = content.replaceAll("</blockquote>", "</center>");
         content = FSUtils.jtidy(content);
+        content = DocxUtils.hoistMisnestedLists(content);
 
         // run report extensions at pre-compile time so their output (e.g.
         // injected charts, cross-references) is baked into the cached XML.
@@ -295,6 +375,19 @@ public class DocxPrecompiler {
         // URIs. At report time, DocxUtils creates real image parts in the
         // report package and replaces the data URIs with valid rIds
         xml = embedImageDataUris(xml);
+
+        // capture the numbering definitions this conversion created and
+        // rewrite the paragraphs' numId references to portable tokens —
+        // see the class comment for why bare numIds must never be cached
+        NumberingDefinitionsPart ndp = scratchPackage.getMainDocumentPart().getNumberingDefinitionsPart();
+        if (ndp != null && ndp.getContents() != null && !ndp.getContents().getNum().isEmpty()) {
+            Numbering numbering = ndp.getContents();
+            for (Numbering.Num n : numbering.getNum()) {
+                xml = xml.replace("w:numId w:val=\"" + n.getNumId() + "\"",
+                        "w:numId w:val=\"FCT-NUM-" + n.getNumId() + "\"");
+            }
+            xml = xml + NUM_DEFS_MARKER + XmlUtils.marshaltoString(numbering, true, false);
+        }
 
         return xml;
     }
@@ -372,8 +465,7 @@ public class DocxPrecompiler {
                     Image img = (Image) em.createQuery("SELECT i FROM Image i WHERE i.guid = :guid")
                             .setParameter("guid", guid).getSingleResult();
                     if (img != null && img.getBase64Image() != null) {
-                        String base64 = ReportImageScaler.downscaleDataUri(img.getBase64Image(), maxImageWidth);
-                        resolved.put(guid, base64);
+                        resolved.put(guid, ReportImageScaler.reportUri(img, maxImageWidth));
                     }
                 } catch (Exception e) {
                     // image not found
@@ -388,9 +480,8 @@ public class DocxPrecompiler {
     // ===== scratch package image capture =====
 
     // After each convert() call, scan the scratch package's relationships for
-    // new image parts and capture their bytes. The rIds are stored so
-    // report-time code can copy bytes into the real report package and
-    // remap rId references in the cached XML.
+    // new image parts and capture their bytes so they can be embedded into
+    // the cached XML as data URIs.
     private void captureImages() {
         if (scratchPackage == null) return;
         RelationshipsPart rels = scratchPackage.getMainDocumentPart().getRelationshipsPart();
@@ -402,7 +493,7 @@ public class DocxPrecompiler {
             }
             String rId = r.getId();
             if (capturedImages.containsKey(rId)) {
-                continue; // already captured (shared across fields)
+                continue;
             }
             try {
                 org.docx4j.openpackaging.parts.Part part = rels.getPart(r);
@@ -416,19 +507,6 @@ public class DocxPrecompiler {
                 e.printStackTrace();
             }
         }
-    }
-
-    /**
-     * Returns the captured image data (rId → bytes) collected during
-     * compilation. Report-time code uses this to copy images into the
-     * report package and remap rIds.
-     */
-    public Map<String, byte[]> getCapturedImages() {
-        return capturedImages;
-    }
-
-    public Map<String, String> getCapturedContentTypes() {
-        return capturedContentTypes;
     }
 
     // ===== helpers (mirrors DocxUtils) =====
@@ -527,12 +605,14 @@ public class DocxPrecompiler {
         return uris;
     }
 
-    // bump this when the cached XML format changes (namespace normalization,
-    // snippet splitting logic, etc.) to invalidate all existing caches and
-    // force recompilation on the next migration/save
-    private static final String CACHE_VERSION = "v6";
+    // Bump this when the cached XML format changes to invalidate all
+    // existing caches and force recompilation on the next migration/save.
+    // v7: numbering definitions captured + tokenized numIds — v6-era
+    // caches carried bare scratch-package numIds that collided with the
+    // report template's numbering (bullets rendered as decimal).
+    private static final String CACHE_VERSION = "v7";
 
-    // SHA-256 hash of font+content+cacheVersion for cache invalidation
+    // SHA-256 hash of version+font+content for cache invalidation
     private static String hash(String font, String content) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -542,15 +622,6 @@ public class DocxPrecompiler {
         } catch (Exception e) {
             return "" + System.currentTimeMillis(); // fallback — always stale
         }
-    }
-
-    // returns true if the content contains any kind of image reference —
-    // either getImage?id=... links (uploaded screenshots) or inline
-    // data:image/... base64 URIs (pasted screenshots). Fields with images
-    // can't be pre-compiled because the importer's rIds are package-scoped.
-    private static boolean containsImageContent(String content) {
-        if (content == null || content.isEmpty()) return false;
-        return content.contains("getImage") || content.contains("data:image/");
     }
 
     private static String replaceAllCf(String original, Vulnerability v) {

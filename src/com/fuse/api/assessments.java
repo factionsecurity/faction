@@ -2012,7 +2012,7 @@ public class assessments {
                     HibHelper.getInstance().commit();
                     this.broadcastVulnUpdates(u, vuln);
                     // pre-compile HTML fields in the background so report
-                    // generation can skip XHTMLImporterImpl.convert()
+                    // generation can skip the expensive XHTML conversion
                     precompileInBackground(vuln, FSUtils.getOrCreateReportOptionsIfNotExist(em));
                 }
 
@@ -2055,6 +2055,9 @@ public class assessments {
 
                 Image image = new Image();
                 image.setBase64Image(outlineImage(encodedImage));
+                // prepare the report-ready rendition once here so report
+                // generation never has to decode the full-size original
+                com.fuse.utils.ReportImageScaler.prepareReportRendition(image);
 
                 HibHelper.getInstance().preJoin();
                 em.joinTransaction();

@@ -1564,7 +1564,7 @@ public class DocxUtils2 {
                     Image img = (Image) em.createQuery("SELECT i FROM Image i WHERE i.guid = :guid")
                             .setParameter("guid", guid).getSingleResult();
                     if (img != null && img.getBase64Image() != null) {
-                        String base64 = ReportImageScaler.downscaleDataUri(img.getBase64Image(), maxImageWidth);
+                        String base64 = ReportImageScaler.reportUri(img, maxImageWidth);
                         resolved.put(guid, base64);
                         cacheImage(guid, base64);
                     } else {
@@ -1671,7 +1671,12 @@ public class DocxUtils2 {
                             Image img = (Image) em.createQuery("SELECT i FROM Image i WHERE i.guid = :guid")
                                     .setParameter("guid", guid).getSingleResult();
                             if (img != null && img.getBase64Image() != null) {
-                                rawImages.put(guid, img.getBase64Image());
+                                if (ReportImageScaler.isReportReady(img, maxImageWidth)) {
+                                    // rendition prepared at upload — no decode work left
+                                    cacheImage(guid, ReportImageScaler.reportUri(img, maxImageWidth));
+                                } else {
+                                    rawImages.put(guid, img.getBase64Image());
+                                }
                             } else {
                                 this.imagesNotFound.add(guid);
                             }

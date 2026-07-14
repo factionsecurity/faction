@@ -918,6 +918,7 @@ public class AssessmentView extends FSActionSupport {
 			v.setCachedDescHash(null);
 			v.setCachedRecHash(null);
 			v.setCachedDetailsHash(null);
+			v.setCachedCfXml(null);
 		}
 		List<Notification> notifiers = new ArrayList();
 		for (User a : assessment.getAssessor()) {

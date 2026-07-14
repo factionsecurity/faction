@@ -26,6 +26,15 @@ public class Image {
 	private String name;
 	private String contentType;
 	private String guid;
+	// Report-ready rendition: base64Image downscaled/re-encoded once at
+	// upload (or by the startup backfill) so report generation can embed
+	// it directly instead of decoding the full-size original for every
+	// report. null with a non-null reportWidth means the original already
+	// fits the cap; reportWidth records the width cap the rendition was
+	// prepared for, so a FACTION_REPORT_IMAGE_MAX_WIDTH change
+	// invalidates it.
+	private String reportImage;
+	private Integer reportWidth;
 	
 	public Image(){
 		UUID uuid = UUID.randomUUID();
@@ -62,6 +71,18 @@ public class Image {
 	public void setGuid(String guid) {
 		UUID uuid = UUID.randomUUID();
 		this.guid = uuid.toString();
+	}
+	public String getReportImage() {
+		return reportImage;
+	}
+	public void setReportImage(String reportImage) {
+		this.reportImage = reportImage;
+	}
+	public Integer getReportWidth() {
+		return reportWidth;
+	}
+	public void setReportWidth(Integer reportWidth) {
+		this.reportWidth = reportWidth;
 	}
 	
 	

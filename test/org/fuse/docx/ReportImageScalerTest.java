@@ -94,4 +94,52 @@ public class ReportImageScalerTest {
 		String tidied = FSUtils.jtidy(content);
 		assertTrue("jtidy altered a megabyte data URI", tidied.contains(uri));
 	}
+
+	@Test
+	public void prepareStoresRenditionForOversizedImage() throws Exception {
+		com.fuse.dao.Image img = new com.fuse.dao.Image();
+		img.setBase64Image(makePng(2400, 1400));
+		int maxWidth = ReportImageScaler.configuredMaxWidth();
+
+		assertTrue("first prepare must modify the entity", ReportImageScaler.prepareReportRendition(img));
+		assertEquals(Integer.valueOf(maxWidth), img.getReportWidth());
+		assertNotEquals("oversized image must get a distinct rendition", null, img.getReportImage());
+		assertTrue(ReportImageScaler.isReportReady(img, maxWidth));
+
+		// the rendition is what report generation embeds, with no decode work
+		assertEquals(img.getReportImage(), ReportImageScaler.reportUri(img, maxWidth));
+
+		// idempotent: a second prepare for the same cap is a no-op
+		assertTrue("re-prepare for the same cap must be a no-op",
+				!ReportImageScaler.prepareReportRendition(img));
+	}
+
+	@Test
+	public void prepareMarksSmallImageWithoutDuplicatingIt() throws Exception {
+		com.fuse.dao.Image img = new com.fuse.dao.Image();
+		String uri = makePng(800, 500);
+		img.setBase64Image(uri);
+		int maxWidth = ReportImageScaler.configuredMaxWidth();
+
+		assertTrue(ReportImageScaler.prepareReportRendition(img));
+		assertEquals("already-small image must not be stored twice", null, img.getReportImage());
+		assertEquals(Integer.valueOf(maxWidth), img.getReportWidth());
+		// reportUri serves the original directly
+		assertEquals(uri, ReportImageScaler.reportUri(img, maxWidth));
+	}
+
+	@Test
+	public void staleWidthFallsBackToLiveDownscale() throws Exception {
+		com.fuse.dao.Image img = new com.fuse.dao.Image();
+		img.setBase64Image(makePng(2400, 1400));
+		img.setReportImage("data:image/png;base64,STALE");
+		img.setReportWidth(999); // prepared for a different cap
+
+		assertTrue(!ReportImageScaler.isReportReady(img, 1600));
+		String served = ReportImageScaler.reportUri(img, 1600);
+		assertNotEquals("stale rendition must not be served", img.getReportImage(), served);
+		byte[] bytes = Base64.getMimeDecoder().decode(served.substring(served.indexOf(',') + 1));
+		BufferedImage decoded = ImageIO.read(new ByteArrayInputStream(bytes));
+		assertEquals("must be a live downscale of the original", 1600, decoded.getWidth());
+	}
 }

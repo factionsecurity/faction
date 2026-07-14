@@ -33,7 +33,6 @@ import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.reporting.DocxUtils;
 import com.fuse.reporting.DocxUtils2;
-import com.fuse.reporting.DocxPrecompiler;
 import com.fuse.utils.MethodProfiler;
 
 /**
@@ -204,76 +203,6 @@ public class DocxUtils2ParityTest {
 		assertTrue("DocxUtils2 missing last vuln name", gen2Text.contains("Parity Issue " + vulnCount));
 		assertFalse("DocxUtils2 leaked ${fiBegin", gen2Text.contains("${fiBegin"));
 		assertFalse("DocxUtils2 leaked ${desc", gen2Text.contains("${desc"));
-	}
-
-	// ============================================================
-	// Perf harness with pre-compiled cache: compares live vs cached
-	// report generation. Run with:
-	//   -Dfaction.parity.harness=true -Dfaction.parity.vulns=500
-	// ============================================================
-
-	@Test
-	public void cachedVsLivePerformanceComparison() throws Exception {
-		Assume.assumeTrue("cached perf harness disabled; pass -Dfaction.parity.harness=true to enable",
-				"true".equals(System.getProperty("faction.parity.harness")));
-		int vulnCount = Integer.parseInt(System.getProperty("faction.parity.vulns", "500"));
-		String customCSS = "p { margin: 0; } img { width: 50% !important; height: auto !important; }";
-
-		Assessment assessment = buildAssessment(vulnCount);
-
-		// pre-compile all vulnerabilities' HTML fields
-		long precompileStart = System.currentTimeMillis();
-		DocxPrecompiler pre = new DocxPrecompiler("Calibri", customCSS);
-		int compiled = 0;
-		for (Vulnerability v : assessment.getVulns()) {
-			if (pre.compile(v)) compiled++;
-		}
-		long precompileElapsed = System.currentTimeMillis() - precompileStart;
-		System.out.println("\n=== Pre-compile: " + compiled + "/" + vulnCount + " vulns compiled in "
-				+ precompileElapsed + "ms ===");
-
-		// build a fresh template for each run
-		EntityManagerFactory emf = stubEntityManagerFactory();
-
-		// ----- LIVE (no cache) -----
-		// create a fresh assessment with no cached XML
-		Assessment liveAssessment = buildAssessment(vulnCount);
-		WordprocessingMLPackage liveTemplate = buildTemplatePackage();
-		ByteArrayOutputStream liveTemplateBytes = new ByteArrayOutputStream();
-		liveTemplate.save(liveTemplateBytes);
-		DocxUtils liveGen = new DocxUtils(emf, WordprocessingMLPackage.load(
-				new ByteArrayInputStream(liveTemplateBytes.toByteArray())), liveAssessment);
-		liveGen.FONT = "Calibri";
-		MethodProfiler.setEnabled(true);
-		MethodProfiler.clearStats();
-		long liveStart = System.currentTimeMillis();
-		liveGen.generateDocx(customCSS);
-		long liveElapsed = System.currentTimeMillis() - liveStart;
-		System.out.println("\n=== DocxUtils LIVE (no cache): vulns=" + vulnCount
-				+ " wall=" + liveElapsed + "ms ===");
-		MethodProfiler.printReport();
-		MethodProfiler.clearStats();
-
-		// ----- CACHED -----
-		WordprocessingMLPackage cachedTemplate = buildTemplatePackage();
-		ByteArrayOutputStream cachedTemplateBytes = new ByteArrayOutputStream();
-		cachedTemplate.save(cachedTemplateBytes);
-		DocxUtils cachedGen = new DocxUtils(emf, WordprocessingMLPackage.load(
-				new ByteArrayInputStream(cachedTemplateBytes.toByteArray())), assessment);
-		cachedGen.FONT = "Calibri";
-		MethodProfiler.setEnabled(true);
-		MethodProfiler.clearStats();
-		long cachedStart = System.currentTimeMillis();
-		cachedGen.generateDocx(customCSS);
-		long cachedElapsed = System.currentTimeMillis() - cachedStart;
-		System.out.println("\n=== DocxUtils CACHED (precompiled): vulns=" + vulnCount
-				+ " wall=" + cachedElapsed + "ms ===");
-		MethodProfiler.printReport();
-		MethodProfiler.clearStats();
-
-		System.out.println("\n=== Speedup from cache: "
-				+ String.format("%.2fx", (double) liveElapsed / Math.max(cachedElapsed, 1)) + " ===");
-		System.out.println("=== Pre-compile cost: " + precompileElapsed + "ms (amortized across reports) ===");
 	}
 
 	// ============================================================

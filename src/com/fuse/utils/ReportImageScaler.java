@@ -12,6 +12,8 @@ import java.util.Base64;
 
 import javax.imageio.ImageIO;
 
+import com.fuse.dao.Image;
+
 /**
  * Downscales oversized report images before they are embedded into
  * documents. Full-resolution screenshots are the dominant cost of report
@@ -46,6 +48,53 @@ public class ReportImageScaler {
 					+ DEFAULT_MAX_WIDTH);
 			return DEFAULT_MAX_WIDTH;
 		}
+	}
+
+	/**
+	 * True when the stored rendition was prepared for this width cap and
+	 * can be embedded without any decode work.
+	 */
+	public static boolean isReportReady(Image img, int maxWidth) {
+		return img != null && img.getReportWidth() != null && img.getReportWidth().intValue() == maxWidth;
+	}
+
+	/**
+	 * Computes and stores the report-ready rendition on the image entity;
+	 * the caller persists. Returns true when the entity was modified. A
+	 * null rendition with a recorded width means "checked — the original
+	 * is already report-ready", so the original isn't duplicated.
+	 */
+	public static boolean prepareReportRendition(Image img) {
+		int maxWidth = configuredMaxWidth();
+		if (img == null || maxWidth <= 0 || img.getBase64Image() == null) {
+			return false;
+		}
+		if (isReportReady(img, maxWidth)) {
+			return false;
+		}
+		String scaled = downscaleDataUri(img.getBase64Image(), maxWidth);
+		img.setReportImage(scaled.equals(img.getBase64Image()) ? null : scaled);
+		img.setReportWidth(maxWidth);
+		return true;
+	}
+
+	/**
+	 * The data URI report generation should embed for this image: the
+	 * stored rendition when it matches the current width cap, otherwise a
+	 * live downscale of the original (covers images uploaded before the
+	 * backfill has reached them and width-cap changes).
+	 */
+	public static String reportUri(Image img, int maxWidth) {
+		if (img == null) {
+			return null;
+		}
+		if (maxWidth <= 0) {
+			return img.getBase64Image();
+		}
+		if (isReportReady(img, maxWidth)) {
+			return img.getReportImage() != null ? img.getReportImage() : img.getBase64Image();
+		}
+		return downscaleDataUri(img.getBase64Image(), maxWidth);
 	}
 
 	/**
