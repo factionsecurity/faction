@@ -714,7 +714,7 @@ public class vulnerabilities {
         } else {
             Category cat = em.find(Category.class, dto.getCategoryId());
             // If the cat name has changed then we update it
-            if(cat != null && !cat.getName().equals(dto.getCategoryName())) {
+            if(cat != null && !java.util.Objects.equals(cat.getName(), dto.getCategoryName())) {
                 cat.setName(dto.getCategoryName());
                 HibHelper.getInstance().preJoin();
                 em.joinTransaction();
