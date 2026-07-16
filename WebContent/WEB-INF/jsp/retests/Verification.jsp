@@ -88,9 +88,9 @@
 									<div class="form-group"
 										style="font-size: x-large; padding-left: 30px">
 										<label> <input type="radio" name="r3"
-											class="flat-green" value="1"> Mitigated <br /> <input
+											class="flat-green" value="1"> Remediated <br /> <input
 											type="radio" name="r3" class="flat-red" checked value="0">
-											Not Mitigated
+											Not Remediated
 										</label>
 									</div>
 								</bs:mco>
