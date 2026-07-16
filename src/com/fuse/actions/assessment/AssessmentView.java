@@ -910,6 +910,15 @@ public class AssessmentView extends FSActionSupport {
 		List<Vulnerability> vulns = assessment.getVulns();
 		for (Vulnerability v : vulns) {
 			v.setOpened(new Date());
+			// clear the pre-compiled OOXML cache — finalized assessments
+			// never regenerate reports, so the cache is dead weight
+			v.setCachedDescXml(null);
+			v.setCachedRecXml(null);
+			v.setCachedDetailsXml(null);
+			v.setCachedDescHash(null);
+			v.setCachedRecHash(null);
+			v.setCachedDetailsHash(null);
+			v.setCachedCfXml(null);
 		}
 		List<Notification> notifiers = new ArrayList();
 		for (User a : assessment.getAssessor()) {

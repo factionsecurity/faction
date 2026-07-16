@@ -225,6 +225,14 @@ public class Extensions {
 	public String updateReport(Assessment localAssessment, String reportText) {
 		if (!this.isExtended())
 			return reportText;
+		// fast path: skip the expensive full-assessment clone when the text
+		// doesn't contain any ${ placeholder that an extension might handle.
+		// Extensions use ${faction-*} by convention; any extension-specific
+		// placeholder will contain "${". This avoids cloning 447 vulns +
+		// checklists + assessors for every field that has no extension work.
+		if (reportText == null || !reportText.contains("${")) {
+			return reportText;
+		}
 		try {
 			// Clone Assessment
 			com.faction.elements.Assessment tmpAssessment = new com.faction.elements.Assessment();

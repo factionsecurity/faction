@@ -19,11 +19,15 @@ import com.fuse.dao.Status;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.Image;
+import com.fuse.dao.ReportOptions;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.Category;
+import com.fuse.reporting.DocxPrecompiler;
+import com.fuse.utils.FSUtils;
 import com.fuse.utils.LoggingConfig;
+import com.fuse.utils.ReportImageScaler;
 
 
 @WebListener
@@ -40,6 +44,7 @@ public class AppBootstrapListener implements ServletContextListener {
         
         createDefautlStatusIfNeeded();
         fixAssessmentStatuses();
+        prepareReportImageRenditions();
         
         // Bootstrap method to create assessment with 500 vulnerabilities and 1000 images
         // Uncomment the following line to enable this bootstrap functionality
@@ -106,98 +111,177 @@ public class AppBootstrapListener implements ServletContextListener {
             }
         }
     }
-    
+
     /**
-     * Bootstrap method to create an assessment with 500 vulnerabilities and 1000 images
-     * Uncomment this method to run it during application startup
+     * Backfill: prepares the report-ready rendition (see ReportImageScaler)
+     * for stored images that don't have one for the current width cap. New
+     * uploads are prepared inline at upload time; this covers images that
+     * existed before, plus every image after a FACTION_REPORT_IMAGE_MAX_WIDTH
+     * change. Runs on a background thread so startup isn't blocked; images
+     * are loaded and committed one at a time so heap usage stays flat.
+     *
+     * When the renditions are done, the same thread pre-compiles vuln HTML
+     * fields for open assessments (see DocxPrecompiler) — run second so the
+     * compiled XML embeds the freshly prepared renditions instead of
+     * re-downscaling originals.
      */
-    private void createTestAssessmentWithVulnerabilitiesAndImages() {
+    private void prepareReportImageRenditions() {
+        new Thread(() -> {
+            backfillImageRenditions();
+            precompileOpenAssessmentVulns();
+        }, "report-image-backfill").start();
+    }
+
+    private void backfillImageRenditions() {
+            try {
+                int maxWidth = ReportImageScaler.configuredMaxWidth();
+                if (maxWidth <= 0) {
+                    return;
+                }
+                List<Long> ids;
+                EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+                try {
+                    // only images without a rendition for the current cap;
+                    // fall back to a full scan if the OGM query translation
+                    // rejects the null/inequality combination
+                    try {
+                        ids = em.createQuery(
+                            "select i.id from Image i where i.reportWidth is null or i.reportWidth <> :w",
+                            Long.class).setParameter("w", maxWidth).getResultList();
+                    } catch (Exception e) {
+                        ids = em.createQuery("select i.id from Image i", Long.class).getResultList();
+                    }
+                } finally {
+                    em.close();
+                }
+                if (ids.isEmpty()) {
+                    return;
+                }
+                System.out.println("[ReportImages] Preparing report renditions for up to "
+                    + ids.size() + " images (width cap " + maxWidth + ")...");
+                int prepared = 0;
+                long start = System.currentTimeMillis();
+                for (Long id : ids) {
+                    EntityManager iem = HibHelper.getInstance().getEMF().createEntityManager();
+                    try {
+                        Image img = iem.find(Image.class, id);
+                        if (img == null || !ReportImageScaler.prepareReportRendition(img)) {
+                            continue;
+                        }
+                        HibHelper.getInstance().preJoin();
+                        iem.joinTransaction();
+                        iem.merge(img);
+                        HibHelper.getInstance().commit();
+                        prepared++;
+                    } catch (Exception e) {
+                        System.err.println("[ReportImages] Error preparing image " + id + ": " + e.getMessage());
+                    } finally {
+                        if (iem.isOpen()) {
+                            iem.close();
+                        }
+                    }
+                }
+                System.out.println("[ReportImages] Backfill complete: " + prepared + "/" + ids.size()
+                    + " images prepared in " + (System.currentTimeMillis() - start) + "ms");
+            } catch (Exception e) {
+                System.err.println("[ReportImages] Backfill failed: " + e.getMessage());
+                e.printStackTrace();
+            }
+    }
+
+    /**
+     * Pre-compiles HTML fields (desc/rec/details) into cached OOXML for
+     * all vulnerabilities in open assessments (see DocxPrecompiler).
+     * Vulnerabilities whose cache already matches their current content
+     * are skipped, so re-runs at every startup only pay the id query plus
+     * a per-vuln hash check — this is also how a CACHE_VERSION bump
+     * recompiles the whole install. New and updated vulnerabilities get
+     * their cache populated at save time by the save-path hooks.
+     */
+    private void precompileOpenAssessmentVulns() {
         EntityManager em = null;
         try {
-            System.out.println("Creating test assessment with 500 vulnerabilities and 1000 images...");
+            System.out.println("[DocxPrecompiler] Checking pre-compiled caches for open assessments...");
             em = HibHelper.getInstance().getEMF().createEntityManager();
-            
-            // Create base64 encoded image from faction-logo.png
-            String base64Image = null;
-            try {
-                byte[] imageBytes = Files.readAllBytes(Paths.get("/Users/joshsummitt/Code/faction-all/free/faction/WebContent/faction-logo.png"));
-                base64Image = "data:image/png;base64," + Base64.getEncoder().encodeToString(imageBytes);
-            } catch (IOException e) {
-                System.err.println("Error reading faction logo file: " + e.getMessage());
+
+            // fetch report options once — font/CSS don't change per vuln
+            ReportOptions rpo = FSUtils.getOrCreateReportOptionsIfNotExist(em);
+            String font = rpo != null ? rpo.getFont() : "Calibri";
+            String css = rpo != null ? rpo.getBodyCss() : "";
+            String customCSS = css != null ? css : "";
+
+            // find all OPEN assessment IDs first — Hibernate OGM (MongoDB)
+            // does not support multi-entity JPQL joins, so we can't join
+            // Vulnerability and Assessment in one query
+            List<Long> openAssessmentIds = em.createQuery(
+                "select a.id from Assessment a " +
+                "where a.status is null or a.status <> 'Completed'",
+                Long.class).getResultList();
+            if (openAssessmentIds.isEmpty()) {
+                System.out.println("[DocxPrecompiler] No open assessments found.");
                 return;
             }
-            
-            // Create 1000 Images
-            List<Image> images = new ArrayList<>();
-            for (int i = 0; i < 1000; i++) {
-                Image image = new Image();
-                image.setBase64Image(base64Image);
-                image.setName("Test Image " + i);
-                image.setContentType("image/png");
-                images.add(image);
+
+            List<Long> vulnIds = new ArrayList<>();
+            for (Long asmtId : openAssessmentIds) {
+                vulnIds.addAll(em.createQuery(
+                    "select v.id from Vulnerability v where v.assessmentId = :aid",
+                    Long.class)
+                    .setParameter("aid", asmtId)
+                    .getResultList());
             }
-            
-            // Create Assessment
-            Assessment assessment = new Assessment();
-            assessment.setName("Test Assessment with 500 Vulnerabilities and 1000 Images");
-            assessment.setSummary("This is a test assessment created for development purposes");
-            assessment.setRiskAnalysis("Risk analysis for test assessment");
-            assessment.setStart(new Date());
-            assessment.setEnd(new Date());
-            
-            // Assign user with ID 2 as the assessor
-            User assessor = em.find(User.class, 2L);
-            if (assessor != null) {
-                List<User> assessors = new ArrayList<>();
-                assessors.add(assessor);
-                assessment.setAssessor(assessors);
-            } else {
-                System.err.println("User with ID 2 not found for assessor assignment");
+            em.close();
+            em = null;
+            if (vulnIds.isEmpty()) {
+                System.out.println("[DocxPrecompiler] No vulnerabilities found in open assessments.");
+                return;
             }
-            
-            // Set the images to the assessment
-            assessment.setImages(images);
-            
-            // For JTA transactions, use the TransactionManager from HibHelper
-            HibHelper.getInstance().preJoin();
-            em.persist(assessment);
-            em.flush();
-            
-            // Create 500 vulnerabilities with image links (but don't try to set them on the assessment directly)
-            // This avoids the collection management issue with cascade="all-delete-orphan"
-            int imgId=0;
-            for (int i = 0; i < 500; i++) {
-                Vulnerability vuln = new Vulnerability();
-                vuln.setName("Test Vulnerability " + i);
-                vuln.setDescription("This is a test vulnerability description for vulnerability number " + i);
-                vuln.setRecommendation("Recommendation for vulnerability " + i);
-                vuln.setOverall(5L); // Set overall level to 5 (Critical)
-                vuln.setAssessmentId(assessment.getId());
-                
-                // Create the details with image links
-                StringBuilder details = new StringBuilder();
-                details.append("<p>Vulnerability details with images:</p>");
-                
-                // Add image link using a placeholder that will be replaced with actual assessment ID
-                String imageId1 = assessment.getId().toString() + ":" + images.get(imgId++).getGuid();
-                details.append("<img src=\"getImage?id=" + imageId1 + "\" alt=\"image.png\">");
-                String imageId2 = assessment.getId().toString() + ":" + images.get(imgId++).getGuid();
-                details.append("<img src=\"getImage?id=" + imageId2 + "\" alt=\"image.png\">");
-                
-                vuln.setDescription(details.toString());
-                
-                // Persist vulnerability directly rather than trying to manage the collection
-                em.persist(vuln);
-                assessment.getVulns().add(vuln);
+
+            System.out.println("[DocxPrecompiler] Found " + vulnIds.size()
+                + " vulnerabilities in open assessments.");
+
+            int totalCompiled = 0;
+            int totalSkipped = 0;
+            long startTime = System.currentTimeMillis();
+
+            for (Long vulnId : vulnIds) {
+                // fresh EM per vuln so a multi-MB cached payload never
+                // accumulates in a shared persistence context
+                EntityManager vulnEm = null;
+                try {
+                    vulnEm = HibHelper.getInstance().getEMF().createEntityManager();
+                    Vulnerability v = vulnEm.find(Vulnerability.class, vulnId);
+                    if (v == null) continue;
+
+                    // fetch the parent assessment so extensions can run
+                    // during pre-compilation
+                    Assessment asmt = v.getAssessmentId() > 0
+                        ? vulnEm.find(Assessment.class, v.getAssessmentId()) : null;
+                    DocxPrecompiler pre = new DocxPrecompiler(font, customCSS, asmt);
+                    if (pre.compile(v)) {
+                        HibHelper.getInstance().preJoin();
+                        vulnEm.joinTransaction();
+                        vulnEm.merge(v);
+                        HibHelper.getInstance().commit();
+                        totalCompiled++;
+                    } else {
+                        totalSkipped++;
+                    }
+                } catch (Exception e) {
+                    System.err.println("[DocxPrecompiler] Error compiling vuln "
+                        + vulnId + ": " + e.getMessage());
+                } finally {
+                    if (vulnEm != null && vulnEm.isOpen()) {
+                        vulnEm.close();
+                    }
+                }
             }
-           
-            em.merge(assessment);
-            HibHelper.getInstance().commit();
-            
-            System.out.println("Successfully created test assessment with 500 vulnerabilities and 1000 images");
-            
+
+            System.out.println("[DocxPrecompiler] Migration complete: " + totalCompiled
+                + " compiled, " + totalSkipped + " skipped (already cached) in "
+                + (System.currentTimeMillis() - startTime) + "ms");
         } catch (Exception e) {
-            System.err.println("Error creating test assessment: " + e.getMessage());
+            System.err.println("[DocxPrecompiler] Migration failed: " + e.getMessage());
             e.printStackTrace();
         } finally {
             if (em != null && em.isOpen()) {
@@ -205,4 +289,5 @@ public class AppBootstrapListener implements ServletContextListener {
             }
         }
     }
+
 }
