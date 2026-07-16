@@ -52,6 +52,7 @@
                         <th>Severity</th>
                         <th>Opened</th>
                         <th>Closed (Dev)</th>
+                        <th>Closed (Staging)</th>
                         <th>Closed (Prod)</th>
                       </tr>
                     </thead>

@@ -714,7 +714,7 @@ public class vulnerabilities {
         } else {
             Category cat = em.find(Category.class, dto.getCategoryId());
             // If the cat name has changed then we update it
-            if(cat != null && !cat.getName().equals(dto.getCategoryName())) {
+            if(cat != null && !java.util.Objects.equals(cat.getName(), dto.getCategoryName())) {
                 cat.setName(dto.getCategoryName());
                 HibHelper.getInstance().preJoin();
                 em.joinTransaction();
@@ -1104,7 +1104,7 @@ public class vulnerabilities {
     }
 
     @POST
-    @ApiOperation(value = "Set the status (open/closed) of a vulnerability in production or development.", notes = "Set status to open or closed and set remediation dates for the vulnerability. ", position = 85)
+    @ApiOperation(value = "Set the status (open/closed) of a vulnerability in production, staging, or development.", notes = "Set status to open or closed and set remediation dates for the vulnerability. ", position = 85)
     @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 400, message = "Unknown Error"),
             @ApiResponse(code = 200, message = "Vulnerability Successfully Updated.") })
@@ -1115,8 +1115,10 @@ public class vulnerabilities {
             @ApiParam(value = "Vulnerability ID", required = true) @FormParam("vulnId") Long vulnid,
             @ApiParam(value = "Tracking ID", required = true) @FormParam("trackingId") String trackingid,
             @ApiParam(value = "Set Status to Fixed in the development environment", required = false) @FormParam("isClosedDev") boolean statusDev,
+            @ApiParam(value = "Set Status to Fixed in the staging environment", required = false) @FormParam("isClosedStaging") boolean statusStaging,
             @ApiParam(value = "Set Status to Fixed in the production environment", required = false) @FormParam("isClosedProd") boolean statusProd,
             @ApiParam(value = "Set Date of remediation for development", required = false) @FormParam("devClosedDate") Date devClosed,
+            @ApiParam(value = "Set Date of remediation for staging", required = false) @FormParam("stagingClosedDate") Date stagingClosed,
             @ApiParam(value = "Set Date of remediation for production", required = false) @FormParam("prodClosedDate") Date prodClosed) {
         EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
         try {
@@ -1135,7 +1137,10 @@ public class vulnerabilities {
                 if (statusDev) {
                     vuln.setDevClosed(devClosed);
                 }
-                if (statusDev) {
+                if (statusStaging) {
+                    vuln.setStagingClosed(stagingClosed);
+                }
+                if (statusProd) {
                     vuln.setClosed(prodClosed);
                 }
                 HibHelper.getInstance().preJoin();
@@ -1155,7 +1160,10 @@ public class vulnerabilities {
                 if (statusDev) {
                     vuln.setDevClosed(devClosed);
                 }
-                if (statusDev) {
+                if (statusStaging) {
+                    vuln.setStagingClosed(stagingClosed);
+                }
+                if (statusProd) {
                     vuln.setClosed(prodClosed);
                 }
                 HibHelper.getInstance().preJoin();

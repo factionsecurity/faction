@@ -33,6 +33,9 @@
 	<s:if test="detailVuln.devClosed != null">
 		<tr><th>Dev Closed</th><td><s:date name="detailVuln.devClosed" format="MM/dd/yyyy"/></td></tr>
 	</s:if>
+	<s:if test="detailVuln.stagingClosed != null">
+		<tr><th>Staging Closed</th><td><s:date name="detailVuln.stagingClosed" format="MM/dd/yyyy"/></td></tr>
+	</s:if>
 	<s:if test="detailAssessment != null">
 		<tr><th>Assessment</th><td>[<s:property value="detailAssessment.appId"/>] <s:property value="detailAssessment.name"/></td></tr>
 		<s:if test="detailAssessment.finalReport != null">

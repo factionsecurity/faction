@@ -84,7 +84,8 @@ public class ManagerDashboardVulnerabilitiesCSV extends FSActionSupport {
         }
 
         header.append(",Team,Assessor,Severity,CVSS Score,Category,");
-        header.append("Opened Date,Closed Date,Status,Tracking ID");
+        header.append("Opened Date,Closed Date,Closed Dev Date,Closed Staging Date,");
+        header.append("Closed In Dev,Closed In Staging,Closed In Prod,Status,Tracking ID");
 
         // Add vulnerability custom field columns to header
         for (CustomType customType : vulnerabilityCustomTypes) {
@@ -158,7 +159,14 @@ public class ManagerDashboardVulnerabilitiesCSV extends FSActionSupport {
                 // Dates
                 csvContent.append(vuln.getOpened() != null ? dateFormat.format(vuln.getOpened()) : "").append(",");
                 csvContent.append(vuln.getClosed() != null ? dateFormat.format(vuln.getClosed()) : "").append(",");
-                
+                csvContent.append(vuln.getDevClosed() != null ? dateFormat.format(vuln.getDevClosed()) : "").append(",");
+                csvContent.append(vuln.getStagingClosed() != null ? dateFormat.format(vuln.getStagingClosed()) : "").append(",");
+
+                // Closed-per-environment booleans
+                csvContent.append(vuln.getDevClosed() != null ? "true" : "false").append(",");
+                csvContent.append(vuln.getStagingClosed() != null ? "true" : "false").append(",");
+                csvContent.append(vuln.getClosed() != null ? "true" : "false").append(",");
+
                 // Status
                 String vulnStatus = vuln.getClosed() != null ? "Closed" : "Open";
                 csvContent.append(escapeCSV(vulnStatus)).append(",");

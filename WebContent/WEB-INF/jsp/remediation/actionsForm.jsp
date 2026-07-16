@@ -13,6 +13,7 @@
 <!--</s:if>-->
 <bs:button color="warning" size="md" colsize="3" text="Change Severity" id="chSev"></bs:button>
 <bs:button color="primary" size="md" colsize="3" text="Close in Dev" id="closeDev"></bs:button>
+<bs:button color="info" size="md" colsize="3" text="Close in Staging" id="closeStaging"></bs:button>
 <bs:button color="success" size="md" colsize="3" text="Close in Prod" id="closeProd"></bs:button>
 </bs:row>
 <div style="height:500px"></div>

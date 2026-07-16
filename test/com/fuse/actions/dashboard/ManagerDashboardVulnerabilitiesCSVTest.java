@@ -212,6 +212,11 @@ public class ManagerDashboardVulnerabilitiesCSVTest extends StrutsJUnit4TestCase
         assertTrue("Header should contain Category", header.contains("Category"));
         assertTrue("Header should contain Opened Date", header.contains("Opened Date"));
         assertTrue("Header should contain Closed Date", header.contains("Closed Date"));
+        assertTrue("Header should contain Closed Dev Date", header.contains("Closed Dev Date"));
+        assertTrue("Header should contain Closed Staging Date", header.contains("Closed Staging Date"));
+        assertTrue("Header should contain Closed In Dev", header.contains("Closed In Dev"));
+        assertTrue("Header should contain Closed In Staging", header.contains("Closed In Staging"));
+        assertTrue("Header should contain Closed In Prod", header.contains("Closed In Prod"));
         assertTrue("Header should contain Status", header.contains("Status"));
         assertTrue("Header should contain Tracking ID", header.contains("Tracking ID"));
         assertTrue("Header should contain custom field", header.contains("Affected Component"));
@@ -273,6 +278,62 @@ public class ManagerDashboardVulnerabilitiesCSVTest extends StrutsJUnit4TestCase
         assertTrue("Data row should contain assessment name", dataRow.contains("Test Assessment"));
         assertTrue("Data row should contain app id", dataRow.contains("APP-001"));
         assertTrue("Data row should contain custom field value", dataRow.contains("Finance"));
+
+        reader.close();
+    }
+
+    @Test
+    public void testEnvironmentClosedDatesAndBooleans() throws Exception {
+        ManagerDashboardVulnerabilitiesCSV action = new ManagerDashboardVulnerabilitiesCSV();
+        mockEm = mock(EntityManager.class);
+        setField(action, "em", mockEm);
+        com.opensymphony.xwork2.ActionContext.getContext().put("isManager", true);
+
+        Assessment testAsmt = createTestAssessment();
+        mockAllRequiredQueries(Arrays.asList(testAsmt));
+
+        // Vuln closed in dev and staging but still open in prod
+        Vulnerability vuln = new Vulnerability();
+        vuln.setId(1L);
+        vuln.setName("SQL Injection");
+        vuln.setOpened(new SimpleDateFormat("yyyy-MM-dd").parse("2026-01-01"));
+        vuln.setDevClosed(new SimpleDateFormat("yyyy-MM-dd").parse("2026-01-15"));
+        vuln.setStagingClosed(new SimpleDateFormat("yyyy-MM-dd").parse("2026-02-20"));
+        vuln.setOverall(4L);
+        vuln.setTracking("VID-001");
+        vuln.setCustomFields(new ArrayList<>());
+
+        // Vuln not closed anywhere
+        Vulnerability openVuln = new Vulnerability();
+        openVuln.setId(2L);
+        openVuln.setName("XSS");
+        openVuln.setOpened(new SimpleDateFormat("yyyy-MM-dd").parse("2026-01-02"));
+        openVuln.setOverall(3L);
+        openVuln.setTracking("VID-002");
+        openVuln.setCustomFields(new ArrayList<>());
+
+        TypedQuery<Vulnerability> vulnQuery = mock(TypedQuery.class);
+        doReturn(vulnQuery).when(vulnQuery).setParameter(eq("aid"), any());
+        doReturn(Arrays.asList(vuln, openVuln)).when(vulnQuery).getResultList();
+        doReturn(vulnQuery).when(mockEm).createQuery(contains("Vulnerability"), eq(Vulnerability.class));
+
+        String result = action.exportCSV();
+        assertEquals("Should return SUCCESS", "success", result);
+
+        BufferedReader reader = new BufferedReader(
+            new InputStreamReader(action.getInputStream()));
+        reader.readLine(); // header
+        String closedRow = reader.readLine();
+        String openRow = reader.readLine();
+
+        assertNotNull("Should have a row for the dev/staging closed vuln", closedRow);
+        assertTrue("Row should contain dev closed date", closedRow.contains("2026-01-15"));
+        assertTrue("Row should contain staging closed date", closedRow.contains("2026-02-20"));
+        assertTrue("Booleans should be dev=true, staging=true, prod=false",
+            closedRow.contains("true,true,false"));
+
+        assertNotNull("Should have a row for the open vuln", openRow);
+        assertTrue("Open vuln booleans should all be false", openRow.contains("false,false,false"));
 
         reader.close();
     }

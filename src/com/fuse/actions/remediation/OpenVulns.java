@@ -58,7 +58,8 @@ public class OpenVulns extends FSActionSupport {
 			case "6" : param = "vuln.overall";break;
 			case "7" : param = "vuln.opened";break;
 			case "8" : param = "vuln.devClosed";break;
-			case "9" : param = "vuln.closed";break;
+			case "9" : param = "vuln.stagingClosed";break;
+			case "10" : param = "vuln.closed";break;
 			default: param ="vuln.opened";
 		}
 		return String.format("{ '$sort': { '%s': %s} },",param, direction);

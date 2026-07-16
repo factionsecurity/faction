@@ -115,7 +115,8 @@ public class RemVulnData extends FSActionSupport {
 
 			return "successJson";
 
-		} else if ((action.equals("closeInProd") || action.equals("closeInDev")) && vulnId != -1l) {
+		} else if ((action.equals("closeInProd") || action.equals("closeInDev") || action.equals("closeInStaging"))
+				&& vulnId != -1l) {
 
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
@@ -131,6 +132,9 @@ public class RemVulnData extends FSActionSupport {
 			String env = "Production";
 			if (action.equals("closeInProd")) {
 				v.setClosed(new Date());
+			} else if (action.equals("closeInStaging")) {
+				v.setStagingClosed(new Date());
+				env = "Staging";
 			} else {
 				v.setDevClosed(new Date());
 				env = "Development";
@@ -264,6 +268,7 @@ public class RemVulnData extends FSActionSupport {
 		if(vuln!=null) {
 			vuln.setClosed(null);
 			vuln.setDevClosed(null);
+			vuln.setStagingClosed(null);
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
 			em.persist(vuln);

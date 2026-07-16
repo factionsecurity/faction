@@ -37,6 +37,7 @@ let editors = {
 	remNotes: createEditor("RemNotes"),
 	chSevNotes: createEditor("chSevNotes"),
 	nprodNotes:createEditor("nprodNotes"),
+	stagingNotes: createEditor("stagingNotes"),
 	prodNotes: createEditor("prodNotes"),
 	cancelVerNotes: createEditor("cancelVerNotes")
 }
@@ -112,8 +113,9 @@ function updateForms(){
 		
 	}
 	const devclosed = selected.data("devclosed");
+	const stagingclosed = selected.data("stagingclosed");
 	const prodclosed = selected.data("prodclosed");
-	if(devclosed != "" || prodclosed != ""){
+	if(devclosed != "" || stagingclosed != "" || prodclosed != ""){
 		$("#reopenVulnControl").show();	
 	}else{
 		$("#reopenVulnControl").hide();	
@@ -458,6 +460,9 @@ $(function() {
 	$("#closeDev").click(function() {
 		$("#nprodModal").modal('show');
 	});
+	$("#closeStaging").click(function() {
+		$("#stagingModal").modal('show');
+	});
 	$("#closeProd").click(function() {
 		$("#prodModal").modal('show');
 	});
@@ -496,6 +501,17 @@ $(function() {
 		$.post("RemVulnData", data).done(function() {
 			refreshNotes(vulnId);
 			$("#nprodModal").modal('hide');
+
+		});
+	});
+	$("#saveStaging").click(function() {
+		let newNote = encodeURIComponent(editors['stagingNotes'].getHTML());
+		let data = "action=closeInStaging";
+		data += "&note=" + newNote;
+		data += "&vulnId=" + vulnId;
+		$.post("RemVulnData", data).done(function() {
+			refreshNotes(vulnId);
+			$("#stagingModal").modal('hide');
 
 		});
 	});
