@@ -86,9 +86,9 @@
 							<bs:row>
 								<bs:mco colsize="6">
 									<div class="form-group"
-										style="font-size: x-large; padding-left: 30px">
-										<label> <input type="radio" name="r3"
-											class="flat-green" value="1"> Remediated <br /> <input
+										style="padding-left: 30px">
+										<input type="radio" name="r3"
+											class="flat-green" value="1"> Remediated <br /> <br/><input
 											type="radio" name="r3" class="flat-red" checked value="0">
 											Not Remediated
 										</label>
