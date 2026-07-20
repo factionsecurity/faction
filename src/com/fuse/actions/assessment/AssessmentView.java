@@ -905,11 +905,12 @@ public class AssessmentView extends FSActionSupport {
 		//TODO: ADD this BACK
 		//AssessmentQueries.removeImages(assessment);
 		assessment.setCompleted(new Date());
-		assessment.setStatus("Complete");
+		assessment.setStatus("Completed");
 		assessment.setFinalized();
 		List<Vulnerability> vulns = assessment.getVulns();
 		for (Vulnerability v : vulns) {
 			v.setOpened(new Date());
+			v.setStatus(Vulnerability.StatusOpen);
 			// clear the pre-compiled OOXML cache — finalized assessments
 			// never regenerate reports, so the cache is dead weight
 			v.setCachedDescXml(null);

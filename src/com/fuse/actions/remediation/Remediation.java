@@ -126,6 +126,7 @@ public class Remediation extends FSActionSupport{
 							errors=true;
 							break;
 						}else{
+							v.setStatus(Vulnerability.StatusInRetest);
 							vi.setVulnerability(v);
 							break;
 						}
@@ -133,7 +134,7 @@ public class Remediation extends FSActionSupport{
 				}
 				if(!errors){
 					ver.getVerificationItems().add(vi);
-					VulnerabilityQueries.saveAll(this, ver.getVerificationItems().get(0).getVulnerability(), em, "Create Verification", a, ver, vi);
+					VulnerabilityQueries.saveAll(this, ver.getVerificationItems().get(0).getVulnerability(), em, "Create Verification", a, ver, vi, vi.getVulnerability());
 				}
 			}
 			String appName = a.getAppId() + " - " + a.getName();
@@ -188,12 +189,13 @@ public class Remediation extends FSActionSupport{
 			VerificationItem vi = new VerificationItem();
 			for(Vulnerability v : a.getVulns()){
 				if(v.getId() == vulnId){
+					v.setStatus(Vulnerability.StatusInRetest);
 					vi.setVulnerability(v);
 					break;
 				}
 			}
 			ver.getVerificationItems().add(vi);
-			VulnerabilityQueries.saveAll(this, vi.getVulnerability(), em, "Adding Vulns to Verification", vi, ver);
+			VulnerabilityQueries.saveAll(this, vi.getVulnerability(), em, "Adding Vulns to Verification", vi, ver, vi.getVulnerability());
 			//em.persist(vi);
 			//em.persist(ver);
 			//HibHelper.getInstance().commit();

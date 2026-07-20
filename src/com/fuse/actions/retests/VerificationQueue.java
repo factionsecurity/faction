@@ -20,6 +20,7 @@ import com.fuse.dao.User;
 import com.fuse.dao.Verification;
 import com.fuse.dao.VerificationItem;
 import com.fuse.dao.VulnNotes;
+import com.fuse.dao.Vulnerability;
 import com.faction.extender.VerificationManager;
 import com.fuse.extenderapi.Extensions;
 import com.fuse.tasks.EmailThread;
@@ -110,12 +111,15 @@ public class VerificationQueue extends FSActionSupport {
 
 				if (pass == 1l) {
 					vi.setPass(true);
+					vi.getVulnerability().setStatus(Vulnerability.StatusPassedRetest);
 					if (verOption == 1l) {
 						vi.getVulnerability().setDevClosed(new Date());
+						vi.getVulnerability().setStatus(Vulnerability.StatusClosedInDev);
 						vnote = "<span style=color:green > Issue Passed Verification in the Development Environment.</span><br>"
 								+ notes;
 					} else if (verOption == 2l) {
 						vi.getVulnerability().setClosed(new Date());
+						vi.getVulnerability().setStatus(Vulnerability.StatusClosed);
 						vnote = "<span style=color:green > Issue Passed Verification in the Production Environment.</span><br>"
 								+ notes;
 
@@ -130,6 +134,7 @@ public class VerificationQueue extends FSActionSupport {
 
 				} else if (pass == 0l) {
 					vi.setPass(false);
+					vi.getVulnerability().setStatus(Vulnerability.StatusFailedRetest);
 					vnote = "<span style=color:red > Issue Failed Verification </span><br>" + notes;
 				} else {
 
@@ -161,6 +166,7 @@ public class VerificationQueue extends FSActionSupport {
 					// em.remove(v);
 				}
 				em.persist(vi);
+				em.persist(vi.getVulnerability());
 				em.persist(v);
 
 				Assessment a = em.find(Assessment.class, vi.getVulnerability().getAssessmentId());

@@ -168,7 +168,7 @@ public class ManagerDashboardVulnerabilitiesCSV extends FSActionSupport {
                 csvContent.append(vuln.getClosed() != null ? "true" : "false").append(",");
 
                 // Status
-                String vulnStatus = vuln.getClosed() != null ? "Closed" : "Open";
+                String vulnStatus = vuln.getDisplayStatus();
                 csvContent.append(escapeCSV(vulnStatus)).append(",");
                 
                 // Tracking ID

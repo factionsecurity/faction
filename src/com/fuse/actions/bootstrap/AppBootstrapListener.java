@@ -11,6 +11,8 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,6 +23,8 @@ import com.fuse.dao.HibHelper;
 import com.fuse.dao.Image;
 import com.fuse.dao.ReportOptions;
 import com.fuse.dao.User;
+import com.fuse.dao.Verification;
+import com.fuse.dao.VerificationItem;
 import com.fuse.dao.Vulnerability;
 import com.fuse.dao.DefaultVulnerability;
 import com.fuse.dao.Category;
@@ -44,6 +48,7 @@ public class AppBootstrapListener implements ServletContextListener {
         
         createDefautlStatusIfNeeded();
         fixAssessmentStatuses();
+        backfillVulnerabilityStatuses();
         prepareReportImageRenditions();
         
         // Bootstrap method to create assessment with 500 vulnerabilities and 1000 images
@@ -72,39 +77,124 @@ public class AppBootstrapListener implements ServletContextListener {
             em = HibHelper.getInstance().getEMF().createEntityManager();
             
             // Find all assessments with status "Open" and a non-null completed date
-            List<Assessment> assessmentsToFix = em.createQuery(
+            List<Assessment> assessmentsToFix = new ArrayList<>(em.createQuery(
                 "from Assessment where status = :status and completed is not null",
                 Assessment.class)
                 .setParameter("status", "Open")
-                .getResultList();
-            
+                .getResultList());
+
+            // Also find assessments stored with the legacy "Complete" status
+            // (older finalize code wrote "Complete" instead of "Completed")
+            assessmentsToFix.addAll(em.createQuery(
+                "from Assessment where status = :status",
+                Assessment.class)
+                .setParameter("status", "Complete")
+                .getResultList());
+
             if (!assessmentsToFix.isEmpty()) {
                 System.out.println("Found " + assessmentsToFix.size() + " assessments to fix");
-                
-                // Begin transaction using EntityManager's built-in transaction management
-                em.getTransaction().begin();
-                
+
+                // JTA persistence unit: transactions go through HibHelper's
+                // TransactionManager, never em.getTransaction()
+                HibHelper.getInstance().preJoin();
+                em.joinTransaction();
+
                 for (Assessment assessment : assessmentsToFix) {
+                    String oldStatus = assessment.getRealStatus();
                     assessment.setStatus("Completed");
                     em.merge(assessment);  // Use merge instead of persist for existing entities
                     System.out.println("Fixed assessment ID " + assessment.getId() +
-                        " - changed status from Open to Completed (completed date: " +
+                        " - changed status from " + oldStatus + " to Completed (completed date: " +
                         assessment.getCompleted() + ")");
                 }
-                
-                // Commit the transaction
-                em.getTransaction().commit();
+
+                HibHelper.getInstance().commit();
                 System.out.println("Assessment status migration completed successfully");
             } else {
                 System.out.println("No assessments found requiring status fix");
             }
-            
+
         } catch (Exception e) {
             System.err.println("Error fixing assessment statuses: " + e.getMessage());
             e.printStackTrace();
-            if (em != null && em.getTransaction() != null && em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
+        } finally {
+            if (em != null && em.isOpen()) {
+                em.close();
             }
+        }
+    }
+
+    /**
+     * Backfill: gives every vulnerability that has entered remediation
+     * (opened is set) a lifecycle status derived from its close dates and
+     * any in-flight verification. Idempotent — only touches documents that
+     * have no status yet; every write path sets the status going forward.
+     */
+    private void backfillVulnerabilityStatuses() {
+        EntityManager em = null;
+        try {
+            System.out.println("Running vulnerability status backfill...");
+            em = HibHelper.getInstance().getEMF().createEntityManager();
+
+            List<Vulnerability> vulnsToFix = em.createNativeQuery(
+                "{\"status\" : { \"$exists\" : false}, \"opened\" : { \"$exists\" : true}}",
+                Vulnerability.class).getResultList();
+
+            if (vulnsToFix.isEmpty()) {
+                System.out.println("No vulnerabilities found requiring a status backfill");
+                return;
+            }
+
+            // Statuses implied by verifications the assessor hasn't finished
+            // (In Retest) or has finished but remediation hasn't closed yet
+            // (Passed/Failed Retest)
+            Map<Long, String> retestStatuses = new HashMap<>();
+            List<Verification> verifications = em.createQuery(
+                "from Verification where workflowStatus = :wf1 or workflowStatus = :wf2 or workflowStatus = :wf3",
+                Verification.class)
+                .setParameter("wf1", Verification.InAssessorQueue)
+                .setParameter("wf2", Verification.AssessorCompleted)
+                .setParameter("wf3", Verification.AssessorCancelled)
+                .getResultList();
+            for (Verification ver : verifications) {
+                for (VerificationItem item : ver.getVerificationItems()) {
+                    if (item == null || item.getVulnerability() == null)
+                        continue;
+                    if (ver.getWorkflowStatus().equals(Verification.AssessorCompleted)) {
+                        retestStatuses.put(item.getVulnerability().getId(),
+                            item.isPass() ? Vulnerability.StatusPassedRetest : Vulnerability.StatusFailedRetest);
+                    } else {
+                        retestStatuses.put(item.getVulnerability().getId(), Vulnerability.StatusInRetest);
+                    }
+                }
+            }
+
+            // JTA persistence unit: transactions go through HibHelper's
+            // TransactionManager, never em.getTransaction()
+            HibHelper.getInstance().preJoin();
+            em.joinTransaction();
+            for (Vulnerability vuln : vulnsToFix) {
+                String status;
+                if (vuln.getClosed() != null && vuln.getClosed().getTime() != 0l) {
+                    status = Vulnerability.StatusClosed;
+                } else if (vuln.getStagingClosed() != null && vuln.getStagingClosed().getTime() != 0l) {
+                    status = Vulnerability.StatusClosedInStaging;
+                } else if (vuln.getDevClosed() != null && vuln.getDevClosed().getTime() != 0l) {
+                    status = Vulnerability.StatusClosedInDev;
+                } else if (retestStatuses.containsKey(vuln.getId())) {
+                    status = retestStatuses.get(vuln.getId());
+                } else {
+                    status = Vulnerability.StatusOpen;
+                }
+                vuln.setStatus(status);
+                em.merge(vuln);
+            }
+            HibHelper.getInstance().commit();
+            System.out.println("Backfilled status for " + vulnsToFix.size() + " vulnerabilities");
+
+        } catch (Exception e) {
+            System.err.println("Error backfilling vulnerability statuses: " + e.getMessage());
+            e.printStackTrace();
         } finally {
             if (em != null && em.isOpen()) {
                 em.close();

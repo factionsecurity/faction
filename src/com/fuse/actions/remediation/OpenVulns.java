@@ -126,9 +126,12 @@ public class OpenVulns extends FSActionSupport {
 				}
 
 				if (this.closed.equals("") && !this.open.equals("")) {
-					newMongo += " 'vuln.closed' : {'$exists':false}, ";
+					// open = anything whose status does not say "Closed"
+					newMongo += " 'vuln.closed' : {'$exists':false}, "
+							+ " 'vuln.status' : {'$nin': " + VulnerabilityQueries.closedStatusArray() + "}, ";
 				} else if (!this.closed.equals("") && this.open.equals("")) { // show only closed items
-					newMongo += " 'vuln.closed' : {'$exists':true}, ";
+					newMongo += " '$or' : [ {'vuln.closed' : {'$exists':true}}, "
+							+ "{'vuln.status' : {'$in': " + VulnerabilityQueries.closedStatusArray() + "}} ], ";
 				}
 
 				if (!this.tracking.equals("")) {

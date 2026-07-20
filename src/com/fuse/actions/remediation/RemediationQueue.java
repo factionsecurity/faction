@@ -101,6 +101,10 @@ public class RemediationQueue extends FSActionSupport{
 					}else{
 						badges += FSUtils.addBadge("In Retest", "green", "fa-calendar");
 					}
+				}else{
+					// Still in the assessor's queue — an incomplete retest, so
+					// the "Show Incomplete Retests" filter can match it
+					badges += FSUtils.addBadge("In Retest", "green", "fa-calendar");
 				}
 			}
 			

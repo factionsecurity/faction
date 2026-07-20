@@ -195,6 +195,9 @@ public class Metrics extends FSActionSupport {
 				if (v.getOverall() == null)
 					continue;
 
+				if (v.hasClosedStatus())
+					continue;
+
 				String count = data.get(v.getOverall().intValue());
 				if (v.getOverall() == null || v.getOverall() == -1l)
 					continue;

@@ -560,7 +560,7 @@ public class ManagerDashboard extends FSActionSupport {
                 row.setCategory(vuln.getCategory() != null ? vuln.getCategory().getName() : "");
                 row.setOpened(vuln.getOpened());
                 row.setClosed(vuln.getClosed());
-                row.setStatus(vuln.getClosed() != null ? "Closed" : "Open");
+                row.setStatus(vuln.getDisplayStatus());
                 row.setTracking(vuln.getTracking());
                 vulnerabilityResults.add(row);
             }

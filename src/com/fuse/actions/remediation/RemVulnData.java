@@ -132,11 +132,14 @@ public class RemVulnData extends FSActionSupport {
 			String env = "Production";
 			if (action.equals("closeInProd")) {
 				v.setClosed(new Date());
+				v.setStatus(Vulnerability.StatusClosed);
 			} else if (action.equals("closeInStaging")) {
 				v.setStagingClosed(new Date());
+				v.setStatus(Vulnerability.StatusClosedInStaging);
 				env = "Staging";
 			} else {
 				v.setDevClosed(new Date());
+				v.setStatus(Vulnerability.StatusClosedInDev);
 				env = "Development";
 			}
 			String PrependNote = "<small class=\"label pull-left bg-blue\">Closed in " + env + " by "
@@ -248,7 +251,12 @@ public class RemVulnData extends FSActionSupport {
 			else
 				ver.setWorkflowStatus(Verification.RemediationCompleted);
 
+			// Cancelling/closing the verification without an environment close
+			// puts the vulnerability back in the open pool
+			v.setStatus(Vulnerability.StatusOpen);
+
 			em.persist(vn);
+			em.persist(v);
 			em.persist(ver);
 			HibHelper.getInstance().commit();
 
@@ -269,6 +277,7 @@ public class RemVulnData extends FSActionSupport {
 			vuln.setClosed(null);
 			vuln.setDevClosed(null);
 			vuln.setStagingClosed(null);
+			vuln.setStatus(Vulnerability.StatusOpen);
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
 			em.persist(vuln);
