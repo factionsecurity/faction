@@ -1438,7 +1438,7 @@ public class DocxUtils {
             map2.put("${asmtAssessors_Comma}", wrapHTML(assessors_comma, customCSS, ""));
             replaceHTML(mlp.getMainDocumentPart(), map2);
             replaceHTML(mlp.getMainDocumentPart(), cfMap, false);
-            replaceHeaderAndFooter(map);
+            replaceHeaderAndFooter(map, dateMap);
         } finally {
             context.end();
         }
@@ -2593,7 +2593,7 @@ public class DocxUtils {
         }
     }
 
-    private void replaceHeaderAndFooter(final Map<String, String> replacements) {
+    private void replaceHeaderAndFooter(final Map<String, String> replacements, final Map<String, Date> dates) {
         MethodProfiler.ProfileContext context = MethodProfiler.start("DocxUtils", "replaceHeaderAndFooter");
         try {
 			List<Object> list = new ArrayList<>();
@@ -2602,6 +2602,9 @@ public class DocxUtils {
 				if (this.mlp.getHeaderFooterPolicy().getDefaultHeader() != null) {
 					HeaderPart fp = this.mlp.getHeaderFooterPolicy().getDefaultHeader();
 					String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
+                    for (Map.Entry<String, Date> date : dates.entrySet()) {
+                     xml = replaceDateVariable(xml, date.getKey(), date.getValue());
+                    }
 					for (String key : replacements.keySet()) {
 						xml = xml.replace("${" + key + "}", replacements.get(key));
 					}
@@ -2610,6 +2613,9 @@ public class DocxUtils {
 				if (this.mlp.getHeaderFooterPolicy().getFirstHeader() != null) {
 					HeaderPart fp = this.mlp.getHeaderFooterPolicy().getFirstHeader();
 					String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
+                    for (Map.Entry<String, Date> date : dates.entrySet()) {
+                        xml = replaceDateVariable(xml, date.getKey(), date.getValue());
+                    }
 					for (String key : replacements.keySet()) {
 						xml = xml.replace("${" + key + "}", replacements.get(key));
 					}
@@ -2618,6 +2624,9 @@ public class DocxUtils {
 				if (this.mlp.getHeaderFooterPolicy().getEvenHeader() != null) {
 					HeaderPart fp = this.mlp.getHeaderFooterPolicy().getEvenHeader();
 					String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
+                    for (Map.Entry<String, Date> date : dates.entrySet()) {
+                       xml = replaceDateVariable(xml, date.getKey(), date.getValue());
+                    }
 					for (String key : replacements.keySet()) {
 						xml = xml.replace("${" + key + "}", replacements.get(key));
 					}
@@ -2627,6 +2636,9 @@ public class DocxUtils {
 				if (this.mlp.getHeaderFooterPolicy().getDefaultFooter() != null) {
 					FooterPart fp = this.mlp.getHeaderFooterPolicy().getDefaultFooter();
 					String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
+                    for (Map.Entry<String, Date> date : dates.entrySet()) {
+                        xml = replaceDateVariable(xml, date.getKey(), date.getValue());
+                    }
 					for (String key : replacements.keySet()) {
 						xml = xml.replace("${" + key + "}", replacements.get(key));
 					}
@@ -2635,6 +2647,9 @@ public class DocxUtils {
 				if (this.mlp.getHeaderFooterPolicy().getFirstFooter() != null) {
 					FooterPart fp = this.mlp.getHeaderFooterPolicy().getFirstFooter();
 					String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
+                    for (Map.Entry<String, Date> date : dates.entrySet()) {
+                        xml = replaceDateVariable(xml, date.getKey(), date.getValue());
+                    }
 					for (String key : replacements.keySet()) {
 						xml = xml.replace("${" + key + "}", replacements.get(key));
 					}
@@ -2643,6 +2658,9 @@ public class DocxUtils {
 				if (this.mlp.getHeaderFooterPolicy().getEvenFooter() != null) {
 					FooterPart fp = this.mlp.getHeaderFooterPolicy().getEvenFooter();
 					String xml = XmlUtils.marshaltoString(fp.getContents(), false, true);
+                    for (Map.Entry<String, Date> date : dates.entrySet()) {
+                        xml = replaceDateVariable(xml, date.getKey(), date.getValue());
+                    }
 					for (String key : replacements.keySet()) {
 						xml = xml.replace("${" + key + "}", replacements.get(key));
 					}
