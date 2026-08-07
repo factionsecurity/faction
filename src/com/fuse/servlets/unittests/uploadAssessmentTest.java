@@ -3,6 +3,7 @@ package com.fuse.servlets.unittests;
 import static org.junit.Assert.*;
 
 import java.io.IOException;
+import java.util.Date;
 
 import javax.persistence.EntityManager;
 
@@ -10,6 +11,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.junit.Test;
 
+import com.fuse.dao.Assessment;
 import com.fuse.dao.CustomType;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.User;
@@ -80,6 +82,53 @@ public class uploadAssessmentTest extends uploadAssessment{
 			JSONObject errorRow = (JSONObject) errors.get(0);
 			assertEquals(4L, ((Number) errorRow.get("row")).longValue());
 			assertNotNull(errorRow.get("message"));
+		} finally {
+			em.close();
+		}
+	}
+
+	@Test
+	public void assessmentMatchingIsCaseInsensitive() throws IOException {
+		// An existing assessment is stored with an uppercase appId. The CSV row
+		// uses a lowercased appId and a different appName; the match should still
+		// resolve to the existing assessment (its name is reused rather than the
+		// CSV's appName), proving the appId lookup is case-insensitive.
+		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+		HibHelper.getInstance().preJoin();
+		em.joinTransaction();
+
+		Assessment existing = new Assessment();
+		existing.setAppId("APP-001");
+		existing.setName("Pre Existing App");
+		existing.setStart(new Date());
+		existing.setEnd(new Date());
+		em.persist(existing);
+
+		User assessor = new User();
+		assessor.setFname("Case");
+		assessor.setLname("Matcher");
+		assessor.setUsername("cmatcher");
+		assessor.setEmail("case@example.com");
+		em.persist(assessor);
+
+		HibHelper.getInstance().commit();
+
+		try {
+			String csv = "AppID,AppName,Start Date,Days,Type,Assessors,Campaign,Custom Fields\n"
+					+ "app-001,CSV Different Name,20170709,5,Manual Ethical Hacking,Case Matcher,2017 Assessments,{}\n";
+
+			JSONObject result = this.createAssessment(csv, em);
+			assertNotNull(result);
+
+			JSONArray added = (JSONArray) result.get("added");
+			JSONArray errors = (JSONArray) result.get("errors");
+			assertEquals(1, added.size());
+			assertEquals(0, errors.size());
+
+			JSONObject addedRow = (JSONObject) added.get(0);
+			assertEquals("app-001", addedRow.get("appId"));
+			// Name came from the existing assessment, not the CSV row.
+			assertEquals("Pre Existing App", addedRow.get("name"));
 		} finally {
 			em.close();
 		}
