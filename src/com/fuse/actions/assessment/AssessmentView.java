@@ -198,6 +198,12 @@ public class AssessmentView extends FSActionSupport {
 
 			return finalizeAssessment(em, assessment, user);
 
+		} else if (this.action != null && this.action.equals("reopen")) {
+			if (!this.testToken(false))
+				return this.ERRORJSON;
+
+			return reopenAssessment(em, assessment, user);
+
 		} else if (this.update != null && this.update.equals("true")) {
 			if (!this.testToken(false))
 				return this.ERRORJSON;
@@ -947,6 +953,46 @@ public class AssessmentView extends FSActionSupport {
 		Extensions amgr = new Extensions(Extensions.EventType.ASMT_MANAGER);
 		amgr.execute(assessment, AssessmentManager.Operation.Finalize);
 		
+		return this.SUCCESSJSON;
+	}
+
+	private String reopenAssessment(EntityManager em, Assessment assessment, User user) {
+
+		if (!this.isAcadmin()) {
+			JSONObject msg = new JSONObject();
+			msg.put("errors", "Only administrators can reopen a finalized assessment.");
+			msg.put("token", this.get_token());
+			this.jsonResponse = msg.toJSONString();
+			return "finerrorJson";
+		}
+
+		if (!assessment.isFinalized()) {
+			JSONObject msg = new JSONObject();
+			msg.put("errors", "Assessment is not finalized.");
+			msg.put("token", this.get_token());
+			this.jsonResponse = msg.toJSONString();
+			return "finerrorJson";
+		}
+
+		assessment.setReopen();
+		List<Vulnerability> vulns = assessment.getVulns();
+		for (Vulnerability v : vulns) {
+			if (v.getStatus() != null && v.getStatus().contains("Closed")) {
+				v.setStatus(Vulnerability.StatusOpen);
+			}
+		}
+
+		AssessmentQueries.saveAll(this, assessment, em, "Assessment Reopened",
+				assessment.getVulns(), assessment);
+
+		String email = "<b>Assessment Reopened: " + assessment.getName() + " [ " + assessment.getAppId()
+				+ " ] </b><br>";
+		email += "<p>The assessment was reopened by " + user.getFname() + " " + user.getLname() + " on " + new Date()
+				+ "</p>";
+		EmailThread emailThread = new EmailThread(assessment,
+				"Assessment Reopened for " + assessment.getName() + " [ " + assessment.getAppId() + " ]", email);
+		TaskQueueExecutor.getInstance().execute(emailThread);
+
 		return this.SUCCESSJSON;
 	}
 

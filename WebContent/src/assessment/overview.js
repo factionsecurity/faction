@@ -485,7 +485,49 @@ $(function() {
 				cancel: function() { }
 			}
 		});
+	});
 
+	$("#reopen").click(function() {
+		$.confirm({
+			title: 'Are you sure?',
+			content: "Reopening this assessment will unfinalize it and return it to the assessment queue. Any closed vulnerabilities will be reopened.",
+			type: 'orange',
+			buttons: {
+				confirm: function() {
+					$(".content").loading({ overlay: true, base: 0.3 });
+					var data = "action=reopen";
+					data += "&id=" + $("#appid")[0].value.replace("app", "");
+					data += "&_token=" + global._token;
+					$.post("Assessment", data).done(function(resp) {
+						global._token = resp.token;
+						if (resp.result === "success") {
+							$.alert({
+								type: "green",
+								title: 'Success!',
+								content: "Assessment has been reopened",
+								buttons: {
+									ok: function() { location.reload(); }
+								}
+							});
+						} else {
+							$(".content").loading({ destroy: true });
+							var error = "";
+							if (typeof resp.errors == 'undefined')
+								error = "<br>" + resp.message;
+							else {
+								error = resp.errors;
+							}
+							$.alert({
+								type: "red",
+								title: 'Alert!',
+								content: error,
+							});
+						}
+					});
+				},
+				cancel: function() { }
+			}
+		});
 	});
 });
 
