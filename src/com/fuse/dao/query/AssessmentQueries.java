@@ -30,7 +30,27 @@ public class AssessmentQueries {
 	public static int OnlyCompleted = 0;
 	public static int OnlyNonCompleted = 1;
 	public static int All = 2;
-	
+
+	/** Number of days a finalized assessment stays in the assessment queue. */
+	public static final int FINALIZED_QUEUE_RETENTION_DAYS = 30;
+
+	/**
+	 * Builds a MongoDB $or clause that matches assessments that are either
+	 * not yet completed OR were completed within the last
+	 * {@link #FINALIZED_QUEUE_RETENTION_DAYS} days. This keeps recently
+	 * finalized assessments visible in the queue for a grace period.
+	 */
+	private static String nonCompletedOrRecentlyFinalized() {
+		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+		Date cutoff = new Date(System.currentTimeMillis()
+				- (long) FINALIZED_QUEUE_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+		String cutoffStr = sdf.format(cutoff);
+		return "\"$or\" : ["
+				+ " {\"completed\" : {\"$exists\": false}},"
+				+ " {\"completed\" : {\"$gte\": ISODate(\"" + cutoffStr + "\")}}"
+				+ "] ";
+	}
+
 	public static List<Assessment> getAllAssessmentsbk(EntityManager em, User user, int assessmentType){
 		String query = "db.Assessment.aggregate("
 				+ "["
@@ -70,7 +90,7 @@ public class AssessmentQueries {
 		
 		
 		if(assessmentType == OnlyNonCompleted)
-			query += "\"completed\" : {\"$exists\": false}  ";
+			query += nonCompletedOrRecentlyFinalized();
 		else if(assessmentType == OnlyCompleted)
 			query += "\"completed\" : {\"$exists\": true}  ";
 		
@@ -141,7 +161,7 @@ public class AssessmentQueries {
 		query += "\"campaign_id\" : " + CampId +",";
 		
 		if(assessmentType == OnlyNonCompleted)
-			query += "\"completed\" : {\"$exists\": false}  ";
+			query += nonCompletedOrRecentlyFinalized();
 		else if(assessmentType == OnlyCompleted)
 			query += "\"completed\" : {\"$exists\": true}  ";
 		
@@ -172,7 +192,7 @@ public class AssessmentQueries {
 		
 	
 		if(assessmentType == OnlyNonCompleted)
-			query += "\"completed\" : {\"$exists\": false}} , ";
+			query += nonCompletedOrRecentlyFinalized() + "} , ";
 		
 		else if(assessmentType == OnlyCompleted)
 			query += "\"completed\" : {\"$exists\": true}} , ";
@@ -227,7 +247,7 @@ public class AssessmentQueries {
 		
 	
 		if(assessmentType == OnlyNonCompleted)
-			query += "\"completed\" : {\"$exists\": false} , ";
+			query += nonCompletedOrRecentlyFinalized() + " , ";
 		else if(assessmentType == OnlyCompleted)
 			query += "\"completed\" : {\"$exists\": true} , ";
 		

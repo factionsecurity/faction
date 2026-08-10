@@ -84,16 +84,36 @@
 					<bs:row>
 						<bs:mco colsize="12">
 							<bs:row>
-								<bs:mco colsize="6">
-									<div class="form-group"
-										style="padding-left: 30px">
-										<input type="radio" name="r3"
-											class="flat-green" value="1"> Remediated <br /> <br/><input
-											type="radio" name="r3" class="flat-red" checked value="0">
-											Not Remediated
-										</label>
-									</div>
-								</bs:mco>
+							<bs:mco colsize="6">
+								<div class="form-group"
+									style="padding-left: 30px">
+									<input type="radio" name="r3"
+										class="flat-green" value="1"> Remediated <br /> <br/><input
+										type="radio" name="r3" class="flat-red" checked value="0">
+										Not Remediated
+									</label>
+									<br />
+									<br />
+								<div id="closeEnvGroup" style="display:none">
+									<label><u>Close finding in:</u></label><br/>
+									<label style="font-weight:normal"><input type="radio"
+										name="closeEnv" value="" checked> Close retest only</label><br/>
+									<label style="font-weight:normal"><input type="radio"
+										name="closeEnv" value="dev"> Development</label><br/>
+									<label style="font-weight:normal"><input type="radio"
+										name="closeEnv" value="staging"> Staging</label><br/>
+									<label style="font-weight:normal"><input type="radio"
+										name="closeEnv" value="prod"> Production</label>
+								</div>
+								<div id="failActionGroup" style="display:none">
+									<label><u>On failure:</u></label><br/>
+									<label style="font-weight:normal"><input type="radio"
+										name="failAction" value="close" checked> Close verification</label><br/>
+									<label style="font-weight:normal"><input type="radio"
+										name="failAction" value="remediate"> Send to remediation team</label>
+								</div>
+								</div>
+							</bs:mco>
 								<bs:mco colsize="6">
 									<bs:button color="primary" size="md" colsize="12"
 										text="<span class='fa fa-check' ></span> Complete " id="save"></bs:button>
@@ -109,6 +129,38 @@
 						</bs:mco>
 						</div>
 					</bs:row>
+				</bs:box>
+			</bs:mco>
+		</bs:row>
+		<bs:row>
+			<bs:mco colsize="12">
+				<bs:box type="warning"
+					title="<i class='glyphicon glyphicon-adjust'></i> Severity Adjustment">
+					<div class="row">
+						<div class="col-md-4">
+							<label><u>Current Severity:</u></label><br/>
+							<span class="severityBox <s:property value="verification.verificationItems[0].vulnerability.overallStr"/>">
+								<s:property value="verification.verificationItems[0].vulnerability.overallStr"/>
+							</span>
+						</div>
+						<div class="col-md-4">
+							<label><u>New Severity:</u></label><br/>
+							<select id="newOverall" name="newOverall" class="form-control">
+								<s:iterator value="levels" status="stat">
+									<option value="<s:property value="riskId"/>"
+										<s:if test="riskId == verification.verificationItems[0].vulnerability.overall">selected="selected"</s:if>>
+										<s:property value="risk"/>
+									</option>
+								</s:iterator>
+							</select>
+						</div>
+						<div class="col-md-4">
+							<label><u>Annotation (required if changed):</u></label><br/>
+							<input type="text" id="severityNote" name="severityNote"
+								class="form-control"
+								placeholder="Explain why the severity was changed" />
+						</div>
+					</div>
 				</bs:box>
 			</bs:mco>
 		</bs:row>
@@ -204,6 +256,7 @@
 			const reportName = "${verification.assessment.finalReport.filename}";
 			const vulnId = "${verification.verificationItems[0].vulnerability.id}";
 			const verificationId = "${verification.id}";
+			const originalOverall = "${verification.verificationItems[0].vulnerability.overall}";
 			$(function() {
 				$('input[type="radio"].flat-red').iCheck({
 					radioClass : 'iradio_flat-red'
@@ -211,6 +264,13 @@
 				$('input[type="radio"].flat-green').iCheck({
 					radioClass : 'iradio_flat-green'
 				});
+				function toggleCloseEnv() {
+					var pass = $('input:radio[name=r3]:checked').val();
+					$("#closeEnvGroup").toggle(pass == '1');
+					$("#failActionGroup").toggle(pass == '0');
+				}
+				$('input[name=r3]').on('ifChecked', toggleCloseEnv);
+				toggleCloseEnv();
 			});
 		let colors = ["#8E44AD", "#9B59B6", "#2C3E50", "#34495E", "#95A5A6", "#00a65a", "#39cccc", "#00c0ef", "#f39c12", "#dd4b39"];
 		 <%int count = 9;%>

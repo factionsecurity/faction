@@ -30,6 +30,7 @@ import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
 import com.faction.elements.results.InventoryResult;
 import com.fuse.extenderapi.Extensions;
+import com.fuse.utils.FSUtils;
 import com.opencsv.CSVReader;
 
 
@@ -315,10 +316,13 @@ public class uploadAssessment extends HttpServlet {
 	private Assessment getOrCreateAssessmentByAppID(String appid, String appName, EntityManager em){
 		
 		
-		//Find and existing assessment
-		Assessment asmtHold = (Assessment) em.createQuery("from Assessment where appId = :appid")
-				.setParameter("appid", appid)
-				.getResultList().stream().findFirst().orElse(null);
+		//Find and existing assessment (case-insensitive match on appId)
+		Assessment asmtHold = null;
+		if(appid != null && !appid.trim().equals("")) {
+			String query = "{'appId': {$regex: '^" + FSUtils.sanitizeMongo(appid) + "$', $options: 'i'}}";
+			asmtHold = (Assessment) em.createNativeQuery(query, Assessment.class)
+					.getResultList().stream().findFirst().orElse(null);
+		}
 		
 
 		Assessment asmt = new Assessment();

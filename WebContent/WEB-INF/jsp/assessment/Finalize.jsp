@@ -57,6 +57,17 @@
 </bs:mco>
 </s:if>
 </bs:row>
+<s:if test="assessment.finalized && acadmin">
+<bs:row>
+<bs:mco colsize="12">
+<bs:box type="warning" title="Controls">
+<div style="padding-bottom:60px">
+  <bs:button color="warning" size="md" colsize="3" text="Reopen Assessment" id="reopen"></bs:button>
+</div>
+</bs:box>
+</bs:mco>
+</bs:row>
+</s:if>
 <bs:row>
 <bs:mco colsize="12">
 <ul class="timeline">

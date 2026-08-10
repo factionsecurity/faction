@@ -88,6 +88,19 @@ $(function() {
 		let pass = $('input:radio[name=r3]:checked').val();
 		let msgText = pass == '1'? "<span style='color:green'>PASS</span>": "<span style='color:red' >FAIL</span>";
 		let type =  pass == '1'? 'green': 'red';
+
+		let newOverall = $('#newOverall').val();
+		let severityNote = $('#severityNote').val().trim();
+		let severityChanged = newOverall !== originalOverall;
+		if (severityChanged && severityNote === '') {
+			$.alert({
+				title: 'Annotation Required',
+				content: 'You changed the severity. Please annotate why it was downgraded or raised.',
+				type: 'orange'
+			});
+			return;
+		}
+
 		$.confirm({
 			title: "Are you sure?",
 			content: `This will ${msgText} the vulnerability re-test.`,
@@ -100,6 +113,16 @@ $(function() {
 					data += `&notes=${encodeURIComponent(editors["failNotes"].getHTML())}`;
 					data += `&vid=${vulnId}`;
 					data += `&ver=${verificationId}`;
+					if (pass == '1') {
+						data += `&closeEnv=${encodeURIComponent($('input:radio[name=closeEnv]:checked').val() || "")}`;
+					}
+					if (pass == '0') {
+						data += `&failAction=${encodeURIComponent($('input:radio[name=failAction]:checked').val() || "close")}`;
+					}
+					if (severityChanged) {
+						data += `&overall=${encodeURIComponent(newOverall)}`;
+						data += `&severityNote=${encodeURIComponent(severityNote)}`;
+					}
 					$.post("CompleteVerification", data).done( () => {
 
 						document.location = "Verifications";

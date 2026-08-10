@@ -565,6 +565,15 @@ public class Assessment {
 	}
 
 	@Transient
+	public void setReopen() {
+		this.workflow = 0;
+		this.completed = null;
+		if (this.status == null || this.status.equals("Completed")) {
+			this.status = "In Progress";
+		}
+	}
+
+	@Transient
 	public boolean isFinalized() {
 		if (this.workflow != null && this.workflow == 4)
 			return true;
