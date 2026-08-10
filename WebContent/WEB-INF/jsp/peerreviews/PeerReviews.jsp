@@ -47,7 +47,7 @@
 									value="created" /></td>
 							<td><bs:mco colsize="6">
 									<button class="btn btn-md btn-info" text="Download Report"
-										onClick="downPdf(${assessment.id})" id="dl${st.count}">
+										onClick="downloadReport(${assessment.id})" id="dl${st.count}">
 										<i class='fa fa-download'></i> Download Report
 									</button>
 								</bs:mco></td>
@@ -66,8 +66,10 @@
 		<script>
 			var selectedId = -1;
 			
-			function downPdf(id){	
-				var win = window.open('../portal/DownloadReport?aid='+id, '_blank');
+			// Peer review always hands back the editable Word document -- the
+			// reviewer marks it up, so a PDF is no use to them.
+			function downloadReport(id){
+				var win = window.open('../portal/DownloadReport?aid='+id+'&format=docx', '_blank');
 			}
 			function trackChanges(id){			
 				document.location="TrackChanges?prqueue=true&prid="+id;
