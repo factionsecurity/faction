@@ -82,20 +82,23 @@ public class AssessmentQueries {
 	}
 	
 	public static List<Assessment>getAllAssessments(EntityManager em, User user, int assessmentType ){
-		
- 		String query = "db.Assessment.find({ \"$query\" : {";
+
+		// Clauses are joined rather than concatenated so that All (which adds no
+		// completed clause) doesn't leave a dangling comma in the query document.
+		List<String> clauses = new ArrayList<String>();
 		if(!user.getPermissions().isManager() || user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
-			query += "\"assessor\" : "+user.getId() + "," ;
+			clauses.add("\"assessor\" : " + user.getId());
 		}
-		
-		
+
+
 		if(assessmentType == OnlyNonCompleted)
-			query += nonCompletedOrRecentlyFinalized();
+			clauses.add(nonCompletedOrRecentlyFinalized());
 		else if(assessmentType == OnlyCompleted)
-			query += "\"completed\" : {\"$exists\": true}  ";
-		
-		
-		query +="}, \"$orderby\": { \"start\" : 1 }})";
+			clauses.add("\"completed\" : {\"$exists\": true}");
+
+
+		String query = "db.Assessment.find({ \"$query\" : {" + String.join(", ", clauses)
+				+ "}, \"$orderby\": { \"start\" : 1 }})";
 		List<Assessment> assessments = (List<Assessment>)em.createNativeQuery(
 				query, Assessment.class).getResultList();
 		
