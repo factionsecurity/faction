@@ -122,7 +122,35 @@ public class Reports extends FSActionSupport {
 
 	}
 
-	@Action(value = "DownloadReport", results = { 
+	/**
+	 * Reports whether a second format is still rendering for an already-stored
+	 * report. Report generation commits the DOCX as soon as it exists and
+	 * appends the PDF afterwards, so CheckStatus can go green while the PDF is
+	 * still minutes away; the finalize page polls this to know when to pick up
+	 * the rest of the formats. 202 = still rendering.
+	 */
+	@Action(value = "CheckPdfStatus", results = {
+			@Result(name = "success202", type = "httpheader", params = { "status", "202" }),
+			@Result(name = "success200", location = "/WEB-INF/jsp/assessment/SuccessMessageJSON.jsp")
+
+	})
+	public String checkPdfStatus() {
+		Assessment assessment = em.find(Assessment.class, aid);
+		if (assessment == null)
+			return ERROR;
+
+		FinalReport finalreport = retest ? assessment.getRetestReport() : assessment.getFinalReport();
+		if (finalreport == null)
+			return ERROR;
+
+		if (finalreport.getPdfPending())
+			return "success202";
+
+		this._message = "" + finalreport.getVariantCount();
+		return "success200";
+	}
+
+	@Action(value = "DownloadReport", results = {
 			@Result(
 					name = "report", 
 					type = "stream", 

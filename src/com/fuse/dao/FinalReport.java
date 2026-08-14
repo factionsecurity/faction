@@ -49,6 +49,8 @@ public class FinalReport{
 	private Integer variantCount;
 	@Getter @Setter
 	private String encryptedReportPassword;
+	@Setter
+	private Boolean pdfPending;
 
 	public Long getId() {
 		return id;
@@ -121,6 +123,16 @@ public class FinalReport{
 	}
 	public int getVariantCount() {
 		return (variantCount == null || variantCount <= 0) ? 1 : variantCount;
+	}
+
+	/**
+	 * True while a PDF variant is still rendering for this report. The DOCX is
+	 * committed and downloadable as soon as it exists, so a report can be
+	 * usable and still be waiting on its second format. Absent on every record
+	 * written before the split, hence the null-safe read.
+	 */
+	public boolean getPdfPending() {
+		return pdfPending != null && pdfPending;
 	}
 
 	/**

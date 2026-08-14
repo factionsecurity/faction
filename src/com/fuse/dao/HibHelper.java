@@ -122,6 +122,21 @@ public class HibHelper {
 		}
 	}
 
+	/**
+	 * Rolls back whatever transaction is bound to the calling thread, if any.
+	 * A unit of work that fails part-way must not leave its transaction
+	 * associated with the thread: the next preJoin() would try to begin a
+	 * nested one and fail, taking the following unit of work down with it.
+	 */
+	public void rollback() {
+		try {
+			if (tm != null && tm.getStatus() != Status.STATUS_NO_TRANSACTION)
+				tm.rollback();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
 	public void closeEMF() {
 		emf.close();
 
