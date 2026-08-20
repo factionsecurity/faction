@@ -126,9 +126,10 @@ public class OpenVulns extends FSActionSupport {
 				}
 
 				if (this.closed.equals("") && !this.open.equals("")) {
-					// open = anything whose status does not say "Closed"
+					// open = not closed in production. Items closed in dev
+					// or staging are still open in prod, so they stay here.
 					newMongo += " 'vuln.closed' : {'$exists':false}, "
-							+ " 'vuln.status' : {'$nin': " + VulnerabilityQueries.closedStatusArray() + "}, ";
+							+ " 'vuln.status' : {'$ne': \"" + Vulnerability.StatusClosed + "\"}, ";
 				} else if (!this.closed.equals("") && this.open.equals("")) { // show only closed items
 					newMongo += " '$or' : [ {'vuln.closed' : {'$exists':true}}, "
 							+ "{'vuln.status' : {'$in': " + VulnerabilityQueries.closedStatusArray() + "}} ], ";
