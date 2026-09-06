@@ -1,10 +1,15 @@
 # OWASP - FACTION PenTesting Report Generation and Collaboration Framework
-
  ![GitHub last commit](https://img.shields.io/github/last-commit/factionsecurity/faction) ![GitHub Release Date - Published_At](https://img.shields.io/github/release-date/factionsecurity/faction) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10120/badge)](https://www.bestpractices.dev/projects/10120)
 
 [![](https://img.shields.io/badge/null0perat0r-it?style=flat-square&logo=mastodon&labelColor=white&color=white&link=https%3A%2F%2Finfosec.exchange%2F%40null0perat0r)](https://infosec.exchange/@null0perat0r)
 [![Bluesky](https://img.shields.io/badge/Bluesky-0285FF?logo=bluesky&logoColor=fff)](https://bsky.app/profile/factionsecurity.com)
 
+
+## OWASP Faction 2.0 Has been released! 🎉
+
+Faction 2.0 is a major update and will begin replacing this version. You can run it [here](https://github.com/factionsecurity/OWASP-Faction-2)
+
+## OWASP Faction 1.X Info
 ___Faction is now an OWASP Project! You can find more information [here](https://owasp.org/www-project-faction/)___
 
 ![image](https://github.com/factionsecurity/faction/assets/2343831/d9237bed-302f-4e6a-9716-22ae88d0dc36)
