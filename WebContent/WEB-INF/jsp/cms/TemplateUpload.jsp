@@ -36,10 +36,10 @@
 <bs:select name="Assessment Type" colsize="12" id="type">
 	<s:iterator value="types">
 		<s:if test="selectedTemplate.type.id == id">
-			<option value="${id }" selected="selected">${type}</option>
+			<option value="${id }" selected="selected"><s:property value="type"/></option>
 		</s:if>
 		<s:else>
-			<option value="${id }">${type}</option>
+			<option value="${id }"><s:property value="type"/></option>
 			
 		</s:else>
 	</s:iterator>

@@ -185,7 +185,7 @@ $(function() {
 							content: content
 						});
 
-					}).error(function() {
+					}).fail(function() {
 						$.alert({
 							title: 'Error!',
 							content: "There is a problem with your request."

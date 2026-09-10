@@ -296,6 +296,9 @@ public class AppStore {
 		
 		JarInputStream jarStream = new JarInputStream(fis);
 		Manifest manifest = jarStream.getManifest();
+		if (manifest == null) {
+			throw new IOException("Extension JAR is missing META-INF/MANIFEST.MF");
+		}
 		Attributes attr = manifest.getMainAttributes();
 		String title = attr.getValue("Title");
 		String author = attr.getValue("Author");
@@ -338,21 +341,27 @@ public class AppStore {
 					logo.write(data, 0, size);
 				}
 			}
-			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.ApplicationInventory")) {
+			if (!entry.isDirectory() && entry.getName().equals("META-INF/services/com.faction.extender.ApplicationInventory")) {
 				isInventoryApp = true;
 			}
-			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.AssessmentManager")) {
+			if (!entry.isDirectory() && entry.getName().equals("META-INF/services/com.faction.extender.AssessmentManager")) {
 				isAssessmentApp = true;
 			}
-			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.ReportManager")) {
+			if (!entry.isDirectory() && entry.getName().equals("META-INF/services/com.faction.extender.ReportManager")) {
 				isReportingApp=true;
 			}
-			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.VulnerabilityManager")) {
+			if (!entry.isDirectory() && entry.getName().equals("META-INF/services/com.faction.extender.VulnerabilityManager")) {
 				isVulnerabilityApp = true;
 			}
-			if (!entry.isDirectory() && entry.getName().endsWith("com.faction.extender.VerificationManager")) {
+			if (!entry.isDirectory() && entry.getName().equals("META-INF/services/com.faction.extender.VerificationManager")) {
 				isVerificationApp = true;
 			}
+		}
+		if (!(isAssessmentApp || isVerificationApp || isVulnerabilityApp || isInventoryApp || isReportingApp)) {
+			throw new IOException("Extension JAR does not register any FACTION extension service (META-INF/services/com.faction.extender.*)");
+		}
+		if (title == null || author == null || version == null || url == null) {
+			throw new IOException("Extension JAR manifest must define Title, Author, Version and URL");
 		}
 		//reset file pointer
 		FileChannel     fc = fis.getChannel();

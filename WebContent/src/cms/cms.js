@@ -68,7 +68,7 @@ $(function(){
 									content: resp.message
 								})
 							}
-						}).error(function(){
+						}).fail(function(){
 							console.log("error");
 						});
 					}
@@ -181,7 +181,7 @@ $(function(){
                                 content: resp.message
                             });
                         }
-                    }).error(function(){
+                    }).fail(function(){
                         console.log("error");
                     });
                 }

@@ -129,6 +129,10 @@ public class Options extends FSActionSupport {
 				this._message = "Name is Empty";
 				return this.ERRORJSON;
 			}
+			if (FSUtils.containsHTML(this.name)) {
+				this._message = "Assessment Type name cannot contain HTML";
+				return this.ERRORJSON;
+			}
 			AssessmentType AT = AssessmentQueries.getAssessmentTypeByName(em, this.name);
 
 			if (AT != null) {
@@ -544,12 +548,21 @@ public class Options extends FSActionSupport {
 		if (!this.testToken(false))
 			return this.ERRORJSON;
 
+		if (this.title == null || this.title.length < 2) {
+			this._message = "Both titles are required";
+			return this.ERRORJSON;
+		}
+		if (FSUtils.containsHTML(this.title[0]) || FSUtils.containsHTML(this.title[1])) {
+			this._message = "Titles cannot contain HTML";
+			return this.ERRORJSON;
+		}
+
 		EMS = (SystemSettings) em.createQuery("from SystemSettings").getResultList().stream().findFirst().orElse(null);
 		if (EMS == null) {
 			EMS = new SystemSettings();
 		}
-		EMS.setBoldTitle(this.title[0]);
-		EMS.setOtherTitle(this.title[1]);
+		EMS.setBoldTitle(this.title[0].trim());
+		EMS.setOtherTitle(this.title[1].trim());
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		em.persist(EMS);
@@ -632,6 +645,14 @@ public class Options extends FSActionSupport {
 
 		if (t == null) {
 			this._message = "Assessment Type does not exist";
+			return this.ERRORJSON;
+		}
+		if (this.getName() == null || this.getName().trim().equals("")) {
+			this._message = "Name is Empty";
+			return this.ERRORJSON;
+		}
+		if (FSUtils.containsHTML(this.getName())) {
+			this._message = "Assessment Type name cannot contain HTML";
 			return this.ERRORJSON;
 		}
 

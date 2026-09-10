@@ -79,7 +79,9 @@
 								</h4>
 								${message }
 							</div>
-							<script src="plugins/jQuery/jQuery-2.1.4.min.js"
+							<script src="plugins/jQuery/jquery-3.7.1.min.js"
+								type="text/javascript"></script>
+							<script src="plugins/jQuery/jquery-migrate-3.6.0.min.js"
 								type="text/javascript"></script>
 							<script type="text/javascript">
 								/*$(function() {

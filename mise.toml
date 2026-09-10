@@ -92,7 +92,7 @@ run = "docker-compose -f docker-compose-hotreload.yml restart tomcat-service"
 
 [tasks."hotreload:logs"]
 description = "HotReload: View Logs"
-run = "docker-compose -f docker-compose-hotreload.yml logs -f tomcat-service"
+run = "docker compose -f docker-compose-hotreload.yml logs -f tomcat-service"
 
 [tasks."hotreload:stop"]
 description = "HotReload: Stop"

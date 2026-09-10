@@ -575,8 +575,14 @@ public class Extensions {
 
 		List<AppStore> apps = this.sortApps();
 		for (AppStore app : apps) {
-			
+			// sortApps() only returns extensions that are enabled *and* registered for this
+			// event type, so bytecode from a disabled (or unrelated) extension is never
+			// loaded into the JVM. ServiceLoader runs static initialisers and constructors
+			// as soon as it iterates, so the filtering has to happen before this point.
 			URLClassLoader extensionLoader = dynamicExtensionClassLoader(app);
+			if (extensionLoader == null) {
+				continue;
+			}
 			ClassLoader currentClassLoader = Thread.currentThread().getContextClassLoader();
 
 			// Load Assessment Manager Extensions
@@ -667,13 +673,37 @@ public class Extensions {
 		}
 	}
 
+	/**
+	 * Installed extensions that are enabled and have opted in to the event type this
+	 * instance serves, in configured order. Disabled extensions are never returned and
+	 * therefore never class-loaded.
+	 */
 	private List<AppStore> sortApps() {
 		EntityManager em = entityManagerFactory.createEntityManager();
 		try {
 			List<AppStore> apps = em.createQuery("from AppStore order by order").getResultList();
-			return apps;
+			return apps.stream()
+					.filter(app -> Boolean.TRUE.equals(app.getEnabled()) && this.isEnabledFor(app))
+					.collect(Collectors.toList());
 		} finally {
 			em.close();
+		}
+	}
+
+	private boolean isEnabledFor(AppStore app) {
+		switch (this.type) {
+		case ASMT_MANAGER:
+			return Boolean.TRUE.equals(app.getAssessmentEnabled());
+		case REPORT_MANAGER:
+			return Boolean.TRUE.equals(app.getReportEnabled());
+		case VULN_MANAGER:
+			return Boolean.TRUE.equals(app.getVulnerabilityEnabled());
+		case VER_MANAGER:
+			return Boolean.TRUE.equals(app.getVerificationEnabled());
+		case INVENTORY:
+			return Boolean.TRUE.equals(app.getInventoryEnabled());
+		default:
+			return false;
 		}
 	}
 

@@ -92,7 +92,7 @@
 								<bs:row>
 									<bs:select name="Assessment Type" colsize="6" id="asmtType">
 										<s:iterator value="types">
-											<option value="${id }">${type }</option>
+											<option value="${id }"><s:property value="type"/></option>
 										</s:iterator>
 									</bs:select>
 									<bs:select name="Assessment Team" colsize="6" id="asmtTeam">

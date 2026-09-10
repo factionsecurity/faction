@@ -1,8 +1,9 @@
 /*
     <!-- REQUIRED JS SCRIPTS -->
 
-    <!-- jQuery 2.1.4 -->
-    <script src="../plugins/jQuery/jQuery-2.1.4.min.js"></script>
+    <!-- jQuery 3.7.1 (+ migrate shim for legacy plugins) -->
+    <script src="../plugins/jQuery/jquery-3.7.1.min.js"></script>
+    <script src="../plugins/jQuery/jquery-migrate-3.6.0.min.js"></script>
     <!-- Bootstrap 3.3.5 -->
     <script src="../bootstrap/js/bootstrap.min.js"></script>
     <!-- AdminLTE App -->
@@ -262,7 +263,7 @@
 				    			content: content
 				    		});
 				    		
-				    	}).error(function(){
+				    	}).fail(function(){
 			    			$.alert({
 				    			title: 'Error!',
 				    			content: "There is a problem with your request."
