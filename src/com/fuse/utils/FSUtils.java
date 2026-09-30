@@ -2,6 +2,7 @@ package com.fuse.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,6 +14,8 @@ import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.GeneralSecurityException;
@@ -47,6 +50,7 @@ import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.apache.struts2.ServletActionContext;
 import javax.persistence.EntityManager;
 import javax.servlet.ServletContext;
 
@@ -194,6 +198,44 @@ public class FSUtils {
 	 * reject plain-text settings (titles, type names) that are later shown in the
 	 * UI. Output encoding is still applied at render time; this is defence in depth.
 	 */
+	/**
+	 * Returns the uploaded file after checking it really is a multipart temp file that
+	 * Struts wrote under the servlet temp directory (or java.io.tmpdir when no servlet
+	 * context is available, e.g. in unit tests). Struts already decides where uploads
+	 * land, so this is defence in depth: it pins the path we read to the upload area
+	 * and makes that visible to static analysis.
+	 */
+	public static File checkUploadedFile(File upload) throws IOException {
+		if (upload == null) {
+			throw new IOException("No file uploaded");
+		}
+		Path real = upload.toPath().toRealPath();
+		for (Path base : uploadDirectories()) {
+			if (real.startsWith(base)) {
+				return real.toFile();
+			}
+		}
+		throw new IOException("Uploaded file is outside the upload directory");
+	}
+
+	private static List<Path> uploadDirectories() {
+		List<Path> dirs = new ArrayList<>();
+		try {
+			ServletContext ctx = ServletActionContext.getServletContext();
+			Object tmp = ctx == null ? null : ctx.getAttribute("javax.servlet.context.tempdir");
+			if (tmp instanceof File) {
+				dirs.add(((File) tmp).toPath().toRealPath());
+			}
+		} catch (Exception ignore) {
+			// no action context (unit tests, background threads)
+		}
+		try {
+			dirs.add(Paths.get(System.getProperty("java.io.tmpdir")).toRealPath());
+		} catch (Exception ignore) {
+		}
+		return dirs;
+	}
+
 	public static boolean containsHTML(String value) {
 		return value != null && (value.indexOf('<') >= 0 || value.indexOf('>') >= 0);
 	}

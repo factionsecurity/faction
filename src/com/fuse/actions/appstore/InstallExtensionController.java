@@ -16,6 +16,7 @@ import java.util.List;
 
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.AppStore;
+import com.fuse.utils.FSUtils;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.HibHelper;
 import com.opensymphony.xwork2.interceptor.annotations.Before;
@@ -76,7 +77,7 @@ public class InstallExtensionController extends FSActionSupport {
 		if (app == null || file_data == null) {
 			return this.errorJson("Extension not found or no file uploaded");
 		}
-		try (FileInputStream fis = new FileInputStream(file_data)) {
+		try (FileInputStream fis = new FileInputStream(FSUtils.checkUploadedFile(file_data))) {
 			app.updateApp(fis);
 		} catch (Exception ex) {
 			AuditLog.audit(this, "Rejected extension update upload: " + ex.getMessage(), AuditLog.UserAction, true);
@@ -99,7 +100,7 @@ public class InstallExtensionController extends FSActionSupport {
 			return this.errorJson("No file uploaded");
 		}
 		AppStore preview = new AppStore();
-		try (FileInputStream fis = new FileInputStream(file_data)) {
+		try (FileInputStream fis = new FileInputStream(FSUtils.checkUploadedFile(file_data))) {
 			preview.parseJar(fis);
 		} catch (Exception ex) {
 			AuditLog.audit(this, "Rejected extension upload: " + ex.getMessage(), AuditLog.UserAction, true);
