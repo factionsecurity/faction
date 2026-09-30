@@ -1,7 +1,0 @@
-[mcp_servers.faction]
-command = "node"
-args = ["/Volumes/extended/Code/faction-all/free/faction-mcp/dist/index.js"]
-
-[mcp_servers.faction.env]
-FACTION_API_KEY = "bf9bff1a-fc5d-4e86-adc3-86bb9165d180"
-FACTION_BASE_URL = "https://acme.factionsecurity.com"
