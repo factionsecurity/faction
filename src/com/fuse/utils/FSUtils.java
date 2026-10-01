@@ -2,6 +2,7 @@ package com.fuse.utils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -13,8 +14,11 @@ import java.net.MalformedURLException;
 import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.spec.KeySpec;
@@ -43,8 +47,10 @@ import java.util.zip.ZipInputStream;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
+import org.apache.struts2.ServletActionContext;
 import javax.persistence.EntityManager;
 import javax.servlet.ServletContext;
 
@@ -185,6 +191,53 @@ public class FSUtils {
 		/// Adding regex for MS Word table copy and paste that mess everything up.
 		return sanitized.replaceAll("(style=\".*? )(windowtext)", "$1").replaceAll("style=\"line-height:normal\"", "");
 
+	}
+
+	/**
+	 * True when a value contains characters that could open an HTML tag. Used to
+	 * reject plain-text settings (titles, type names) that are later shown in the
+	 * UI. Output encoding is still applied at render time; this is defence in depth.
+	 */
+	/**
+	 * Returns the uploaded file after checking it really is a multipart temp file that
+	 * Struts wrote under the servlet temp directory (or java.io.tmpdir when no servlet
+	 * context is available, e.g. in unit tests). Struts already decides where uploads
+	 * land, so this is defence in depth: it pins the path we read to the upload area
+	 * and makes that visible to static analysis.
+	 */
+	public static File checkUploadedFile(File upload) throws IOException {
+		if (upload == null) {
+			throw new IOException("No file uploaded");
+		}
+		Path real = upload.toPath().toRealPath();
+		for (Path base : uploadDirectories()) {
+			if (real.startsWith(base)) {
+				return real.toFile();
+			}
+		}
+		throw new IOException("Uploaded file is outside the upload directory");
+	}
+
+	private static List<Path> uploadDirectories() {
+		List<Path> dirs = new ArrayList<>();
+		try {
+			ServletContext ctx = ServletActionContext.getServletContext();
+			Object tmp = ctx == null ? null : ctx.getAttribute("javax.servlet.context.tempdir");
+			if (tmp instanceof File) {
+				dirs.add(((File) tmp).toPath().toRealPath());
+			}
+		} catch (Exception ignore) {
+			// no action context (unit tests, background threads)
+		}
+		try {
+			dirs.add(Paths.get(System.getProperty("java.io.tmpdir")).toRealPath());
+		} catch (Exception ignore) {
+		}
+		return dirs;
+	}
+
+	public static boolean containsHTML(String value) {
+		return value != null && (value.indexOf('<') >= 0 || value.indexOf('>') >= 0);
 	}
 
 	public static String sanitizeGUID(String guid) {
@@ -456,54 +509,101 @@ public class FSUtils {
 
 	}
 
+	// ---------------------------------------------------------------------
+	// Symmetric encryption of stored secrets (SMTP/LDAP passwords, API keys,
+	// keystores, report passwords). The key is derived from FACTION_SECRET_KEY.
+	//
+	// Current format ("v2"):  $AESGCM$ + base64( salt[16] || iv[12] || AES-GCM ciphertext+tag )
+	//   - a fresh random salt and IV are generated for every value, so identical
+	//     plaintexts never produce identical ciphertexts and the PBKDF2 salt is
+	//     never reused.
+	// Legacy format (pre 1.8.14): base64( AES/ECB ciphertext ) with a constant
+	//   PBKDF2 salt. It is still *read* so that values already in the database
+	//   keep working; it is never written. Values are re-encrypted in the new
+	//   format the next time they are saved.
+	// ---------------------------------------------------------------------
+	private static final String GCM_PREFIX = "$AESGCM$";
+	private static final int GCM_SALT_LENGTH = 16;
+	private static final int GCM_IV_LENGTH = 12;
+	private static final int GCM_TAG_BITS = 128;
+	private static final int PBKDF2_ITERATIONS = 65536;
+	private static final int AES_KEY_BITS = 256;
+	private static final byte[] LEGACY_SALT = "f04ce910-bedb-4d8f-a023-4d2441dc0fba".getBytes();
+
+	private static SecretKey deriveKey(byte[] salt) throws GeneralSecurityException {
+		String secret = getEnv("FACTION_SECRET_KEY");
+		if (secret == null || secret.isEmpty()) {
+			throw new IllegalStateException("FACTION_SECRET_KEY is not set");
+		}
+		MessageDigest md = MessageDigest.getInstance("SHA-256");
+		byte[] hash = md.digest(secret.getBytes(StandardCharsets.UTF_8));
+		char[] b64hash = Base64.encodeBase64String(hash).toCharArray();
+
+		SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+		KeySpec spec = new PBEKeySpec(b64hash, salt, PBKDF2_ITERATIONS, AES_KEY_BITS);
+		SecretKey tmp = factory.generateSecret(spec);
+		return new SecretKeySpec(tmp.getEncoded(), "AES");
+	}
+
+	private static String encryptToString(byte[] plaintext) throws GeneralSecurityException {
+		SecureRandom random = new SecureRandom();
+		byte[] salt = new byte[GCM_SALT_LENGTH];
+		byte[] iv = new byte[GCM_IV_LENGTH];
+		random.nextBytes(salt);
+		random.nextBytes(iv);
+
+		Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+		cipher.init(Cipher.ENCRYPT_MODE, deriveKey(salt), new GCMParameterSpec(GCM_TAG_BITS, iv));
+		byte[] ciphertext = cipher.doFinal(plaintext);
+
+		byte[] out = new byte[GCM_SALT_LENGTH + GCM_IV_LENGTH + ciphertext.length];
+		System.arraycopy(salt, 0, out, 0, GCM_SALT_LENGTH);
+		System.arraycopy(iv, 0, out, GCM_SALT_LENGTH, GCM_IV_LENGTH);
+		System.arraycopy(ciphertext, 0, out, GCM_SALT_LENGTH + GCM_IV_LENGTH, ciphertext.length);
+		return GCM_PREFIX + Base64.encodeBase64String(out);
+	}
+
+	private static byte[] decryptToBytes(String data) throws GeneralSecurityException {
+		if (data == null) {
+			throw new IllegalArgumentException("nothing to decrypt");
+		}
+		if (data.startsWith(GCM_PREFIX)) {
+			byte[] raw = Base64.decodeBase64(data.substring(GCM_PREFIX.length()));
+			int headerLength = GCM_SALT_LENGTH + GCM_IV_LENGTH;
+			if (raw.length < headerLength + (GCM_TAG_BITS / 8)) {
+				throw new GeneralSecurityException("ciphertext too short");
+			}
+			byte[] salt = Arrays.copyOfRange(raw, 0, GCM_SALT_LENGTH);
+			byte[] iv = Arrays.copyOfRange(raw, GCM_SALT_LENGTH, headerLength);
+			byte[] ciphertext = Arrays.copyOfRange(raw, headerLength, raw.length);
+
+			Cipher cipher = Cipher.getInstance("AES/GCM/NoPadding");
+			cipher.init(Cipher.DECRYPT_MODE, deriveKey(salt), new GCMParameterSpec(GCM_TAG_BITS, iv));
+			return cipher.doFinal(ciphertext);
+		}
+		// Legacy AES/ECB value written by an earlier release. Read-only.
+		Cipher cipher = Cipher.getInstance("AES/ECB/PKCS5Padding");
+		cipher.init(Cipher.DECRYPT_MODE, deriveKey(LEGACY_SALT));
+		return cipher.doFinal(Base64.decodeBase64(data));
+	}
+
 	public static String decryptPassword(String password) {
 		try {
-			MessageDigest md = MessageDigest.getInstance("SHA-256");
-			String secret = System.getenv("FACTION_SECRET_KEY");
-			byte[] hash = md.digest(secret.getBytes());
-			char[] b64hash = Base64.encodeBase64String(hash).toCharArray();
-
-			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-			KeySpec spec = new PBEKeySpec(b64hash, "f04ce910-bedb-4d8f-a023-4d2441dc0fba".getBytes(), 65536, 256);
-			SecretKey tmp = factory.generateSecret(spec);
-			SecretKey SecKey = new SecretKeySpec(tmp.getEncoded(), "AES");
-
-			Cipher AesCipher = Cipher.getInstance("AES");
-			AesCipher.init(Cipher.DECRYPT_MODE, SecKey);
-			byte[] cypherText = Base64.decodeBase64(password);
-			byte[] bytePlainText = AesCipher.doFinal(cypherText);
-			return new String(bytePlainText);
-
+			return new String(decryptToBytes(password), StandardCharsets.UTF_8);
 		} catch (Exception ex) {
 			return "";
 		}
-
 	}
-	public static byte [] decryptBytes(String data) {
+
+	public static byte[] decryptBytes(String data) {
 		try {
-			MessageDigest md = MessageDigest.getInstance("SHA-256");
-			String secret = System.getenv("FACTION_SECRET_KEY");
-			byte[] hash = md.digest(secret.getBytes());
-			char[] b64hash = Base64.encodeBase64String(hash).toCharArray();
-
-			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-			KeySpec spec = new PBEKeySpec(b64hash, "f04ce910-bedb-4d8f-a023-4d2441dc0fba".getBytes(), 65536, 256);
-			SecretKey tmp = factory.generateSecret(spec);
-			SecretKey SecKey = new SecretKeySpec(tmp.getEncoded(), "AES");
-
-			Cipher AesCipher = Cipher.getInstance("AES");
-			AesCipher.init(Cipher.DECRYPT_MODE, SecKey);
-			byte[] cypherText = Base64.decodeBase64(data);
-			byte[] bytePlainText = AesCipher.doFinal(cypherText);
-			return bytePlainText;
-
+			return decryptToBytes(data);
 		} catch (Exception ex) {
 			System.out.println(ex);
 			return null;
 		}
-
 	}
-	
+
 	public static String md5hash(String data) {
 		try {
 			MessageDigest md;
@@ -529,58 +629,20 @@ public class FSUtils {
 
 	public static String encryptPassword(String password) {
 		try {
-
-			MessageDigest md = MessageDigest.getInstance("SHA-256");
-			String secret = System.getenv("FACTION_SECRET_KEY");
-			byte[] hash = md.digest(secret.getBytes());
-			char[] b64hash = Base64.encodeBase64String(hash).toCharArray();
-
-			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-			KeySpec spec = new PBEKeySpec(b64hash, "f04ce910-bedb-4d8f-a023-4d2441dc0fba".getBytes(), 65536, 256);
-			SecretKey tmp = factory.generateSecret(spec);
-			SecretKey SecKey = new SecretKeySpec(tmp.getEncoded(), "AES");
-
-			Cipher AesCipher = Cipher.getInstance("AES");
-
-			byte[] byteText = password.getBytes();
-
-			AesCipher.init(Cipher.ENCRYPT_MODE, SecKey);
-			byte[] byteCipherText = AesCipher.doFinal(byteText);
-
-			return Base64.encodeBase64String(byteCipherText);
-
-		} catch (Exception Ex) {
-			Ex.printStackTrace();
+			return encryptToString(password.getBytes(StandardCharsets.UTF_8));
+		} catch (Exception ex) {
+			ex.printStackTrace();
 			return null;
 		}
-
 	}
-	public static String encryptBytes(byte [] data) {
+
+	public static String encryptBytes(byte[] data) {
 		try {
-
-			MessageDigest md = MessageDigest.getInstance("SHA-256");
-			String secret = System.getenv("FACTION_SECRET_KEY");
-			byte[] hash = md.digest(secret.getBytes());
-			char[] b64hash = Base64.encodeBase64String(hash).toCharArray();
-
-			SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
-			KeySpec spec = new PBEKeySpec(b64hash, "f04ce910-bedb-4d8f-a023-4d2441dc0fba".getBytes(), 65536, 256);
-			SecretKey tmp = factory.generateSecret(spec);
-			SecretKey SecKey = new SecretKeySpec(tmp.getEncoded(), "AES");
-
-			Cipher AesCipher = Cipher.getInstance("AES");
-
-
-			AesCipher.init(Cipher.ENCRYPT_MODE, SecKey);
-			byte[] byteCipherText = AesCipher.doFinal(data);
-
-			return Base64.encodeBase64String(byteCipherText);
-
-		} catch (Exception Ex) {
-			Ex.printStackTrace();
+			return encryptToString(data);
+		} catch (Exception ex) {
+			ex.printStackTrace();
 			return null;
 		}
-
 	}
 
 	

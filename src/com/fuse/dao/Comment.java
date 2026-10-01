@@ -1,5 +1,7 @@
 package com.fuse.dao;
 
+import com.fuse.utils.FSUtils;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -128,11 +130,11 @@ public class Comment {
 	}
 
 	public void setSummary1_notes(String summary1_notes) {
-		this.summary1_notes = summary1_notes;
+		this.summary1_notes = FSUtils.sanitizeHTML(summary1_notes);
 	}
 
 	public void setSummary2_notes(String summary2_notes) {
-		this.summary2_notes = summary2_notes;
+		this.summary2_notes = FSUtils.sanitizeHTML(summary2_notes);
 	}
 
 	public List<User> getCommenters() {

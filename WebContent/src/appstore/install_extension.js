@@ -38,7 +38,11 @@ class InstallExtension {
 			$("#appFile").fileinput("upload");
 		}).on("fileuploaded", function(_event, data){
 			if(data.response.error){
-				console.log("Error thing");
+				$.alert({
+					title: "Error",
+					type: "red",
+					content: $("<div/>").text(data.response.error).html()
+				});
 			}else{
 				_this.loadPluginPage(data.response.extension_info);
 			}

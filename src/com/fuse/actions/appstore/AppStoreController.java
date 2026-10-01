@@ -80,6 +80,7 @@ public class AppStoreController extends FSActionSupport{
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
 			em.persist(app);
+			AuditLog.audit(this, "Extension enabled: " + app.getName() + " " + app.getVersion(), AuditLog.UserAction, false);
 			HibHelper.getInstance().commit();
 		}
 		_result="success";
@@ -95,6 +96,7 @@ public class AppStoreController extends FSActionSupport{
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
 			em.persist(app);
+			AuditLog.audit(this, "Extension disabled: " + app.getName() + " " + app.getVersion(), AuditLog.UserAction, false);
 			HibHelper.getInstance().commit();
 			_result="success";
 			return MESSAGEJSON;

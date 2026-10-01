@@ -10,6 +10,7 @@ import org.apache.struts2.convention.annotation.Action;
 import org.apache.struts2.convention.annotation.Namespace;
 
 import com.fuse.actions.FSActionSupport;
+import com.fuse.utils.FSUtils;
 import com.fuse.dao.Assessment;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.FinalReport;
@@ -71,7 +72,7 @@ public class UploadReport extends FSActionSupport {
 			return this.ERRORJSON;
 		}
 
-		byte[] fileBytes = Files.readAllBytes(uploadReport.toPath());
+		byte[] fileBytes = Files.readAllBytes(FSUtils.checkUploadedFile(uploadReport).toPath());
 		String b64 = Base64.encodeBase64String(fileBytes);
 		String fileType = isPdf ? "pdf" : "docx";
 

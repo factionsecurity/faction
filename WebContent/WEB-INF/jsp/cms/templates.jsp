@@ -35,7 +35,7 @@ height: 700px;
   <bs:mco colsize="12">
   <<bs:datatable columns="Template Name,Team" classname="" id="" >
   <s:iterator var="reports">
-  		<tr id="rpt_${id }"><td>${name }</td><td>${team.teamName}</td></tr>
+  		<tr id="rpt_${id }"><td><s:property value="name"/></td><td><s:property value="team.teamName"/></td></tr>
   </s:iterator>
   </bs:datatable>
   </bs:mco>

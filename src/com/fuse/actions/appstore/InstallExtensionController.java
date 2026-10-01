@@ -16,6 +16,7 @@ import java.util.List;
 
 import com.fuse.actions.FSActionSupport;
 import com.fuse.dao.AppStore;
+import com.fuse.utils.FSUtils;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.HibHelper;
 import com.opensymphony.xwork2.interceptor.annotations.Before;
@@ -73,9 +74,15 @@ public class InstallExtensionController extends FSActionSupport {
 				.stream()
 				.findFirst()
 				.orElse(null);
-		
-		FileInputStream fis = new FileInputStream(file_data);
-		app.updateApp(fis);
+		if (app == null || file_data == null) {
+			return this.errorJson("Extension not found or no file uploaded");
+		}
+		try (FileInputStream fis = new FileInputStream(FSUtils.checkUploadedFile(file_data))) {
+			app.updateApp(fis);
+		} catch (Exception ex) {
+			AuditLog.audit(this, "Rejected extension update upload: " + ex.getMessage(), AuditLog.UserAction, true);
+			return this.errorJson("Invalid extension JAR: " + ex.getMessage());
+		}
 		String json = app.getMeta();
 		ServletActionContext.getRequest().getSession().setAttribute("PreviewApp", app);
 		stream = new ByteArrayInputStream(json.toString().getBytes());
@@ -89,19 +96,37 @@ public class InstallExtensionController extends FSActionSupport {
 			@Result(name = "input", location = "/WEB-INF/jsp/uploadError.jsp") })
 	public String uploadFile() throws IOException, ParseException {
 		
-		FileInputStream fis = new FileInputStream(file_data);
+		if (file_data == null) {
+			return this.errorJson("No file uploaded");
+		}
 		AppStore preview = new AppStore();
-		preview.parseJar(fis);
+		try (FileInputStream fis = new FileInputStream(FSUtils.checkUploadedFile(file_data))) {
+			preview.parseJar(fis);
+		} catch (Exception ex) {
+			AuditLog.audit(this, "Rejected extension upload: " + ex.getMessage(), AuditLog.UserAction, true);
+			return this.errorJson("Invalid extension JAR: " + ex.getMessage());
+		}
 
 		String json = preview.getMeta();
 		ServletActionContext.getRequest().getSession().setAttribute("PreviewApp", preview);
 		stream = new ByteArrayInputStream(json.toString().getBytes());
 		return "json";
 	}
+
+	private String errorJson(String message) {
+		String json = "{\"error\": \"" + message.replace("\\", "\\\\").replace("\"", "\\\"") + "\"}";
+		stream = new ByteArrayInputStream(json.getBytes());
+		return "json";
+	}
 	
 	@Action(value = "InstallApp")
 	public String installApp() throws IOException, ParseException {
 		AppStore app = (AppStore) ServletActionContext.getRequest().getSession().getAttribute("PreviewApp");
+		if (app == null) {
+			_message="No extension has been uploaded for review";
+			_result="error";
+			return MESSAGEJSON;
+		}
 		Boolean alreadyInstalled =em.createQuery("from AppStore where hash = :hash")
 			.setParameter("hash", app.getHash())
 			.getResultList()
@@ -116,7 +141,10 @@ public class InstallExtensionController extends FSActionSupport {
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		em.persist(app);
+		AuditLog.audit(this, "Extension installed: " + app.getName() + " " + app.getVersion() + " (hash " + app.getHash() + ")",
+				AuditLog.UserAction, false);
 		HibHelper.getInstance().commit();
+		ServletActionContext.getRequest().getSession().removeAttribute("PreviewApp");
 		
 		_result="success";
 		return MESSAGEJSON;
@@ -125,6 +153,11 @@ public class InstallExtensionController extends FSActionSupport {
 	@Action(value = "UpdateApp")
 	public String updateApp() throws IOException, ParseException {
 		AppStore app = (AppStore) ServletActionContext.getRequest().getSession().getAttribute("PreviewApp");
+		if (app == null) {
+			_message="No extension has been uploaded for review";
+			_result="error";
+			return MESSAGEJSON;
+		}
 		List<AppStore> apps =em.createQuery("from AppStore where hash = :hash or uuid = :uuid")
 			.setParameter("hash", app.getHash())
 			.setParameter("uuid", app.getUuid())
@@ -156,7 +189,10 @@ public class InstallExtensionController extends FSActionSupport {
 		HibHelper.getInstance().preJoin();
 		em.joinTransaction();
 		em.merge(app);
+		AuditLog.audit(this, "Extension updated: " + app.getName() + " " + app.getVersion() + " (hash " + app.getHash() + ")",
+				AuditLog.UserAction, false);
 		HibHelper.getInstance().commit();
+		ServletActionContext.getRequest().getSession().removeAttribute("PreviewApp");
 		
 		_result="success";
 		return MESSAGEJSON;

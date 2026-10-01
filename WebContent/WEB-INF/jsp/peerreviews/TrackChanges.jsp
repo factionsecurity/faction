@@ -133,7 +133,7 @@ span.Informational {
   <!-- Content Header (Page header) -->
   <section class="content-header">
     <h1>
-      <i class="glyphicon glyphicon-eye-open"></i> Peer Review for <b>[${asmt.appId}] -  ${asmt.name }</b> - <i>${asmt.assessor[0].fname} ${asmt.assessor[0].lname}</i>
+      <i class="glyphicon glyphicon-eye-open"></i> Peer Review for <b>[<s:property value="asmt.appId"/>] -  <s:property value="asmt.name"/></b> - <i><s:property value="asmt.assessor[0].fname"/> <s:property value="asmt.assessor[0].lname"/></i>
       <small></small>
     </h1>
   </section>
@@ -168,7 +168,7 @@ span.Informational {
 					<bs:row>
 					<bs:mco colsize="7">
 					<div class="text-header" id="summary_header"></div>
-			  		<textarea id="appsum" style="width: 100%" ><s:property value="replaceNewline(asmt.summary)" escapeHtml="false"/></textarea>
+			  		<textarea id="appsum" style="width: 100%" ><s:property value="replaceNewline(asmt.summary)"/></textarea>
 			  		</bs:mco>
 			  		<bs:mco colsize="4">
 						<div class="text-header">Notes <span id="summary_notes_header"></span></div>
@@ -189,7 +189,7 @@ span.Informational {
 					<bs:row>
 					<bs:mco colsize="7">
 					<div class="text-header" id="risk_header"></div>
-			  		<textarea id="risk" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="replaceNewline(asmt.riskAnalysis)" escapeHtml="false"/></textarea>
+			  		<textarea id="risk" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="replaceNewline(asmt.riskAnalysis)"/></textarea>
 			  		</bs:mco>
 			  		<bs:mco colsize="4">
 						<div class="text-header">Notes <span id="risk_notes_header"></span></div>
@@ -260,7 +260,7 @@ span.Informational {
 								   
 									<bs:mco colsize="7">
 										<div class="text-header" >Description <span id="vuln_desc['${id}']_header"></span></div>
-										  <textarea id="vuln_desc['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="replaceNewline(description)" escapeHtml="false"/></textarea>
+										  <textarea id="vuln_desc['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="replaceNewline(description)"/></textarea>
 									  </bs:mco>
 									  <bs:mco colsize="4">
 										<div class="text-header" >Description Notes <span id="vuln_desc_notes['${id}']_header"></span></div>
@@ -276,7 +276,7 @@ span.Informational {
 									<bs:row>
 									<bs:mco colsize="7">
 										<div class="text-header" >Recommendation <span id="vuln_rec['${id}']_header"></span></div>
-										  <textarea id="vuln_rec['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="replaceNewline(recommendation)" escapeHtml="false"/></textarea>
+										  <textarea id="vuln_rec['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="replaceNewline(recommendation)"/></textarea>
 									  </bs:mco>
 									  <bs:mco colsize="4">
 										<div class="text-header">Recommendation Notes <span id="vuln_rec_notes['${id}']_header"></span></div>
@@ -292,7 +292,7 @@ span.Informational {
 									<bs:row>
 									<bs:mco colsize="7">
 										<div class="text-header" >Details <span id="vuln_details['${id}']_header"></span></div>
-										  <textarea id="vuln_details['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="replaceNewline(details)" escapeHtml="false"/></textarea>
+										  <textarea id="vuln_details['${id}']" style="width: 100%" <s:if test="!showComplete">readOnly</s:if>><s:property value="replaceNewline(details)"/></textarea>
 									  </bs:mco>
 									  <bs:mco colsize="4">
 										<div class="text-header">Detail Notes <span id="vuln_detail_notes['${id}']_header"></span></div>
@@ -375,7 +375,7 @@ span.Informational {
 						</s:else>
 						
 						</td>
-					<td><textarea class="form-control" style="width:100%" id="tx${id }" readonly>${notes}</textarea></td>
+					<td><textarea class="form-control" style="width:100%" id="tx${id }" readonly><s:property value="notes"/></textarea></td>
 					<td>
 						<s:if test="answer.value == 0">
 							Incomplete 	

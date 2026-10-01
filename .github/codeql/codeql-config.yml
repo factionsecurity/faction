@@ -1,0 +1,12 @@
+# Used by CodeQL default setup via the repository property `github-codeql-config-file`.
+# Third-party and generated front-end code is excluded: findings there belong upstream
+# (and are re-raised at new line numbers on every library upgrade). Application code in
+# src/, test/, WebContent/src and WebContent/WEB-INF stays fully analyzed.
+name: "FACTION CodeQL config"
+paths-ignore:
+  - WebContent/plugins
+  - WebContent/bootstrap
+  - WebContent/fileupload
+  - WebContent/dist
+  - WebContent/src/scripts
+  - WebContent/node_modules

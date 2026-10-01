@@ -25,8 +25,9 @@
                 <link rel="stylesheet" href="../plugins/loading/css/jquery-loading.css">
                 <link rel="stylesheet" href="../dist/css/Fuse.css">
 
-                <!-- jQuery 2.1.4 -->
-                <script src="../plugins/jQuery/jQuery-2.1.4.min.js"></script>
+                <!-- jQuery 3.7.1 (+ migrate shim for legacy plugins) -->
+                <script src="../plugins/jQuery/jquery-3.7.1.min.js"></script>
+                <script src="../plugins/jQuery/jquery-migrate-3.6.0.min.js"></script>
                 <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
                 <script src="../dist/js/fuse.js"></script>
                 <script src="../dist/js/main.js"></script>
@@ -57,7 +58,7 @@
                         <span class="logo-mini"><img class="icon-img" src="../tri-logo.png" /></span>
                         <!-- logo for regular state and mobile devices -->
                         <span class="logo-lg"><img class="icon-img"
-                                src="../tri-logo.png" />&nbsp;&nbsp;<b>${_title1}</b> ${_title2}</span>
+                                src="../tri-logo.png" />&nbsp;&nbsp;<b><s:property value="_title1"/></b> <s:property value="_title2"/></span>
                     </a>
 
                     <!-- Header Navbar -->
