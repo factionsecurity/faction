@@ -39,7 +39,8 @@ color:#f39c12;
   <section class="content-header">
     <h1>
       <i class="glyphicon glyphicon-th-list"></i> Assessment Queue
-       <s:if test="acengagement"><span class="text-warning fa fa-warning"></span><b  class="text-warning"> (Manager View)</b>
+       <%-- Only a manager's unrestricted queue is the manager view. Users who widen the queue with the "Only my assessments" checkbox get the help-text note instead. --%>
+       <s:if test="acmanager && !onlyMine"><span class="text-warning fa fa-warning"></span><b  class="text-warning"> (Manager View)</b>
       	<small>Viewing all assessments</small>
       	</s:if>
       	<s:else>
