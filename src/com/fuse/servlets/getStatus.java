@@ -15,6 +15,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.hibernate.Session;
 
 import com.fuse.dao.Assessment;
+import com.fuse.actions.assessment.AssessmentQueue;
 import com.fuse.dao.ExploitStep;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.PeerReview;
@@ -63,8 +64,13 @@ public class getStatus extends HttpServlet {
 				boolean showCompleted = "true".equals(request.getParameter("showCompleted"))
 						&& user.getPermissions().getAccessLevel() != Permissions.AccessLevelUserOnly;
 
+				// ...and the same "Only my assessments" scope, so icons match the rows.
+				String onlyMineParam = request.getParameter("onlyMine");
+				boolean onlyMine = AssessmentQueue.restrictToMine(user,
+						onlyMineParam == null ? null : Boolean.valueOf(onlyMineParam));
+
 				List<Assessment> assessments = AssessmentQueries.getAllAssessments(em, user,
-						showCompleted ? AssessmentQueries.All : AssessmentQueries.OnlyNonCompleted);
+						showCompleted ? AssessmentQueries.All : AssessmentQueries.OnlyNonCompleted, onlyMine);
 				
 			
 				for(Assessment a : assessments){

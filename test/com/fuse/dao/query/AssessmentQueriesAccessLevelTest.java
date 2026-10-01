@@ -97,12 +97,36 @@ public class AssessmentQueriesAccessLevelTest extends MongoTestBase {
 		assertEquals(names(ownedByOwnOnlyInB), searchFor(ownOnlyInB));
 	}
 
+	@Test
+	public void allAssessmentsLevelWithOnlyMineSeesOwnAssessmentsInQueue() {
+		assertEquals(names(ownedByAllInA), queueFor(allInA, true));
+	}
+
+	@Test
+	public void allAssessmentsLevelWithoutOnlyMineSeesEveryAssessmentInQueue() {
+		assertEquals(names(ownedByAllInA, ownedByTeamOnlyInA, ownedByOwnOnlyInB), queueFor(allInA, false));
+	}
+
+	@Test
+	public void teamLevelWithOnlyMineSeesOwnAssessmentsInQueue() {
+		assertEquals(names(ownedByTeamOnlyInA), queueFor(teamOnlyInA, true));
+	}
+
 	// ---- helpers ----
 
 	private static List<String> queueFor(User u) {
 		EntityManager em = emf.createEntityManager();
 		try {
 			return tagged(AssessmentQueries.getAllAssessments(em, u, AssessmentQueries.OnlyNonCompleted));
+		} finally {
+			em.close();
+		}
+	}
+
+	private static List<String> queueFor(User u, boolean onlyMine) {
+		EntityManager em = emf.createEntityManager();
+		try {
+			return tagged(AssessmentQueries.getAllAssessments(em, u, AssessmentQueries.OnlyNonCompleted, onlyMine));
 		} finally {
 			em.close();
 		}

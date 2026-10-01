@@ -82,14 +82,24 @@ public class AssessmentQueries {
 	}
 	
 	public static List<Assessment>getAllAssessments(EntityManager em, User user, int assessmentType ){
+		return getAllAssessments(em, user, assessmentType, false);
+	}
+
+	/**
+	 * @param onlyMine when true the result is limited to assessments the user is an
+	 *                 assessor on, whatever their access level allows. The queue uses
+	 *                 this for its "Only my assessments" default.
+	 */
+	public static List<Assessment>getAllAssessments(EntityManager em, User user, int assessmentType, boolean onlyMine){
 
 		// Clauses are joined rather than concatenated so that All (which adds no
 		// completed clause) doesn't leave a dangling comma in the query document.
 		List<String> clauses = new ArrayList<String>();
-		// Only the "Only Assessments Owned by User" access level narrows the queue to
-		// the caller's own work. "Team Assessments" is applied below via hasTeam(), and
-		// "All Assessments" sees everything, manager or not.
-		if(user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
+		// The "Only Assessments Owned by User" access level always narrows the queue to
+		// the caller's own work; other levels only do so when onlyMine is requested.
+		// "Team Assessments" is applied below via hasTeam(), and "All Assessments"
+		// sees everything, manager or not.
+		if(onlyMine || user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
 			clauses.add("\"assessor\" : " + user.getId());
 		}
 

@@ -27,6 +27,21 @@ import 'jquery-confirm';
     	return $('#queueFilters').data('showcompleted') === true;
     }
 
+    // "Only my assessments" is the default for users who have the checkbox, so
+    // only the widened state needs to travel in the URL (and to the status poll).
+    function showingOnlyMine(){
+    	return $('#onlyMineFilter').length === 0 || $('#queueFilters').data('onlymine') === true;
+    }
+
+    function scopeParams(){
+    	return showingOnlyMine() ? [] : ['onlyMine=false'];
+    }
+
+    function reloadQueue(params){
+    	params = params.concat(scopeParams());
+    	document.location = 'AssessmentQueue' + (params.length ? '?' + params.join('&') : '');
+    }
+
     function reloadWithCompleted(){
     	var params = ['showCompleted=true', 'status=' + encodeURIComponent(COMPLETED)];
     	var from = $('#fromDateFilter').val();
@@ -35,7 +50,27 @@ import 'jquery-confirm';
     		params.push('from=' + encodeURIComponent(from));
     	if(to)
     		params.push('to=' + encodeURIComponent(to));
-    	document.location = 'AssessmentQueue?' + params.join('&');
+    	reloadQueue(params);
+    }
+
+    // Flipping the checkbox changes what the server loads, so it reloads with
+    // the current filters carried along.
+    function reloadWithScope(onlyMine){
+    	var params = [];
+    	if(showingCompleted())
+    		params.push('showCompleted=true');
+    	var status = $('#statusFilter').val();
+    	var from = $('#fromDateFilter').val();
+    	var to = $('#toDateFilter').val();
+    	if(status)
+    		params.push('status=' + encodeURIComponent(status));
+    	if(from)
+    		params.push('from=' + encodeURIComponent(from));
+    	if(to)
+    		params.push('to=' + encodeURIComponent(to));
+    	if(!onlyMine)
+    		params.push('onlyMine=false');
+    	document.location = 'AssessmentQueue' + (params.length ? '?' + params.join('&') : '');
     }
 
     function queryParam(name){
@@ -106,6 +141,10 @@ import 'jquery-confirm';
             	table.draw();
             });
 
+            $('#onlyMineFilter').on('change', function(){
+            	reloadWithScope($(this).is(':checked'));
+            });
+
             $('#rangeDropdown li a').on('click', function(e){
             	e.preventDefault();
             	applyQuickRange($(this).data('range'), $(this).text().trim());
@@ -116,7 +155,7 @@ import 'jquery-confirm';
             	// Clearing returns to the default queue, which means dropping the
             	// completed assessments that were pulled in for the filter.
             	if(showingCompleted()){
-            		document.location = 'AssessmentQueue';
+            		reloadQueue([]);
             		return;
             	}
             	$('#statusFilter').val('');
@@ -229,7 +268,8 @@ import 'jquery-confirm';
     		  applyStatus(statusCache);
     		  return;
     	  }
-    	  $.get("../service/status" + (showingCompleted() ? "?showCompleted=true" : "")).done(function(data){
+    	  var statusParams = (showingCompleted() ? ['showCompleted=true'] : []).concat(scopeParams());
+    	  $.get("../service/status" + (statusParams.length ? "?" + statusParams.join("&") : "")).done(function(data){
     		  statusCache = data;
     		  applyStatus(data);
           });
