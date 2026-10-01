@@ -39,7 +39,8 @@ color:#f39c12;
   <section class="content-header">
     <h1>
       <i class="glyphicon glyphicon-th-list"></i> Assessment Queue
-       <s:if test="acengagement"><span class="text-warning fa fa-warning"></span><b  class="text-warning"> (Manager View)</b>
+       <%-- Only a manager's unrestricted queue is the manager view. Users who widen the queue with the "Only my assessments" checkbox get the help-text note instead. --%>
+       <s:if test="acmanager && !onlyMine"><span class="text-warning fa fa-warning"></span><b  class="text-warning"> (Manager View)</b>
       	<small>Viewing all assessments</small>
       	</s:if>
       	<s:else>
@@ -53,7 +54,7 @@ color:#f39c12;
 
 <div class="row">
 	<div class="col-xs-12">
-		<div class="box box-primary" id="queueFilters" data-showcompleted="<s:property value="showCompleted"/>">
+		<div class="box box-primary" id="queueFilters" data-showcompleted="<s:property value="showCompleted"/>" data-onlymine="<s:property value="onlyMine"/>">
 			<div class="box-header with-border">
 				<h3 class="box-title"><i class="fa fa-filter"></i> Filters</h3>
 			</div>
@@ -107,12 +108,25 @@ color:#f39c12;
 						</div>
 					</div>
 				</div>
+				<s:if test="showOnlyMineToggle">
+				<div class="row">
+					<div class="col-md-12">
+						<div class="checkbox" style="margin-top: 0">
+							<label>
+								<input type="checkbox" id="onlyMineFilter" <s:if test="onlyMine">checked</s:if>>
+								Only my assessments
+							</label>
+						</div>
+					</div>
+				</div>
+				</s:if>
 				<div class="row">
 					<div class="col-md-12">
 						<p class="help-block" style="margin-top: 8px">
 							Date range matches assessments scheduled at any point within the selected window.
 							<s:if test="showCompleted">Completed assessments are included in this view.</s:if>
 							<s:else>Selecting the Completed status loads finished assessments, which are otherwise left out of the queue.</s:else>
+							<s:if test="showOnlyMineToggle && !onlyMine">Showing every assessment your access level allows.</s:if>
 						</p>
 					</div>
 				</div>

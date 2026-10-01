@@ -82,11 +82,24 @@ public class AssessmentQueries {
 	}
 	
 	public static List<Assessment>getAllAssessments(EntityManager em, User user, int assessmentType ){
+		return getAllAssessments(em, user, assessmentType, false);
+	}
+
+	/**
+	 * @param onlyMine when true the result is limited to assessments the user is an
+	 *                 assessor on, whatever their access level allows. The queue uses
+	 *                 this for its "Only my assessments" default.
+	 */
+	public static List<Assessment>getAllAssessments(EntityManager em, User user, int assessmentType, boolean onlyMine){
 
 		// Clauses are joined rather than concatenated so that All (which adds no
 		// completed clause) doesn't leave a dangling comma in the query document.
 		List<String> clauses = new ArrayList<String>();
-		if(!user.getPermissions().isManager() || user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
+		// The "Only Assessments Owned by User" access level always narrows the queue to
+		// the caller's own work; other levels only do so when onlyMine is requested.
+		// "Team Assessments" is applied below via hasTeam(), and "All Assessments"
+		// sees everything, manager or not.
+		if(onlyMine || user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
 			clauses.add("\"assessor\" : " + user.getId());
 		}
 
@@ -244,7 +257,9 @@ public class AssessmentQueries {
 	public static List<Assessment>getAssessmentsByAppDesc(EntityManager em, User user, String AppId, String AppName, int assessmentType){
 		
 		String query = "db.Assessment.find({ \"$query\" : {";
-		if(!user.getPermissions().isManager() || user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
+		// Same access-level rule as getAllAssessments(): only the user-only level is
+		// restricted to the caller's own assessments.
+		if(user.getPermissions().getAccessLevel() == Permissions.AccessLevelUserOnly) {
 			query += "\"assessor\" : "+user.getId() + "," ;
 		}
 		
