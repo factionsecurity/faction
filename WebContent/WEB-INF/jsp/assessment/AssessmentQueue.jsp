@@ -111,7 +111,7 @@ color:#f39c12;
 				<s:if test="showOnlyMineToggle">
 				<div class="row">
 					<div class="col-md-12">
-						<div class="checkbox" style="margin-top: 0">
+						<div class="checkbox" style="margin-top: 12px; margin-bottom: 4px">
 							<label>
 								<input type="checkbox" id="onlyMineFilter" <s:if test="onlyMine">checked</s:if>>
 								Only my assessments
