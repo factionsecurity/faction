@@ -53,6 +53,7 @@ import javax.crypto.spec.SecretKeySpec;
 import org.apache.struts2.ServletActionContext;
 import javax.persistence.EntityManager;
 import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
@@ -234,6 +235,35 @@ public class FSUtils {
 		} catch (Exception ignore) {
 		}
 		return dirs;
+	}
+
+	/**
+	 * Base URL for links we email out (password resets, invitations). Taken from
+	 * FACTION_BASE_URL, then FACTION_OAUTH_CALLBACK, which SSO deployments already
+	 * set to the public address. Only when neither is configured does it fall back
+	 * to the request, whose Host header a sender controls, so set one of them in
+	 * any deployment that sends mail.
+	 */
+	public static String publicBaseUrl(HttpServletRequest request) {
+		String configured = getEnv("FACTION_BASE_URL");
+		if (configured.isEmpty()) {
+			configured = getEnv("FACTION_OAUTH_CALLBACK");
+		}
+		String base;
+		if (!configured.isEmpty()) {
+			base = configured.trim();
+		} else {
+			String url = request.getRequestURL().toString();
+			String uri = request.getRequestURI();
+			if (uri != null && url.endsWith(uri)) {
+				url = url.substring(0, url.length() - uri.length());
+			}
+			base = url + (request.getContextPath() == null ? "" : request.getContextPath());
+		}
+		while (base.endsWith("/")) {
+			base = base.substring(0, base.length() - 1);
+		}
+		return base;
 	}
 
 	public static boolean containsHTML(String value) {

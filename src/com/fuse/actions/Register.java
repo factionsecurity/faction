@@ -8,6 +8,7 @@ import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 
 import com.fuse.dao.AuditLog;
+import com.fuse.utils.PasswordResets;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.PasswordReset;
 import com.fuse.dao.User;
@@ -27,10 +28,7 @@ public class Register extends FSActionSupport {
 			@Result(name = "gotologin", type = "redirectAction", location = "../login"), })
 	public String execute() {
 
-		PasswordReset reset = (PasswordReset) em.createQuery("from PasswordReset where key = :key")
-				.setParameter("key", uid)
-				.getResultList().stream()
-				.findFirst().orElse(null);
+		PasswordReset reset = PasswordResets.redeem(em, uid);
 		if(reset == null) {
 			AuditLog.audit(this, "Registration Link was not valid", AuditLog.Login, true);
 			message = "Link is no longer valid.";

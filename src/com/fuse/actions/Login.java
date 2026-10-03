@@ -22,6 +22,7 @@ import org.pac4j.core.profile.ProfileManager;
 import org.pac4j.core.profile.UserProfile;
 
 import com.fuse.dao.AssessmentType;
+import com.fuse.utils.PasswordResets;
 import com.fuse.dao.AuditLog;
 import com.fuse.dao.Campaign;
 import com.fuse.dao.Category;
@@ -379,22 +380,13 @@ public class Login extends FSActionSupport {
 				}
 			}*/
 
-			String key = UUID.randomUUID().toString();
-			PasswordReset reset = new PasswordReset();
-			reset.setKey(key);
-			reset.setUser(u);
-			reset.setCreated(new Date());
-			// You must register first and create a password to login.
+			// Short-lived token bound to this user; any earlier token stops working.
+			String key = PasswordResets.issue(em, u, PasswordResets.RESET_TTL_MILLIS);
 			String message = "Hello " + u.getFname() + " " + u.getLname() + "<br><br>";
-			message += "Click the link below to reset your password:<br><br>";
-			String url = request.getRequestURL().toString();
-			url = url.replace(request.getRequestURI(), "");
-			url = url + request.getContextPath() + "/portal/Register?uid=" + key;
+			message += "Click the link below to reset your password. The link expires in one hour.<br><br>";
+			// Built from the configured public address, never from the request's Host header.
+			String url = FSUtils.publicBaseUrl(request) + "/portal/Register?uid=" + key;
 			message += "<a href='" + url + "'>Click here to Reset</a><br>";
-			HibHelper.getInstance().preJoin();
-			em.joinTransaction();
-			em.persist(reset);
-			HibHelper.getInstance().commit();
 			EmailThread emailThread = new EmailThread(u.getEmail(), "Password Reset", message);
 			TaskQueueExecutor.getInstance().execute(emailThread);
 

@@ -29,6 +29,8 @@ public class PasswordReset {
 	private Long id;
 	private String key;
 	private Date created;
+	/** Absolute expiry; null on rows written before 1.8.15, which are treated as created + 1h. */
+	private Date expires;
 	@ManyToOne(fetch = FetchType.EAGER)
 	private User user;
 }

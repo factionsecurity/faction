@@ -10,6 +10,7 @@ import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 
 import com.fuse.actions.FSActionSupport;
+import com.fuse.utils.PasswordResets;
 import com.fuse.authentication.LDAPValidator;
 import com.fuse.authentication.oauth.SecurityConfigFactory;
 import com.fuse.dao.APIKeys;
@@ -160,7 +161,7 @@ public class Users extends FSActionSupport {
 			return this.ERRORJSON;
 		}
 		
-		PasswordReset reset = null;
+		boolean invite = false;
 
 		this.username = this.username.toLowerCase();
 		User userExists = (User) em.createQuery("from User where username = :username")
@@ -202,9 +203,7 @@ public class Users extends FSActionSupport {
 					String key = UUID.randomUUID().toString();
 					u.setPasshash(key);
 					message += "Your account has been created. Please access the link below and click to access with your SSO Credentials<br><br>";
-					String url = request.getRequestURL().toString();
-					url = url.replace(request.getRequestURI(), "");
-					url = url + request.getContextPath();
+					String url = FSUtils.publicBaseUrl(request);
 					message += "<a href='" + url + "'>Click here to Login</a><br>";
 					
 					
@@ -214,9 +213,7 @@ public class Users extends FSActionSupport {
 				if(passErrorMessage.equals("")) {
 					u.setPasshash(AccessControl.HashPass(this.credential));
 					message += "Your account has been created. Please access the link below and click to access the portal. You will need to ask your Administrator for the credentials.<br><br>";
-					String url = request.getRequestURL().toString();
-					url = url.replace(request.getRequestURI(), "");
-					url = url + request.getContextPath();
+					String url = FSUtils.publicBaseUrl(request);
 					message += "<a href='" + url + "'>Click here to Login</a><br>";
 				}else {
 					this._message = passErrorMessage;
@@ -224,17 +221,11 @@ public class Users extends FSActionSupport {
 				}
 				
 			}else {
-				String key = UUID.randomUUID().toString();
 				u.setPasshash(AccessControl.HashPass(UUID.randomUUID().toString()));
-				reset = new PasswordReset();
-				reset.setKey(key);
-				reset.setUser(u);
-				reset.setCreated(new Date());
-				message += "Click the link below to update your password:<br><br>";
-				String url = request.getRequestURL().toString();
-				url = url.replace(request.getRequestURI(), "");
-				url = url + request.getContextPath() + "/portal/Register?uid=" + key;
-				message += "<a href='" + url + "'>Click here to Register</a><br>";
+				// The invitation token is issued after the user is persisted so it is bound
+				// to the new account; the link is appended to the message then.
+				invite = true;
+				message += "Click the link below to set your password. The link expires in 72 hours:<br><br>";
 			}
 
 			Permissions p = new Permissions();
@@ -257,13 +248,14 @@ public class Users extends FSActionSupport {
 			HibHelper.getInstance().preJoin();
 			em.joinTransaction();
 			em.persist(u);
-			if(reset != null) {
-				em.persist(reset);
-			}
 			AuditLog.audit(this, "User " + u.getUsername() + " added", AuditLog.UserAction, false);
 
 			HibHelper.getInstance().commit();
 
+			if (invite) {
+				String key = PasswordResets.issue(em, u, PasswordResets.INVITE_TTL_MILLIS);
+				message += "<a href='" + FSUtils.publicBaseUrl(request) + "/portal/Register?uid=" + key + "'>Click here to Register</a><br>";
+			}
 			EmailThread emailThread = new EmailThread(this.email, "New Account Created", message);
 			TaskQueueExecutor.getInstance().execute(emailThread);
 			if (api) {
