@@ -254,7 +254,7 @@ public class Users extends FSActionSupport {
 
 			if (invite) {
 				String key = PasswordResets.issue(em, u, PasswordResets.INVITE_TTL_MILLIS);
-				message += "<a href='" + FSUtils.publicBaseUrl(request) + "/portal/Register?uid=" + key + "'>Click here to Register</a><br>";
+				message += "<a href='" + FSUtils.publicBaseUrl(request) + "/Register?uid=" + key + "'>Click here to Register</a><br>";
 			}
 			EmailThread emailThread = new EmailThread(this.email, "New Account Created", message);
 			TaskQueueExecutor.getInstance().execute(emailThread);

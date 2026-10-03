@@ -385,7 +385,7 @@ public class Login extends FSActionSupport {
 			String message = "Hello " + u.getFname() + " " + u.getLname() + "<br><br>";
 			message += "Click the link below to reset your password. The link expires in one hour.<br><br>";
 			// Built from the configured public address, never from the request's Host header.
-			String url = FSUtils.publicBaseUrl(request) + "/portal/Register?uid=" + key;
+			String url = FSUtils.publicBaseUrl(request) + "/Register?uid=" + key;
 			message += "<a href='" + url + "'>Click here to Reset</a><br>";
 			EmailThread emailThread = new EmailThread(u.getEmail(), "Password Reset", message);
 			TaskQueueExecutor.getInstance().execute(emailThread);

@@ -117,7 +117,7 @@ public class users {
 					String key = PasswordResets.issue(em, newUser, PasswordResets.INVITE_TTL_MILLIS);
 					String message = "Hello " + fname + " " + lname + "<br><br>";
 					message += "Click the link below to set your password. The link expires in 72 hours:<br><br>";
-					String url = FSUtils.publicBaseUrl(req) + "/portal/Register?uid=" + key;
+					String url = FSUtils.publicBaseUrl(req) + "/Register?uid=" + key;
 					message += "<a href='" + url + "'>Click here to Register</a><br>";
 					TaskQueueExecutor.getInstance().execute(new EmailThread(email, "New Account Created", message));
 				}
