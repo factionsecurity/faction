@@ -8,12 +8,17 @@ import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.FormParam;
+import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
 
 import com.fuse.api.util.Support;
 import com.fuse.dao.HibHelper;
@@ -34,6 +39,46 @@ import io.swagger.annotations.ApiResponses;
 @Api(value = "/users")
 @Path("/users")
 public class users {
+
+	@GET
+	@ApiOperation(value = "Lists every Faction user.", notes = "Returns the directory — id, username, email, name, and whether the account is inactive —"
+			+ " so that an integration can resolve the user ids that appear on assessments and vulnerabilities."
+			+ " Requires an admin or manager API key. Password hashes and tokens are never included.", position = 5)
+	@ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
+			@ApiResponse(code = 200, message = "Request Successfull") })
+	@Produces(MediaType.APPLICATION_JSON)
+	@Path("/all")
+	public Response getAllUsers(
+			@ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey) {
+
+		EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+		try {
+			User caller = Support.getUser(em, apiKey);
+			if (caller == null || caller.getPermissions() == null
+					|| !(caller.getPermissions().isAdmin() || caller.getPermissions().isManager())) {
+				return Support.autherror();
+			}
+
+			List<User> users = em.createQuery("from User").getResultList();
+			JSONArray array = new JSONArray();
+			for (User u : users) {
+				JSONObject obj = new JSONObject();
+				obj.put("id", u.getId());
+				obj.put("username", u.getUsername());
+				obj.put("email", u.getEmail());
+				obj.put("firstName", u.getFname());
+				obj.put("lastName", u.getLname());
+				obj.put("inactive", u.isInActive());
+				array.add(obj);
+			}
+			return Response.status(200).entity(array.toJSONString()).build();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return Response.status(500).entity(String.format(Support.ERROR, "Error retrieving users")).build();
+		} finally {
+			em.close();
+		}
+	}
 
 	@POST
 	@ApiOperation(value = "Add a user to Faction.", notes = "This call will give you the ability to create a user in Faction. If the user already exists then"
