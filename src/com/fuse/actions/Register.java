@@ -8,12 +8,15 @@ import org.apache.struts2.convention.annotation.Namespace;
 import org.apache.struts2.convention.annotation.Result;
 
 import com.fuse.dao.AuditLog;
+import com.fuse.utils.PasswordResets;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.PasswordReset;
 import com.fuse.dao.User;
 import com.fuse.utils.AccessControl;
 
-@Namespace("/portal")
+// Root namespace: reset and invitation links are opened without a session, and the
+// AccessControlInterceptor only lets "/" and "/sso" through unauthenticated.
+@Namespace("/")
 @Result(name = "success", location = "/WEB-INF/jsp/register/newuser.jsp")
 public class Register extends FSActionSupport {
 
@@ -24,13 +27,10 @@ public class Register extends FSActionSupport {
 	private String message = "";
 
 	@Action(value = "Register", results = {
-			@Result(name = "gotologin", type = "redirectAction", location = "../login"), })
+			@Result(name = "gotologin", type = "redirectAction", location = "login"), })
 	public String execute() {
 
-		PasswordReset reset = (PasswordReset) em.createQuery("from PasswordReset where key = :key")
-				.setParameter("key", uid)
-				.getResultList().stream()
-				.findFirst().orElse(null);
+		PasswordReset reset = PasswordResets.redeem(em, uid);
 		if(reset == null) {
 			AuditLog.audit(this, "Registration Link was not valid", AuditLog.Login, true);
 			message = "Link is no longer valid.";
