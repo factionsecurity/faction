@@ -178,8 +178,14 @@ public class AssessmentDTO {
             dto.setCampaignId(assessment.getCampaign().getId());
         }
         
-        dto.setStart(""+assessment.getStart().getTime());
-        dto.setEnd(""+assessment.getEnd().getTime());
+        // Guarded: a bulk listing sweeps up drafts that never had dates set, and an
+        // unguarded getTime() would fail the whole page over one of them.
+        if (assessment.getStart() != null) {
+            dto.setStart("" + assessment.getStart().getTime());
+        }
+        if (assessment.getEnd() != null) {
+            dto.setEnd("" + assessment.getEnd().getTime());
+        }
         dto.setCompleted(assessment.getCompleted());
         dto.setStatus(assessment.getStatus());
         if(assessment.getNotebook() == null || assessment.getNotebook().size() == 0) {
