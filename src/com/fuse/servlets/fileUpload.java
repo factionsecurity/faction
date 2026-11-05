@@ -59,6 +59,16 @@ public class fileUpload extends HttpServlet {
 			EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
 			Files f = (Files) em.createQuery("from Files where uuid = :id").setParameter("id", id).getResultList()
 					.stream().findFirst().orElse(null);
+			if (f == null) {
+				em.close();
+				response.sendError(HttpServletResponse.SC_NOT_FOUND);
+				return;
+			}
+			if (!FileAccess.canAccess(em, u, f)) {
+				em.close();
+				response.sendError(HttpServletResponse.SC_FORBIDDEN);
+				return;
+			}
 			response.setContentType(f.getContentType());
 			// response.setContentType("application/octet-stream");
 			// response.setHeader("Content-Disposition", "attachment; filename=" +
@@ -107,6 +117,7 @@ public class fileUpload extends HttpServlet {
 			Part filePart = request.getPart("file_data");
 			Files f = new Files();
 			f.setUuid(uuid);
+			f.setCreatorId(u.getId());
 			f.setContentType(filePart.getContentType());
 			String fileName = getFileName(filePart);
 			if (!isSafeFileName(fileName)) {
@@ -122,6 +133,11 @@ public class fileUpload extends HttpServlet {
 				f.setType(Files.ASSESSMENT);
 				f.setEntityId(Long.parseLong(apid));
 				EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+				if (!FileAccess.canAttachToAssessment(em, u, f.getEntityId())) {
+					em.close();
+					response.sendError(HttpServletResponse.SC_FORBIDDEN);
+					return;
+				}
 				HibHelper.getInstance().preJoin();
 				em.joinTransaction();
 				em.persist(f);
@@ -133,6 +149,11 @@ public class fileUpload extends HttpServlet {
 				f.setType(Files.VERIFICATION);
 				f.setEntityId(Long.parseLong(verificationId));
 				EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+				if (!FileAccess.canAccessVerification(em, u, f.getEntityId())) {
+					em.close();
+					response.sendError(HttpServletResponse.SC_FORBIDDEN);
+					return;
+				}
 				HibHelper.getInstance().preJoin();
 				em.joinTransaction();
 				em.persist(f);
@@ -205,6 +226,11 @@ public class fileUpload extends HttpServlet {
 			// Session session = HibHelper.getSessionFactory().openSession();
 			Files f = (Files) em.createQuery("from Files where uuid = :id").setParameter("id", delid).getResultList()
 					.stream().findFirst().orElse(null);
+			if (f != null && !FileAccess.canAccess(em, u, f)) {
+				em.close();
+				response.sendError(HttpServletResponse.SC_FORBIDDEN);
+				return;
+			}
 			if (f != null) {
 				HibHelper.getInstance().preJoin();
 				em.joinTransaction();
@@ -222,6 +248,11 @@ public class fileUpload extends HttpServlet {
 			// Session session = HibHelper.getSessionFactory().openSession();
 			// HibHelper hh = new HibHelper();
 			EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+			if (!FileAccess.canAttachToAssessment(em, u, Long.parseLong(apid))) {
+				em.close();
+				response.sendError(HttpServletResponse.SC_FORBIDDEN);
+				return;
+			}
 			Files f = (Files) em.createQuery("from Files where name = :name and entityId = :eid")
 					.setParameter("name", name).setParameter("eid", Long.parseLong(apid)).getResultList().stream()
 					.findFirst().orElse(null);

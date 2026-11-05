@@ -16,6 +16,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import com.fuse.api.util.Support;
+import com.fuse.utils.FSUtils;
+import com.fuse.utils.PasswordResets;
 import com.fuse.dao.HibHelper;
 import com.fuse.dao.PasswordReset;
 import com.fuse.dao.Permissions;
@@ -88,28 +90,10 @@ public class users {
 							.build();
 				}
 				newUser.setTeam(t);
-				if (verify != null && verify == true) {
-					String key = UUID.randomUUID().toString();
+				boolean invite = verify != null && verify == true;
+				if (invite) {
+					// A random, unknown password until the invitee registers through the emailed link.
 					newUser.setPasshash(AccessControl.HashPass(UUID.randomUUID().toString()));
-					// Setting username to an empty string prevents logins with GUID.
-					// You must register first and create a password to login.
-					PasswordReset reset = new PasswordReset();
-					reset.setKey(key);
-					reset.setUser(u);
-					reset.setCreated(new Date());
-					HibHelper.getInstance().preJoin();
-					em.joinTransaction();
-					em.persist(reset);
-					HibHelper.getInstance().commit();
-					String message = "Hello " + fname + " " + lname + "<br><br>";
-					message += "Click the link below to update your password:<br><br>";
-					String url = req.getRequestURL().toString();
-					url = url.replace(req.getRequestURI(), "");
-					url = url + req.getContextPath() + "/portal/Register?uid=" + key;
-					message += "<a href='" + url + "'>Click here to Register</a><br>";
-					EmailThread emailThread = new EmailThread(email, "New Account Created", message);
-					TaskQueueExecutor.getInstance().execute(emailThread);
-
 				}
 				Permissions p = new Permissions();
 				if (isAdmin != null && isAdmin == true)
@@ -128,6 +112,15 @@ public class users {
 				em.joinTransaction();
 				em.persist(newUser);
 				HibHelper.getInstance().commit();
+				if (invite) {
+					// Issued after persisting so the token is bound to the NEW user, not the calling admin.
+					String key = PasswordResets.issue(em, newUser, PasswordResets.INVITE_TTL_MILLIS);
+					String message = "Hello " + fname + " " + lname + "<br><br>";
+					message += "Click the link below to set your password. The link expires in 72 hours:<br><br>";
+					String url = FSUtils.publicBaseUrl(req) + "/Register?uid=" + key;
+					message += "<a href='" + url + "'>Click here to Register</a><br>";
+					TaskQueueExecutor.getInstance().execute(new EmailThread(email, "New Account Created", message));
+				}
 				return Response.status(200).entity(Support.SUCCESS).build();
 
 			} else {
