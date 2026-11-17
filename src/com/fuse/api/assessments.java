@@ -137,6 +137,59 @@ public class assessments {
     }
 
     /*
+     * getAllAssessments - every assessment the caller can see, open and completed
+     */
+    @GET
+    @ApiOperation(value = "Gets every assessment visible to the caller, open and completed.", notes = "Unlike /queue (open assessments assigned to the caller) and /completed (completed within a date range), this returns the caller's full visible inventory in one call. Managers with unrestricted access get every assessment; other callers get the same subset the UI would show them. Intended for bulk export and migration.", response = AssessmentDTO.class, responseContainer = "List", position = 110)
+    @ApiResponses(value = { @ApiResponse(code = 401, message = "Not Authorized"),
+            @ApiResponse(code = 200, message = "All Visible Assessments Returned") })
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/all")
+    public Response getAllAssessments(
+            @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
+            @ApiParam(value = "Include base64-encoded images (default false). When false, returns links to Faction images; when true, converts images to base64 data URLs.", required = false) @QueryParam("includeBase64Images") Boolean includeBase64Images) {
+
+        EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+        List<AssessmentDTO> dtos = new ArrayList<>();
+        try {
+            User u = Support.getUser(em, apiKey);
+            if (u == null || !(u.getPermissions().isAssessor() || u.getPermissions().isManager()
+                    || u.getPermissions().isAdmin())) {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+
+            try {
+                List<Assessment> asmts = AssessmentQueries.getAllAssessments(em, u, AssessmentQueries.All);
+                for (Assessment a : asmts) {
+                    if (Boolean.TRUE.equals(includeBase64Images)) {
+                        AssessmentQueries.updateImages(a);
+                    }
+                    AssessmentDTO dto = AssessmentDTO.fromEntity(a);
+
+                    if (a.getCustomFields() != null) {
+                        dto.setCustomFieldsFromEntity(a.getCustomFields());
+                    }
+
+                    dtos.add(dto);
+                }
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                return Response.status(500).entity(String.format(Support.ERROR, "Error retrieving assessments"))
+                        .build();
+            }
+        } finally {
+            em.close();
+        }
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            return Response.status(200).entity(mapper.writeValueAsString(dtos)).build();
+        } catch (JsonProcessingException e) {
+            return Response.status(500).entity(String.format(Support.ERROR, "Failed to serialize response")).build();
+        }
+    }
+
+    /*
      * getAssessment - get assessment details by ID
      */
     @GET
@@ -221,7 +274,7 @@ public class assessments {
      * downloadReport - Download the final report for an assessment
      */
     @GET
-    @ApiOperation(value = "Downloads the final report (PDF/DOCX) for an assessment", notes = "Returns the base64-encoded report as a binary download", position = 200)
+    @ApiOperation(value = "Downloads the final report (PDF/DOCX) for an assessment", notes = "Returns the report as a binary download. Pass type=docx or type=pdf to pick a variant; with no type the PDF is preferred and the first available variant is the fallback. Pass retest=true for the retest report.", position = 200)
     @ApiResponses(value = {
             @ApiResponse(code = 401, message = "Not Authorized"),
             @ApiResponse(code = 404, message = "Assessment or Report not found"),
@@ -229,7 +282,9 @@ public class assessments {
     @Path("/report/{aid}")
     public Response downloadReport(
             @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
-            @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid) {
+            @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid,
+            @ApiParam(value = "Variant to download: docx or pdf. Omit to prefer the PDF.", required = false) @QueryParam("type") String type,
+            @ApiParam(value = "Download the retest report instead of the final report (default false).", required = false) @QueryParam("retest") Boolean retest) {
 
         EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
         try {
@@ -243,19 +298,113 @@ public class assessments {
             }
 
             Assessment assessment = AssessmentQueries.getAssessment(em, u, aid);
+            return invokeDownloadReport(u, assessment, aid, type, retest);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(500).entity(String.format(Support.ERROR, "Error downloading report")).build();
+        } finally {
+            em.close();
+        }
+    }
+
+    /*
+     * reportInfo - which report variants exist, without shipping the blobs
+     */
+    @GET
+    @ApiOperation(value = "Lists the report variants available for an assessment", notes = "Reports the file types (docx, pdf) held for the final and retest reports so a caller can choose what to download without pulling every blob. An assessment with no report returns empty lists.", position = 205)
+    @ApiResponses(value = {
+            @ApiResponse(code = 401, message = "Not Authorized"),
+            @ApiResponse(code = 404, message = "Assessment not found"),
+            @ApiResponse(code = 200, message = "Returns the available report variants") })
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/report/{aid}/info")
+    public Response reportInfo(
+            @ApiParam(value = "Authentication Header", required = true) @HeaderParam("FACTION-API-KEY") String apiKey,
+            @ApiParam(value = "Assessment ID", required = true) @PathParam("aid") Long aid) {
+
+        EntityManager em = HibHelper.getInstance().getEMF().createEntityManager();
+        try {
+            User u = Support.getUser(em, apiKey);
+            if (u == null || !(u.getPermissions().isAssessor() || u.getPermissions().isManager()
+                    || u.getPermissions().isAdmin())) {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+
+            Assessment assessment = AssessmentQueries.getAssessment(em, u, aid);
+            if (assessment == null) {
+                return Response.status(404)
+                        .entity(String.format(Support.ERROR, "Assessment not found or access denied")).build();
+            }
+
+            JSONObject info = new JSONObject();
+            info.put("assessmentId", aid);
+            info.put("final", variantTypes(assessment.getFinalReport()));
+            info.put("retest", variantTypes(assessment.getRetestReport()));
+            // Whether the PDF is password protected in FACTION 1. The password itself is
+            // deliberately not exposed; a consumer re-protects with its own.
+            info.put("finalEncrypted", assessment.getFinalReport() != null
+                    && assessment.getFinalReport().getEncryptedReportPassword() != null);
+            info.put("retestEncrypted", assessment.getRetestReport() != null
+                    && assessment.getRetestReport().getEncryptedReportPassword() != null);
+            return Response.status(200).entity(info.toJSONString()).build();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Response.status(500).entity(String.format(Support.ERROR, "Error reading report info")).build();
+        } finally {
+            em.close();
+        }
+    }
+
+    // The file types held by a report, empty when the report is absent. A variant with no
+    // content is left out so callers don't request a download that can only 404.
+    static JSONArray variantTypes(FinalReport report) {
+        JSONArray types = new JSONArray();
+        if (report == null) {
+            return types;
+        }
+        for (FinalReportVariant variant : report.getEffectiveVariants()) {
+            String content = variant.getBase64Content();
+            if (content != null && !content.isEmpty()) {
+                types.add(variant.getFileType());
+            }
+        }
+        return types;
+    }
+
+    // Package-private method for testing — bypasses DB and uses pre-built Assessment/User
+    Response invokeDownloadReport(User user, Assessment assessment, Long aid) {
+        return invokeDownloadReport(user, assessment, aid, null, null);
+    }
+
+    Response invokeDownloadReport(User user, Assessment assessment, Long aid, String type, Boolean retest) {
+        try {
+            if (user == null) {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+
+            if (!(user.getPermissions().isAssessor() || user.getPermissions().isManager() || user.getPermissions().isAdmin())) {
+                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
+            }
+
             if (assessment == null) {
                 return Response.status(404).entity(String.format(Support.ERROR, "Assessment not found or access denied")).build();
             }
 
-            FinalReport finalReport = assessment.getFinalReport();
+            boolean wantRetest = Boolean.TRUE.equals(retest);
+            FinalReport finalReport = wantRetest ? assessment.getRetestReport() : assessment.getFinalReport();
             if (finalReport == null) {
-                return Response.status(404).entity(String.format(Support.ERROR, "No final report available for this assessment")).build();
+                return Response.status(404).entity(String.format(Support.ERROR,
+                        wantRetest ? "No retest report available for this assessment"
+                                   : "No final report available for this assessment")).build();
             }
 
-            FinalReportVariant variant = finalReport.getEffectiveVariants().stream()
-                    .filter(v -> "pdf".equals(v.getFileType()))
-                    .findFirst()
-                    .orElse(finalReport.getEffectiveVariants().get(0));
+            FinalReportVariant variant = selectVariant(finalReport, type);
+            if (variant == null) {
+                return Response.status(404).entity(String.format(Support.ERROR,
+                        "No '" + type + "' variant available for this report")).build();
+            }
 
             String b64Rpt = variant.getBase64Content();
             if (b64Rpt == null || b64Rpt.isEmpty()) {
@@ -283,77 +432,50 @@ public class assessments {
                 filename = "Report.docx";
             }
 
-            if (finalReport.getRetest() != null && finalReport.getRetest()) {
+            if (wantRetest || (finalReport.getRetest() != null && finalReport.getRetest())) {
                 filename = "Retest " + filename;
             }
 
-            String downloadFilename = assessment.getName() + " - " + assessment.getType().getType() + " " + filename;
+            String assessmentType = assessment.getType() == null ? "" : assessment.getType().getType() + " ";
+            String downloadFilename = assessment.getName() + " - " + assessmentType + filename;
 
-            return buildReportResponse(report, downloadFilename);
+            return buildReportResponse(report, downloadFilename, contentType);
 
         } catch (Exception e) {
             e.printStackTrace();
             return Response.status(500).entity(String.format(Support.ERROR, "Error downloading report")).build();
-        } finally {
-            em.close();
         }
     }
 
-    // Package-private method for testing — bypasses DB and uses pre-built Assessment/User
-    Response invokeDownloadReport(User user, Assessment assessment, Long aid) {
-        try {
-            if (user == null) {
-                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
-            }
-
-            if (!(user.getPermissions().isAssessor() || user.getPermissions().isManager() || user.getPermissions().isAdmin())) {
-                return Response.status(401).entity(String.format(Support.ERROR, "Not Authorized")).build();
-            }
-
-            if (assessment == null) {
-                return Response.status(404).entity(String.format(Support.ERROR, "Assessment not found or access denied")).build();
-            }
-
-            FinalReport finalReport = assessment.getFinalReport();
-            if (finalReport == null) {
-                return Response.status(404).entity(String.format(Support.ERROR, "No final report available for this assessment")).build();
-            }
-
-            FinalReportVariant variant = finalReport.getEffectiveVariants().stream()
-                    .filter(v -> "pdf".equals(v.getFileType()))
-                    .findFirst()
-                    .orElse(finalReport.getEffectiveVariants().get(0));
-
-            String b64Rpt = variant.getBase64Content();
-            if (b64Rpt == null || b64Rpt.isEmpty()) {
-                return Response.status(404).entity(String.format(Support.ERROR, "Report data is empty")).build();
-            }
-
-            byte[] report;
-            report = Base64.decodeBase64(b64Rpt.getBytes());
-
-            if (report == null || report.length == 0) {
-                return Response.status(500).entity(String.format(Support.ERROR, "Report is empty")).build();
-            }
-
-            String filename = "pdf".equals(variant.getFileType()) ? "Report.pdf" : "Report.docx";
-
-            if (finalReport.getRetest() != null && finalReport.getRetest()) {
-                filename = "Retest " + filename;
-            }
-
-            String downloadFilename = assessment.getName() + " - " + assessment.getType().getType() + " " + filename;
-
-            return buildReportResponse(report, downloadFilename);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return Response.status(500).entity(String.format(Support.ERROR, "Error downloading report")).build();
+    /**
+     * Picks the variant to serve. A named type must match exactly — falling back to some
+     * other format would hand the caller a file it did not ask for, which a migration
+     * would then mis-file. With no type the PDF wins, then whatever the report has.
+     */
+    static FinalReportVariant selectVariant(FinalReport report, String type) {
+        List<FinalReportVariant> variants = report.getEffectiveVariants();
+        if (variants == null || variants.isEmpty()) {
+            return null;
         }
+        if (type != null && !type.trim().isEmpty()) {
+            String wanted = type.trim().toLowerCase();
+            return variants.stream()
+                    .filter(v -> wanted.equals(v.getFileType()))
+                    .findFirst()
+                    .orElse(null);
+        }
+        return variants.stream()
+                .filter(v -> "pdf".equals(v.getFileType()))
+                .findFirst()
+                .orElse(variants.get(0));
     }
 
     Response buildReportResponse(byte[] report, String filename) {
-        return Response.ok(report)
+        return buildReportResponse(report, filename, MediaType.APPLICATION_OCTET_STREAM);
+    }
+
+    Response buildReportResponse(byte[] report, String filename, String contentType) {
+        return Response.ok(report, contentType)
             .header("Content-Disposition", "attachment; filename=\"" + sanitizeFilename(filename) + "\"")
             .header("Cache-Control", "no-cache, no-store, must-revalidate")
             .header("Pragma", "no-cache")
