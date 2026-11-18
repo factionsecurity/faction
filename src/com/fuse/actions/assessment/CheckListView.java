@@ -20,6 +20,7 @@ import com.fuse.dao.PeerReview;
 import com.fuse.dao.RiskLevel;
 import com.fuse.dao.User;
 import com.fuse.dao.Vulnerability;
+import com.fuse.dao.query.AssessmentQueries;
 
  
 @Namespace("/portal")
@@ -55,17 +56,12 @@ public class CheckListView extends FSActionSupport{
 		User user = this.getSessionUser();
 		
 		if(this.isAcmanager()) {
-			assessment = (Assessment) em
-					.createNativeQuery("{ \"_id\" : " + lid +"}", Assessment.class)
-					.getResultList().stream().findFirst().orElse(null);
-			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst().orElse(null);
-			if(mgrs == null)
+			assessment = AssessmentQueries.getAssessmentById(em, lid);
+			if(assessment != null && assessment.getAssessor().stream().noneMatch(u -> u.getId() == user.getId()))
 				this.notowner = true;
 		
 		}else {
-			assessment = (Assessment) em
-					.createNativeQuery("{\"assessor\" : "+user.getId() +", \"_id\" : " + lid +"}", Assessment.class)
-					.getResultList().stream().findFirst().orElse(null);
+			assessment = AssessmentQueries.getAssessmentForUser(em, user, lid);
 		}
 		
 		if(assessment == null) {
@@ -148,6 +144,14 @@ public class CheckListView extends FSActionSupport{
 		
 		Long asmtid = (Long)this.getSession("asmtid");
 		assessment = em.find(Assessment.class, asmtid);
+		if(assessment == null) {
+			this._message = "Assessment Does not exist";
+			return this.ERRORJSON;
+		}
+		if(!this.isAcmanager() && !AssessmentQueries.canEditAssessment(user, assessment)) {
+			this._message = "You do not have access to update this assessment.";
+			return this.ERRORJSON;
+		}
 		
 		CheckList list = em.find(CheckList.class, Long.parseLong(id));
 		if(list == null) {
@@ -201,6 +205,11 @@ public class CheckListView extends FSActionSupport{
 		Assessment assessment = em.find(Assessment.class, asmtid);
 		if(assessment == null) {
 			this._message = "Assessment Does not exist";
+			return this.ERRORJSON;
+		}
+
+		if(!this.isAcmanager() && !AssessmentQueries.canEditAssessment(user, assessment)) {
+			this._message = "You do not have access to update this assessment.";
 			return this.ERRORJSON;
 		}
 		if(assessment.isFinalized()) {
@@ -267,6 +276,11 @@ public class CheckListView extends FSActionSupport{
 			this._message = "Assessment Does not exist";
 			return this.ERRORJSON;
 		}
+
+		if(!this.isAcmanager() && !AssessmentQueries.canEditAssessment(user, assessment)) {
+			this._message = "You do not have access to update this assessment.";
+			return this.ERRORJSON;
+		}
 		if(assessment.isFinalized()) {
 			this._message = "Assessment has been finalized.";
 			return this.ERRORJSON;
@@ -314,6 +328,11 @@ public class CheckListView extends FSActionSupport{
 		Assessment assessment = em.find(Assessment.class, asmtid);
 		if(assessment == null) {
 			this._message = "Assessment Does not exist";
+			return this.ERRORJSON;
+		}
+
+		if(!this.isAcmanager() && !AssessmentQueries.canEditAssessment(user, assessment)) {
+			this._message = "You do not have access to update this assessment.";
 			return this.ERRORJSON;
 		}
 		if(assessment.getCompleted() != null) {

@@ -130,19 +130,10 @@ public class AssessmentView extends FSActionSupport {
 		}
 
 		Long lid = Long.parseLong(this.id);
-		if (this.isAcmanager()) {
-			assessment = AssessmentQueries.getAssessmentById(em, lid);
-			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
-					.orElse(null);
-			if (mgrs == null)
-				this.notowner = true;
-
-		} else {
-			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
-		}
+		assessment = loadAssessment(user, lid);
 
 		if (assessment == null)
-			return SUCCESS;
+			return this.accessDenied("User cannot open assessment " + lid);
 		
 		hasTemplate = AssessmentQueries.checkForReportTemplates(em, assessment);
 		
@@ -309,16 +300,7 @@ public class AssessmentView extends FSActionSupport {
 		}
 
 		Long lid = Long.parseLong(this.id);
-		if (this.isAcmanager()) {
-			assessment = AssessmentQueries.getAssessmentById(em, lid);
-			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
-					.orElse(null);
-			if (mgrs == null)
-				this.notowner = true;
-
-		} else {
-			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
-		}
+		assessment = loadAssessment(user, lid);
 
 		if (assessment == null)
 			return SUCCESS;
@@ -371,16 +353,7 @@ public class AssessmentView extends FSActionSupport {
 		}
 
 		Long lid = Long.parseLong(this.id);
-		if (this.isAcmanager()) {
-			assessment = AssessmentQueries.getAssessmentById(em, lid);
-			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
-					.orElse(null);
-			if (mgrs == null)
-				this.notowner = true;
-
-		} else {
-			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
-		}
+		assessment = loadAssessment(user, lid);
 
 		if (assessment == null)
 			return "";
@@ -485,11 +458,7 @@ public class AssessmentView extends FSActionSupport {
 		Long asmtId = SessionAsmtId();
 
 		Assessment current;
-		if (this.isAcmanager()) {
-			current = AssessmentQueries.getAssessmentById(em, asmtId);
-		} else {
-			current = AssessmentQueries.getAssessmentByUserId(em, user.getId(), asmtId, AssessmentQueries.All);
-		}
+		current = loadAssessment(user, asmtId);
 
 		if (current == null) {
 			this._message = "Assessment not found.";
@@ -627,11 +596,7 @@ public class AssessmentView extends FSActionSupport {
 		Long asmtId = SessionAsmtId();
 
 		Assessment current;
-		if (this.isAcmanager()) {
-			current = AssessmentQueries.getAssessmentById(em, asmtId);
-		} else {
-			current = AssessmentQueries.getAssessmentByUserId(em, user.getId(), asmtId, AssessmentQueries.All);
-		}
+		current = loadAssessment(user, asmtId);
 
 		if (current == null) {
 			this._message = "Assessment not found.";
@@ -668,8 +633,7 @@ public class AssessmentView extends FSActionSupport {
 
 		User user = this.getSessionUser();
 		Long assessmentId = Long.parseLong(this.id);
-		Assessment assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), assessmentId,
-				AssessmentQueries.OnlyNonCompleted);
+		Assessment assessment = AssessmentQueries.getAssessmentForUser(em, user, assessmentId);
 
 		if (this.isAssessmentBlocked(assessment, user)) {
 			return this.ERRORJSON;
@@ -704,7 +668,7 @@ public class AssessmentView extends FSActionSupport {
 				return "assessmentStats";
 			}
 		}else if(this.isAcassessor()) {
-			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), assessmentId, AssessmentQueries.All);
+			assessment = AssessmentQueries.getAssessmentForUser(em, user, assessmentId);
 			if(assessment == null) {
 				List<Vulnerability> vulns = new ArrayList();
 				return "assessmentStats";
@@ -781,8 +745,7 @@ public class AssessmentView extends FSActionSupport {
 
 		User user = this.getSessionUser();
 		Long asmtId = SessionAsmtId();
-		Assessment asmt = AssessmentQueries.getAssessmentByUserId(em, user.getId(), asmtId,
-				AssessmentQueries.OnlyNonCompleted);
+		Assessment asmt = AssessmentQueries.getAssessmentForUser(em, user, asmtId);
 
 		if (this.isAssessmentBlocked(asmt, user)) {
 			return this.ERRORJSON;
@@ -857,6 +820,10 @@ public class AssessmentView extends FSActionSupport {
 			return false;
 	}
 	private boolean isAssessmentBlocked(Assessment assessment, User user) {
+		if (assessment == null) {
+			this._message = "Assessment not found.";
+			return true;
+		}
 		if (this.blockingPR(assessment.getId())) {
 			this._message = "Assessment cannot be updated when in Peer Review.";
 			return true; 
@@ -872,14 +839,29 @@ public class AssessmentView extends FSActionSupport {
 			return true; 
 		}
 
-		if (!assessment.getAssessor().stream().anyMatch(u -> u.getId() == user.getId())) {
-			this._message = "You Are not the owner of this Assessment";
+		if (!AssessmentQueries.canEditAssessment(user, assessment)) {
+			this._message = "You do not have access to update this Assessment";
 			return true; 
 		}
 		return false;
 		
 	}
 
+
+	/**
+	 * The assessment this user may open, or null. Managers open any assessment and
+	 * see "Manager View" on ones they aren't assigned to; everyone else gets what
+	 * their Access Level covers (see AssessmentQueries.canOpenAssessment).
+	 */
+	private Assessment loadAssessment(User user, Long assessmentId) {
+		if (this.isAcmanager()) {
+			Assessment found = AssessmentQueries.getAssessmentById(em, assessmentId);
+			if (found != null && found.getAssessor().stream().noneMatch(u -> u.getId() == user.getId()))
+				this.notowner = true;
+			return found;
+		}
+		return AssessmentQueries.getAssessmentForUser(em, user, assessmentId);
+	}
 
 	private Long SessionAsmtId() {
 		if (this.getSession("asmtid") == null) {

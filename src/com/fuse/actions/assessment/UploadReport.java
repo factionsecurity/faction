@@ -41,7 +41,7 @@ public class UploadReport extends FSActionSupport {
 		if (this.isAcmanager()) {
 			asmt = AssessmentQueries.getAssessmentById(em, asmtId);
 		} else {
-			asmt = AssessmentQueries.getAssessmentByUserId(em, user.getId(), asmtId, AssessmentQueries.All);
+			asmt = AssessmentQueries.getAssessmentForUser(em, user, asmtId);
 		}
 
 		if (!this.testToken(false))
@@ -52,8 +52,8 @@ public class UploadReport extends FSActionSupport {
 			return this.ERRORJSON;
 		}
 
-		if (!this.isAcmanager() && asmt.getAssessor().stream().noneMatch(u -> u.getId() == user.getId())) {
-			this._message = "You are not an assessor on this assessment.";
+		if (!this.isAcmanager() && !AssessmentQueries.canEditAssessment(user, asmt)) {
+			this._message = "You do not have access to update this assessment.";
 			return this.ERRORJSON;
 		}
 
