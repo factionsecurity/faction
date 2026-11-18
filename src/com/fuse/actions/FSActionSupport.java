@@ -302,7 +302,22 @@ public class FSActionSupport extends ActionSupport implements SessionAware, Serv
 	public void setSession(String attr, Object value) {
 		ServletActionContext.getRequest().getSession().setAttribute(attr, value);
 	}
-	
+
+	/**
+	 * Records the attempt in the audit log and answers 403 Access Denied, for a page
+	 * the user is signed in for but not allowed to see. Return the result from the
+	 * action so Struts renders nothing else.
+	 */
+	protected String accessDenied(String description) {
+		AuditLog.notAuthorized(this, description, true);
+		try {
+			ServletActionContext.getResponse().sendError(HttpServletResponse.SC_FORBIDDEN, "Access Denied");
+		} catch (IOException | IllegalStateException e) {
+			// response already committed; nothing more can be sent
+		}
+		return NONE;
+	}
+
 	public boolean isNullStirng(String var) {
 		if(var == null)
 			return true;
