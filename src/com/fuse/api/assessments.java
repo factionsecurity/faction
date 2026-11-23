@@ -402,8 +402,10 @@ public class assessments {
 
             FinalReportVariant variant = selectVariant(finalReport, type);
             if (variant == null) {
+                // The requested type is caller input, so it is never written back into the
+                // response: only one of these fixed messages is.
                 return Response.status(404).entity(String.format(Support.ERROR,
-                        "No '" + type + "' variant available for this report")).build();
+                        missingVariantMessage(type))).build();
             }
 
             String b64Rpt = variant.getBase64Content();
@@ -445,6 +447,24 @@ public class assessments {
             e.printStackTrace();
             return Response.status(500).entity(String.format(Support.ERROR, "Error downloading report")).build();
         }
+    }
+
+    /**
+     * The 404 message for a variant that is not there. Built from fixed strings only —
+     * echoing the requested type would reflect caller input into the response.
+     */
+    static String missingVariantMessage(String type) {
+        String wanted = type == null ? "" : type.trim().toLowerCase();
+        if ("pdf".equals(wanted)) {
+            return "No pdf variant available for this report";
+        }
+        if ("docx".equals(wanted)) {
+            return "No docx variant available for this report";
+        }
+        if (wanted.isEmpty()) {
+            return "No report variant available for this report";
+        }
+        return "Unsupported report type; use docx or pdf";
     }
 
     /**

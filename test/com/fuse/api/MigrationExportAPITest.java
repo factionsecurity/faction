@@ -209,6 +209,31 @@ public class MigrationExportAPITest {
     }
 
     @Test
+    public void aMissingVariantNeverEchoesTheRequestedType() {
+        // The type comes straight from the query string. Writing it into the error body
+        // reflected caller input back to the browser.
+        assessment.setFinalReport(reportWith(variant("pdf", "PDF BODY")));
+        String hostile = "<script>alert(1)</script>";
+
+        Response response = api.invokeDownloadReport(manager, assessment, 100L, hostile, false);
+
+        assertEquals(404, response.getStatus());
+        String body = String.valueOf(response.getEntity());
+        assertFalse(body, body.contains("<script>"));
+        assertFalse(body, body.contains("alert(1)"));
+    }
+
+    @Test
+    public void aMissingKnownVariantNamesTheFormat() {
+        assessment.setFinalReport(reportWith(variant("pdf", "PDF BODY")));
+
+        Response response = api.invokeDownloadReport(manager, assessment, 100L, " DOCX ", false);
+
+        assertEquals(404, response.getStatus());
+        assertTrue(String.valueOf(response.getEntity()).contains("No docx variant"));
+    }
+
+    @Test
     public void downloadIs404WhenThereIsNoRetestReport() {
         assessment.setFinalReport(reportWith(variant("pdf", "PDF BODY")));
 
