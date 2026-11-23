@@ -328,7 +328,10 @@ public class EntityUnitTest extends MongoTestBase {
         java.lang.reflect.Field sectionField = Vulnerability.class.getDeclaredField("section");
         sectionField.setAccessible(true);
         sectionField.set(testVuln, "Cross_Site_Scripting");
-        assertEquals("Section should convert underscores to spaces", "Cross Site Scripting", testVuln.getSection());
+        // getSection() is the stored key the report templates match on, so it keeps the
+        // underscores; getSectionPretty() is the display form.
+        assertEquals("Section key should keep underscores", "Cross_Site_Scripting", testVuln.getSection());
+        assertEquals("Pretty section should convert underscores to spaces", "Cross Site Scripting", testVuln.getSectionPretty());
     }
 
     @Test
