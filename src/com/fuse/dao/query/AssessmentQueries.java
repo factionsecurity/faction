@@ -319,6 +319,42 @@ public class AssessmentQueries {
 		
 	}
 	
+	/**
+	 * Whether the user may update an assessment: its own assessors always can, and
+	 * any other assessor can take it over when their Access Level covers it ("All
+	 * Assessments" covers every assessment, "Team Assessments" the team's).
+	 * Finalized assessments are never editable.
+	 */
+	public static boolean canEditAssessment(User user, Assessment asmt) {
+		if (user == null || asmt == null || asmt.getCompleted() != null)
+			return false;
+		if (isAssignedTo(user, asmt))
+			return true;
+		return user.getPermissions() != null && user.getPermissions().isAssessor() && canAccessAssessment(user, asmt);
+	}
+
+	/**
+	 * Whether a user may open an assessment: its own assessors always can (finalized
+	 * or not), and anyone else when their Access Level covers it.
+	 */
+	public static boolean canOpenAssessment(User user, Assessment asmt) {
+		if (user == null || asmt == null)
+			return false;
+		return isAssignedTo(user, asmt) || canAccessAssessment(user, asmt);
+	}
+
+	/** The assessment if the user may open it (see canOpenAssessment), otherwise null. */
+	public static Assessment getAssessmentForUser(EntityManager em, User user, Long assessmentId) {
+		if (assessmentId == null)
+			return null;
+		Assessment asmt = em.find(Assessment.class, assessmentId);
+		return canOpenAssessment(user, asmt) ? asmt : null;
+	}
+
+	private static boolean isAssignedTo(User user, Assessment asmt) {
+		return asmt.getAssessor() != null && asmt.getAssessor().stream().anyMatch(u -> u.getId() == user.getId());
+	}
+
 	public static Assessment getAssessment(EntityManager em, User user, Long AssessmentId) {
 		Assessment asmt = em.find(Assessment.class, AssessmentId);
 		if(canAccessAssessment(user, asmt)) {

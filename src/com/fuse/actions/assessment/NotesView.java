@@ -49,16 +49,7 @@ public class NotesView extends FSActionSupport {
 		}
 
 		Long lid = Long.parseLong(this.id);
-		if (this.isAcmanager()) {
-			assessment = AssessmentQueries.getAssessmentById(em, lid);
-			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
-					.orElse(null);
-			if (mgrs == null)
-				this.notowner = true;
-
-		} else {
-			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
-		}
+		assessment = loadAssessment(user, lid);
 		if (assessment == null)
 			return SUCCESS;
 		
@@ -95,16 +86,7 @@ public class NotesView extends FSActionSupport {
 		}
 
 		Long lid = Long.parseLong(this.id);
-		if (this.isAcmanager()) {
-			assessment = AssessmentQueries.getAssessmentById(em, lid);
-			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
-					.orElse(null);
-			if (mgrs == null)
-				this.notowner = true;
-
-		} else {
-			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
-		}
+		assessment = loadAssessment(user, lid);
 
 		if (assessment == null)
 			return SUCCESS;
@@ -133,16 +115,7 @@ public class NotesView extends FSActionSupport {
 		}
 
 		Long lid = Long.parseLong(this.id);
-		if (this.isAcmanager()) {
-			assessment = AssessmentQueries.getAssessmentById(em, lid);
-			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
-					.orElse(null);
-			if (mgrs == null)
-				this.notowner = true;
-
-		} else {
-			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
-		}
+		assessment = loadAssessment(user, lid);
 		if (assessment == null) {
 			this._message = "Invalid Assessment";
 			return this.ERRORJSON;
@@ -188,16 +161,7 @@ public class NotesView extends FSActionSupport {
 		}
 
 		Long lid = Long.parseLong(this.id);
-		if (this.isAcmanager()) {
-			assessment = AssessmentQueries.getAssessmentById(em, lid);
-			User mgrs = assessment.getAssessor().stream().filter(u -> u.getId() == user.getId()).findFirst()
-					.orElse(null);
-			if (mgrs == null)
-				this.notowner = true;
-
-		} else {
-			assessment = AssessmentQueries.getAssessmentByUserId(em, user.getId(), lid, AssessmentQueries.All);
-		}
+		assessment = loadAssessment(user, lid);
 
 		if (assessment == null)
 			return SUCCESS;
@@ -223,4 +187,15 @@ public class NotesView extends FSActionSupport {
 		this.noteText = noteText;
 	}
 
+
+	/** Same rule as the assessment page: managers open any, others per Access Level. */
+	private Assessment loadAssessment(User user, Long assessmentId) {
+		if (this.isAcmanager()) {
+			Assessment found = AssessmentQueries.getAssessmentById(em, assessmentId);
+			if (found != null && found.getAssessor().stream().noneMatch(u -> u.getId() == user.getId()))
+				this.notowner = true;
+			return found;
+		}
+		return AssessmentQueries.getAssessmentForUser(em, user, assessmentId);
+	}
 }
