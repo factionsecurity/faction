@@ -596,6 +596,7 @@ public class DocxUtils {
             warmedImages.clear();
             inlineImagesDownscaled.clear();
             embeddedImageRIdCache.clear();
+            cachedLinkRIdCache.clear();
             templateTables = null;
             processedTables.clear();
 
@@ -766,6 +767,12 @@ public class DocxUtils {
                 return null;
             }
 
+            // same for hyperlinks: a bare rId can only come from a pre-v9
+            // cache and would resolve to nothing, or to the wrong link
+            if (BARE_HYPERLINK_RID.matcher(fieldXml).find()) {
+                return null;
+            }
+
             String xml = fieldXml;
 
             // Variable substitution runs dozens of full scans over the
@@ -791,6 +798,13 @@ public class DocxUtils {
             // valid rIds so Word can display the images
             xml = resolveEmbeddedImages(xml);
 
+            // hyperlinks: FCT-LINK tokens become real external
+            // relationships in the report package
+            xml = resolveCachedLinks(xml);
+            if (xml.contains(DocxPrecompiler.LINK_TOKEN_PREFIX)) {
+                return null; // unresolved link — fall back to live
+            }
+
             // re-create the field's numbering definitions in the report
             // package and swap the FCT-NUM tokens for the fresh ids
             if (numberingXml != null) {
@@ -801,13 +815,14 @@ public class DocxUtils {
             }
 
             // unmarshal the XML string back to JAXB nodes. The cached XML
-            // is a concatenation of <w:p> elements — unmarshal each one
-            // individually to avoid deep JAXB call stacks on large snippets
+            // is a concatenation of block elements (<w:p>, <w:tbl>, ...) —
+            // unmarshal each one individually to avoid deep JAXB call
+            // stacks on large snippets
             List<Object> nodes = new ArrayList<>();
             try {
-                List<String> snippets = splitTopLevelParagraphs(xml);
+                List<String> snippets = splitTopLevelElements(xml);
                 if (snippets.isEmpty()) {
-                    // the cached XML doesn't contain recognizable <w:p>
+                    // the cached XML doesn't contain recognizable block
                     // elements — fall back to live conversion rather than
                     // returning an empty list.
                     return null;
@@ -966,6 +981,57 @@ public class DocxUtils {
     private static final Pattern EMBEDDED_IMAGE_PATTERN = Pattern.compile(
             "(r:embed|r:link)=\"(data:image/[^\"]+)\"");
 
+    private static final Pattern CACHED_LINK_PATTERN = Pattern.compile(
+            "r:id=\"" + Pattern.quote(DocxPrecompiler.LINK_TOKEN_PREFIX) + "([A-Za-z0-9_-]*)\"");
+
+    // a hyperlink still referencing a relationship id from the package it
+    // was converted in (cache formats before v9)
+    private static final Pattern BARE_HYPERLINK_RID = Pattern.compile(
+            "<w:hyperlink\\b[^>]*\\sr:id=\"rId");
+
+    // target URL -> relationship id in this report, so a link repeated
+    // across findings shares one relationship
+    private Map<String, String> cachedLinkRIdCache = new HashMap<>();
+
+    /**
+     * Replaces each cached hyperlink's FCT-LINK token with the id of an
+     * external hyperlink relationship to that URL in the report package.
+     * A token that can't be resolved is left in place; the caller then
+     * falls back to live conversion.
+     */
+    private String resolveCachedLinks(String xml) {
+        if (!xml.contains(DocxPrecompiler.LINK_TOKEN_PREFIX)) return xml;
+        RelationshipsPart relsPart = mlp.getMainDocumentPart().getRelationshipsPart();
+        if (relsPart == null || relsPart.getRelationships() == null) return xml;
+
+        Matcher m = CACHED_LINK_PATTERN.matcher(xml);
+        StringBuffer sb = new StringBuffer();
+        while (m.find()) {
+            String target;
+            try {
+                target = new String(Base64.getUrlDecoder().decode(m.group(1)),
+                        java.nio.charset.StandardCharsets.UTF_8);
+            } catch (IllegalArgumentException e) {
+                m.appendReplacement(sb, Matcher.quoteReplacement(m.group(0)));
+                continue;
+            }
+            String rId = cachedLinkRIdCache.get(target);
+            if (rId == null) {
+                org.docx4j.relationships.Relationship rel = new org.docx4j.relationships.Relationship();
+                rel.setId(relsPart.getNextId());
+                rel.setType("http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink");
+                rel.setTarget(target);
+                rel.setTargetMode("External");
+                relsPart.getRelationships().getRelationship().add(rel);
+                rId = rel.getId();
+                cachedLinkRIdCache.put(target, rId);
+            }
+            m.appendReplacement(sb, Matcher.quoteReplacement("r:id=\"" + rId + "\""));
+        }
+        m.appendTail(sb);
+        return sb.toString();
+    }
+
     /**
      * Scans cached XML for embedded image data URIs (placed by the
      * precompiler), creates real image parts in the report package, and
@@ -1067,76 +1133,83 @@ public class DocxUtils {
         }
     }
 
-    // splits a concatenated XML string into individual top-level paragraph
-    // elements, so each can be unmarshaled independently. This avoids deep
-    // JAXB call stacks when unmarshaling large snippets.
+    private static final String CACHED_NS_DECLS =
+            " xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\""
+            + " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\""
+            + " xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\""
+            + " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\""
+            + " xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"";
+
+    // splits a concatenated XML string into its top-level block elements
+    // (<w:p>, <w:tbl>, ...), so each can be unmarshaled independently. This
+    // avoids deep JAXB call stacks when unmarshaling large snippets.
     //
-    // The docx4j marshaller may use the standard <w:p> prefix when
+    // Every top-level element is kept. This once looked only for <w:p>,
+    // which turned a cached table into its cells' paragraphs: the <w:tbl>
+    // around them was skipped and each cell paragraph read as top-level.
+    //
+    // The docx4j marshaller may use the standard w: prefix when
     // marshalling inside a document context, or an arbitrary namespace
     // prefix (e.g. <ns3:p>) when marshalling a standalone node. This
     // method handles both by falling back to a regex-based split if the
     // standard prefix scan finds nothing.
-    private static List<String> splitTopLevelParagraphs(String xml) {
+    static List<String> splitTopLevelElements(String xml) {
         List<String> parts = new ArrayList<>();
-        int scan = 0;
-        while (scan < xml.length()) {
-            int pStart = xml.indexOf("<w:p ", scan);
-            int pStartPlain = xml.indexOf("<w:p>", scan);
-            int best;
-            if (pStart < 0) {
-                best = pStartPlain;
-            } else if (pStartPlain < 0) {
-                best = pStart;
-            } else {
-                best = Math.min(pStart, pStartPlain);
-            }
-            if (best < 0) {
+        int depth = 0;
+        int start = -1;
+        int i = 0;
+        while (true) {
+            int lt = xml.indexOf('<', i);
+            if (lt < 0 || lt + 1 >= xml.length()) {
                 break;
             }
-            // find matching </w:p> with depth tracking for nested w:p
-            int depth = 0;
-            int i = best + 4;
-            int end = -1;
-            while (i < xml.length()) {
-                int nextOpen = xml.indexOf("<w:p ", i);
-                int nextOpenPlain = xml.indexOf("<w:p>", i);
-                int nextClose = xml.indexOf("</w:p>", i);
-                int bestOpen;
-                if (nextOpen < 0) {
-                    bestOpen = nextOpenPlain;
-                } else if (nextOpenPlain < 0) {
-                    bestOpen = nextOpen;
-                } else {
-                    bestOpen = Math.min(nextOpen, nextOpenPlain);
-                }
-                if (nextClose < 0) break;
-                if (bestOpen >= 0 && bestOpen < nextClose) {
-                    depth++;
-                    i = bestOpen + 5;
-                } else {
-                    if (depth == 0) {
-                        end = nextClose + "</w:p>".length();
-                        break;
-                    }
-                    depth--;
-                    i = nextClose + "</w:p>".length();
-                }
+            // comments (the numbering marker), processing instructions and
+            // CDATA are not elements and never open or close one
+            if (xml.startsWith("<!--", lt)) {
+                int e = xml.indexOf("-->", lt);
+                if (e < 0) break;
+                i = e + 3;
+                continue;
             }
-            if (end < 0) break;
-            String snippet = xml.substring(best, end);
-            if (!snippet.contains("xmlns:w=")) {
-                snippet = snippet.replaceFirst("<w:p",
-                        "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\""
-                        + " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\""
-                        + " xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\""
-                        + " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\""
-                        + " xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"");
+            if (xml.startsWith("<?", lt)) {
+                int e = xml.indexOf("?>", lt);
+                if (e < 0) break;
+                i = e + 2;
+                continue;
             }
-            parts.add(snippet);
-            scan = end;
+            if (xml.startsWith("<![CDATA[", lt)) {
+                int e = xml.indexOf("]]>", lt);
+                if (e < 0) break;
+                i = e + 3;
+                continue;
+            }
+            int gt = tagEnd(xml, lt);
+            if (gt < 0) {
+                break;
+            }
+            if (xml.charAt(lt + 1) == '/') {
+                depth--;
+                if (depth < 0) {
+                    break; // unbalanced: keep what was complete
+                }
+                if (depth == 0 && start >= 0) {
+                    addTopLevel(parts, xml.substring(start, gt + 1));
+                    start = -1;
+                }
+            } else if (xml.charAt(gt - 1) == '/') {
+                if (depth == 0) {
+                    addTopLevel(parts, xml.substring(lt, gt + 1));
+                }
+            } else {
+                if (depth == 0) {
+                    start = lt;
+                }
+                depth++;
+            }
+            i = gt + 1;
         }
 
-        // fallback: if no <w:p> elements were found, the marshaller may
+        // fallback: if no w: elements were found, the marshaller may
         // have used a different namespace prefix (e.g. <ns3:p>). Try a
         // regex-based split on any element whose local name is "p".
         if (parts.isEmpty() && xml.contains(":p") && xml.contains(":p>")) {
@@ -1153,18 +1226,47 @@ public class DocxUtils {
                 snippet = snippet.replace("<" + prefix + ":p", "<w:p");
                 snippet = snippet.replace("</" + prefix + ":p", "</w:p");
                 if (!snippet.contains("xmlns:w=")) {
-                    snippet = snippet.replaceFirst("<w:p",
-                            "<w:p xmlns:w=\"http://schemas.openxmlformats.org/wordprocessingml/2006/main\""
-                            + " xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\""
-                            + " xmlns:wp=\"http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing\""
-                            + " xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\""
-                            + " xmlns:pic=\"http://schemas.openxmlformats.org/drawingml/2006/picture\"");
+                    snippet = snippet.replaceFirst("<w:p", "<w:p" + Matcher.quoteReplacement(CACHED_NS_DECLS));
                 }
                 parts.add(snippet);
             }
         }
 
         return parts;
+    }
+
+    // the '>' that closes the tag opened at lt, skipping any inside a
+    // quoted attribute value
+    private static int tagEnd(String xml, int lt) {
+        char quote = 0;
+        for (int j = lt + 1; j < xml.length(); j++) {
+            char c = xml.charAt(j);
+            if (quote != 0) {
+                if (c == quote) quote = 0;
+            } else if (c == '"' || c == '\'') {
+                quote = c;
+            } else if (c == '>') {
+                return j;
+            }
+        }
+        return -1;
+    }
+
+    // keeps a top-level element in the standard w: namespace, declaring the
+    // namespaces the cached XML uses when the snippet does not
+    private static void addTopLevel(List<String> parts, String snippet) {
+        if (!snippet.startsWith("<w:")) {
+            return; // other prefixes are handled by the fallback below
+        }
+        if (!snippet.contains("xmlns:w=")) {
+            int nameEnd = 3;
+            while (nameEnd < snippet.length()
+                    && Character.isLetterOrDigit(snippet.charAt(nameEnd))) {
+                nameEnd++;
+            }
+            snippet = snippet.substring(0, nameEnd) + CACHED_NS_DECLS + snippet.substring(nameEnd);
+        }
+        parts.add(snippet);
     }
 
     @ProfileMethod("Convert HTML content to docx format with CSS styling")

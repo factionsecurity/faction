@@ -44,7 +44,12 @@ import javax.persistence.EntityManager;
  *
  * The cached XML must be SELF-CONTAINED — a paragraph that references
  * anything by id is worthless once it leaves the package the conversion
- * ran in. Two kinds of references are made portable:
+ * ran in. Three kinds of references are made portable:
+ *
+ * Hyperlinks: a link's URL lives in a relationship of the scratch
+ * package, referenced by rId. The reference is replaced with an
+ * FCT-LINK token carrying the URL; report-time code creates a real
+ * external relationship in the report package and swaps in its rId.
  *
  * Images: the importer attaches image parts to the scratch package and
  * references them by rId. The image bytes are captured and embedded
@@ -376,6 +381,10 @@ public class DocxPrecompiler {
         // report package and replaces the data URIs with valid rIds
         xml = embedImageDataUris(xml);
 
+        // same for hyperlinks: their URL lives in a scratch-package
+        // relationship, so the reference is swapped for the URL itself
+        xml = embedHyperlinkTargets(xml);
+
         // capture the numbering definitions this conversion created and
         // rewrite the paragraphs' numId references to portable tokens —
         // see the class comment for why bare numIds must never be cached
@@ -407,6 +416,32 @@ public class DocxPrecompiler {
             xml = xml.replace("r:embed=\"" + rId + "\"", "r:embed=\"" + dataUri + "\"");
             // also handle r:link (rare)
             xml = xml.replace("r:link=\"" + rId + "\"", "r:link=\"" + dataUri + "\"");
+        }
+        return xml;
+    }
+
+    /**
+     * Marks a hyperlink reference whose relationship must be re-created at
+     * report time: {@code r:id="FCT-LINK:<base64url of the target URL>"}.
+     */
+    public static final String LINK_TOKEN_PREFIX = "FCT-LINK:";
+
+    // replaces each hyperlink's r:id="rIdN" with a token carrying the URL.
+    // Left as rIdN, the reference pointed at whatever relationship had that
+    // id in the report package: usually none (Word repairs the file and the
+    // link goes nowhere), sometimes an unrelated one (a link to the wrong
+    // place). DocxUtils.resolveCachedLinks() creates the real relationship.
+    private String embedHyperlinkTargets(String xml) {
+        if (!xml.contains("hyperlink")) return xml;
+        RelationshipsPart rels = scratchPackage.getMainDocumentPart().getRelationshipsPart();
+        if (rels == null || rels.getRelationships() == null) return xml;
+        for (Relationship r : rels.getRelationships().getRelationship()) {
+            if (r.getType() == null || !r.getType().endsWith("/hyperlink") || r.getTarget() == null) {
+                continue;
+            }
+            String token = LINK_TOKEN_PREFIX + Base64.getUrlEncoder().withoutPadding()
+                    .encodeToString(r.getTarget().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            xml = xml.replace("r:id=\"" + r.getId() + "\"", "r:id=\"" + token + "\"");
         }
         return xml;
     }
@@ -539,7 +574,7 @@ public class DocxPrecompiler {
                     }
                 }
                 // normalize namespace prefixes to the standard w: prefix
-                // so splitTopLevelParagraphs can find <w:p> at report time.
+                // so splitTopLevelElements can find them at report time.
                 // docx4j's standalone marshaller may use arbitrary prefixes
                 // like <ns3:p> which the splitter doesn't recognize.
                 xml = normalizeNamespaces(xml);
@@ -619,7 +654,10 @@ public class DocxPrecompiler {
     // report template's numbering (bullets rendered as decimal).
     // v8: normalizeNamespaces text-corruption fix — v7 rows may have
     // " :" in user text stored as " w:".
-    private static final String CACHE_VERSION = "v8";
+    // v9: hyperlinks carry their URL (FCT-LINK tokens) — v8 rows hold
+    // scratch-package rIds that resolve to nothing, or to the wrong
+    // relationship, in the report.
+    private static final String CACHE_VERSION = "v9";
 
     // SHA-256 hash of version+font+content for cache invalidation
     private static String hash(String font, String content) {
