@@ -162,6 +162,67 @@ public class DocxAssessmentVarsParityTest {
 				docText.contains("Template header: Test PCI Assessment " + startStr + " ENG-42"));
 	}
 
+	@Test
+	public void assessmentValuesAreInsertedLiterally() throws Exception {
+		Teams team = new Teams();
+		team.setId(123l);
+		team.setTeamName("CORP\\red");
+		AssessmentType type = new AssessmentType();
+		type.setId(1235l);
+		type.setType("Type $1");
+
+		List<RiskLevel> levels = new ArrayList<>();
+		for (int i = 0; i < 10; i++) {
+			RiskLevel level = new RiskLevel();
+			level.setRiskId(i);
+			level.setRisk("Risk" + i);
+			levels.add(level);
+		}
+
+		Assessment assessment = GenerateReport.createTestAssessment(team, type, levels, new String[] { "S1" });
+		assessment.setGuid("test-guid");
+		assessment.setName("Save$ {Phase} $1");
+		assessment.getVulns().clear();
+		Vulnerability v = new Vulnerability();
+		v.setLevels(levels);
+		v.setId(1l);
+		v.setName("VarIssue");
+		v.setImpact(3l);
+		v.setLikelyhood(3l);
+		v.setOverall(3l);
+		v.setAssessmentId(1l);
+		v.setCustomFields(new ArrayList<CustomField>());
+		v.setDescription("name=${asmtName} team=${asmtTeam} type=${asmtType}");
+		v.setRecommendation("Rec");
+		v.setDetails("Details");
+		assessment.getVulns().add(v);
+
+		WordprocessingMLPackage mlp = WordprocessingMLPackage.createPackage();
+		mlp.getMainDocumentPart().addParagraphOfText("${fiBegin}");
+		mlp.getMainDocumentPart().addParagraphOfText("${desc}");
+		mlp.getMainDocumentPart().addParagraphOfText("${fiEnd}");
+		mlp.getMainDocumentPart().addParagraphOfText("");
+		mlp.getMainDocumentPart().addParagraphOfText("End of report");
+
+		EntityManagerFactory emf = Mockito.mock(EntityManagerFactory.class);
+		EntityManager em = Mockito.mock(EntityManager.class);
+		Query query = Mockito.mock(Query.class);
+		Mockito.when(emf.createEntityManager()).thenReturn(em);
+		Mockito.when(em.createQuery("from AppStore order by order")).thenReturn(query);
+		Mockito.when(query.getResultList()).thenReturn(new ArrayList<AppStore>());
+
+		DocxUtils genDoc = new DocxUtils(emf, mlp, assessment);
+		genDoc.FONT = "Calibri";
+		mlp = genDoc.generateDocx("p { margin: 0; }");
+
+		java.io.StringWriter sw = new java.io.StringWriter();
+		org.docx4j.TextUtils.extractText(mlp.getMainDocumentPart().getContents(), sw);
+		String docText = sw.toString();
+
+		org.junit.Assert.assertTrue(docText,
+				docText.contains("name=Save$ {Phase} $1 team=CORP\\red type=Type $1"));
+	}
+
 	private static String snippetAround(String text, String needle) {
 		int idx = text.indexOf(needle);
 		if (idx < 0)

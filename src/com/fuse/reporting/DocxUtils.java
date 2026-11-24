@@ -1585,31 +1585,31 @@ public class DocxUtils {
 			String assessors_comma = this.assessorsComma;
 			String assessors_bullets = this.assessorsBullets;
 
-			content = content.replaceAll("\\$\\{asmtName\\}",
+			content = StringUtils.replace(content, "${asmtName}",
 					this.assessment.getName() == null ? "" : this.assessment.getName());
 			content = content.replaceAll("\\$\\{asmtId\\}",
 					this.assessment.getId() == null ? "" : "" + this.assessment.getId());
 			content = content.replaceAll("\\$\\{asmtAppId\\}", "" + this.assessment.getAppId());
-			content = content.replaceAll("\\$\\{asmtAssessor\\}", this.assessment.getAssessor() == null ? ""
+			content = StringUtils.replace(content, "${asmtAssessor}", this.assessment.getAssessor() == null ? ""
 					: (this.assessment.getAssessor().get(0).getFname() + " "
 							+ this.assessment.getAssessor().get(0).getLname()));
-			content = content.replaceAll("\\$\\{asmtAssessor_Email\\}",
+			content = StringUtils.replace(content, "${asmtAssessor_Email}",
 					this.assessment.getAssessor() == null ? "" : (this.assessment.getAssessor().get(0).getEmail()));
-			content = content.replaceAll("\\$\\{asmtAssessors_Lines\\}",
+			content = StringUtils.replace(content, "${asmtAssessors_Lines}",
 					this.assessment.getAssessor() == null ? "" : assessors_nl);
-			content = content.replaceAll("\\$\\{asmtAssessors_Comma\\}",
+			content = StringUtils.replace(content, "${asmtAssessors_Comma}",
 					this.assessment.getAssessor() == null ? "" : assessors_comma);
-			content = content.replaceAll("\\$\\{asmtAssessors_Bullets\\}",
+			content = StringUtils.replace(content, "${asmtAssessors_Bullets}",
 					this.assessment.getAssessor() == null ? "" : assessors_bullets);
-			content = content.replaceAll("\\$\\{remediation\\}", this.assessment.getRemediation() == null ? ""
+			content = StringUtils.replace(content, "${remediation}", this.assessment.getRemediation() == null ? ""
 					: (this.assessment.getRemediation().getFname() + " " + this.assessment.getRemediation().getLname()));
 			content = getVulnCount(content);
 
-			content = content.replaceAll("\\$\\{asmtTeam\\}",
+			content = StringUtils.replace(content, "${asmtTeam}",
 					this.assessment.getAssessor() == null ? ""
 							: this.assessment.getAssessor().get(0).getTeam() == null ? ""
 									: this.assessment.getAssessor().get(0).getTeam().getTeamName().trim());
-			content = content.replaceAll("\\$\\{asmtType\\}",
+			content = StringUtils.replace(content, "${asmtType}",
 					this.assessment.getType() == null ? "" : this.assessment.getType().getType().trim());
 			// content = content.replaceAll("\\$\\{today\\}", formatter.format(new Date()));
 			content = replaceDateVariable(content, "today", new Date());
